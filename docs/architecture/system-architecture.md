@@ -2,88 +2,71 @@
 
 ## High-Level System Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        USER BROWSER                            │
-├─────────────────────────────────────────────────────────────────┤
-│                     Next.js Frontend                           │
-│  ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐   │
-│  │  Journal Pages  │ │   Dashboard     │ │  Relationship   │   │
-│  │                 │ │                 │ │   Management    │   │
-│  └─────────────────┘ └─────────────────┘ └─────────────────┘   │
-│                                                                 │
-│  ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐   │
-│  │   AI Insights   │ │  Notifications  │ │   Data Export   │   │
-│  │                 │ │                 │ │                 │   │
-│  └─────────────────┘ └─────────────────┘ └─────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
-                                │
-                                │ HTTPS/WebSocket
-                                ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                      VERCEL PLATFORM                           │
-├─────────────────────────────────────────────────────────────────┤
-│                    Next.js App Router                          │
-│  ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐   │
-│  │   API Routes    │ │  Server Actions │ │  Edge Functions │   │
-│  │                 │ │                 │ │                 │   │
-│  └─────────────────┘ └─────────────────┘ └─────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
-                │                           │                │
-                │                           │                │
-                ▼                           ▼                ▼
-┌─────────────────┐           ┌─────────────────┐ ┌─────────────────┐
-│   CLERK AUTH    │           │     CONVEX      │ │  GOOGLE GEMINI  │
-│                 │           │    DATABASE     │ │      FLASH      │
-│  ┌───────────┐  │           │                 │ │                 │
-│  │ User Auth │  │           │ ┌─────────────┐ │ │ ┌─────────────┐ │
-│  │           │  │           │ │    Users    │ │ │ │ AI Analysis │ │
-│  │ Sessions  │  │           │ │             │ │ │ │             │ │
-│  │           │  │           │ │Relationships│ │ │ │  Sentiment  │ │
-│  │ Profiles  │  │           │ │             │ │ │ │             │ │
-│  │           │  │           │ │  Entries    │ │ │ │  Patterns   │ │
-│  └───────────┘  │           │ │             │ │ │ │             │ │
-│                 │           │ │ AI Results │ │ │ │Suggestions  │ │
-└─────────────────┘           │ │             │ │ │ └─────────────┘ │
-                              │ └─────────────┘ │ │                 │
-                              │                 │ └─────────────────┘
-                              │ ┌─────────────┐ │
-                              │ │ Scheduled   │ │
-                              │ │ Functions   │ │
-                              │ └─────────────┘ │
-                              └─────────────────┘
+```mermaid
+graph TB
+    subgraph Browser["USER BROWSER"]
+        subgraph Frontend["Next.js Frontend"]
+            JP["Journal Pages"]
+            DB["Dashboard"]
+            RM["Relationship Management"]
+            AI["AI Insights"]
+            NO["Notifications"]
+            DE["Data Export"]
+        end
+    end
+    
+    subgraph Vercel["VERCEL PLATFORM"]
+        subgraph AppRouter["Next.js App Router"]
+            AR["API Routes"]
+            SA["Server Actions"]
+            EF["Edge Functions"]
+        end
+    end
+    
+    subgraph ClerkAuth["CLERK AUTH"]
+        UA["User Auth"]
+        SE["Sessions"]
+        PR["Profiles"]
+    end
+    
+    subgraph ConvexDB["CONVEX DATABASE"]
+        US["Users"]
+        RE["Relationships"]
+        EN["Entries"]
+        AIR["AI Results"]
+        SF["Scheduled Functions"]
+    end
+    
+    subgraph GeminiAI["GOOGLE GEMINI FLASH"]
+        AIA["AI Analysis"]
+        SEN["Sentiment"]
+        PAT["Patterns"]
+        SUG["Suggestions"]
+    end
+    
+    Browser -.->|HTTPS/WebSocket| Vercel
+    Vercel --> ClerkAuth
+    Vercel --> ConvexDB
+    Vercel --> GeminiAI
 ```
 
 ## Data Flow Architecture
 
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│     USER        │    │    FRONTEND     │    │    BACKEND      │
-│                 │    │   (Next.js)     │    │    (Convex)     │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         │ 1. Write Journal      │                       │
-         │ ─────────────────────▶│                       │
-         │                       │ 2. Store Entry        │
-         │                       │ ─────────────────────▶│
-         │                       │                       │
-         │                       │ 3. Trigger AI         │
-         │                       │    Analysis           │
-         │                       │ ─────────────────────▶│
-         │                       │                       │
-┌─────────────────┐              │                       │ 4. Call Gemini
-│  GOOGLE GEMINI  │              │                       │ ◀─────────────────
-│     FLASH       │              │                       │
-└─────────────────┘              │                       │ 5. Process Results
-         │                       │                       │ ─────────────────▶
-         │ 6. Return Analysis    │                       │
-         │ ─────────────────────▶│                       │
-         │                       │ 7. Update UI          │
-         │                       │ ◀─────────────────────│
-         │                       │                       │
-         │ 8. Display Insights   │                       │
-         │ ◀─────────────────────│                       │
-         │                       │                       │
+```mermaid
+sequenceDiagram
+    participant U as USER
+    participant F as FRONTEND<br/>(Next.js)
+    participant B as BACKEND<br/>(Convex)
+    participant G as GOOGLE GEMINI<br/>FLASH
+    
+    U->>F: 1. Write Journal
+    F->>B: 2. Store Entry
+    F->>B: 3. Trigger AI Analysis
+    B->>G: 4. Call Gemini
+    B->>B: 5. Process Results
+    G->>F: 6. Return Analysis
+    B->>F: 7. Update UI
+    F->>U: 8. Display Insights
 ```
 
 ## Component Architecture
@@ -141,222 +124,265 @@ src/
 
 ## Database Schema (Convex)
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        CONVEX DATABASE                         │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌─────────────────┐    ┌─────────────────┐                    │
-│  │     users       │    │  relationships  │                    │
-│  │─────────────────│    │─────────────────│                    │
-│  │ _id             │    │ _id             │                    │
-│  │ clerkId         │    │ userId          │──┐                 │
-│  │ email           │    │ name            │  │                 │
-│  │ createdAt       │    │ type            │  │                 │
-│  │ preferences     │    │ photo           │  │                 │
-│  └─────────────────┘    │ createdAt       │  │                 │
-│           │              │ updatedAt       │  │                 │
-│           │              └─────────────────┘  │                 │
-│           │                       │           │                 │
-│           │                       │           │                 │
-│  ┌────────▼───────┐    ┌──────────▼───────┐  │                 │
-│  │  journalEntries │    │   aiAnalysis     │  │                 │
-│  │─────────────────│    │─────────────────│  │                 │
-│  │ _id             │    │ _id             │  │                 │
-│  │ userId          │    │ entryId         │──┘                 │
-│  │ relationshipId  │────│ userId          │                    │
-│  │ content         │    │ sentiment       │                    │
-│  │ mood            │    │ emotions        │                    │
-│  │ isPrivate       │    │ patterns        │                    │
-│  │ createdAt       │    │ confidence      │                    │
-│  │ updatedAt       │    │ processedAt     │                    │
-│  └─────────────────┘    └─────────────────┘                    │
-│           │                       │                            │
-│           │              ┌────────▼───────┐                    │
-│           │              │ healthScores   │                    │
-│           │              │─────────────────│                    │
-│           │              │ _id             │                    │
-│           │              │ userId          │                    │
-│           └──────────────│ relationshipId  │                    │
-│                          │ score           │                    │
-│                          │ factors         │                    │
-│                          │ trend           │                    │
-│                          │ lastUpdated     │                    │
-│                          └─────────────────┘                    │
-│                                                                 │
-├─────────────────────────────────────────────────────────────────┤
-│                     SCHEDULED FUNCTIONS                        │
-│  ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐   │
-│  │  processAI      │ │ calculateScores │ │ sendReminders   │   │
-│  │   Analysis      │ │                 │ │                 │   │
-│  └─────────────────┘ └─────────────────┘ └─────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+erDiagram
+    users {
+        string _id PK
+        string clerkId
+        string email
+        date createdAt
+        object preferences
+    }
+    
+    relationships {
+        string _id PK
+        string userId FK
+        string name
+        string type
+        string photo
+        date createdAt
+        date updatedAt
+    }
+    
+    journalEntries {
+        string _id PK
+        string userId FK
+        string relationshipId FK
+        string content
+        string mood
+        boolean isPrivate
+        date createdAt
+        date updatedAt
+    }
+    
+    aiAnalysis {
+        string _id PK
+        string entryId FK
+        string userId FK
+        string sentiment
+        array emotions
+        array patterns
+        number confidence
+        date processedAt
+    }
+    
+    healthScores {
+        string _id PK
+        string userId FK
+        string relationshipId FK
+        number score
+        array factors
+        string trend
+        date lastUpdated
+    }
+    
+    users ||--o{ relationships : "has"
+    users ||--o{ journalEntries : "writes"
+    relationships ||--o{ journalEntries : "relates to"
+    journalEntries ||--|| aiAnalysis : "analyzed by"
+    relationships ||--|| healthScores : "scored by"
+    users ||--o{ healthScores : "owns"
 ```
 
 ## AI Processing Pipeline
 
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   JOURNAL       │    │      DSPY       │    │    GEMINI       │
-│    ENTRY        │    │   PROCESSOR     │    │     FLASH       │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         │ 1. New Entry          │                       │
-         │ ─────────────────────▶│                       │
-         │                       │                       │
-         │                       │ 2. Format Prompt     │
-         │                       │ ─────────────────────▶│
-         │                       │                       │
-         │                       │ 3. AI Analysis       │
-         │                       │ ◀─────────────────────│
-         │                       │                       │
-         │ 4. Structured Results │                       │
-         │ ◀─────────────────────│                       │
-         │                       │                       │
-         ▼                       ▼                       ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│  STORE RESULTS  │    │   UPDATE UI     │    │   CALCULATE     │
-│   IN CONVEX     │    │   REAL-TIME     │    │  HEALTH SCORE   │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+```mermaid
+flowchart TD
+    JE["JOURNAL ENTRY"] --> DP["DSPY PROCESSOR"]
+    DP --> |"2. Format Prompt"| GF["GEMINI FLASH"]
+    GF --> |"3. AI Analysis"| DP
+    DP --> |"4. Structured Results"| JE
+    
+    JE --> SR["STORE RESULTS IN CONVEX"]
+    DP --> UU["UPDATE UI REAL-TIME"]
+    GF --> CHS["CALCULATE HEALTH SCORE"]
 ```
 
 ## DSPy Integration Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        DSPY FRAMEWORK                          │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌─────────────────┐    ┌─────────────────┐                    │
-│  │   Signatures    │    │    Modules      │                    │
-│  │─────────────────│    │─────────────────│                    │
-│  │ SentimentAnalysis│   │ RelationshipAnalyzer                │
-│  │ EmotionDetection│    │ PatternDetector │                    │
-│  │ PatternRecognition   │ SuggestionGenerator                 │
-│  │ SuggestionGeneration │ HealthScoreCalculator               │
-│  └─────────────────┘    └─────────────────┘                    │
-│           │                       │                            │
-│           │              ┌────────▼───────┐                    │
-│           │              │   Optimizers   │                    │
-│           │              │─────────────────│                    │
-│           │              │ BootstrapFewShot│                   │
-│           └──────────────│ MIPRO           │                    │
-│                          │ Automatic Tuning│                    │
-│                          └─────────────────┘                    │
-│                                   │                             │
-│                          ┌────────▼───────┐                    │
-│                          │   Evaluators   │                    │
-│                          │─────────────────│                    │
-│                          │ Accuracy Metrics│                    │
-│                          │ User Feedback   │                    │
-│                          │ A/B Testing     │                    │
-│                          └─────────────────┘                    │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph DSPy["DSPY FRAMEWORK"]
+        subgraph Signatures["Signatures"]
+            SA["SentimentAnalysis"]
+            ED["EmotionDetection"]
+            PR["PatternRecognition"]
+            SG["SuggestionGeneration"]
+        end
+        
+        subgraph Modules["Modules"]
+            RA["RelationshipAnalyzer"]
+            PD["PatternDetector"]
+            SGM["SuggestionGenerator"]
+            HSC["HealthScoreCalculator"]
+        end
+        
+        subgraph Optimizers["Optimizers"]
+            BFS["BootstrapFewShot"]
+            MI["MIPRO"]
+            AT["Automatic Tuning"]
+        end
+        
+        subgraph Evaluators["Evaluators"]
+            AM["Accuracy Metrics"]
+            UF["User Feedback"]
+            AB["A/B Testing"]
+        end
+    end
+    
+    Signatures --> Modules
+    Modules --> Optimizers
+    Optimizers --> Evaluators
 ```
 
 ## Security & Privacy Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     SECURITY LAYERS                            │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐   │
-│  │   CLIENT-SIDE   │ │   TRANSPORT     │ │   SERVER-SIDE   │   │
-│  │   SECURITY      │ │    SECURITY     │ │    SECURITY     │   │
-│  │─────────────────│ │─────────────────│ │─────────────────│   │
-│  │ Input Validation│ │ HTTPS/TLS 1.3   │ │ Authentication  │   │
-│  │ XSS Protection  │ │ WSS WebSockets  │ │ Authorization   │   │
-│  │ CSRF Protection │ │ Certificate     │ │ Rate Limiting   │   │
-│  │ Content Security│ │ Pinning         │ │ Input Sanitization  │
-│  │ Policy (CSP)    │ │                 │ │ SQL Injection   │   │
-│  └─────────────────┘ └─────────────────┘ │ Prevention      │   │
-│                                          └─────────────────┘   │
-│                                                                 │
-│  ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐   │
-│  │   DATA-AT-REST  │ │  DATA-IN-TRANSIT│ │   PRIVACY       │   │
-│  │   ENCRYPTION    │ │   ENCRYPTION    │ │   CONTROLS      │   │
-│  │─────────────────│ │─────────────────│ │─────────────────│   │
-│  │ AES-256         │ │ TLS 1.3         │ │ Data Minimization│  │
-│  │ Database        │ │ End-to-End      │ │ Purpose Limitation│ │
-│  │ Encryption      │ │ WebSocket       │ │ User Consent    │   │
-│  │ File Encryption │ │ Security        │ │ Right to Delete │   │
-│  │                 │ │                 │ │ Data Portability│   │
-│  └─────────────────┘ └─────────────────┘ └─────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph Security["SECURITY LAYERS"]
+        subgraph ClientSide["CLIENT-SIDE SECURITY"]
+            IV["Input Validation"]
+            XSS["XSS Protection"]
+            CSRF["CSRF Protection"]
+            CSP["Content Security Policy"]
+        end
+        
+        subgraph Transport["TRANSPORT SECURITY"]
+            HTTPS["HTTPS/TLS 1.3"]
+            WSS["WSS WebSockets"]
+            CP["Certificate Pinning"]
+        end
+        
+        subgraph ServerSide["SERVER-SIDE SECURITY"]
+            AUTH["Authentication"]
+            AUTHZ["Authorization"]
+            RL["Rate Limiting"]
+            IS["Input Sanitization"]
+            SQL["SQL Injection Prevention"]
+        end
+        
+        subgraph DataRest["DATA-AT-REST ENCRYPTION"]
+            AES["AES-256"]
+            DB["Database Encryption"]
+            FE["File Encryption"]
+        end
+        
+        subgraph DataTransit["DATA-IN-TRANSIT ENCRYPTION"]
+            TLS["TLS 1.3"]
+            E2E["End-to-End"]
+            WS["WebSocket Security"]
+        end
+        
+        subgraph Privacy["PRIVACY CONTROLS"]
+            DM["Data Minimization"]
+            PL["Purpose Limitation"]
+            UC["User Consent"]
+            RD["Right to Delete"]
+            DP["Data Portability"]
+        end
+    end
 ```
 
 ## Deployment Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                      VERCEL EDGE NETWORK                       │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐   │
-│  │   US-EAST-1     │ │    EU-WEST-1    │ │   ASIA-PAC-1    │   │
-│  │   (Primary)     │ │   (Secondary)   │ │   (Secondary)   │   │
-│  │─────────────────│ │─────────────────│ │─────────────────│   │
-│  │ Next.js App     │ │ Next.js App     │ │ Next.js App     │   │
-│  │ Edge Functions  │ │ Edge Functions  │ │ Edge Functions  │   │
-│  │ Static Assets   │ │ Static Assets   │ │ Static Assets   │   │
-│  └─────────────────┘ └─────────────────┘ └─────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
-                │                   │                   │
-                └───────────────────┼───────────────────┘
-                                    │
-                ┌───────────────────────────────────────┐
-                │          GLOBAL SERVICES              │
-                ├───────────────────────────────────────┤
-                │                                       │
-                │ ┌─────────────┐ ┌─────────────────┐   │
-                │ │   CONVEX    │ │     CLERK       │   │
-                │ │  DATABASE   │ │ AUTHENTICATION  │   │
-                │ │             │ │                 │   │
-                │ │ Multi-Region│ │ Global Identity │   │
-                │ │ Replication │ │ Provider        │   │
-                │ └─────────────┘ └─────────────────┘   │
-                │                                       │
-                │ ┌─────────────┐ ┌─────────────────┐   │
-                │ │   GOOGLE    │ │   MONITORING    │   │
-                │ │  GEMINI AI  │ │   & ANALYTICS   │   │
-                │ │             │ │                 │   │
-                │ │ API Gateway │ │ Vercel Analytics│   │
-                │ │ Rate Limits │ │ Error Tracking  │   │
-                │ └─────────────┘ └─────────────────┘   │
-                └───────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph VercelEdge["VERCEL EDGE NETWORK"]
+        subgraph USEast["US-EAST-1 (Primary)"]
+            USA_App["Next.js App"]
+            USA_Edge["Edge Functions"]
+            USA_Static["Static Assets"]
+        end
+        
+        subgraph EUWest["EU-WEST-1 (Secondary)"]
+            EU_App["Next.js App"]
+            EU_Edge["Edge Functions"]
+            EU_Static["Static Assets"]
+        end
+        
+        subgraph AsiaPac["ASIA-PAC-1 (Secondary)"]
+            ASIA_App["Next.js App"]
+            ASIA_Edge["Edge Functions"]
+            ASIA_Static["Static Assets"]
+        end
+    end
+    
+    subgraph GlobalServices["GLOBAL SERVICES"]
+        subgraph ConvexService["CONVEX DATABASE"]
+            MR["Multi-Region Replication"]
+        end
+        
+        subgraph ClerkService["CLERK AUTHENTICATION"]
+            GIP["Global Identity Provider"]
+        end
+        
+        subgraph GeminiService["GOOGLE GEMINI AI"]
+            AG["API Gateway"]
+            RateL["Rate Limits"]
+        end
+        
+        subgraph MonitoringService["MONITORING & ANALYTICS"]
+            VA["Vercel Analytics"]
+            ET["Error Tracking"]
+        end
+    end
+    
+    USEast --> GlobalServices
+    EUWest --> GlobalServices
+    AsiaPac --> GlobalServices
 ```
 
 ## Performance Optimization Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                   PERFORMANCE STRATEGIES                       │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐    │
-│ │   FRONTEND      │ │    BACKEND      │ │      AI         │    │
-│ │  OPTIMIZATION   │ │  OPTIMIZATION   │ │  OPTIMIZATION   │    │
-│ │─────────────────│ │─────────────────│ │─────────────────│    │
-│ │ Code Splitting  │ │ Database        │ │ Prompt Caching  │    │
-│ │ Lazy Loading    │ │ Indexing        │ │ Batch Processing│    │
-│ │ Image           │ │ Query           │ │ Result Caching  │    │
-│ │ Optimization    │ │ Optimization    │ │ Rate Limiting   │    │
-│ │ Bundle Analysis │ │ Connection      │ │ Async Processing│    │
-│ │ Tree Shaking    │ │ Pooling         │ │ Priority Queue  │    │
-│ │ Prefetching     │ │ Caching         │ │                 │    │
-│ └─────────────────┘ └─────────────────┘ └─────────────────┘    │
-│                                                                 │
-│ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐    │
-│ │     CACHING     │ │    MONITORING   │ │   SCALABILITY   │    │
-│ │   STRATEGY      │ │   & ALERTING    │ │   PLANNING      │    │
-│ │─────────────────│ │─────────────────│ │─────────────────│    │
-│ │ Browser Cache   │ │ Performance     │ │ Auto Scaling    │    │
-│ │ CDN Cache       │ │ Metrics         │ │ Load Balancing  │    │
-│ │ API Cache       │ │ Error Tracking  │ │ Database        │    │
-│ │ Database Cache  │ │ User Analytics  │ │ Sharding        │    │
-│ │ Memory Cache    │ │ Uptime          │ │ Horizontal      │    │
-│ │ Disk Cache      │ │ Monitoring      │ │ Scaling         │    │
-│ └─────────────────┘ └─────────────────┘ └─────────────────┘    │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph Performance["PERFORMANCE STRATEGIES"]
+        subgraph Frontend["FRONTEND OPTIMIZATION"]
+            CS["Code Splitting"]
+            LL["Lazy Loading"]
+            IO["Image Optimization"]
+            BA["Bundle Analysis"]
+            TS["Tree Shaking"]
+            PF["Prefetching"]
+        end
+        
+        subgraph Backend["BACKEND OPTIMIZATION"]
+            DI["Database Indexing"]
+            QO["Query Optimization"]
+            CP["Connection Pooling"]
+            BC["Caching"]
+        end
+        
+        subgraph AI["AI OPTIMIZATION"]
+            PC["Prompt Caching"]
+            BP["Batch Processing"]
+            RC["Result Caching"]
+            RL["Rate Limiting"]
+            AP["Async Processing"]
+            PQ["Priority Queue"]
+        end
+        
+        subgraph Caching["CACHING STRATEGY"]
+            BrC["Browser Cache"]
+            CDNC["CDN Cache"]
+            AC["API Cache"]
+            DC["Database Cache"]
+            MC["Memory Cache"]
+            DiC["Disk Cache"]
+        end
+        
+        subgraph Monitoring["MONITORING & ALERTING"]
+            PM["Performance Metrics"]
+            ET["Error Tracking"]
+            UA["User Analytics"]
+            UM["Uptime Monitoring"]
+        end
+        
+        subgraph Scalability["SCALABILITY PLANNING"]
+            AS["Auto Scaling"]
+            LB["Load Balancing"]
+            DS["Database Sharding"]
+            HS["Horizontal Scaling"]
+        end
+    end
 ```
