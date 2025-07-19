@@ -1,0 +1,19 @@
+import { auth } from '@clerk/nextjs/server'
+import { redirect } from 'next/navigation'
+
+export default async function JournalPage() {
+  const { userId } = await auth()
+
+  if (!userId) {
+    redirect('/sign-in')
+  }
+
+  return (
+    <div className="container mx-auto py-8">
+      <h1 className="text-3xl font-bold mb-6">Journal</h1>
+      <p className="text-gray-600">
+        Create and manage your relationship journal entries.
+      </p>
+    </div>
+  )
+}
