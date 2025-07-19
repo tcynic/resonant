@@ -8,14 +8,18 @@
  * @module
  */
 
-import type * as auth from "../auth.js";
-import type * as http from "../http.js";
-
 import type {
   ApiFromModules,
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as constants from "../constants.js";
+import type * as http from "../http.js";
+import type * as journalEntries from "../journalEntries.js";
+import type * as relationships from "../relationships.js";
+import type * as test_testDataManager from "../test/testDataManager.js";
+import type * as users from "../users.js";
+import type * as utils_validation from "../utils/validation.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -26,8 +30,13 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
-  auth: typeof auth;
+  constants: typeof constants;
   http: typeof http;
+  journalEntries: typeof journalEntries;
+  relationships: typeof relationships;
+  "test/testDataManager": typeof test_testDataManager;
+  users: typeof users;
+  "utils/validation": typeof utils_validation;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,

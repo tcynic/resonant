@@ -18,7 +18,7 @@ describe('Authentication Middleware', () => {
 
   it('defines correct public routes', () => {
     // Import the middleware to test route configuration
-    require('../../../../middleware')
+    require('../../../../src/middleware')
 
     expect(createRouteMatcher).toHaveBeenCalledWith([
       '/sign-in(.*)',
