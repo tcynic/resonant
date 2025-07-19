@@ -1,19 +1,134 @@
-import { auth } from '@clerk/nextjs/server'
+'use client'
+
+import React, { useState } from 'react'
+import { useUser } from '@clerk/nextjs'
 import { redirect } from 'next/navigation'
+import RelationshipsList from '@/components/features/relationships/relationships-list'
+import RelationshipForm from '@/components/features/relationships/relationship-form'
+import DeleteRelationshipModal from '@/components/features/relationships/delete-relationship-modal'
+import Modal from '@/components/ui/modal'
+import { useRelationships } from '@/hooks/use-relationships'
+import { Relationship } from '@/lib/types'
 
-export default async function RelationshipsPage() {
-  const { userId } = await auth()
+export default function RelationshipsPage() {
+  const { user, isLoaded } = useUser()
+  const { relationships } = useRelationships()
 
-  if (!userId) {
+  // Modal states
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [selectedRelationship, setSelectedRelationship] =
+    useState<Relationship | null>(null)
+
+  // Redirect if not authenticated
+  if (isLoaded && !user) {
     redirect('/sign-in')
   }
 
+  // Show loading state
+  if (!isLoaded) {
+    return (
+      <div className="container mx-auto py-8">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2 mb-8"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="h-32 bg-gray-200 rounded-lg"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Event handlers
+  const handleCreateNew = () => {
+    setIsCreateModalOpen(true)
+  }
+
+  const handleEdit = (relationshipId: string) => {
+    const relationship = relationships.find(
+      (r: Relationship) => r._id === relationshipId
+    )
+    if (relationship) {
+      setSelectedRelationship(relationship)
+      setIsEditModalOpen(true)
+    }
+  }
+
+  const handleDelete = (relationshipId: string) => {
+    const relationship = relationships.find(
+      (r: Relationship) => r._id === relationshipId
+    )
+    if (relationship) {
+      setSelectedRelationship(relationship)
+      setIsDeleteModalOpen(true)
+    }
+  }
+
+  const handleFormSuccess = () => {
+    setIsCreateModalOpen(false)
+    setIsEditModalOpen(false)
+    setSelectedRelationship(null)
+  }
+
+  const handleDeleteSuccess = () => {
+    setIsDeleteModalOpen(false)
+    setSelectedRelationship(null)
+  }
+
+  const handleCloseModals = () => {
+    setIsCreateModalOpen(false)
+    setIsEditModalOpen(false)
+    setIsDeleteModalOpen(false)
+    setSelectedRelationship(null)
+  }
+
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-6">Relationships</h1>
-      <p className="text-gray-600">
-        Manage your relationships and track their health.
-      </p>
+    <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      {/* Main Content */}
+      <RelationshipsList
+        onCreateNew={handleCreateNew}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+      />
+
+      {/* Create Relationship Modal */}
+      <Modal
+        isOpen={isCreateModalOpen}
+        onClose={handleCloseModals}
+        title="Add New Relationship"
+      >
+        <RelationshipForm
+          onSuccess={handleFormSuccess}
+          onCancel={handleCloseModals}
+          isModal={true}
+        />
+      </Modal>
+
+      {/* Edit Relationship Modal */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={handleCloseModals}
+        title="Edit Relationship"
+      >
+        <RelationshipForm
+          relationship={selectedRelationship || undefined}
+          onSuccess={handleFormSuccess}
+          onCancel={handleCloseModals}
+          isModal={true}
+        />
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteRelationshipModal
+        isOpen={isDeleteModalOpen}
+        onClose={handleCloseModals}
+        relationship={selectedRelationship}
+        onSuccess={handleDeleteSuccess}
+      />
     </div>
   )
 }

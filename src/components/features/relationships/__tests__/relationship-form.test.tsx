@@ -16,7 +16,9 @@ jest.mock('convex/react', () => ({
 }))
 // Mock Convex generated files (these files don't exist yet in development)
 jest.mock('../../../../convex/_generated/api', () => ({}), { virtual: true })
-jest.mock('../../../../convex/_generated/dataModel', () => ({}), { virtual: true })
+jest.mock('../../../../convex/_generated/dataModel', () => ({}), {
+  virtual: true,
+})
 
 const mockCreateRelationship = jest.fn()
 const mockUpdateRelationship = jest.fn()

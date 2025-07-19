@@ -14,7 +14,7 @@ graph TB
             DE["Data Export"]
         end
     end
-    
+
     subgraph Vercel["VERCEL PLATFORM"]
         subgraph AppRouter["Next.js App Router"]
             AR["API Routes"]
@@ -22,13 +22,13 @@ graph TB
             EF["Edge Functions"]
         end
     end
-    
+
     subgraph ClerkAuth["CLERK AUTH"]
         UA["User Auth"]
         SE["Sessions"]
         PR["Profiles"]
     end
-    
+
     subgraph ConvexDB["CONVEX DATABASE"]
         US["Users"]
         RE["Relationships"]
@@ -36,14 +36,14 @@ graph TB
         AIR["AI Results"]
         SF["Scheduled Functions"]
     end
-    
+
     subgraph GeminiAI["GOOGLE GEMINI FLASH"]
         AIA["AI Analysis"]
         SEN["Sentiment"]
         PAT["Patterns"]
         SUG["Suggestions"]
     end
-    
+
     Browser -.->|HTTPS/WebSocket| Vercel
     Vercel --> ClerkAuth
     Vercel --> ConvexDB
@@ -58,7 +58,7 @@ sequenceDiagram
     participant F as FRONTEND<br/>(Next.js)
     participant B as BACKEND<br/>(Convex)
     participant G as GOOGLE GEMINI<br/>FLASH
-    
+
     U->>F: 1. Write Journal
     F->>B: 2. Store Entry
     F->>B: 3. Trigger AI Analysis
@@ -133,7 +133,7 @@ erDiagram
         date createdAt
         object preferences
     }
-    
+
     relationships {
         string _id PK
         string userId FK
@@ -143,7 +143,7 @@ erDiagram
         date createdAt
         date updatedAt
     }
-    
+
     journalEntries {
         string _id PK
         string userId FK
@@ -154,7 +154,7 @@ erDiagram
         date createdAt
         date updatedAt
     }
-    
+
     aiAnalysis {
         string _id PK
         string entryId FK
@@ -165,7 +165,7 @@ erDiagram
         number confidence
         date processedAt
     }
-    
+
     healthScores {
         string _id PK
         string userId FK
@@ -175,7 +175,7 @@ erDiagram
         string trend
         date lastUpdated
     }
-    
+
     users ||--o{ relationships : "has"
     users ||--o{ journalEntries : "writes"
     relationships ||--o{ journalEntries : "relates to"
@@ -192,7 +192,7 @@ flowchart TD
     DP --> |"2. Format Prompt"| GF["GEMINI FLASH"]
     GF --> |"3. AI Analysis"| DP
     DP --> |"4. Structured Results"| JE
-    
+
     JE --> SR["STORE RESULTS IN CONVEX"]
     DP --> UU["UPDATE UI REAL-TIME"]
     GF --> CHS["CALCULATE HEALTH SCORE"]
@@ -209,27 +209,27 @@ graph TB
             PR["PatternRecognition"]
             SG["SuggestionGeneration"]
         end
-        
+
         subgraph Modules["Modules"]
             RA["RelationshipAnalyzer"]
             PD["PatternDetector"]
             SGM["SuggestionGenerator"]
             HSC["HealthScoreCalculator"]
         end
-        
+
         subgraph Optimizers["Optimizers"]
             BFS["BootstrapFewShot"]
             MI["MIPRO"]
             AT["Automatic Tuning"]
         end
-        
+
         subgraph Evaluators["Evaluators"]
             AM["Accuracy Metrics"]
             UF["User Feedback"]
             AB["A/B Testing"]
         end
     end
-    
+
     Signatures --> Modules
     Modules --> Optimizers
     Optimizers --> Evaluators
@@ -246,13 +246,13 @@ graph TB
             CSRF["CSRF Protection"]
             CSP["Content Security Policy"]
         end
-        
+
         subgraph Transport["TRANSPORT SECURITY"]
             HTTPS["HTTPS/TLS 1.3"]
             WSS["WSS WebSockets"]
             CP["Certificate Pinning"]
         end
-        
+
         subgraph ServerSide["SERVER-SIDE SECURITY"]
             AUTH["Authentication"]
             AUTHZ["Authorization"]
@@ -260,19 +260,19 @@ graph TB
             IS["Input Sanitization"]
             SQL["SQL Injection Prevention"]
         end
-        
+
         subgraph DataRest["DATA-AT-REST ENCRYPTION"]
             AES["AES-256"]
             DB["Database Encryption"]
             FE["File Encryption"]
         end
-        
+
         subgraph DataTransit["DATA-IN-TRANSIT ENCRYPTION"]
             TLS["TLS 1.3"]
             E2E["End-to-End"]
             WS["WebSocket Security"]
         end
-        
+
         subgraph Privacy["PRIVACY CONTROLS"]
             DM["Data Minimization"]
             PL["Purpose Limitation"]
@@ -293,40 +293,40 @@ graph TB
             USA_Edge["Edge Functions"]
             USA_Static["Static Assets"]
         end
-        
+
         subgraph EUWest["EU-WEST-1 (Secondary)"]
             EU_App["Next.js App"]
             EU_Edge["Edge Functions"]
             EU_Static["Static Assets"]
         end
-        
+
         subgraph AsiaPac["ASIA-PAC-1 (Secondary)"]
             ASIA_App["Next.js App"]
             ASIA_Edge["Edge Functions"]
             ASIA_Static["Static Assets"]
         end
     end
-    
+
     subgraph GlobalServices["GLOBAL SERVICES"]
         subgraph ConvexService["CONVEX DATABASE"]
             MR["Multi-Region Replication"]
         end
-        
+
         subgraph ClerkService["CLERK AUTHENTICATION"]
             GIP["Global Identity Provider"]
         end
-        
+
         subgraph GeminiService["GOOGLE GEMINI AI"]
             AG["API Gateway"]
             RateL["Rate Limits"]
         end
-        
+
         subgraph MonitoringService["MONITORING & ANALYTICS"]
             VA["Vercel Analytics"]
             ET["Error Tracking"]
         end
     end
-    
+
     USEast --> GlobalServices
     EUWest --> GlobalServices
     AsiaPac --> GlobalServices
@@ -345,14 +345,14 @@ graph TB
             TS["Tree Shaking"]
             PF["Prefetching"]
         end
-        
+
         subgraph Backend["BACKEND OPTIMIZATION"]
             DI["Database Indexing"]
             QO["Query Optimization"]
             CP["Connection Pooling"]
             BC["Caching"]
         end
-        
+
         subgraph AI["AI OPTIMIZATION"]
             PC["Prompt Caching"]
             BP["Batch Processing"]
@@ -361,7 +361,7 @@ graph TB
             AP["Async Processing"]
             PQ["Priority Queue"]
         end
-        
+
         subgraph Caching["CACHING STRATEGY"]
             BrC["Browser Cache"]
             CDNC["CDN Cache"]
@@ -370,14 +370,14 @@ graph TB
             MC["Memory Cache"]
             DiC["Disk Cache"]
         end
-        
+
         subgraph Monitoring["MONITORING & ALERTING"]
             PM["Performance Metrics"]
             ET["Error Tracking"]
             UA["User Analytics"]
             UM["Uptime Monitoring"]
         end
-        
+
         subgraph Scalability["SCALABILITY PLANNING"]
             AS["Auto Scaling"]
             LB["Load Balancing"]

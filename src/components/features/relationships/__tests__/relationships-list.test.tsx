@@ -9,11 +9,17 @@ import { useRelationships } from '@/hooks/use-relationships'
 jest.mock('@/hooks/use-relationships')
 jest.mock('../relationship-card', () => {
   return function MockRelationshipCard({ relationship }: any) {
-    return <div data-testid={`relationship-card-${relationship._id}`}>{relationship.name}</div>
+    return (
+      <div data-testid={`relationship-card-${relationship._id}`}>
+        {relationship.name}
+      </div>
+    )
   }
 })
 
-const mockUseRelationships = useRelationships as jest.MockedFunction<typeof useRelationships>
+const mockUseRelationships = useRelationships as jest.MockedFunction<
+  typeof useRelationships
+>
 
 describe('RelationshipsList', () => {
   beforeEach(() => {
@@ -31,7 +37,9 @@ describe('RelationshipsList', () => {
     render(<RelationshipsList />)
 
     expect(screen.getByText(/no relationships yet/i)).toBeInTheDocument()
-    expect(screen.getByText(/start building your relationship journal/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(/start building your relationship journal/i)
+    ).toBeInTheDocument()
   })
 
   it('renders loading state', () => {
@@ -80,7 +88,9 @@ describe('RelationshipsList', () => {
     render(<RelationshipsList />)
 
     expect(screen.getByText('Relationships')).toBeInTheDocument()
-    expect(screen.getByText(/manage your relationships \(2 total\)/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(/manage your relationships \(2 total\)/i)
+    ).toBeInTheDocument()
     expect(screen.getByTestId('relationship-card-rel_1')).toBeInTheDocument()
     expect(screen.getByTestId('relationship-card-rel_2')).toBeInTheDocument()
   })
@@ -122,7 +132,9 @@ describe('RelationshipsList', () => {
 
     // Should filter to show only John
     expect(screen.getByTestId('relationship-card-rel_1')).toBeInTheDocument()
-    expect(screen.queryByTestId('relationship-card-rel_2')).not.toBeInTheDocument()
+    expect(
+      screen.queryByTestId('relationship-card-rel_2')
+    ).not.toBeInTheDocument()
   })
 
   it('calls onCreateNew when add button is clicked', async () => {
@@ -179,6 +191,8 @@ describe('RelationshipsList', () => {
     const searchInput = screen.getByPlaceholderText(/search relationships/i)
     await user.type(searchInput, 'John')
 
-    expect(screen.getByText(/showing 1 of 2 relationships/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(/showing 1 of 2 relationships/i)
+    ).toBeInTheDocument()
   })
 })

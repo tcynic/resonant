@@ -1,19 +1,36 @@
-import { auth } from '@clerk/nextjs/server'
-import { redirect } from 'next/navigation'
+'use client'
 
-export default async function JournalPage() {
-  const { userId } = await auth()
+import { useRouter } from 'next/navigation'
+import JournalEntriesList from '@/components/features/journal/journal-entries-list'
 
-  if (!userId) {
-    redirect('/sign-in')
+export default function JournalPage() {
+  const router = useRouter()
+
+  const handleCreateNew = () => {
+    router.push('/journal/new')
+  }
+
+  const handleView = (entryId: string) => {
+    router.push(`/journal/${entryId}`)
+  }
+
+  const handleEdit = (entryId: string) => {
+    router.push(`/journal/${entryId}/edit`)
+  }
+
+  const handleDelete = () => {
+    // Refresh the page to reload entries after deletion
+    router.refresh()
   }
 
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-6">Journal</h1>
-      <p className="text-gray-600">
-        Create and manage your relationship journal entries.
-      </p>
+    <div className="container mx-auto py-8 px-4">
+      <JournalEntriesList
+        onCreateNew={handleCreateNew}
+        onView={handleView}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+      />
     </div>
   )
 }

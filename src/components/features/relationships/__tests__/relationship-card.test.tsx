@@ -37,8 +37,8 @@ describe('RelationshipCard', () => {
     const mockOnDelete = jest.fn()
 
     render(
-      <RelationshipCard 
-        relationship={mockRelationship} 
+      <RelationshipCard
+        relationship={mockRelationship}
         onEdit={mockOnEdit}
         onDelete={mockOnDelete}
       />
@@ -53,23 +53,29 @@ describe('RelationshipCard', () => {
     const mockOnDelete = jest.fn()
 
     render(
-      <RelationshipCard 
-        relationship={mockRelationship} 
+      <RelationshipCard
+        relationship={mockRelationship}
         onEdit={mockOnEdit}
         onDelete={mockOnDelete}
         showActions={false}
       />
     )
 
-    expect(screen.queryByRole('button', { name: /edit/i })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /edit/i })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /delete/i })
+    ).not.toBeInTheDocument()
   })
 
   it('calls onEdit when edit button is clicked', async () => {
     const user = userEvent.setup()
     const mockOnEdit = jest.fn()
 
-    render(<RelationshipCard relationship={mockRelationship} onEdit={mockOnEdit} />)
+    render(
+      <RelationshipCard relationship={mockRelationship} onEdit={mockOnEdit} />
+    )
 
     const editButton = screen.getByRole('button', { name: /edit/i })
     await user.click(editButton)
@@ -81,7 +87,12 @@ describe('RelationshipCard', () => {
     const user = userEvent.setup()
     const mockOnDelete = jest.fn()
 
-    render(<RelationshipCard relationship={mockRelationship} onDelete={mockOnDelete} />)
+    render(
+      <RelationshipCard
+        relationship={mockRelationship}
+        onDelete={mockOnDelete}
+      />
+    )
 
     const deleteButton = screen.getByRole('button', { name: /delete/i })
     await user.click(deleteButton)
@@ -90,7 +101,10 @@ describe('RelationshipCard', () => {
   })
 
   it('displays correct relationship type styling', () => {
-    const partnerRelationship = { ...mockRelationship, type: 'partner' as const }
+    const partnerRelationship = {
+      ...mockRelationship,
+      type: 'partner' as const,
+    }
     render(<RelationshipCard relationship={partnerRelationship} />)
 
     const typeElement = screen.getByText('Partner')
@@ -108,12 +122,12 @@ describe('RelationshipCard', () => {
 
   it('handles relationship with same created and updated dates', () => {
     const sameDate = Date.now()
-    const newRelationship = { 
-      ...mockRelationship, 
+    const newRelationship = {
+      ...mockRelationship,
       createdAt: sameDate,
-      updatedAt: sameDate 
+      updatedAt: sameDate,
     }
-    
+
     render(<RelationshipCard relationship={newRelationship} />)
 
     expect(screen.getByText(/added/i)).toBeInTheDocument()

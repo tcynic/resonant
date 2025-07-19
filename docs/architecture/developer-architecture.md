@@ -27,19 +27,19 @@ Resonant is a relationship health journal built on a modern web stack with AI-po
 ```mermaid
 graph TD
     src["src/"]
-    
+
     src --> app["app/ - Next.js App Router"]
     app --> auth["(auth)/ - Authentication routes"]
     app --> dashboard["dashboard/ - Main dashboard"]
     app --> journal["journal/ - Journal functionality"]
     app --> relationships["relationships/ - Relationship management"]
     app --> insights["insights/ - AI insights"]
-    
+
     src --> components["components/ - Reusable components"]
     components --> ui["ui/ - Base UI components"]
     components --> features["features/ - Feature-specific components"]
     components --> layout["layout/ - Layout components"]
-    
+
     src --> lib["lib/ - Utilities and configurations"]
     src --> hooks["hooks/ - Custom React hooks"]
     src --> styles["styles/ - Global styles"]
