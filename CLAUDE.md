@@ -11,9 +11,9 @@ Resonant is a relationship health journal application built with Next.js 15, Rea
 ### Development Setup
 
 ```bash
-# Start both development servers (required for full functionality)
-npm run dev          # Next.js development server (localhost:3000)
-npm run convex:dev   # Convex backend development environment
+# CRITICAL: Both development servers MUST run simultaneously for full functionality
+npm run dev          # Terminal 1: Next.js with Turbopack (localhost:3000)
+npm run convex:dev   # Terminal 2: Convex real-time backend + dashboard
 
 # Environment setup
 cp .env.local.template .env.local  # Copy and configure environment variables
@@ -22,13 +22,26 @@ cp .env.local.template .env.local  # Copy and configure environment variables
 ### Code Quality & Testing
 
 ```bash
-# Testing commands
+# Unit & Component Testing
 npm test                # Run all Jest tests
 npm test:watch         # Run tests in watch mode
 npm test:ci            # Run tests with coverage for CI
 npm test -- --testPathPatterns="component-name"  # Run specific test file
 
-# Code quality
+# E2E Testing (Standard Playwright)
+npm run test:e2e       # Run standard Playwright tests
+npm run test:e2e:ui    # Playwright with UI mode
+npm run test:e2e:debug # Playwright debug mode
+npm run test:e2e:headed # Playwright headed mode
+npm run test:e2e:report # View test reports
+
+# MCP Browser Automation Testing
+npm run test:e2e:mcp        # Run E2E tests with MCP config
+npm run test:e2e:mcp:setup  # Validate MCP test setup
+npm run test:mcp            # Run MCP tests via Node script
+npm run test:mcp:guide      # Show MCP testing instructions
+
+# Code Quality
 npm run lint           # ESLint checking
 npm run lint:fix       # Auto-fix ESLint issues
 npm run format         # Prettier formatting
@@ -44,17 +57,28 @@ npm run convex:deploy  # Deploy Convex functions to production
 
 - **Unit Tests**: Located in `__tests__` directories adjacent to components
 - **Component Tests**: Use React Testing Library with Jest DOM matchers
-- **E2E Tests**: Use Playwright MCP for authentication and user flow testing
+- **E2E Tests**: Standard Playwright for automated browser testing
+- **MCP Browser Tests**: Use Playwright MCP for advanced browser automation with Claude Code
 - **Test Pattern**: `ComponentName.test.tsx` for components, `fileName.test.ts` for utilities
+
+### Test User Personas
+
+The system includes 4 comprehensive test user personas for thorough testing:
+
+- **New User**: Empty state for onboarding and first-use testing
+- **Active User**: Moderate data set for typical user workflows
+- **Power User**: Extensive data for performance and scalability testing
+- **Edge Case User**: Boundary conditions, special characters, and edge scenarios
 
 ## Architecture Overview
 
 ### Technology Stack
 
-- **Frontend**: Next.js 15 (App Router) + React 19 + TypeScript + Tailwind CSS
+- **Frontend**: Next.js 15 (App Router) + React 19 + TypeScript + Tailwind CSS 4
 - **Backend**: Convex (real-time database + serverless functions)
 - **Authentication**: Clerk with Next.js integration
-- **Testing**: Jest + React Testing Library + Playwright MCP
+- **Development**: Turbopack for fast development builds
+- **Testing**: Jest + React Testing Library + Playwright + Playwright MCP
 - **Validation**: Zod schemas for type-safe form and API validation
 
 ### Project Structure
@@ -179,9 +203,10 @@ GOOGLE_GEMINI_API_KEY=              # For AI analysis features
 
 ### Development Dependencies
 
-- Both `npm run dev` and `npm run convex:dev` must be running simultaneously
+- **CRITICAL**: Both `npm run dev` (Turbopack) and `npm run convex:dev` must be running simultaneously
 - Clerk development keys work in development mode
 - Real-time updates require active Convex connection
+- Convex dashboard accessible during `npm run convex:dev` for real-time debugging
 
 ## Debugging and Development Tips
 
@@ -203,14 +228,38 @@ GOOGLE_GEMINI_API_KEY=              # For AI analysis features
 - Use existing test patterns when creating new components
 - Component tests focus on user behavior, not implementation details
 
-## Playwright MCP Testing
+## MCP Browser Automation Testing
 
-For end-to-end testing with authentication:
+For advanced end-to-end testing with Claude Code:
 
-- Use Playwright MCP tools for browser automation
-- Authentication requires real email verification in development
-- Test authentication flows and component interactions
-- Focus on critical user journeys and form validations
+### Standard MCP Commands
+```bash
+# Navigate and interact
+await mcp__playwright__browser_navigate({ url: 'http://localhost:3000' })
+await mcp__playwright__browser_snapshot()
+await mcp__playwright__browser_type({ element: 'email input', ref: "input[type='email']", text: 'test@example.com' })
+await mcp__playwright__browser_click({ element: 'submit button', ref: "button[type='submit']" })
+```
+
+### Test Suite Execution
+```javascript
+// Run comprehensive test suite
+const { runAllMCPTests } = require('./tests/e2e/mcp-demo.test.ts')
+await runAllMCPTests()
+
+// Run specific tests
+const { runAuthenticationTest, runJournalCreationTest } = require('./tests/e2e/mcp-demo.test.ts')
+await runAuthenticationTest()
+await runJournalCreationTest()
+```
+
+### MCP Testing Features
+- Real email verification testing in development
+- Authentication flow automation
+- Component interaction testing
+- Critical user journey validation
+- Test data isolation with 4 user personas
+- Integration with `scripts/run-mcp-tests.js` for guided execution
 
 ## Code Quality Standards
 
