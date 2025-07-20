@@ -262,12 +262,12 @@ export const searchEntries = query({
       query = query.filter(q => q.eq(q.field('isPrivate'), args.isPrivate))
     }
 
-    if (args.startDate) {
-      query = query.filter(q => q.gte(q.field('createdAt'), args.startDate))
+    if (args.startDate !== undefined) {
+      query = query.filter(q => q.gte(q.field('createdAt'), args.startDate!))
     }
 
-    if (args.endDate) {
-      query = query.filter(q => q.lte(q.field('createdAt'), args.endDate))
+    if (args.endDate !== undefined) {
+      query = query.filter(q => q.lte(q.field('createdAt'), args.endDate!))
     }
 
     const limit = args.limit || 20

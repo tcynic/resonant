@@ -1,6 +1,6 @@
 /**
  * Test Data Manager for Convex Database
- * 
+ *
  * Provides functions for managing test data in the Convex database
  */
 
@@ -42,16 +42,18 @@ export const createTestUser = mutation({
 export const createTestRelationships = mutation({
   args: {
     userId: v.id('users'),
-    relationships: v.array(v.object({
-      name: v.string(),
-      type: v.union(
-        v.literal('partner'),
-        v.literal('family'),
-        v.literal('friend'),
-        v.literal('colleague'),
-        v.literal('other')
-      ),
-    })),
+    relationships: v.array(
+      v.object({
+        name: v.string(),
+        type: v.union(
+          v.literal('partner'),
+          v.literal('family'),
+          v.literal('friend'),
+          v.literal('colleague'),
+          v.literal('other')
+        ),
+      })
+    ),
   },
   handler: async (ctx, args) => {
     const relationshipIds: Id<'relationships'>[] = []
@@ -76,13 +78,15 @@ export const createTestRelationships = mutation({
 export const createTestJournalEntries = mutation({
   args: {
     userId: v.id('users'),
-    entries: v.array(v.object({
-      relationshipId: v.id('relationships'),
-      content: v.string(),
-      mood: v.optional(v.string()),
-      tags: v.optional(v.array(v.string())),
-      isPrivate: v.optional(v.boolean()),
-    })),
+    entries: v.array(
+      v.object({
+        relationshipId: v.id('relationships'),
+        content: v.string(),
+        mood: v.optional(v.string()),
+        tags: v.optional(v.array(v.string())),
+        isPrivate: v.optional(v.boolean()),
+      })
+    ),
   },
   handler: async (ctx, args) => {
     const entryIds: Id<'journalEntries'>[] = []
@@ -144,7 +148,9 @@ export const cleanupTestUser = mutation({
     for (const relationship of relationships) {
       const healthScores = await ctx.db
         .query('healthScores')
-        .withIndex('by_relationship', q => q.eq('relationshipId', relationship._id))
+        .withIndex('by_relationship', q =>
+          q.eq('relationshipId', relationship._id)
+        )
         .collect()
 
       for (const score of healthScores) {
@@ -161,10 +167,10 @@ export const cleanupTestUser = mutation({
     await ctx.db.delete(user._id)
     deletedCount++
 
-    return { 
-      deleted: true, 
+    return {
+      deleted: true,
       deletedCount,
-      userId: user._id 
+      userId: user._id,
     }
   },
 })
@@ -179,7 +185,7 @@ export const cleanupAllTestData = mutation({
 
     // Find all test users by email domain
     const allUsers = await ctx.db.query('users').collect()
-    const testUsers = allUsers.filter(user => 
+    const testUsers = allUsers.filter(user =>
       user.email.includes(args.testDomain)
     )
 
@@ -204,7 +210,9 @@ export const cleanupAllTestData = mutation({
       for (const relationship of relationships) {
         const healthScores = await ctx.db
           .query('healthScores')
-          .withIndex('by_relationship', q => q.eq('relationshipId', relationship._id))
+          .withIndex('by_relationship', q =>
+            q.eq('relationshipId', relationship._id)
+          )
           .collect()
 
         for (const score of healthScores) {
@@ -221,10 +229,10 @@ export const cleanupAllTestData = mutation({
       deletedCount++
     }
 
-    return { 
-      deleted: true, 
+    return {
+      deleted: true,
       deletedCount,
-      testUsersFound: testUsers.length 
+      testUsersFound: testUsers.length,
     }
   },
 })
@@ -236,7 +244,7 @@ export const getTestDataStats = query({
   },
   handler: async (ctx, args) => {
     const allUsers = await ctx.db.query('users').collect()
-    const testUsers = allUsers.filter(user => 
+    const testUsers = allUsers.filter(user =>
       user.email.includes(args.testDomain)
     )
 
@@ -249,7 +257,7 @@ export const getTestDataStats = query({
         .query('relationships')
         .withIndex('by_user', q => q.eq('userId', user._id))
         .collect()
-      
+
       const journalEntries = await ctx.db
         .query('journalEntries')
         .withIndex('by_user', q => q.eq('userId', user._id))
@@ -261,7 +269,9 @@ export const getTestDataStats = query({
       for (const relationship of relationships) {
         const healthScores = await ctx.db
           .query('healthScores')
-          .withIndex('by_relationship', q => q.eq('relationshipId', relationship._id))
+          .withIndex('by_relationship', q =>
+            q.eq('relationshipId', relationship._id)
+          )
           .collect()
         totalHealthScores += healthScores.length
       }

@@ -4,17 +4,20 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import JournalEntryEditor from '@/components/features/journal/journal-entry-editor'
 import { useJournalEntryMutations } from '@/hooks/journal/use-journal-entries'
-import { CreateJournalEntryData } from '@/lib/types'
+import { CreateJournalEntryData, UpdateJournalEntryData } from '@/lib/types'
 
 export default function NewJournalEntryPage() {
   const router = useRouter()
   const { createJournalEntry } = useJournalEntryMutations()
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleSave = async (data: CreateJournalEntryData): Promise<string> => {
+  const handleSave = async (
+    data: CreateJournalEntryData | UpdateJournalEntryData
+  ): Promise<string> => {
     setIsLoading(true)
     try {
-      const entryId = await createJournalEntry(data)
+      // For new entries, we expect CreateJournalEntryData
+      const entryId = await createJournalEntry(data as CreateJournalEntryData)
       router.push(`/journal/${entryId}`)
       return entryId
     } catch (error) {

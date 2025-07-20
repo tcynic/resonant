@@ -1,6 +1,6 @@
 /**
  * Test User Personas for E2E Testing
- * 
+ *
  * These personas represent different user types and data scenarios
  * for comprehensive testing of the Resonant application.
  */
@@ -21,7 +21,8 @@ export const testUsers = {
     id: 'new-user',
     name: 'New User Test',
     persona: 'New User',
-    description: 'Empty state user for testing onboarding and first-time experience',
+    description:
+      'Empty state user for testing onboarding and first-time experience',
     testDataLevel: 'minimal' as const,
     relationships: 0,
     journalEntries: 0,
@@ -30,8 +31,8 @@ export const testUsers = {
       'onboarding',
       'empty-states',
       'first-relationship-creation',
-      'first-journal-entry'
-    ]
+      'first-journal-entry',
+    ],
   },
 
   activeUser: {
@@ -48,15 +49,16 @@ export const testUsers = {
       'mood-tracking',
       'tag-management',
       'dashboard-navigation',
-      'search-filtering'
-    ]
+      'search-filtering',
+    ],
   },
 
   powerUser: {
     id: 'power-user',
     name: 'Power User Test',
     persona: 'Power User',
-    description: 'User with extensive data for testing performance and pagination',
+    description:
+      'User with extensive data for testing performance and pagination',
     testDataLevel: 'extensive' as const,
     relationships: 15,
     journalEntries: 50,
@@ -66,15 +68,16 @@ export const testUsers = {
       'bulk-operations',
       'advanced-search',
       'data-export',
-      'relationship-insights'
-    ]
+      'relationship-insights',
+    ],
   },
 
   edgeCaseUser: {
     id: 'edge-case-user',
     name: 'Edge Case Test',
     persona: 'Edge Case User',
-    description: 'User with boundary conditions and unusual data for testing edge cases',
+    description:
+      'User with boundary conditions and unusual data for testing edge cases',
     testDataLevel: 'edge-case' as const,
     relationships: 8,
     journalEntries: 25,
@@ -84,9 +87,9 @@ export const testUsers = {
       'maximum-length-fields',
       'special-characters',
       'error-handling',
-      'validation-testing'
-    ]
-  }
+      'validation-testing',
+    ],
+  },
 } as const
 
 export type TestUserType = keyof typeof testUsers
@@ -108,7 +111,9 @@ export function getAllTestUsers(): TestUser[] {
 /**
  * Get test users by data level
  */
-export function getTestUsersByDataLevel(level: TestUser['testDataLevel']): TestUser[] {
+export function getTestUsersByDataLevel(
+  level: TestUser['testDataLevel']
+): TestUser[] {
   return Object.values(testUsers).filter(user => user.testDataLevel === level)
 }
 
@@ -122,11 +127,12 @@ export function getTestUserCredentials(userId: TestUserType): {
 } {
   const user = testUsers[userId]
   const domain = process.env.TEST_ACCOUNT_EMAIL_DOMAIN || 'test.resonant.local'
-  const password = process.env.TEST_ACCOUNT_PASSWORD || 'ResonantTestSecure2025!'
+  const password =
+    process.env.TEST_ACCOUNT_PASSWORD || 'ResonantTestSecure2025!'
 
   return {
     email: `${userId}@${domain}`,
     password,
-    user
+    user,
   }
 }

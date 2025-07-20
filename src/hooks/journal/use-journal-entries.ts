@@ -70,13 +70,27 @@ export function useJournalEntries(_searchOptions?: JournalEntrySearchOptions) {
   }
 }
 
-export function useJournalEntryById(_entryId?: string) {
+export function useJournalEntryById(entryId?: string) {
   // TODO: Re-enable user authentication when ready for production
   // const { user } = useUser()
 
   // Mock data for development until Convex is fully integrated
   const currentUser = { _id: 'mock_user_id' }
-  const journalEntry: JournalEntry | null = null
+
+  // Provide mock entry if entryId is provided
+  const journalEntry: JournalEntry | null = entryId
+    ? {
+        _id: entryId,
+        userId: 'mock_user_id',
+        relationshipId: 'mock_relationship_id',
+        content: 'Mock journal entry content for testing',
+        mood: 'happy',
+        isPrivate: false,
+        tags: ['mock', 'testing'],
+        createdAt: Date.now() - 86400000,
+        updatedAt: Date.now(),
+      }
+    : null
 
   // TODO: Replace with actual Convex queries when generated files are available
   // const currentUser = useQuery(

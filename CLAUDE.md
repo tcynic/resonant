@@ -9,6 +9,7 @@ Resonant is a relationship health journal application built with Next.js 15, Rea
 ## Core Development Commands
 
 ### Development Setup
+
 ```bash
 # Start both development servers (required for full functionality)
 npm run dev          # Next.js development server (localhost:3000)
@@ -19,6 +20,7 @@ cp .env.local.template .env.local  # Copy and configure environment variables
 ```
 
 ### Code Quality & Testing
+
 ```bash
 # Testing commands
 npm test                # Run all Jest tests
@@ -39,6 +41,7 @@ npm run convex:deploy  # Deploy Convex functions to production
 ```
 
 ### Testing Strategy
+
 - **Unit Tests**: Located in `__tests__` directories adjacent to components
 - **Component Tests**: Use React Testing Library with Jest DOM matchers
 - **E2E Tests**: Use Playwright MCP for authentication and user flow testing
@@ -47,6 +50,7 @@ npm run convex:deploy  # Deploy Convex functions to production
 ## Architecture Overview
 
 ### Technology Stack
+
 - **Frontend**: Next.js 15 (App Router) + React 19 + TypeScript + Tailwind CSS
 - **Backend**: Convex (real-time database + serverless functions)
 - **Authentication**: Clerk with Next.js integration
@@ -54,6 +58,7 @@ npm run convex:deploy  # Deploy Convex functions to production
 - **Validation**: Zod schemas for type-safe form and API validation
 
 ### Project Structure
+
 ```
 src/
 ├── app/                    # Next.js App Router pages
@@ -79,6 +84,7 @@ convex/                   # Backend functions and schema
 ```
 
 ### Database Schema (Convex)
+
 - **users**: User profiles with Clerk integration
 - **relationships**: User's relationship definitions
 - **journalEntries**: Journal content with mood/tags/relationships
@@ -87,6 +93,7 @@ convex/                   # Backend functions and schema
 ### Key Components Architecture
 
 #### Journal System
+
 - **journal-entry-editor**: Main form for creating/editing entries
 - **mood-selector**: 10 mood types with emoji interface
 - **tag-input**: Dynamic tag system with suggestions and autocomplete
@@ -94,12 +101,14 @@ convex/                   # Backend functions and schema
 - **journal-entry-card**: Display component for entry lists
 
 #### Authentication Flow
+
 - Clerk handles all authentication with middleware protection
 - Public routes: `/`, `/sign-in/*`, `/sign-up/*`
 - Protected routes: All others require authentication
 - User sync: Automatic Convex user creation via Clerk webhooks
 
 #### Type Safety
+
 - Shared types in `src/lib/types.ts` cover all data models
 - Zod validation schemas in `src/lib/validations.ts`
 - End-to-end type safety from database to UI components
@@ -108,6 +117,7 @@ convex/                   # Backend functions and schema
 ## Development Workflows
 
 ### Feature Development
+
 1. **Database First**: Define/update Convex schema if needed
 2. **Types**: Update TypeScript interfaces in `src/lib/types.ts`
 3. **Backend**: Create/update Convex functions for data operations
@@ -116,6 +126,7 @@ convex/                   # Backend functions and schema
 6. **Integration**: Test with real Convex backend in development
 
 ### Testing Approach
+
 - **Component Tests**: Focus on user interactions and behaviors
 - **Mock Strategy**: Mock Convex hooks using Jest, not implementation details
 - **Test Data**: Use realistic test data that matches production schemas
@@ -124,6 +135,7 @@ convex/                   # Backend functions and schema
 ### Common Patterns
 
 #### Convex Data Fetching
+
 ```typescript
 // Query pattern
 const journalEntries = useQuery(api.journalEntries.list, { userId: user?.id })
@@ -133,6 +145,7 @@ const createEntry = useMutation(api.journalEntries.create)
 ```
 
 #### Form Handling
+
 ```typescript
 // Zod validation with TypeScript inference
 const schema = z.object({...})
@@ -140,6 +153,7 @@ type FormData = z.infer<typeof schema>
 ```
 
 #### Component Testing
+
 ```typescript
 // Standard test pattern
 import { render, screen, fireEvent } from '@testing-library/react'
@@ -150,11 +164,12 @@ import userEvent from '@testing-library/user-event'
 ## Environment Configuration
 
 ### Required Environment Variables
+
 ```bash
 # Convex
 NEXT_PUBLIC_CONVEX_URL=         # From npx convex dev
 
-# Clerk Authentication  
+# Clerk Authentication
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=  # From Clerk dashboard
 CLERK_SECRET_KEY=                   # From Clerk dashboard
 
@@ -163,6 +178,7 @@ GOOGLE_GEMINI_API_KEY=              # For AI analysis features
 ```
 
 ### Development Dependencies
+
 - Both `npm run dev` and `npm run convex:dev` must be running simultaneously
 - Clerk development keys work in development mode
 - Real-time updates require active Convex connection
@@ -170,16 +186,19 @@ GOOGLE_GEMINI_API_KEY=              # For AI analysis features
 ## Debugging and Development Tips
 
 ### Convex Development
+
 - Convex dashboard available during `npm run convex:dev`
 - Real-time function logs and database inspection
 - TypeScript errors show in Convex console
 
 ### Authentication Debugging
+
 - Clerk provides development mode indicators
 - Use Clerk dashboard for user management during development
 - Authentication flow can be tested with real email addresses
 
 ### Component Development
+
 - All components have comprehensive test suites
 - Use existing test patterns when creating new components
 - Component tests focus on user behavior, not implementation details
@@ -187,6 +206,7 @@ GOOGLE_GEMINI_API_KEY=              # For AI analysis features
 ## Playwright MCP Testing
 
 For end-to-end testing with authentication:
+
 - Use Playwright MCP tools for browser automation
 - Authentication requires real email verification in development
 - Test authentication flows and component interactions

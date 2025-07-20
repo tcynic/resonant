@@ -1,6 +1,6 @@
 /**
  * Simple Convex Test Client
- * 
+ *
  * Provides a simplified interface for Convex testing that gracefully handles
  * missing generated files and falls back to mock operations
  */
@@ -32,29 +32,36 @@ export class SimpleConvexTestClient {
       if (!this.convexUrl) {
         return {
           success: false,
-          message: 'NEXT_PUBLIC_CONVEX_URL not configured'
+          message: 'NEXT_PUBLIC_CONVEX_URL not configured',
         }
       }
 
       // Check if URL is reachable (simple validation)
-      if (!this.convexUrl.startsWith('https://') || !this.convexUrl.includes('.convex.cloud')) {
+      if (
+        !this.convexUrl.startsWith('https://') ||
+        !this.convexUrl.includes('.convex.cloud')
+      ) {
         return {
           success: false,
-          message: 'Invalid Convex URL format'
+          message: 'Invalid Convex URL format',
         }
       }
 
       // Check if generated API files exist
       const fs = require('fs')
       const path = require('path')
-      
+
       const apiPath = path.resolve(process.cwd(), 'convex/_generated/api.d.ts')
-      const serverPath = path.resolve(process.cwd(), 'convex/_generated/server.d.ts')
-      
+      const serverPath = path.resolve(
+        process.cwd(),
+        'convex/_generated/server.d.ts'
+      )
+
       if (!fs.existsSync(apiPath) || !fs.existsSync(serverPath)) {
         return {
           success: false,
-          message: 'Convex generated files not found. Run "npx convex dev" to generate them.'
+          message:
+            'Convex generated files not found. Run "npx convex dev" to generate them.',
         }
       }
 
@@ -63,14 +70,13 @@ export class SimpleConvexTestClient {
         message: 'Convex configuration valid',
         data: {
           convexUrl: this.convexUrl,
-          testDomain: this.testDomain
-        }
+          testDomain: this.testDomain,
+        },
       }
-
     } catch (error) {
       return {
         success: false,
-        message: `Convex validation error: ${error.message}`
+        message: `Convex validation error: ${(error as Error).message}`,
       }
     }
   }
@@ -78,9 +84,13 @@ export class SimpleConvexTestClient {
   /**
    * Mock test user creation (for when Convex is not available)
    */
-  async mockCreateTestUser(clerkId: string, name: string, email: string): Promise<ConvexTestResult> {
+  async mockCreateTestUser(
+    clerkId: string,
+    name: string,
+    email: string
+  ): Promise<ConvexTestResult> {
     console.log(`🧪 Mock: Creating test user ${email} with clerkId ${clerkId}`)
-    
+
     return {
       success: true,
       message: `Mock user created: ${email}`,
@@ -88,8 +98,8 @@ export class SimpleConvexTestClient {
         userId: `mock_user_${clerkId}`,
         email,
         name,
-        clerkId
-      }
+        clerkId,
+      },
     }
   }
 
@@ -98,14 +108,14 @@ export class SimpleConvexTestClient {
    */
   async mockCleanupTestData(): Promise<ConvexTestResult> {
     console.log(`🧪 Mock: Cleaning up test data for domain ${this.testDomain}`)
-    
+
     return {
       success: true,
       message: 'Mock cleanup completed',
       data: {
         deletedCount: 0,
-        testDomain: this.testDomain
-      }
+        testDomain: this.testDomain,
+      },
     }
   }
 
@@ -122,8 +132,8 @@ export class SimpleConvexTestClient {
         totalJournalEntries: 0,
         totalHealthScores: 0,
         userEmails: [],
-        note: 'Mock data - no actual database operations performed'
-      }
+        note: 'Mock data - no actual database operations performed',
+      },
     }
   }
 
@@ -140,7 +150,7 @@ export class SimpleConvexTestClient {
  * Factory function to create simple Convex test client
  */
 export function createSimpleConvexTestClient(
-  convexUrl?: string, 
+  convexUrl?: string,
   testDomain?: string
 ): SimpleConvexTestClient {
   return new SimpleConvexTestClient(convexUrl, testDomain)

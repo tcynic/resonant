@@ -10,34 +10,34 @@ config({ path: '.env.test' })
  */
 export default defineConfig({
   testDir: './tests',
-  
+
   /* Run tests sequentially for MCP integration */
   fullyParallel: false,
-  
+
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
-  
+
   /* No retries for MCP testing */
   retries: 0,
-  
+
   /* Single worker for MCP integration */
   workers: 1,
-  
+
   /* Reporter to use */
   reporter: [
     ['line'],
     ['json', { outputFile: 'test-results/mcp-results.json' }],
   ],
-  
+
   /* Shared settings - no browser launch */
   use: {
     /* Base URL for navigation */
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
-    
+
     /* No trace, screenshot, or timeout settings needed for MCP */
     actionTimeout: 0,
     navigationTimeout: 0,
-    
+
     /* Disable headless mode since we're not launching browsers */
     headless: undefined,
   },
@@ -47,7 +47,7 @@ export default defineConfig({
 
   /* Test output directories */
   outputDir: 'test-results/mcp/',
-  
+
   /* No timeout - MCP manages execution */
   timeout: 0,
 

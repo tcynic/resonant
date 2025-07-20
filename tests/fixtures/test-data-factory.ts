@@ -25,12 +25,16 @@ export interface TestJournalEntry {
 
 export class TestDataFactory {
   private readonly relationshipTypes: RelationshipType[] = [
-    'partner', 'family', 'friend', 'colleague', 'other'
+    'partner',
+    'family',
+    'friend',
+    'colleague',
+    'other',
   ]
-  
+
   // Map to store relationship IDs from Convex for journal entry creation
   private relationshipIdMap = new Map<string, any[]>()
-  
+
   // Map to store actual Convex user IDs
   private userIdMap = new Map<string, any>()
 
@@ -39,7 +43,7 @@ export class TestDataFactory {
    */
   setUserIdMappings(accountManager: any): void {
     // Copy all user ID mappings from account manager
-    const personas = ['new-user', 'power-user', 'minimal-user', 'edge-case-user']
+    const personas = ['new-user', 'active-user', 'power-user', 'edge-case-user']
     for (const persona of personas) {
       const convexUserId = accountManager.getConvexUserId(persona)
       if (convexUserId) {
@@ -49,13 +53,29 @@ export class TestDataFactory {
   }
 
   private readonly moodTypes: MoodType[] = [
-    'happy', 'excited', 'content', 'neutral', 'sad', 
-    'angry', 'frustrated', 'anxious', 'confused', 'grateful'
+    'happy',
+    'excited',
+    'content',
+    'neutral',
+    'sad',
+    'angry',
+    'frustrated',
+    'anxious',
+    'confused',
+    'grateful',
   ]
 
   private readonly sampleTags = [
-    'communication', 'conflict', 'support', 'fun', 'stress',
-    'growth', 'celebration', 'challenge', 'understanding', 'love'
+    'communication',
+    'conflict',
+    'support',
+    'fun',
+    'stress',
+    'growth',
+    'celebration',
+    'challenge',
+    'understanding',
+    'love',
   ]
 
   /**
@@ -66,7 +86,7 @@ export class TestDataFactory {
 
     try {
       const personas = Object.values(testUsers)
-      
+
       for (const persona of personas) {
         await this.seedUserData(persona)
       }
@@ -93,7 +113,9 @@ export class TestDataFactory {
       const journalEntries = this.generateJournalEntries(user, relationships)
       await this.seedJournalEntries(user.id, journalEntries)
 
-      console.log(`✅ Seeded ${relationships.length} relationships and ${journalEntries.length} journal entries for ${user.id}`)
+      console.log(
+        `✅ Seeded ${relationships.length} relationships and ${journalEntries.length} journal entries for ${user.id}`
+      )
     } catch (error) {
       console.error(`❌ Failed to seed data for ${user.id}:`, error)
       throw error
@@ -105,7 +127,7 @@ export class TestDataFactory {
    */
   private generateRelationships(user: TestUser): TestRelationship[] {
     const relationships: TestRelationship[] = []
-    const baseTime = Date.now() - (30 * 24 * 60 * 60 * 1000) // 30 days ago
+    const baseTime = Date.now() - 30 * 24 * 60 * 60 * 1000 // 30 days ago
 
     for (let i = 0; i < user.relationships; i++) {
       const relationship: TestRelationship = {
@@ -113,9 +135,11 @@ export class TestDataFactory {
         userId: user.id,
         name: this.generateRelationshipName(user.testDataLevel, i),
         type: this.relationshipTypes[i % this.relationshipTypes.length],
-        photo: this.shouldHavePhoto(user.testDataLevel) ? this.generatePhotoUrl(i) : undefined,
-        createdAt: baseTime + (i * 24 * 60 * 60 * 1000),
-        updatedAt: baseTime + (i * 24 * 60 * 60 * 1000),
+        photo: this.shouldHavePhoto(user.testDataLevel)
+          ? this.generatePhotoUrl(i)
+          : undefined,
+        createdAt: baseTime + i * 24 * 60 * 60 * 1000,
+        updatedAt: baseTime + i * 24 * 60 * 60 * 1000,
       }
 
       relationships.push(relationship)
@@ -127,12 +151,16 @@ export class TestDataFactory {
   /**
    * Generate journal entries for a user based on their relationships
    */
-  private generateJournalEntries(user: TestUser, relationships: TestRelationship[]): TestJournalEntry[] {
+  private generateJournalEntries(
+    user: TestUser,
+    relationships: TestRelationship[]
+  ): TestJournalEntry[] {
     const journalEntries: TestJournalEntry[] = []
-    const baseTime = Date.now() - (30 * 24 * 60 * 60 * 1000) // 30 days ago
+    const baseTime = Date.now() - 30 * 24 * 60 * 60 * 1000 // 30 days ago
 
     for (let i = 0; i < user.journalEntries; i++) {
-      const relationshipIndex = relationships.length > 0 ? i % relationships.length : 0
+      const relationshipIndex =
+        relationships.length > 0 ? i % relationships.length : 0
       const relationship = relationships[relationshipIndex]
 
       const entry: TestJournalEntry = {
@@ -140,11 +168,15 @@ export class TestDataFactory {
         userId: user.id,
         relationshipId: relationship?.id || 'default_relationship',
         content: this.generateJournalContent(user.testDataLevel, i),
-        mood: this.shouldHaveMood() ? this.moodTypes[i % this.moodTypes.length] : undefined,
-        tags: this.shouldHaveTags() ? this.generateTags(user.testDataLevel) : undefined,
+        mood: this.shouldHaveMood()
+          ? this.moodTypes[i % this.moodTypes.length]
+          : undefined,
+        tags: this.shouldHaveTags()
+          ? this.generateTags(user.testDataLevel)
+          : undefined,
         isPrivate: this.shouldBePrivate(),
-        createdAt: baseTime + (i * 12 * 60 * 60 * 1000), // Every 12 hours
-        updatedAt: baseTime + (i * 12 * 60 * 60 * 1000),
+        createdAt: baseTime + i * 12 * 60 * 60 * 1000, // Every 12 hours
+        updatedAt: baseTime + i * 12 * 60 * 60 * 1000,
       }
 
       journalEntries.push(entry)
@@ -156,24 +188,42 @@ export class TestDataFactory {
   /**
    * Generate relationship name based on data level
    */
-  private generateRelationshipName(dataLevel: TestUser['testDataLevel'], index: number): string {
+  private generateRelationshipName(
+    dataLevel: TestUser['testDataLevel'],
+    index: number
+  ): string {
     const baseNames = [
-      'Alex Johnson', 'Sam Smith', 'Jordan Lee', 'Casey Brown', 'Riley Davis',
-      'Morgan Wilson', 'Taylor Garcia', 'Avery Martinez', 'Quinn Anderson', 'Blake Thomas'
+      'Alex Johnson',
+      'Sam Smith',
+      'Jordan Lee',
+      'Casey Brown',
+      'Riley Davis',
+      'Morgan Wilson',
+      'Taylor Garcia',
+      'Avery Martinez',
+      'Quinn Anderson',
+      'Blake Thomas',
     ]
 
     switch (dataLevel) {
       case 'edge-case':
         // Include special characters and unicode
         const specialNames = [
-          'José María García-López', 'Müller Schmidt', 'O\'Connor-Smith', 
-          '李小明', 'محمد عبدالله', 'François Dubois'
+          'José María García-López',
+          'Müller Schmidt',
+          "O'Connor-Smith",
+          '李小明',
+          'محمد عبدالله',
+          'François Dubois',
         ]
-        return specialNames[index % specialNames.length] || baseNames[index % baseNames.length]
-      
+        return (
+          specialNames[index % specialNames.length] ||
+          baseNames[index % baseNames.length]
+        )
+
       case 'extensive':
         return `${baseNames[index % baseNames.length]} (Contact ${index + 1})`
-      
+
       default:
         return baseNames[index % baseNames.length]
     }
@@ -182,20 +232,25 @@ export class TestDataFactory {
   /**
    * Generate journal content based on data level
    */
-  private generateJournalContent(dataLevel: TestUser['testDataLevel'], index: number): string {
+  private generateJournalContent(
+    dataLevel: TestUser['testDataLevel'],
+    index: number
+  ): string {
     const baseContents = [
       'Had a great conversation today about our future plans.',
       'Feeling grateful for the support during a difficult time.',
       'We disagreed on something important, but talked it through.',
       'Celebrated a milestone together - such a wonderful moment.',
-      'Feeling a bit distant lately, need to reconnect soon.'
+      'Feeling a bit distant lately, need to reconnect soon.',
     ]
 
     switch (dataLevel) {
       case 'edge-case':
         // Include very long content, special characters, and edge cases
         const edgeContents = [
-          'This is a very long journal entry that tests the maximum length limits of the content field. '.repeat(20),
+          'This is a very long journal entry that tests the maximum length limits of the content field. '.repeat(
+            20
+          ),
           'Content with special chars: @#$%^&*()_+-=[]{}|;:,.<>?~`',
           'Unicode content: 🎉💖✨🌟💫🦄🌈❤️💕🎊🎈🌸🌺🌻🌷',
           'Mixed content: Hello 世界! 🌍 Testing émojis and àccénts',
@@ -203,10 +258,10 @@ export class TestDataFactory {
           '   ', // Whitespace only edge case
         ]
         return edgeContents[index % edgeContents.length]
-      
+
       case 'extensive':
         return `${baseContents[index % baseContents.length]} Entry #${index + 1} with additional context for performance testing.`
-      
+
       default:
         return baseContents[index % baseContents.length]
     }
@@ -220,11 +275,16 @@ export class TestDataFactory {
 
     switch (dataLevel) {
       case 'edge-case':
-        return ['tag with spaces', 'very-long-tag-name-that-tests-limits', '🏷️', 'émojí-tàg']
-      
+        return [
+          'tag with spaces',
+          'very-long-tag-name-that-tests-limits',
+          '🏷️',
+          'émojí-tàg',
+        ]
+
       case 'extensive':
         return this.sampleTags.slice(0, 5)
-      
+
       default:
         return baseTags
     }
@@ -256,37 +316,54 @@ export class TestDataFactory {
   /**
    * Seed relationships into the test database
    */
-  private async seedRelationships(userId: string, relationships: TestRelationship[]): Promise<void> {
-    console.log(`📝 Seeding ${relationships.length} relationships for ${userId}`)
-    
+  private async seedRelationships(
+    userId: string,
+    relationships: TestRelationship[]
+  ): Promise<void> {
+    console.log(
+      `📝 Seeding ${relationships.length} relationships for ${userId}`
+    )
+
     try {
-      const { getSharedConvexTestClient } = require('../helpers/convex-test-client')
+      const {
+        getSharedConvexTestClient,
+      } = require('../helpers/convex-test-client')
       const convexClient = getSharedConvexTestClient()
-      
+
       // Get the actual Convex user ID from account manager
       const convexUserId = this.userIdMap.get(userId)
       if (!convexUserId) {
         throw new Error(`No Convex user ID found for persona ${userId}`)
       }
-      
+
       // Map test relationships to Convex format
       const convexRelationships = relationships.map(rel => ({
         name: rel.name,
-        type: rel.type as 'partner' | 'family' | 'friend' | 'colleague' | 'other'
+        type: rel.type as
+          | 'partner'
+          | 'family'
+          | 'friend'
+          | 'colleague'
+          | 'other',
       }))
-      
-      const relationshipIds = await convexClient.createTestRelationships(convexUserId, convexRelationships)
-      
+
+      const relationshipIds = await convexClient.createTestRelationships(
+        convexUserId,
+        convexRelationships
+      )
+
       relationships.forEach((rel, index) => {
         console.log(`  ${index + 1}. ${rel.name} (${rel.type})`)
       })
-      
+
       // Store relationship IDs for journal entry creation
       this.relationshipIdMap.set(userId, relationshipIds)
-      
     } catch (error) {
-      console.warn(`⚠️  Convex relationship seeding failed for ${userId}, using mock data:`, error.message)
-      
+      console.warn(
+        `⚠️  Convex relationship seeding failed for ${userId}, using mock data:`,
+        (error as Error).message
+      )
+
       // Fallback: log relationships without database operation
       relationships.forEach((rel, index) => {
         console.log(`  ${index + 1}. ${rel.name} (${rel.type})`)
@@ -297,21 +374,28 @@ export class TestDataFactory {
   /**
    * Seed journal entries into the test database
    */
-  private async seedJournalEntries(userId: string, entries: TestJournalEntry[]): Promise<void> {
+  private async seedJournalEntries(
+    userId: string,
+    entries: TestJournalEntry[]
+  ): Promise<void> {
     console.log(`📖 Seeding ${entries.length} journal entries for ${userId}`)
-    
+
     try {
-      const { getSharedConvexTestClient } = require('../helpers/convex-test-client')
+      const {
+        getSharedConvexTestClient,
+      } = require('../helpers/convex-test-client')
       const convexClient = getSharedConvexTestClient()
-      
+
       // Get relationship IDs for this user
       const relationshipIds = this.relationshipIdMap.get(userId) || []
-      
+
       if (relationshipIds.length === 0) {
-        console.warn(`⚠️  No relationships found for ${userId}, skipping journal entries`)
+        console.warn(
+          `⚠️  No relationships found for ${userId}, skipping journal entries`
+        )
         return
       }
-      
+
       // Map test entries to Convex format
       const convexEntries = entries.map((entry, index) => ({
         relationshipId: relationshipIds[index % relationshipIds.length], // Cycle through relationships
@@ -320,26 +404,75 @@ export class TestDataFactory {
         tags: entry.tags,
         isPrivate: entry.isPrivate,
       }))
-      
+
       // Get the actual Convex user ID
       const convexUserId = this.userIdMap.get(userId)
       if (!convexUserId) {
         throw new Error(`No Convex user ID found for persona ${userId}`)
       }
-      
+
       await convexClient.createTestJournalEntries(convexUserId, convexEntries)
-      
+
       entries.forEach((entry, index) => {
-        console.log(`  ${index + 1}. Entry with mood: ${entry.mood || 'none'}, tags: ${entry.tags?.length || 0}`)
+        console.log(
+          `  ${index + 1}. Entry with mood: ${entry.mood || 'none'}, tags: ${entry.tags?.length || 0}`
+        )
       })
-      
     } catch (error) {
-      console.warn(`⚠️  Convex journal entry seeding failed for ${userId}, using mock data:`, error.message)
-      
+      console.warn(
+        `⚠️  Convex journal entry seeding failed for ${userId}, using mock data:`,
+        (error as Error).message
+      )
+
       // Fallback: log entries without database operation
       entries.forEach((entry, index) => {
-        console.log(`  ${index + 1}. Entry with mood: ${entry.mood || 'none'}, tags: ${entry.tags?.length || 0}`)
+        console.log(
+          `  ${index + 1}. Entry with mood: ${entry.mood || 'none'}, tags: ${entry.tags?.length || 0}`
+        )
       })
+    }
+  }
+
+  /**
+   * Create a single test relationship for validation/testing
+   */
+  createRelationship(userId: string, type: RelationshipType): TestRelationship {
+    const timestamp = Date.now()
+    const id = `test-rel-${userId}-${timestamp}`
+
+    return {
+      id,
+      userId,
+      name: `Test ${type.charAt(0).toUpperCase() + type.slice(1)}`,
+      type,
+      photo: this.shouldHavePhoto('moderate')
+        ? this.generatePhotoUrl(1)
+        : undefined,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    }
+  }
+
+  /**
+   * Create a single test journal entry for validation/testing
+   */
+  createJournalEntry(
+    userId: string,
+    relationshipId?: string
+  ): TestJournalEntry {
+    const timestamp = Date.now()
+    const id = `test-entry-${userId}-${timestamp}`
+
+    return {
+      id,
+      userId,
+      relationshipId: relationshipId || `test-rel-${userId}`,
+      content: 'Test journal entry content',
+      mood: this.moodTypes[0], // Always have a mood for validation tests
+      tags: ['test', 'validation'], // Always have tags for validation tests
+      isPrivate: false, // Predictable value for validation
+      createdAt: timestamp,
+      updatedAt: timestamp,
     }
   }
 
@@ -351,7 +484,7 @@ export class TestDataFactory {
 
     try {
       const personas = Object.values(testUsers)
-      
+
       for (const persona of personas) {
         await this.cleanupUserData(persona.id)
       }
@@ -368,10 +501,10 @@ export class TestDataFactory {
    */
   private async cleanupUserData(userId: string): Promise<void> {
     console.log(`🗑️ Cleaning up test data for ${userId}`)
-    
+
     // Note: This will be implemented with actual Convex test database operations
     // For now, we'll log the cleanup that would be performed
-    
+
     console.log(`  - Removing journal entries for ${userId}`)
     console.log(`  - Removing relationships for ${userId}`)
     console.log(`  - Cleaning up user-specific test data`)

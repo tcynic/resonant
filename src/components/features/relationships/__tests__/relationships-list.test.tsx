@@ -47,7 +47,7 @@ describe('RelationshipsList', () => {
       relationships: [],
       relationshipsCount: 0,
       isLoading: true,
-      currentUser: undefined,
+      currentUser: { _id: 'mock_user_id' },
     })
 
     render(<RelationshipsList />)

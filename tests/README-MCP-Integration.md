@@ -2,7 +2,65 @@
 
 ## Overview
 
-This project is now configured to run Playwright E2E tests using the MCP (Model Context Protocol) browser server instead of local browser installations. This setup enables running browser automation tests through the Claude Code environment.
+This project is configured to run Playwright E2E tests using the MCP (Model Context Protocol) browser server through Claude Code. This setup enables running browser automation tests without local browser installations.
+
+## Quick Start
+
+### Running Tests with Claude Code
+
+1. **Simple Test Example**:
+   ```javascript
+   // Navigate to the app
+   await mcp__playwright__browser_navigate({ url: "http://localhost:3000" })
+   
+   // Take a snapshot
+   await mcp__playwright__browser_snapshot()
+   
+   // Fill and submit a form
+   await mcp__playwright__browser_type({
+     element: "email input",
+     ref: "input[type='email']",
+     text: "test@example.com"
+   })
+   
+   await mcp__playwright__browser_click({
+     element: "submit button",
+     ref: "button[type='submit']"
+   })
+   ```
+
+2. **Run the Demo Test Suite**:
+   ```javascript
+   // Import and run the test suite
+   const { runAllMCPTests } = require("./tests/e2e/mcp-demo.test.ts")
+   await runAllMCPTests()
+   ```
+
+3. **Run Individual Tests**:
+   ```javascript
+   const { runAuthenticationTest, runJournalCreationTest } = require("./tests/e2e/mcp-demo.test.ts")
+   
+   // Test authentication
+   await runAuthenticationTest()
+   
+   // Test journal creation
+   await runJournalCreationTest()
+   ```
+
+## Available MCP Browser Tools
+
+Claude Code provides these Playwright MCP tools:
+
+- `mcp__playwright__browser_navigate` - Navigate to URLs
+- `mcp__playwright__browser_snapshot` - Capture page state
+- `mcp__playwright__browser_click` - Click elements
+- `mcp__playwright__browser_type` - Type text into inputs
+- `mcp__playwright__browser_wait_for` - Wait for text/elements
+- `mcp__playwright__browser_take_screenshot` - Capture screenshots
+- `mcp__playwright__browser_evaluate` - Execute JavaScript
+- `mcp__playwright__browser_select_option` - Select dropdown options
+- `mcp__playwright__browser_hover` - Hover over elements
+- `mcp__playwright__browser_press_key` - Press keyboard keys
 
 ## Configuration Files
 
@@ -11,6 +69,8 @@ This project is now configured to run Playwright E2E tests using the MCP (Model 
 - **`playwright.mcp.config.ts`** - MCP-specific Playwright configuration
 - **`.env.test`** - Test environment variables
 - **`tests/helpers/mcp-browser-helper.ts`** - MCP browser interface abstraction
+- **`tests/e2e/mcp-demo.test.ts`** - Example MCP test implementation
+- **`scripts/run-mcp-tests.js`** - MCP test runner script
 
 ### Test Structure
 
@@ -18,36 +78,32 @@ This project is now configured to run Playwright E2E tests using the MCP (Model 
 tests/
 ├── accounts/              # Test user personas and credentials
 ├── e2e/                   # E2E test suites
-│   └── auth/              # Authentication flow tests
+│   ├── auth/              # Authentication flow tests
+│   ├── user-journeys/     # Core user journey tests
+│   ├── advanced-features/ # Advanced feature tests
+│   └── mcp-demo.test.ts   # MCP test examples
 ├── fixtures/              # Test data factories
 ├── helpers/               # Test utilities and MCP integration
+│   ├── mcp-browser-helper.ts  # MCP abstraction layer
+│   └── mcp-browser-runner.ts  # MCP test runner
 └── setup/                 # Global setup and teardown
 ```
 
-## Running Tests
-
-### MCP Test Commands
+## Test Commands
 
 ```bash
-# Run all MCP tests (test infrastructure validation)
+# Show MCP test guide
+npm run test:mcp:guide
+
+# Run MCP test information script
+npm run test:mcp
+
+# Run E2E tests with MCP configuration (requires actual Playwright)
 npm run test:e2e:mcp
 
-# Run specific test files with MCP configuration
-npx playwright test --config=playwright.mcp.config.ts
-
-# Validate test infrastructure only
-npx playwright test --config=playwright.mcp.config.ts tests/setup/test-setup-validation.test.ts
+# Run test setup validation
+npm run test:e2e:mcp:setup
 ```
-
-### Test Environment Setup
-
-The MCP configuration includes:
-
-✅ **Global Setup/Teardown**: Creates test accounts and seeds data  
-✅ **No Browser Launch**: Skips local browser management (handled by MCP)  
-✅ **Test Data Factory**: Generates realistic test data for 4 user personas  
-✅ **Environment Isolation**: Separate test configuration and environment  
-✅ **TypeScript Integration**: Full type safety for test development  
 
 ## Test User Personas
 
@@ -69,80 +125,157 @@ The system creates 4 test user personas:
    - Boundary conditions and special characters
    - 8 relationships, 25 journal entries with unicode content
 
-## MCP Browser Helper Interface
+## Example Test Patterns
 
-The `MCPBrowserHelper` class provides an abstraction layer for MCP browser operations:
+### Authentication Test
+```javascript
+// Navigate to sign-in
+await mcp__playwright__browser_navigate({ url: "http://localhost:3000/sign-in" })
 
-```typescript
-import { createMCPBrowser } from '../helpers/mcp-browser-helper'
+// Fill credentials
+await mcp__playwright__browser_type({
+  element: "email input",
+  ref: "input[type='email']",
+  text: "active-user@test.resonant.local"
+})
 
-const browser = createMCPBrowser()
-await browser.navigate('/')
-await browser.click('button[data-testid="sign-up"]')
-await browser.type('input[name="email"]', 'test@example.com')
+await mcp__playwright__browser_type({
+  element: "password input",
+  ref: "input[type='password']",
+  text: "Test123!Active"
+})
+
+// Submit form
+await mcp__playwright__browser_click({
+  element: "sign in button",
+  ref: "button[type='submit']"
+})
+
+// Wait for dashboard
+await mcp__playwright__browser_wait_for({ text: "Dashboard" })
 ```
 
-## Implementation Status
+### Journal Entry Test
+```javascript
+// Navigate to new journal entry
+await mcp__playwright__browser_navigate({ url: "http://localhost:3000/journal/new" })
 
-### ✅ Completed
+// Fill form fields
+await mcp__playwright__browser_type({
+  element: "title input",
+  ref: "input[name='title']",
+  text: "My Test Entry"
+})
 
-- Test environment configuration
-- Test user personas and data generation
-- Global setup and teardown systems
-- MCP configuration without browser launch conflicts
-- Test data factory with realistic data generation
-- Authentication helpers framework
-- TypeScript integration and type safety
+await mcp__playwright__browser_type({
+  element: "content textarea",
+  ref: "textarea[name='content']",
+  text: "This is a test journal entry."
+})
 
-### 🔄 Next Steps for Full MCP Integration
+// Select mood
+await mcp__playwright__browser_click({
+  element: "happy mood button",
+  ref: "button[aria-label='happy']"
+})
 
-To complete the MCP browser integration, tests need to be implemented using the actual MCP browser tools:
-
-1. **Replace placeholder methods** in `mcp-browser-helper.ts` with actual MCP tool calls
-2. **Implement E2E test scenarios** using the MCP browser interface
-3. **Add error handling** for MCP browser tool failures
-4. **Create test utilities** for common MCP browser operations
-
-### Example MCP Implementation Pattern
-
-```typescript
-// In actual MCP tests, replace placeholders with:
-// await mcp_playwright_browser_navigate({ url: '/' })
-// await mcp_playwright_browser_click({ element: 'Sign Up', ref: 'button' })
-// await mcp_playwright_browser_type({ element: 'Email', ref: 'input', text: email })
+// Save entry
+await mcp__playwright__browser_click({
+  element: "save button",
+  ref: "button[type='submit']"
+})
 ```
 
-## Global Setup Output
+## Prerequisites
 
-When tests run, you'll see comprehensive logging:
+Before running MCP tests:
 
+1. **Start Development Server**:
+   ```bash
+   npm run dev
+   ```
+
+2. **Start Convex Backend**:
+   ```bash
+   npm run convex:dev
+   ```
+
+3. **Ensure Test Environment**:
+   - Copy `.env.local` to `.env.test` if needed
+   - Verify test environment variables are set
+
+## Global Setup Process
+
+When tests run, the global setup:
+
+1. Validates test environment configuration
+2. Creates 4 test user personas
+3. Seeds realistic test data for each persona
+4. Prepares test database isolation
+5. Logs detailed setup information
+
+Example output:
 ```
 🚀 Starting global test setup...
 ✅ Test environment validation passed
-✅ Test database isolation setup prepared
 👥 Creating test account personas...
 ✅ Created 4 test account personas
 🌱 Test data seeded for 4 personas
 ✅ Global test setup completed successfully
-ℹ️  Browser management handled by MCP server - skipping local browser warmup
 ```
 
-## Configuration Benefits
+## Tips for MCP Testing
 
-- **No Browser Installation Required**: MCP handles browser management
-- **Deterministic Test Data**: Consistent test accounts and data generation
-- **Environment Isolation**: Separate test database and configuration
-- **Type Safety**: Full TypeScript support for test development
-- **Comprehensive Logging**: Detailed setup and execution logging
-- **Scalable Architecture**: Ready for complex E2E test scenarios
+1. **Element Selection**: Use multiple selectors for reliability:
+   ```javascript
+   ref: "button[type='submit'], button:has-text('Sign In'), #sign-in-button"
+   ```
 
-## Test Data Generation
+2. **Wait Strategies**: Always wait for navigation/content:
+   ```javascript
+   await mcp__playwright__browser_wait_for({ text: "Dashboard", time: 5 })
+   ```
 
-The system automatically generates:
+3. **Snapshot for Debugging**: Take snapshots before assertions:
+   ```javascript
+   const snapshot = await mcp__playwright__browser_snapshot()
+   console.log("Current page state:", snapshot)
+   ```
 
-- **Realistic Names**: Diverse, culturally appropriate names
-- **Varied Content**: Different moods, tags, and relationship types
-- **Edge Cases**: Unicode characters, long content, special cases
-- **Deterministic IDs**: Consistent user identification for reliable testing
+4. **Error Handling**: Wrap tests in try-catch:
+   ```javascript
+   try {
+     await runTest()
+   } catch (error) {
+     await mcp__playwright__browser_snapshot() // Capture error state
+     throw error
+   }
+   ```
 
-This configuration provides a solid foundation for comprehensive E2E testing with MCP browser integration.
+## Implementation Status
+
+### ✅ Completed
+- Test environment configuration
+- MCP-specific Playwright config
+- Test user personas and data generation
+- Demo test implementation (`mcp-demo.test.ts`)
+- MCP browser helper abstraction
+- Test runner scripts and commands
+- Global setup and teardown systems
+
+### 🔄 Using MCP Tools
+To run tests with Claude Code:
+1. Use the examples in `tests/e2e/mcp-demo.test.ts`
+2. Call MCP browser tools directly as shown above
+3. Import and run test functions from the demo file
+
+## Benefits of MCP Testing
+
+- **No Browser Installation**: MCP server handles browser management
+- **Cloud IDE Compatible**: Works in any environment with Claude Code
+- **Consistent Test Data**: Deterministic personas and data generation
+- **Real Browser Testing**: Uses actual browser automation, not mocks
+- **TypeScript Support**: Full type safety for test development
+- **Comprehensive Logging**: Detailed execution and debugging information
+
+This configuration provides a complete E2E testing solution using Playwright MCP browser automation through Claude Code.

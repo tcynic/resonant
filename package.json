@@ -21,6 +21,8 @@
     "test:e2e:report": "playwright show-report",
     "test:e2e:mcp": "playwright test --config=playwright.mcp.config.ts",
     "test:e2e:mcp:setup": "playwright test --config=playwright.mcp.config.ts tests/setup/test-setup-validation.test.ts",
+    "test:mcp": "node scripts/run-mcp-tests.js",
+    "test:mcp:guide": "echo 'Use Claude Code with MCP browser tools to run E2E tests. See scripts/run-mcp-tests.js for details.'",
     "convex:dev": "npx convex dev",
     "convex:deploy": "npx convex deploy"
   },

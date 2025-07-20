@@ -1,6 +1,6 @@
 /**
  * Working Authentication Flow Tests using Direct MCP Browser Integration
- * 
+ *
  * These tests demonstrate the actual MCP Playwright tools in action
  */
 
@@ -23,32 +23,32 @@ const createMockMCPBrowser = (): MCPBrowserTools => ({
     // Simulate navigation success
     await new Promise(resolve => setTimeout(resolve, 100))
   },
-  
+
   click: async (selector: string) => {
     console.log(`🖱️  MCP Click: ${selector}`)
     await new Promise(resolve => setTimeout(resolve, 50))
   },
-  
+
   type: async (selector: string, text: string) => {
     console.log(`⌨️  MCP Type: "${text}" into ${selector}`)
     await new Promise(resolve => setTimeout(resolve, 100))
   },
-  
+
   snapshot: async () => {
     console.log(`📸 MCP Snapshot captured`)
     await new Promise(resolve => setTimeout(resolve, 50))
   },
-  
+
   isVisible: async (selector: string) => {
     console.log(`👀 MCP Check visibility: ${selector}`)
     await new Promise(resolve => setTimeout(resolve, 50))
     return true // Mock successful visibility check
   },
-  
+
   waitFor: async (condition: string) => {
     console.log(`⏳ MCP Wait for: ${condition}`)
     await new Promise(resolve => setTimeout(resolve, 100))
-  }
+  },
 })
 
 test.describe('Working MCP Authentication Flow', () => {
@@ -62,13 +62,13 @@ test.describe('Working MCP Authentication Flow', () => {
   test('should demonstrate MCP browser capabilities', async () => {
     await test.step('🏠 Navigate to landing page', async () => {
       console.log('📱 Testing with MCP browser integration')
-      
+
       await mcpBrowser.navigate('http://localhost:3000/')
       await mcpBrowser.snapshot()
-      
+
       const isResonantVisible = await mcpBrowser.isVisible('text=Resonant')
       expect(isResonantVisible).toBe(true)
-      
+
       console.log('✅ Landing page loaded successfully')
     })
 
@@ -76,17 +76,20 @@ test.describe('Working MCP Authentication Flow', () => {
       await mcpBrowser.click('link=Get Started')
       await mcpBrowser.waitFor('url=/sign-up/')
       await mcpBrowser.snapshot()
-      
+
       console.log('✅ Sign-up page navigation successful')
     })
 
     await test.step('📋 Test form interaction', async () => {
       await mcpBrowser.click('input[type="email"]')
-      await mcpBrowser.type('input[type="email"]', 'new-user@test.resonant.local')
-      
+      await mcpBrowser.type(
+        'input[type="email"]',
+        'new-user@test.resonant.local'
+      )
+
       await mcpBrowser.click('input[type="password"]')
       await mcpBrowser.type('input[type="password"]', 'ResonantTestSecure2025!')
-      
+
       console.log('✅ Form interaction completed')
     })
 
@@ -94,17 +97,23 @@ test.describe('Working MCP Authentication Flow', () => {
       await mcpBrowser.click('button[type="submit"]')
       await mcpBrowser.waitFor('loading state complete')
       await mcpBrowser.snapshot()
-      
+
       console.log('✅ Authentication flow tested')
     })
 
     await test.step('📊 Demonstrate test data integration', async () => {
       console.log('💾 Test data available:')
       console.log('  - new-user: 0 relationships, 0 entries (empty state)')
-      console.log('  - active-user: 4 relationships, 12 entries (moderate usage)')
-      console.log('  - power-user: 15 relationships, 50 entries (performance testing)')
-      console.log('  - edge-case-user: 8 relationships, 25 entries (unicode/edge cases)')
-      
+      console.log(
+        '  - active-user: 4 relationships, 12 entries (moderate usage)'
+      )
+      console.log(
+        '  - power-user: 15 relationships, 50 entries (performance testing)'
+      )
+      console.log(
+        '  - edge-case-user: 8 relationships, 25 entries (unicode/edge cases)'
+      )
+
       expect(true).toBe(true) // Test data integration confirmed
     })
   })
@@ -112,14 +121,14 @@ test.describe('Working MCP Authentication Flow', () => {
   test('should demonstrate route protection testing', async () => {
     await test.step('🔒 Test protected routes', async () => {
       const protectedRoutes = ['/dashboard', '/journal', '/relationships']
-      
+
       for (const route of protectedRoutes) {
         await mcpBrowser.navigate(`http://localhost:3000${route}`)
         await mcpBrowser.waitFor('redirect to sign-in')
-        
+
         const isSignInVisible = await mcpBrowser.isVisible('text=Sign in')
         expect(isSignInVisible).toBe(true)
-        
+
         console.log(`✅ ${route} properly protected`)
       }
     })
@@ -151,7 +160,7 @@ test.describe('Working MCP Authentication Flow', () => {
       console.log('  - Implement real authentication bypass')
       console.log('  - Add journal and relationship testing')
       console.log('  - Create comprehensive user journey tests')
-      
+
       expect('mcp-integration').toBe('mcp-integration')
     })
   })

@@ -59,10 +59,7 @@ describe('RelationshipPicker', () => {
 
     it('should render with custom label', () => {
       render(
-        <RelationshipPicker
-          {...defaultProps}
-          label="Choose Relationships"
-        />
+        <RelationshipPicker {...defaultProps} label="Choose Relationships" />
       )
 
       expect(screen.getByText('Choose Relationships')).toBeInTheDocument()
@@ -76,10 +73,14 @@ describe('RelationshipPicker', () => {
     })
 
     it('should show error message when provided', () => {
-      render(<RelationshipPicker {...defaultProps} error="This field is required" />)
+      render(
+        <RelationshipPicker {...defaultProps} error="This field is required" />
+      )
 
       expect(screen.getByText('This field is required')).toBeInTheDocument()
-      expect(screen.getByText('This field is required')).toHaveClass('text-red-600')
+      expect(screen.getByText('This field is required')).toHaveClass(
+        'text-red-600'
+      )
     })
 
     it('should apply error styling to button when error exists', () => {
@@ -173,7 +174,9 @@ describe('RelationshipPicker', () => {
 
     it('should deselect relationship when clicked again in multiple mode', async () => {
       const user = userEvent.setup()
-      render(<RelationshipPicker {...defaultProps} value={['rel_1']} multiple />)
+      render(
+        <RelationshipPicker {...defaultProps} value={['rel_1']} multiple />
+      )
 
       // Click the main dropdown button (should be the first button)
       const dropdownButton = screen.getAllByRole('button')[0]
@@ -181,12 +184,12 @@ describe('RelationshipPicker', () => {
 
       // Find Alice's checkbox in the dropdown and click to deselect
       const checkboxes = screen.getAllByRole('checkbox')
-      const aliceCheckbox = checkboxes.find(checkbox => 
+      const aliceCheckbox = checkboxes.find(checkbox =>
         checkbox.closest('div')?.textContent?.includes('Alice Johnson')
       )
       expect(aliceCheckbox).toBeTruthy()
       expect(aliceCheckbox).toBeChecked()
-      
+
       await user.click(aliceCheckbox!)
       expect(mockOnChange).toHaveBeenCalledWith([])
     })
@@ -204,7 +207,13 @@ describe('RelationshipPicker', () => {
 
     it('should check checkboxes for selected relationships', async () => {
       const user = userEvent.setup()
-      render(<RelationshipPicker {...defaultProps} value={['rel_1', 'rel_3']} multiple />)
+      render(
+        <RelationshipPicker
+          {...defaultProps}
+          value={['rel_1', 'rel_3']}
+          multiple
+        />
+      )
 
       const dropdownButton = screen.getAllByRole('button')[0]
       await user.click(dropdownButton)
@@ -217,7 +226,13 @@ describe('RelationshipPicker', () => {
     })
 
     it('should display selected relationships as tags', () => {
-      render(<RelationshipPicker {...defaultProps} value={['rel_1', 'rel_2']} multiple />)
+      render(
+        <RelationshipPicker
+          {...defaultProps}
+          value={['rel_1', 'rel_2']}
+          multiple
+        />
+      )
 
       expect(screen.getByText('Alice Johnson')).toBeInTheDocument()
       expect(screen.getByText('Bob Smith')).toBeInTheDocument()
@@ -228,7 +243,13 @@ describe('RelationshipPicker', () => {
 
     it('should remove relationship when tag X is clicked', async () => {
       const user = userEvent.setup()
-      render(<RelationshipPicker {...defaultProps} value={['rel_1', 'rel_2']} multiple />)
+      render(
+        <RelationshipPicker
+          {...defaultProps}
+          value={['rel_1', 'rel_2']}
+          multiple
+        />
+      )
 
       const removeButtons = screen.getAllByText('×')
       await user.click(removeButtons[0])
@@ -237,7 +258,13 @@ describe('RelationshipPicker', () => {
     })
 
     it('should show count when multiple relationships selected', () => {
-      render(<RelationshipPicker {...defaultProps} value={['rel_1', 'rel_2']} multiple />)
+      render(
+        <RelationshipPicker
+          {...defaultProps}
+          value={['rel_1', 'rel_2']}
+          multiple
+        />
+      )
 
       expect(screen.getByText('2 relationships selected')).toBeInTheDocument()
     })
@@ -287,7 +314,13 @@ describe('RelationshipPicker', () => {
     })
 
     it('should display selected relationship name in single mode', () => {
-      render(<RelationshipPicker {...defaultProps} value={['rel_1']} multiple={false} />)
+      render(
+        <RelationshipPicker
+          {...defaultProps}
+          value={['rel_1']}
+          multiple={false}
+        />
+      )
 
       expect(screen.getByText('Alice Johnson')).toBeInTheDocument()
     })
@@ -355,7 +388,11 @@ describe('RelationshipPicker', () => {
       const button = screen.getByRole('button')
       await user.click(button)
 
-      expect(screen.getByText('No relationships found. Create some relationships first.')).toBeInTheDocument()
+      expect(
+        screen.getByText(
+          'No relationships found. Create some relationships first.'
+        )
+      ).toBeInTheDocument()
     })
   })
 
@@ -368,7 +405,9 @@ describe('RelationshipPicker', () => {
     })
 
     it('should have accessible text for selected relationships', () => {
-      render(<RelationshipPicker {...defaultProps} value={['rel_1']} multiple />)
+      render(
+        <RelationshipPicker {...defaultProps} value={['rel_1']} multiple />
+      )
 
       // Find Alice Johnson in the selected tags area using a more specific selector
       const selectedTag = document.querySelector('.bg-blue-100')
@@ -377,7 +416,13 @@ describe('RelationshipPicker', () => {
     })
 
     it('should show unknown relationship for invalid IDs', () => {
-      render(<RelationshipPicker {...defaultProps} value={['invalid_id']} multiple={false} />)
+      render(
+        <RelationshipPicker
+          {...defaultProps}
+          value={['invalid_id']}
+          multiple={false}
+        />
+      )
 
       expect(screen.getByText('Unknown relationship')).toBeInTheDocument()
     })
@@ -392,7 +437,9 @@ describe('RelationshipPicker', () => {
       await user.click(button)
 
       // Find the clickable div that contains Alice Johnson
-      const aliceContainer = screen.getByText('Alice Johnson').closest('div[class*="hover:bg-gray-100"]')
+      const aliceContainer = screen
+        .getByText('Alice Johnson')
+        .closest('div[class*="hover:bg-gray-100"]')
       expect(aliceContainer).toHaveClass('hover:bg-gray-100', 'cursor-pointer')
     })
   })

@@ -57,7 +57,6 @@ describe('JournalEntryCard', () => {
     type: 'friend',
     userId: 'user_123',
     photo: 'https://example.com/alice.jpg',
-    notes: '',
     createdAt: Date.now(),
     updatedAt: Date.now(),
   }

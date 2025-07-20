@@ -23,7 +23,9 @@ describe('TagInput', () => {
 
       expect(screen.getByText('Tags')).toBeInTheDocument()
       expect(screen.getByPlaceholderText('Add tags...')).toBeInTheDocument()
-      expect(screen.getByText('Press Enter or comma to add tags')).toBeInTheDocument()
+      expect(
+        screen.getByText('Press Enter or comma to add tags')
+      ).toBeInTheDocument()
       expect(screen.getByText('0/5 tags')).toBeInTheDocument()
     })
 
@@ -37,7 +39,9 @@ describe('TagInput', () => {
       )
 
       expect(screen.getByText('Custom Tags')).toBeInTheDocument()
-      expect(screen.getByPlaceholderText('Enter custom tags...')).toBeInTheDocument()
+      expect(
+        screen.getByPlaceholderText('Enter custom tags...')
+      ).toBeInTheDocument()
     })
 
     it('should render without label when not provided', () => {
@@ -51,7 +55,9 @@ describe('TagInput', () => {
       render(<TagInput {...defaultProps} error="This field is required" />)
 
       expect(screen.getByText('This field is required')).toBeInTheDocument()
-      expect(screen.getByText('This field is required')).toHaveClass('text-red-600')
+      expect(screen.getByText('This field is required')).toHaveClass(
+        'text-red-600'
+      )
     })
   })
 
@@ -245,11 +251,11 @@ describe('TagInput', () => {
 
       // Wait for suggestions to appear and verify structure
       await screen.findByText('work')
-      
+
       // Use fireEvent since userEvent might have timing issues
       const suggestionButton = screen.getByText('work').closest('button')
       expect(suggestionButton).toBeTruthy()
-      
+
       fireEvent.click(suggestionButton!)
       expect(mockOnChange).toHaveBeenCalledWith(['work'])
     })
@@ -280,7 +286,7 @@ describe('TagInput', () => {
 
       const input = screen.getByRole('textbox')
       await user.type(input, 'w')
-      
+
       // Click outside to hide suggestions
       await user.click(document.body)
       expect(screen.queryByText('work')).not.toBeInTheDocument()
@@ -294,11 +300,7 @@ describe('TagInput', () => {
   describe('Max Tags Limit', () => {
     it('should respect custom max tags limit', () => {
       render(
-        <TagInput
-          {...defaultProps}
-          value={['tag1', 'tag2']}
-          maxTags={3}
-        />
+        <TagInput {...defaultProps} value={['tag1', 'tag2']} maxTags={3} />
       )
 
       expect(screen.getByText('2/3 tags')).toBeInTheDocument()
@@ -328,11 +330,11 @@ describe('TagInput', () => {
       // Test that Enter adds tag
       await user.keyboard('{Enter}')
       expect(mockOnChange).toHaveBeenCalledWith(['test'])
-      
+
       // Reset and test comma behavior with a new component instance
       mockOnChange.mockClear()
       rerender(<TagInput value={['test']} onChange={mockOnChange} />)
-      
+
       // Get the new input after rerender
       const inputs = screen.getAllByRole('textbox')
       const newInput = inputs[inputs.length - 1] // Get the last input

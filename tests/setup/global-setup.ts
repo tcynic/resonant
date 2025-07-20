@@ -7,19 +7,20 @@ async function globalSetup(config: FullConfig) {
   try {
     // Initialize test environment manager
     const envManager = new TestEnvironmentManager()
-    
+
     // Check test environment configuration
     await envManager.validateEnvironment()
-    
+
     // Set up test database isolation
     await envManager.setupTestDatabase()
-    
+
     // Seed initial test data
     await envManager.seedTestData()
-    
+
     console.log('✅ Global test setup completed successfully')
-    console.log('ℹ️  Browser management handled by MCP server - skipping local browser warmup')
-    
+    console.log(
+      'ℹ️  Browser management handled by MCP server - skipping local browser warmup'
+    )
   } catch (error) {
     console.error('❌ Global test setup failed:', error)
     throw error
