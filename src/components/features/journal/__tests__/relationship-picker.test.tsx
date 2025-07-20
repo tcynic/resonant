@@ -1,37 +1,51 @@
 import React from 'react'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import '@testing-library/jest-dom'
 import RelationshipPicker from '../relationship-picker'
+import { Relationship } from '@/lib/types'
 
 // Mock the useRelationships hook
 jest.mock('@/hooks/use-relationships', () => ({
   useRelationships: jest.fn(),
 }))
 
-const { useRelationships } = require('@/hooks/use-relationships')
+import { useRelationships } from '@/hooks/use-relationships'
+
+const mockUseRelationships = useRelationships as jest.MockedFunction<
+  typeof useRelationships
+>
 
 describe('RelationshipPicker', () => {
   const mockOnChange = jest.fn()
 
-  const mockRelationships = [
+  const mockRelationships: Relationship[] = [
     {
       _id: 'rel_1',
+      userId: 'user_123',
       name: 'Alice Johnson',
       type: 'friend',
       photo: 'https://example.com/alice.jpg',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
     },
     {
       _id: 'rel_2',
+      userId: 'user_123',
       name: 'Bob Smith',
-      type: 'romantic',
-      photo: null,
+      type: 'partner',
+      photo: undefined,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
     },
     {
       _id: 'rel_3',
+      userId: 'user_123',
       name: 'Carol Davis',
       type: 'family',
       photo: 'https://example.com/carol.jpg',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
     },
   ]
 
@@ -43,9 +57,11 @@ describe('RelationshipPicker', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
-    useRelationships.mockReturnValue({
+    mockUseRelationships.mockReturnValue({
       relationships: mockRelationships,
+      relationshipsCount: mockRelationships.length,
       isLoading: false,
+      currentUser: { _id: 'user_123' },
     })
   })
 
@@ -93,9 +109,11 @@ describe('RelationshipPicker', () => {
 
   describe('Loading State', () => {
     it('should show loading skeleton when loading', () => {
-      useRelationships.mockReturnValue({
+      mockUseRelationships.mockReturnValue({
         relationships: [],
+        relationshipsCount: 0,
         isLoading: true,
+        currentUser: { _id: 'user_123' },
       })
 
       render(<RelationshipPicker {...defaultProps} />)
@@ -378,9 +396,11 @@ describe('RelationshipPicker', () => {
   describe('Empty State', () => {
     it('should show empty state when no relationships exist', async () => {
       const user = userEvent.setup()
-      useRelationships.mockReturnValue({
+      mockUseRelationships.mockReturnValue({
         relationships: [],
+        relationshipsCount: 0,
         isLoading: false,
+        currentUser: { _id: 'user_123' },
       })
 
       render(<RelationshipPicker {...defaultProps} />)

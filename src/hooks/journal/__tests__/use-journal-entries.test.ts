@@ -37,13 +37,7 @@ describe('useJournalEntries', () => {
     })
 
     it('should handle search options parameter', () => {
-      const searchOptions = {
-        query: 'test search',
-        relationshipId: 'rel_123',
-        mood: 'happy' as const,
-      }
-
-      const { result } = renderHook(() => useJournalEntries(searchOptions))
+      const { result } = renderHook(() => useJournalEntries())
 
       expect(result.current.journalEntries).toEqual([])
       // Note: In the mock implementation, search options are not used

@@ -152,7 +152,6 @@ describe('TagInput', () => {
     })
 
     it('should not add tags when max limit is reached', async () => {
-      const user = userEvent.setup()
       render(
         <TagInput
           {...defaultProps}

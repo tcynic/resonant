@@ -48,7 +48,7 @@ describe('useAutoSave', () => {
     })
 
     it('should save data when enabled and content exists', () => {
-      const { result } = renderHook(() =>
+      renderHook(() =>
         useAutoSave(mockData, { key: 'test-entry', enabled: true })
       )
 
@@ -257,7 +257,7 @@ describe('useAutoSave', () => {
     })
 
     it('should handle rapid data changes efficiently', () => {
-      const { result, rerender } = renderHook(
+      const { rerender } = renderHook(
         ({ data }) => useAutoSave(data, { key: 'test-entry', enabled: true }),
         { initialProps: { data: mockData } }
       )

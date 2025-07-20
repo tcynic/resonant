@@ -6,7 +6,6 @@ import {
   CreateJournalEntryData,
   UpdateJournalEntryData,
   JournalEntry,
-  JournalEntrySearchOptions,
 } from '@/lib/types'
 
 // TODO: Re-enable Convex API imports when generated files are available
@@ -42,7 +41,7 @@ import {
 //   }
 // }
 
-export function useJournalEntries(_searchOptions?: JournalEntrySearchOptions) {
+export function useJournalEntries() {
   // TODO: Re-enable user authentication when ready for production
   // const { user } = useUser()
 

@@ -9,40 +9,46 @@ This project is configured to run Playwright E2E tests using the MCP (Model Cont
 ### Running Tests with Claude Code
 
 1. **Simple Test Example**:
+
    ```javascript
    // Navigate to the app
-   await mcp__playwright__browser_navigate({ url: "http://localhost:3000" })
-   
+   await mcp__playwright__browser_navigate({ url: 'http://localhost:3000' })
+
    // Take a snapshot
    await mcp__playwright__browser_snapshot()
-   
+
    // Fill and submit a form
    await mcp__playwright__browser_type({
-     element: "email input",
+     element: 'email input',
      ref: "input[type='email']",
-     text: "test@example.com"
+     text: 'test@example.com',
    })
-   
+
    await mcp__playwright__browser_click({
-     element: "submit button",
-     ref: "button[type='submit']"
+     element: 'submit button',
+     ref: "button[type='submit']",
    })
    ```
 
 2. **Run the Demo Test Suite**:
+
    ```javascript
    // Import and run the test suite
-   const { runAllMCPTests } = require("./tests/e2e/mcp-demo.test.ts")
+   const { runAllMCPTests } = require('./tests/e2e/mcp-demo.test.ts')
    await runAllMCPTests()
    ```
 
 3. **Run Individual Tests**:
+
    ```javascript
-   const { runAuthenticationTest, runJournalCreationTest } = require("./tests/e2e/mcp-demo.test.ts")
-   
+   const {
+     runAuthenticationTest,
+     runJournalCreationTest,
+   } = require('./tests/e2e/mcp-demo.test.ts')
+
    // Test authentication
    await runAuthenticationTest()
-   
+
    // Test journal creation
    await runJournalCreationTest()
    ```
@@ -128,61 +134,67 @@ The system creates 4 test user personas:
 ## Example Test Patterns
 
 ### Authentication Test
+
 ```javascript
 // Navigate to sign-in
-await mcp__playwright__browser_navigate({ url: "http://localhost:3000/sign-in" })
+await mcp__playwright__browser_navigate({
+  url: 'http://localhost:3000/sign-in',
+})
 
 // Fill credentials
 await mcp__playwright__browser_type({
-  element: "email input",
+  element: 'email input',
   ref: "input[type='email']",
-  text: "active-user@test.resonant.local"
+  text: 'active-user@test.resonant.local',
 })
 
 await mcp__playwright__browser_type({
-  element: "password input",
+  element: 'password input',
   ref: "input[type='password']",
-  text: "Test123!Active"
+  text: 'Test123!Active',
 })
 
 // Submit form
 await mcp__playwright__browser_click({
-  element: "sign in button",
-  ref: "button[type='submit']"
+  element: 'sign in button',
+  ref: "button[type='submit']",
 })
 
 // Wait for dashboard
-await mcp__playwright__browser_wait_for({ text: "Dashboard" })
+await mcp__playwright__browser_wait_for({ text: 'Dashboard' })
 ```
 
 ### Journal Entry Test
+
 ```javascript
 // Navigate to new journal entry
-await mcp__playwright__browser_navigate({ url: "http://localhost:3000/journal/new" })
+await mcp__playwright__browser_navigate({
+  url: 'http://localhost:3000/journal/new',
+})
 
 // Fill form fields
 await mcp__playwright__browser_type({
-  element: "title input",
+  element: 'title input',
   ref: "input[name='title']",
-  text: "My Test Entry"
+  text: 'My Test Entry',
 })
 
 await mcp__playwright__browser_type({
-  element: "content textarea",
+  element: 'content textarea',
   ref: "textarea[name='content']",
-  text: "This is a test journal entry."
+  text: 'This is a test journal entry.',
 })
 
 // Select mood
 await mcp__playwright__browser_click({
-  element: "happy mood button",
-  ref: "button[aria-label='happy']"
+  element: 'happy mood button',
+  ref: "button[aria-label='happy']",
 })
 
 // Save entry
 await mcp__playwright__browser_click({
-  element: "save button",
-  ref: "button[type='submit']"
+  element: 'save button',
+  ref: "button[type='submit']",
 })
 ```
 
@@ -191,11 +203,13 @@ await mcp__playwright__browser_click({
 Before running MCP tests:
 
 1. **Start Development Server**:
+
    ```bash
    npm run dev
    ```
 
 2. **Start Convex Backend**:
+
    ```bash
    npm run convex:dev
    ```
@@ -215,6 +229,7 @@ When tests run, the global setup:
 5. Logs detailed setup information
 
 Example output:
+
 ```
 🚀 Starting global test setup...
 ✅ Test environment validation passed
@@ -227,19 +242,22 @@ Example output:
 ## Tips for MCP Testing
 
 1. **Element Selection**: Use multiple selectors for reliability:
+
    ```javascript
    ref: "button[type='submit'], button:has-text('Sign In'), #sign-in-button"
    ```
 
 2. **Wait Strategies**: Always wait for navigation/content:
+
    ```javascript
-   await mcp__playwright__browser_wait_for({ text: "Dashboard", time: 5 })
+   await mcp__playwright__browser_wait_for({ text: 'Dashboard', time: 5 })
    ```
 
 3. **Snapshot for Debugging**: Take snapshots before assertions:
+
    ```javascript
    const snapshot = await mcp__playwright__browser_snapshot()
-   console.log("Current page state:", snapshot)
+   console.log('Current page state:', snapshot)
    ```
 
 4. **Error Handling**: Wrap tests in try-catch:
@@ -255,6 +273,7 @@ Example output:
 ## Implementation Status
 
 ### ✅ Completed
+
 - Test environment configuration
 - MCP-specific Playwright config
 - Test user personas and data generation
@@ -264,7 +283,9 @@ Example output:
 - Global setup and teardown systems
 
 ### 🔄 Using MCP Tools
+
 To run tests with Claude Code:
+
 1. Use the examples in `tests/e2e/mcp-demo.test.ts`
 2. Call MCP browser tools directly as shown above
 3. Import and run test functions from the demo file

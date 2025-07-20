@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import '@testing-library/jest-dom'
 import MoodSelector from '../mood-selector'
@@ -216,14 +216,14 @@ describe('MoodSelector', () => {
 
     it('should handle invalid mood value gracefully', () => {
       // TypeScript would prevent this, but test runtime behavior
-      render(<MoodSelector {...defaultProps} value={'invalid' as any} />)
+      render(<MoodSelector {...defaultProps} value={'invalid' as MoodType} />)
 
       // Should render without crashing
       expect(screen.getByText('How are you feeling?')).toBeInTheDocument()
     })
 
     it('should work without onChange handler', () => {
-      render(<MoodSelector value={undefined} onChange={undefined as any} />)
+      render(<MoodSelector value={undefined} onChange={() => {}} />)
 
       // Should render without crashing
       const moodButtons = screen.getAllByRole('button')

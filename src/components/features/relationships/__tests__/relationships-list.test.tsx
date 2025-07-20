@@ -7,8 +7,18 @@ import { useRelationships } from '@/hooks/use-relationships'
 
 // Mock the hooks
 jest.mock('@/hooks/use-relationships')
+interface MockRelationshipCardProps {
+  relationship: {
+    _id: string
+    name: string
+    type: string
+  }
+}
+
 jest.mock('../relationship-card', () => {
-  return function MockRelationshipCard({ relationship }: any) {
+  return function MockRelationshipCard({
+    relationship,
+  }: MockRelationshipCardProps) {
     return (
       <div data-testid={`relationship-card-${relationship._id}`}>
         {relationship.name}

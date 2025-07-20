@@ -1,13 +1,9 @@
 import React from 'react'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import '@testing-library/jest-dom'
 import JournalEntryEditor from '../journal-entry-editor'
-import {
-  JournalEntry,
-  CreateJournalEntryData,
-  UpdateJournalEntryData,
-} from '@/lib/types'
+import { JournalEntry } from '@/lib/types'
 
 // Mock the hooks
 jest.mock('@/hooks/journal/use-auto-save', () => ({
@@ -30,15 +26,25 @@ jest.mock('@/hooks/use-relationships', () => ({
 }))
 
 // Mock child components
+interface MockMoodSelectorProps {
+  value?: string
+  onChange?: (mood: string) => void
+  label?: string
+}
+
 jest.mock('../mood-selector', () => {
-  return function MockMoodSelector({ value, onChange, label }: any) {
+  return function MockMoodSelector({
+    value,
+    onChange,
+    label,
+  }: MockMoodSelectorProps) {
     return (
       <div data-testid="mood-selector">
         <label>{label}</label>
         <select
           data-testid="mood-select"
           value={value || ''}
-          onChange={e => onChange(e.target.value || undefined)}
+          onChange={e => onChange?.(e.target.value || '')}
         >
           <option value="">No mood selected</option>
           <option value="happy">Happy</option>
@@ -49,8 +55,14 @@ jest.mock('../mood-selector', () => {
   }
 })
 
+interface MockTagInputProps {
+  value?: string[]
+  onChange: (tags: string[]) => void
+  label?: string
+}
+
 jest.mock('../tag-input', () => {
-  return function MockTagInput({ value, onChange, label }: any) {
+  return function MockTagInput({ value, onChange, label }: MockTagInputProps) {
     return (
       <div data-testid="tag-input">
         <label>{label}</label>
@@ -65,13 +77,20 @@ jest.mock('../tag-input', () => {
   }
 })
 
+interface MockRelationshipPickerProps {
+  value?: string[]
+  onChange: (ids: string[]) => void
+  label?: string
+  required?: boolean
+}
+
 jest.mock('../relationship-picker', () => {
   return function MockRelationshipPicker({
     value,
     onChange,
     label,
     required,
-  }: any) {
+  }: MockRelationshipPickerProps) {
     return (
       <div data-testid="relationship-picker">
         <label>

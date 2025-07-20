@@ -46,7 +46,6 @@ export default function JournalEntriesList({
   onView,
   onEdit,
   onDelete,
-  searchOptions,
 }: JournalEntriesListProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterMood, setFilterMood] = useState<MoodType | 'all'>('all')
@@ -63,7 +62,7 @@ export default function JournalEntriesList({
     entryTitle: string
   }>({ isOpen: false, entryId: '', entryTitle: '' })
 
-  const { journalEntries, isLoading } = useJournalEntries(searchOptions)
+  const { journalEntries, isLoading } = useJournalEntries()
   const { relationships } = useRelationships()
   const { deleteJournalEntry } = useJournalEntryMutations()
   const [isDeletingEntry, setIsDeletingEntry] = useState(false)

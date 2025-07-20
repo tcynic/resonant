@@ -32,6 +32,13 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.production # Template file with placeholder values - safe to commit
+!.env.local.template # Template file with placeholder values - safe to commit
+!.env.test # Test environment configuration - safe to commit
+
+# Production environment files with actual secrets (NEVER commit)
+.env.local.production
+.env.prod
 
 # vercel
 .vercel

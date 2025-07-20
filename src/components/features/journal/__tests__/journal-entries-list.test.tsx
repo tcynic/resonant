@@ -23,6 +23,14 @@ jest.mock('@/hooks/use-relationships', () => ({
 }))
 
 // Mock child components
+interface MockJournalEntryCardProps {
+  entry: JournalEntry
+  relationship?: { _id: string; name: string; type: string } | null
+  onView?: () => void
+  onEdit?: () => void
+  onDelete?: () => void
+}
+
 jest.mock('../journal-entry-card', () => {
   return function MockJournalEntryCard({
     entry,
@@ -30,7 +38,7 @@ jest.mock('../journal-entry-card', () => {
     onView,
     onEdit,
     onDelete,
-  }: any) {
+  }: MockJournalEntryCardProps) {
     return (
       <div data-testid={`journal-card-${entry._id}`}>
         <h3>{entry.content.substring(0, 50)}</h3>
@@ -47,8 +55,20 @@ jest.mock('../journal-entry-card', () => {
 })
 
 // Mock UI components
+interface MockInputProps {
+  value?: string
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
+  placeholder?: string
+  type?: string
+}
+
 jest.mock('@/components/ui/input', () => {
-  return function MockInput({ value, onChange, placeholder, type }: any) {
+  return function MockInput({
+    value,
+    onChange,
+    placeholder,
+    type,
+  }: MockInputProps) {
     return (
       <input
         data-testid="search-input"
@@ -61,11 +81,22 @@ jest.mock('@/components/ui/input', () => {
   }
 })
 
+interface MockSelectOption {
+  value: string
+  label: string
+}
+
+interface MockSelectProps {
+  value?: string
+  onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void
+  options: MockSelectOption[]
+}
+
 jest.mock('@/components/ui/select', () => {
-  return function MockSelect({ value, onChange, options }: any) {
+  return function MockSelect({ value, onChange, options }: MockSelectProps) {
     return (
       <select value={value} onChange={onChange} data-testid="filter-select">
-        {options.map((option: any) => (
+        {options.map((option: MockSelectOption) => (
           <option key={option.value} value={option.value}>
             {option.label}
           </option>
@@ -75,8 +106,20 @@ jest.mock('@/components/ui/select', () => {
   }
 })
 
+interface MockButtonProps {
+  children: React.ReactNode
+  onClick?: () => void
+  variant?: string
+  className?: string
+}
+
 jest.mock('@/components/ui/button', () => {
-  return function MockButton({ children, onClick, variant, className }: any) {
+  return function MockButton({
+    children,
+    onClick,
+    variant,
+    className,
+  }: MockButtonProps) {
     return (
       <button onClick={onClick} className={className} data-variant={variant}>
         {children}
@@ -84,6 +127,15 @@ jest.mock('@/components/ui/button', () => {
     )
   }
 })
+
+interface MockConfirmationDialogProps {
+  isOpen: boolean
+  onClose: () => void
+  onConfirm: () => void
+  title: string
+  message: string
+  isLoading?: boolean
+}
 
 jest.mock('@/components/ui/dialog', () => ({
   ConfirmationDialog: function MockConfirmationDialog({
@@ -93,7 +145,7 @@ jest.mock('@/components/ui/dialog', () => ({
     title,
     message,
     isLoading,
-  }: any) {
+  }: MockConfirmationDialogProps) {
     if (!isOpen) return null
     return (
       <div data-testid="confirmation-dialog">
@@ -110,10 +162,15 @@ jest.mock('@/components/ui/dialog', () => ({
   },
 }))
 
-const {
-  useJournalEntries,
-  useJournalEntryMutations,
-} = require('@/hooks/journal/use-journal-entries')
+// Get mocked functions
+const { useJournalEntries } = jest.requireMock(
+  '@/hooks/journal/use-journal-entries'
+)
+const { useJournalEntryMutations } = jest.requireMock(
+  '@/hooks/journal/use-journal-entries'
+)
+const mockUseJournalEntries = jest.mocked(useJournalEntries)
+const mockUseJournalEntryMutations = jest.mocked(useJournalEntryMutations)
 
 describe('JournalEntriesList', () => {
   const mockEntries: JournalEntry[] = [
@@ -163,11 +220,11 @@ describe('JournalEntriesList', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
-    useJournalEntries.mockReturnValue({
+    mockUseJournalEntries.mockReturnValue({
       journalEntries: mockEntries,
       isLoading: false,
     })
-    useJournalEntryMutations.mockReturnValue({
+    mockUseJournalEntryMutations.mockReturnValue({
       deleteJournalEntry: jest.fn(),
     })
   })
@@ -192,7 +249,7 @@ describe('JournalEntriesList', () => {
     })
 
     it('should show loading skeleton when loading', () => {
-      useJournalEntries.mockReturnValue({
+      mockUseJournalEntries.mockReturnValue({
         journalEntries: [],
         isLoading: true,
       })
@@ -203,7 +260,7 @@ describe('JournalEntriesList', () => {
     })
 
     it('should show empty state when no entries', () => {
-      useJournalEntries.mockReturnValue({
+      mockUseJournalEntries.mockReturnValue({
         journalEntries: [],
         isLoading: false,
       })
@@ -494,7 +551,7 @@ describe('JournalEntriesList', () => {
     it('should call delete function when confirmed', async () => {
       const user = userEvent.setup()
       const mockDeleteJournalEntry = jest.fn()
-      useJournalEntryMutations.mockReturnValue({
+      mockUseJournalEntryMutations.mockReturnValue({
         deleteJournalEntry: mockDeleteJournalEntry,
       })
 
@@ -529,7 +586,7 @@ describe('JournalEntriesList', () => {
     it('should call onDelete callback after successful deletion', async () => {
       const user = userEvent.setup()
       const mockDeleteJournalEntry = jest.fn().mockResolvedValue(true)
-      useJournalEntryMutations.mockReturnValue({
+      mockUseJournalEntryMutations.mockReturnValue({
         deleteJournalEntry: mockDeleteJournalEntry,
       })
 
@@ -559,12 +616,14 @@ describe('JournalEntriesList', () => {
   describe('Error Handling', () => {
     it('should handle delete errors gracefully', async () => {
       const user = userEvent.setup()
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation()
+      const consoleSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => {})
       const mockDeleteJournalEntry = jest
         .fn()
         .mockRejectedValue(new Error('Delete failed'))
 
-      useJournalEntryMutations.mockReturnValue({
+      mockUseJournalEntryMutations.mockReturnValue({
         deleteJournalEntry: mockDeleteJournalEntry,
       })
 

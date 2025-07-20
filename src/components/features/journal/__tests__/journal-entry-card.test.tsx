@@ -1,13 +1,18 @@
 import React from 'react'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import '@testing-library/jest-dom'
 import JournalEntryCard from '../journal-entry-card'
 import { JournalEntry, Relationship } from '@/lib/types'
 
 // Mock Card component
+interface MockCardProps {
+  children: React.ReactNode
+  className?: string
+}
+
 jest.mock('@/components/ui/card', () => {
-  return function MockCard({ children, className }: any) {
+  return function MockCard({ children, className }: MockCardProps) {
     return (
       <div className={className} data-testid="journal-card">
         {children}
@@ -16,6 +21,14 @@ jest.mock('@/components/ui/card', () => {
   }
 })
 
+interface MockButtonProps {
+  children: React.ReactNode
+  onClick?: () => void
+  variant?: string
+  size?: string
+  className?: string
+}
+
 jest.mock('@/components/ui/button', () => {
   return function MockButton({
     children,
@@ -23,7 +36,7 @@ jest.mock('@/components/ui/button', () => {
     variant,
     size,
     className,
-  }: any) {
+  }: MockButtonProps) {
     return (
       <button
         onClick={onClick}
