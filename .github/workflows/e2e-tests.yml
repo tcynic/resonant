@@ -1,0 +1,211 @@
+name: E2E Tests with Playwright MCP
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
+  PLAYWRIGHT_VERSION: '1.47.2'
+
+jobs:
+  test-setup:
+    runs-on: ubuntu-latest
+    outputs:
+      should-run-tests: ${{ steps.check-changes.outputs.should-run }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check for relevant changes
+        id: check-changes
+        run: |
+          if git diff --name-only HEAD~1 HEAD | grep -E '\.(ts|tsx|js|jsx|json)$|package\.json|playwright\.config\.|\.env\.'; then
+            echo "should-run=true" >> $GITHUB_OUTPUT
+          else
+            echo "should-run=false" >> $GITHUB_OUTPUT
+          fi
+
+  e2e-tests:
+    needs: test-setup
+    if: needs.test-setup.outputs.should-run-tests == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        test-group: ['auth', 'user-journeys', 'advanced-features']
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup test environment
+        run: |
+          cp .env.local.template .env.test
+          echo "NEXT_PUBLIC_CONVEX_URL_TEST=${{ secrets.CONVEX_URL_TEST }}" >> .env.test
+          echo "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY_TEST=${{ secrets.CLERK_PUBLISHABLE_KEY_TEST }}" >> .env.test
+          echo "CLERK_SECRET_KEY_TEST=${{ secrets.CLERK_SECRET_KEY_TEST }}" >> .env.test
+          echo "PLAYWRIGHT_BASE_URL=http://localhost:3000" >> .env.test
+          echo "PLAYWRIGHT_MCP_ENABLED=true" >> .env.test
+          echo "PLAYWRIGHT_HEADLESS=true" >> .env.test
+          echo "CI=true" >> .env.test
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium
+
+      - name: Build application
+        run: npm run build
+
+      - name: Start development servers
+        run: |
+          npm run dev &
+          npm run convex:dev &
+          sleep 30
+          curl -f http://localhost:3000 || (echo "Application failed to start" && exit 1)
+
+      - name: Validate test infrastructure
+        run: npm run test:setup:validate
+
+      - name: Run E2E tests for ${{ matrix.test-group }}
+        run: |
+          case "${{ matrix.test-group }}" in
+            "auth")
+              npx playwright test tests/e2e/auth/ --config=playwright.mcp.config.ts
+              ;;
+            "user-journeys")
+              npx playwright test tests/e2e/user-journeys/ --config=playwright.mcp.config.ts
+              ;;
+            "advanced-features")
+              npx playwright test tests/e2e/advanced-features/ --config=playwright.mcp.config.ts
+              ;;
+          esac
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ matrix.test-group }}
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 30
+
+      - name: Upload screenshots on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: screenshots-${{ matrix.test-group }}
+          path: test-results/screenshots/
+          retention-days: 7
+
+  test-reporting:
+    needs: e2e-tests
+    if: always() && needs.test-setup.outputs.should-run-tests == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all test results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: test-results-*
+          merge-multiple: true
+
+      - name: Generate test report
+        run: |
+          echo "# E2E Test Results" > test-summary.md
+          echo "" >> test-summary.md
+          echo "## Test Execution Summary" >> test-summary.md
+          echo "" >> test-summary.md
+          
+          # Count test files
+          if [ -d "test-results" ]; then
+            total_tests=$(find test-results -name "*.json" | wc -l)
+            echo "- **Total Test Files**: $total_tests" >> test-summary.md
+          fi
+          
+          # Check for failures
+          if [ -d "test-results/screenshots" ]; then
+            echo "- **Test Failures**: Screenshots captured for failed tests" >> test-summary.md
+          else
+            echo "- **Test Failures**: No test failures detected" >> test-summary.md
+          fi
+          
+          echo "" >> test-summary.md
+          echo "## Test Groups Executed" >> test-summary.md
+          echo "- Authentication flows" >> test-summary.md
+          echo "- User journey tests" >> test-summary.md
+          echo "- Advanced feature tests" >> test-summary.md
+
+      - name: Comment test results on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const testSummary = fs.readFileSync('test-summary.md', 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: testSummary
+            });
+
+  slack-notification:
+    needs: [e2e-tests, test-reporting]
+    if: always() && needs.test-setup.outputs.should-run-tests == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine test status
+        id: test-status
+        run: |
+          if [ "${{ needs.e2e-tests.result }}" == "success" ]; then
+            echo "status=✅ Passed" >> $GITHUB_OUTPUT
+            echo "color=good" >> $GITHUB_OUTPUT
+          else
+            echo "status=❌ Failed" >> $GITHUB_OUTPUT
+            echo "color=danger" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send Slack notification
+        if: env.SLACK_WEBHOOK_URL != ''
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{
+              "attachments": [
+                {
+                  "color": "${{ steps.test-status.outputs.color }}",
+                  "title": "E2E Test Results - ${{ github.ref_name }}",
+                  "text": "Status: ${{ steps.test-status.outputs.status }}\nCommit: ${{ github.sha }}\nActor: ${{ github.actor }}",
+                  "fields": [
+                    {
+                      "title": "Repository",
+                      "value": "${{ github.repository }}",
+                      "short": true
+                    },
+                    {
+                      "title": "Branch",
+                      "value": "${{ github.ref_name }}",
+                      "short": true
+                    }
+                  ]
+                }
+              ]
+            }' \
+            $SLACK_WEBHOOK_URL

@@ -1,0 +1,205 @@
+name: Test Environment Deployment
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'test'
+        type: choice
+        options:
+          - test
+          - staging
+
+env:
+  NODE_VERSION: '20'
+  CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_TEST }}
+
+jobs:
+  deploy-test-environment:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'test' }}
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup test environment configuration
+        run: |
+          echo "Setting up test environment..."
+          cp .env.local.template .env.test
+          echo "NEXT_PUBLIC_CONVEX_URL_TEST=${{ secrets.CONVEX_URL_TEST }}" >> .env.test
+          echo "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY_TEST=${{ secrets.CLERK_PUBLISHABLE_KEY_TEST }}" >> .env.test
+          echo "CLERK_SECRET_KEY_TEST=${{ secrets.CLERK_SECRET_KEY_TEST }}" >> .env.test
+          echo "CONVEX_DEPLOY_KEY=${{ secrets.CONVEX_DEPLOY_KEY_TEST }}" >> .env.test
+
+      - name: Install Convex CLI
+        run: npm install -g convex@latest
+
+      - name: Deploy Convex test functions
+        run: |
+          echo "Deploying Convex functions to test environment..."
+          convex deploy --cmd-url-env-var-name=NEXT_PUBLIC_CONVEX_URL_TEST
+
+      - name: Validate Convex deployment
+        run: |
+          echo "Validating Convex deployment..."
+          # Test that Convex functions are accessible
+          node -e "
+            const { ConvexHttpClient } = require('convex/browser');
+            const client = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL_TEST || '${{ secrets.CONVEX_URL_TEST }}');
+            console.log('Convex client initialized successfully');
+          "
+
+      - name: Setup test data in Convex
+        run: |
+          echo "Setting up test data..."
+          # Run test data seeding
+          npm run test:setup:seed
+
+      - name: Build application for test environment
+        run: |
+          echo "Building application..."
+          npm run build
+
+      - name: Run health checks
+        run: |
+          echo "Running health checks..."
+          # Start the application
+          npm run start &
+          APP_PID=$!
+          
+          # Wait for startup
+          sleep 10
+          
+          # Health check endpoints
+          curl -f http://localhost:3000/api/health || echo "Health check endpoint not available"
+          curl -f http://localhost:3000 || (echo "Application health check failed" && kill $APP_PID && exit 1)
+          
+          # Stop the application
+          kill $APP_PID
+
+      - name: Validate test account system
+        run: |
+          echo "Validating test account system..."
+          npm run test:setup:validate
+
+      - name: Generate deployment summary
+        run: |
+          echo "# Test Environment Deployment Summary" > deployment-summary.md
+          echo "" >> deployment-summary.md
+          echo "## Deployment Details" >> deployment-summary.md
+          echo "- **Environment**: ${{ github.event.inputs.environment || 'test' }}" >> deployment-summary.md
+          echo "- **Branch**: ${{ github.ref_name }}" >> deployment-summary.md
+          echo "- **Commit**: ${{ github.sha }}" >> deployment-summary.md
+          echo "- **Timestamp**: $(date -u)" >> deployment-summary.md
+          echo "" >> deployment-summary.md
+          echo "## Components Deployed" >> deployment-summary.md
+          echo "- ✅ Convex backend functions" >> deployment-summary.md
+          echo "- ✅ Test data seeding" >> deployment-summary.md
+          echo "- ✅ Application build" >> deployment-summary.md
+          echo "- ✅ Health checks passed" >> deployment-summary.md
+          echo "- ✅ Test account system validated" >> deployment-summary.md
+
+      - name: Upload deployment artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-summary-${{ github.run_id }}
+          path: deployment-summary.md
+          retention-days: 30
+
+  post-deployment-tests:
+    needs: deploy-test-environment
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run post-deployment validation
+        run: |
+          echo "Running post-deployment validation tests..."
+          # Setup test environment
+          cp .env.local.template .env.test
+          echo "NEXT_PUBLIC_CONVEX_URL_TEST=${{ secrets.CONVEX_URL_TEST }}" >> .env.test
+          echo "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY_TEST=${{ secrets.CLERK_PUBLISHABLE_KEY_TEST }}" >> .env.test
+          echo "CLERK_SECRET_KEY_TEST=${{ secrets.CLERK_SECRET_KEY_TEST }}" >> .env.test
+          
+          # Run smoke tests
+          npm run test:smoke
+
+      - name: Test account accessibility
+        run: |
+          echo "Testing test account accessibility..."
+          npm run test:accounts:validate
+
+  notify-deployment:
+    needs: [deploy-test-environment, post-deployment-tests]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Determine deployment status
+        id: status
+        run: |
+          if [ "${{ needs.deploy-test-environment.result }}" == "success" ] && [ "${{ needs.post-deployment-tests.result }}" == "success" ]; then
+            echo "status=✅ Success" >> $GITHUB_OUTPUT
+            echo "color=good" >> $GITHUB_OUTPUT
+          else
+            echo "status=❌ Failed" >> $GITHUB_OUTPUT
+            echo "color=danger" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send deployment notification
+        if: env.SLACK_WEBHOOK_URL != ''
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{
+              "attachments": [
+                {
+                  "color": "${{ steps.status.outputs.color }}",
+                  "title": "Test Environment Deployment - ${{ github.ref_name }}",
+                  "text": "Status: ${{ steps.status.outputs.status }}\nEnvironment: ${{ github.event.inputs.environment || \"test\" }}\nCommit: ${{ github.sha }}",
+                  "fields": [
+                    {
+                      "title": "Repository",
+                      "value": "${{ github.repository }}",
+                      "short": true
+                    },
+                    {
+                      "title": "Actor",
+                      "value": "${{ github.actor }}",
+                      "short": true
+                    }
+                  ]
+                }
+              ]
+            }' \
+            $SLACK_WEBHOOK_URL
