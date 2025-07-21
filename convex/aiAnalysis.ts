@@ -223,7 +223,7 @@ export const getSentimentTrends = query({
       .order('desc')
       .collect()
 
-    return analyses.map(analysis => ({
+    return analyses.map((analysis: any) => ({
       sentimentScore: analysis.analysisResults.sentimentScore || 0,
       confidence: analysis.analysisResults.confidence,
       timestamp: analysis.createdAt,
