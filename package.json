@@ -39,7 +39,7 @@
     "convex:dev": "npx convex dev",
     "convex:deploy": "npx convex deploy",
     "convex:codegen": "npx convex codegen",
-    "convex:codegen-optional": "npx convex codegen || echo 'Convex codegen skipped - using stub files for build compatibility'"
+    "convex:codegen-optional": "npx convex codegen || (echo 'Convex codegen skipped - using stub files for build compatibility' && mkdir -p convex/_generated && cp -r convex/_generated_stubs/* convex/_generated/)"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.25.4",
