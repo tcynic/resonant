@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import Image from 'next/image'
 import { JournalEntry, Relationship, MoodType } from '@/lib/types'
 import Button from '@/components/ui/button'
 import Card from '@/components/ui/card'
@@ -93,10 +94,12 @@ export default function JournalEntryCard({
         {relationship && (
           <div className="flex items-center space-x-2">
             {relationship.photo ? (
-              <img
+              <Image
                 src={relationship.photo}
                 alt={`${relationship.name} photo`}
-                className="w-6 h-6 rounded-full object-cover"
+                width={24}
+                height={24}
+                className="rounded-full object-cover"
               />
             ) : (
               <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center">

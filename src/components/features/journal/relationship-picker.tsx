@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import Image from 'next/image'
 import { useRelationships } from '@/hooks/use-relationships'
 // import { Relationship } from '@/lib/types'
 
@@ -132,10 +133,12 @@ export default function RelationshipPicker({
                   )}
                   <div className="flex items-center space-x-3 flex-1">
                     {relationship.photo ? (
-                      <img
+                      <Image
                         src={relationship.photo}
                         alt={`${relationship.name} photo`}
-                        className="w-8 h-8 rounded-full object-cover"
+                        width={32}
+                        height={32}
+                        className="rounded-full object-cover"
                       />
                     ) : (
                       <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">

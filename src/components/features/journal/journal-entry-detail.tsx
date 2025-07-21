@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import Image from 'next/image'
 import { JournalEntry, Relationship, MoodType } from '@/lib/types'
 import Button from '@/components/ui/button'
 import Card from '@/components/ui/card'
@@ -155,10 +156,12 @@ export default function JournalEntryDetail({
             {relationship && (
               <div className="flex items-center space-x-2">
                 {relationship.photo ? (
-                  <img
+                  <Image
                     src={relationship.photo}
                     alt={`${relationship.name} photo`}
-                    className="w-8 h-8 rounded-full object-cover"
+                    width={32}
+                    height={32}
+                    className="rounded-full object-cover"
                   />
                 ) : (
                   <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">

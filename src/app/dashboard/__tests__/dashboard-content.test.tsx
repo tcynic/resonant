@@ -337,24 +337,26 @@ describe('DashboardContent', () => {
   })
 
   it('should not render trend chart when no data', () => {
-    (useQuery as jest.MockedFunction<typeof useQuery>).mockImplementation((api: unknown) => {
-      const apiName = api?._name || api?.name || String(api)
-      if (typeof apiName === 'string') {
-        if (apiName.includes('getDashboardTrends')) {
-          return { trends: [], relationshipNames: [], timeRange: {} }
+    ;(useQuery as jest.MockedFunction<typeof useQuery>).mockImplementation(
+      (api: unknown) => {
+        const apiName = api?._name || api?.name || String(api)
+        if (typeof apiName === 'string') {
+          if (apiName.includes('getDashboardTrends')) {
+            return { trends: [], relationshipNames: [], timeRange: {} }
+          }
+          if (apiName.includes('getDashboardData')) {
+            return mockDashboardData
+          }
+          if (apiName.includes('getDashboardStats')) {
+            return mockDashboardStats
+          }
+          if (apiName.includes('getRecentActivity')) {
+            return mockRecentActivity
+          }
         }
-        if (apiName.includes('getDashboardData')) {
-          return mockDashboardData
-        }
-        if (apiName.includes('getDashboardStats')) {
-          return mockDashboardStats
-        }
-        if (apiName.includes('getRecentActivity')) {
-          return mockRecentActivity
-        }
+        return undefined
       }
-      return undefined
-    })
+    )
 
     render(<DashboardContent />)
 
