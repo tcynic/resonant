@@ -24,10 +24,10 @@ import type * as relationships from "../relationships.js";
 import type * as search from "../search.js";
 import type * as test_testDataManager from "../test/testDataManager.js";
 import type * as users from "../users.js";
-import type * as utils_ai_helpers from "../utils/ai-helpers.js";
-import type * as utils_export_helpers from "../utils/export-helpers.js";
-import type * as utils_health_calculations from "../utils/health-calculations.js";
-import type * as utils_search_helpers from "../utils/search-helpers.js";
+import type * as utils_ai_helpers from "../utils/ai_helpers.js";
+import type * as utils_export_helpers from "../utils/export_helpers.js";
+import type * as utils_health_calculations from "../utils/health_calculations.js";
+import type * as utils_search_helpers from "../utils/search_helpers.js";
 import type * as utils_validation from "../utils/validation.js";
 
 /**
@@ -50,10 +50,10 @@ declare const fullApi: ApiFromModules<{
   search: typeof search;
   "test/testDataManager": typeof test_testDataManager;
   users: typeof users;
-  "utils/ai-helpers": typeof utils_ai_helpers;
-  "utils/export-helpers": typeof utils_export_helpers;
-  "utils/health-calculations": typeof utils_health_calculations;
-  "utils/search-helpers": typeof utils_search_helpers;
+  "utils/ai_helpers": typeof utils_ai_helpers;
+  "utils/export_helpers": typeof utils_export_helpers;
+  "utils/health_calculations": typeof utils_health_calculations;
+  "utils/search_helpers": typeof utils_search_helpers;
   "utils/validation": typeof utils_validation;
 }>;
 export declare const api: FilterApi<

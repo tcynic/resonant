@@ -146,7 +146,7 @@ describe('Data Export Functionality', () => {
     })
 
     it('should reject export for non-existent users', () => {
-      const userId = 'invalid-user' 
+      const userId = 'invalid-user'
       const user = userId === mockUser._id ? mockUser : null
 
       expect(() => {
