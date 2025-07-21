@@ -18,7 +18,6 @@ on:
 
 env:
   NODE_VERSION: '20'
-  CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_TEST }}
 
 jobs:
   deploy-test-environment:
@@ -46,30 +45,14 @@ jobs:
           echo "NEXT_PUBLIC_CONVEX_URL_TEST=${{ secrets.CONVEX_URL_TEST }}" >> .env.test
           echo "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY_TEST=${{ secrets.CLERK_PUBLISHABLE_KEY_TEST }}" >> .env.test
           echo "CLERK_SECRET_KEY_TEST=${{ secrets.CLERK_SECRET_KEY_TEST }}" >> .env.test
-          echo "CONVEX_DEPLOY_KEY=${{ secrets.CONVEX_DEPLOY_KEY_TEST }}" >> .env.test
 
       - name: Install Convex CLI
         run: npm install -g convex@latest
-
-      - name: Deploy Convex test functions
-        run: |
-          echo "Deploying Convex functions to test environment..."
-          convex deploy --cmd-url-env-var-name=NEXT_PUBLIC_CONVEX_URL_TEST
 
       - name: Generate Convex TypeScript files
         run: |
           echo "Generating Convex TypeScript definitions..."
           npx convex codegen
-
-      - name: Validate Convex deployment
-        run: |
-          echo "Validating Convex deployment..."
-          # Test that Convex functions are accessible
-          node -e "
-            const { ConvexHttpClient } = require('convex/browser');
-            const client = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL_TEST || '${{ secrets.CONVEX_URL_TEST }}');
-            console.log('Convex client initialized successfully');
-          "
 
       - name: Setup test data in Convex
         run: |
