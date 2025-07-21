@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.25.4",
+    "@google/generative-ai": "^0.24.1",
     "convex": "^1.25.4",
     "next": "15.4.2",
     "react": "19.1.0",

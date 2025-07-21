@@ -47,14 +47,68 @@ export default defineSchema({
     .index('by_relationship', ['relationshipId'])
     .index('by_user_and_private', ['userId', 'isPrivate']),
 
+  // AI Analysis Results
+  aiAnalysis: defineTable({
+    journalEntryId: v.id('journalEntries'),
+    relationshipId: v.id('relationships'),
+    userId: v.id('users'),
+    analysisType: v.union(
+      v.literal('sentiment'),
+      v.literal('emotional_stability'),
+      v.literal('energy_impact'),
+      v.literal('conflict_resolution'),
+      v.literal('gratitude')
+    ),
+    analysisResults: v.object({
+      sentimentScore: v.optional(v.number()), // 1-10 scale
+      emotions: v.optional(v.array(v.string())),
+      confidence: v.number(), // 0-1 scale
+      rawResponse: v.string(),
+      // Type-specific results
+      stabilityScore: v.optional(v.number()), // 0-100 for emotional stability
+      energyScore: v.optional(v.number()), // 1-10 for energy impact
+      resolutionScore: v.optional(v.number()), // 1-10 for conflict resolution
+      gratitudeScore: v.optional(v.number()), // 1-10 for gratitude
+      additionalData: v.optional(v.any()) // Flexible field for analysis-specific data
+    }),
+    metadata: v.object({
+      modelVersion: v.string(),
+      processingTime: v.number(),
+      tokenCount: v.optional(v.number()),
+      apiCosts: v.optional(v.number())
+    }),
+    createdAt: v.number(),
+    updatedAt: v.number()
+  })
+    .index('by_journal_entry', ['journalEntryId'])
+    .index('by_relationship', ['relationshipId'])
+    .index('by_user', ['userId'])
+    .index('by_analysis_type', ['analysisType'])
+    .index('by_user_and_type', ['userId', 'analysisType']),
+
+  // Relationship Health Scores (updated for AI-based scoring)
   healthScores: defineTable({
     relationshipId: v.id('relationships'),
-    score: v.number(),
-    factors: v.object({
-      communication: v.number(),
-      trust: v.number(),
-      satisfaction: v.number(),
+    userId: v.id('users'),
+    overallScore: v.number(), // 0-100 scale
+    componentScores: v.object({
+      sentiment: v.number(),           // 0-100
+      emotionalStability: v.number(),  // 0-100
+      energyImpact: v.number(),       // 0-100
+      conflictResolution: v.number(),  // 0-100
+      gratitude: v.number(),          // 0-100
+      communicationFrequency: v.number() // 0-100
     }),
-    calculatedAt: v.number(),
-  }).index('by_relationship', ['relationshipId']),
+    lastUpdated: v.number(),
+    dataPoints: v.number(), // Number of entries used in calculation
+    confidenceLevel: v.number(), // 0-1 overall confidence in the score
+    trendsData: v.optional(v.object({
+      improving: v.boolean(),
+      trendDirection: v.union(v.literal('up'), v.literal('down'), v.literal('stable')),
+      changeRate: v.number() // Percentage change over time
+    }))
+  })
+    .index('by_relationship', ['relationshipId'])
+    .index('by_user', ['userId'])
+    .index('by_score', ['overallScore']),
 })
