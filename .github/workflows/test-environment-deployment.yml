@@ -186,7 +186,7 @@ jobs:
                 {
                   "color": "${{ steps.status.outputs.color }}",
                   "title": "Test Environment Deployment - ${{ github.ref_name }}",
-                  "text": "Status: ${{ steps.status.outputs.status }}\nEnvironment: ${{ github.event.inputs.environment || \"test\" }}\nCommit: ${{ github.sha }}",
+                  "text": "Status: ${{ steps.status.outputs.status }}\nEnvironment: ${{ github.event.inputs.environment || 'test' }}\nCommit: ${{ github.sha }}",
                   "fields": [
                     {
                       "title": "Repository",
