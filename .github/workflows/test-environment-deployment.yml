@@ -41,10 +41,10 @@ jobs:
       - name: Setup test environment configuration
         run: |
           echo "Setting up test environment..."
-          cp .env.local.template .env.test
-          echo "NEXT_PUBLIC_CONVEX_URL_TEST=${{ secrets.CONVEX_URL_TEST }}" >> .env.test
-          echo "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY_TEST=${{ secrets.CLERK_PUBLISHABLE_KEY_TEST }}" >> .env.test
-          echo "CLERK_SECRET_KEY_TEST=${{ secrets.CLERK_SECRET_KEY_TEST }}" >> .env.test
+          cp .env.local.template .env.local
+          echo "NEXT_PUBLIC_CONVEX_URL=${{ secrets.CONVEX_URL_TEST }}" >> .env.local
+          echo "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.CLERK_PUBLISHABLE_KEY_TEST }}" >> .env.local
+          echo "CLERK_SECRET_KEY=${{ secrets.CLERK_SECRET_KEY_TEST }}" >> .env.local
 
       - name: Install Convex CLI
         run: npm install -g convex@latest
@@ -133,10 +133,10 @@ jobs:
         run: |
           echo "Running post-deployment validation tests..."
           # Setup test environment
-          cp .env.local.template .env.test
-          echo "NEXT_PUBLIC_CONVEX_URL_TEST=${{ secrets.CONVEX_URL_TEST }}" >> .env.test
-          echo "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY_TEST=${{ secrets.CLERK_PUBLISHABLE_KEY_TEST }}" >> .env.test
-          echo "CLERK_SECRET_KEY_TEST=${{ secrets.CLERK_SECRET_KEY_TEST }}" >> .env.test
+          cp .env.local.template .env.local
+          echo "NEXT_PUBLIC_CONVEX_URL=${{ secrets.CONVEX_URL_TEST }}" >> .env.local
+          echo "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.CLERK_PUBLISHABLE_KEY_TEST }}" >> .env.local
+          echo "CLERK_SECRET_KEY=${{ secrets.CLERK_SECRET_KEY_TEST }}" >> .env.local
 
           # Run smoke tests
           npm run test:smoke
