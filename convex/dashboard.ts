@@ -3,23 +3,24 @@
  */
 
 import { v } from 'convex/values'
-import { query } from './_generated/server'
+import { query, QueryCtx } from './_generated/server'
+import { Id } from './_generated/dataModel'
 
 // Get comprehensive dashboard data for user
 export const getDashboardData = query({
   args: { userId: v.id('users') },
-  handler: async (ctx, args) => {
+  handler: async (ctx: QueryCtx, args: { userId: Id<'users'> }) => {
     // Get user's relationships
     const relationships = await ctx.db
       .query('relationships')
-      .withIndex('by_user', q => q.eq('userId', args.userId))
+      .withIndex('by_user', (q: any) => q.eq('userId', args.userId))
       .collect()
 
     // Get health scores for all relationships efficiently
     const relationshipIds = relationships.map(rel => rel._id)
     const allHealthScores = await ctx.db
       .query('healthScores')
-      .withIndex('by_user', q => q.eq('userId', args.userId))
+      .withIndex('by_user', (q: any) => q.eq('userId', args.userId))
       .collect()
 
     // Create a map for efficient lookup
@@ -38,7 +39,7 @@ export const getDashboardData = query({
     // Get recent journal entries (last 10)
     const recentEntries = await ctx.db
       .query('journalEntries')
-      .withIndex('by_user', q => q.eq('userId', args.userId))
+      .withIndex('by_user', (q: any) => q.eq('userId', args.userId))
       .order('desc')
       .take(10)
 
@@ -94,15 +95,26 @@ export const getFilteredJournalEntries = query({
     limit: v.optional(v.number()),
     cursor: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: QueryCtx,
+    args: {
+      userId: Id<'users'>
+      relationshipIds?: Id<'relationships'>[]
+      startDate?: number
+      endDate?: number
+      searchTerm?: string
+      limit?: number
+      cursor?: string
+    }
+  ) => {
     const limit = args.limit || 20
 
     let query = ctx.db
       .query('journalEntries')
-      .withIndex('by_user', q => q.eq('userId', args.userId))
+      .withIndex('by_user', (q: any) => q.eq('userId', args.userId))
 
     // Apply filters
-    query = query.filter(q => {
+    query = query.filter((q: any) => {
       let filters = []
 
       // Date range filter
@@ -176,7 +188,15 @@ export const getDashboardTrends = query({
       v.union(v.literal('day'), v.literal('week'), v.literal('month'))
     ),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: QueryCtx,
+    args: {
+      userId: Id<'users'>
+      relationshipIds?: Id<'relationships'>[]
+      timeRangeDays?: number
+      granularity?: 'day' | 'week' | 'month'
+    }
+  ) => {
     const timeRange = args.timeRangeDays || 30
     const granularity = args.granularity || 'week'
     const cutoffTime = Date.now() - timeRange * 24 * 60 * 60 * 1000
@@ -186,7 +206,7 @@ export const getDashboardTrends = query({
     if (!relationshipIds) {
       const relationships = await ctx.db
         .query('relationships')
-        .withIndex('by_user', q => q.eq('userId', args.userId))
+        .withIndex('by_user', (q: any) => q.eq('userId', args.userId))
         .collect()
       relationshipIds = relationships.map(rel => rel._id)
     }
@@ -195,10 +215,10 @@ export const getDashboardTrends = query({
     const analysesPromises = relationshipIds.map(relationshipId =>
       ctx.db
         .query('aiAnalysis')
-        .withIndex('by_relationship', q =>
+        .withIndex('by_relationship', (q: any) =>
           q.eq('relationshipId', relationshipId)
         )
-        .filter(q =>
+        .filter((q: any) =>
           q.and(
             q.eq(q.field('analysisType'), 'sentiment'),
             q.gte(q.field('createdAt'), cutoffTime)
@@ -258,7 +278,7 @@ export const getDashboardTrends = query({
     // Calculate averages and format for charting
     const trends = Object.entries(groupedData)
       .map(([timestamp, relationshipData]) => {
-        const dataPoint: any = {
+        const dataPoint: Record<string, any> = {
           timestamp: parseInt(timestamp),
           date: new Date(parseInt(timestamp)).toISOString(),
         }
@@ -295,13 +315,16 @@ export const getRecentActivity = query({
     userId: v.id('users'),
     limit: v.optional(v.number()),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: QueryCtx,
+    args: { userId: Id<'users'>; limit?: number }
+  ) => {
     const limit = args.limit || 10
 
     // Get recent journal entries
     const recentEntries = await ctx.db
       .query('journalEntries')
-      .withIndex('by_user', q => q.eq('userId', args.userId))
+      .withIndex('by_user', (q: any) => q.eq('userId', args.userId))
       .order('desc')
       .take(limit)
 
@@ -309,7 +332,9 @@ export const getRecentActivity = query({
     const analysisPromises = recentEntries.map(entry =>
       ctx.db
         .query('aiAnalysis')
-        .withIndex('by_journal_entry', q => q.eq('journalEntryId', entry._id))
+        .withIndex('by_journal_entry', (q: any) =>
+          q.eq('journalEntryId', entry._id)
+        )
         .collect()
     )
 
@@ -368,20 +393,20 @@ export const getRecentActivity = query({
 // Get dashboard overview statistics
 export const getDashboardStats = query({
   args: { userId: v.id('users') },
-  handler: async (ctx, args) => {
+  handler: async (ctx: QueryCtx, args: { userId: Id<'users'> }) => {
     // Get basic counts
     const [relationships, journalEntries, healthScores] = await Promise.all([
       ctx.db
         .query('relationships')
-        .withIndex('by_user', q => q.eq('userId', args.userId))
+        .withIndex('by_user', (q: any) => q.eq('userId', args.userId))
         .collect(),
       ctx.db
         .query('journalEntries')
-        .withIndex('by_user', q => q.eq('userId', args.userId))
+        .withIndex('by_user', (q: any) => q.eq('userId', args.userId))
         .collect(),
       ctx.db
         .query('healthScores')
-        .withIndex('by_user', q => q.eq('userId', args.userId))
+        .withIndex('by_user', (q: any) => q.eq('userId', args.userId))
         .collect(),
     ])
 

@@ -5,7 +5,13 @@
  */
 
 import { v } from 'convex/values'
-import { mutation, query, internalMutation } from '../_generated/server'
+import {
+  mutation,
+  query,
+  internalMutation,
+  MutationCtx,
+  QueryCtx,
+} from '../_generated/server'
 import { ConvexError } from 'convex/values'
 import { Id } from '../_generated/dataModel'
 
@@ -16,11 +22,14 @@ export const createTestUser = mutation({
     name: v.string(),
     email: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: MutationCtx,
+    args: { clerkId: string; name: string; email: string }
+  ) => {
     // Check for existing user first
     const existingUser = await ctx.db
       .query('users')
-      .withIndex('by_clerk_id', q => q.eq('clerkId', args.clerkId))
+      .withIndex('by_clerk_id', (q: any) => q.eq('clerkId', args.clerkId))
       .first()
 
     if (existingUser) {
@@ -55,7 +64,16 @@ export const createTestRelationships = mutation({
       })
     ),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: MutationCtx,
+    args: {
+      userId: Id<'users'>
+      relationships: {
+        name: string
+        type: 'partner' | 'family' | 'friend' | 'colleague' | 'other'
+      }[]
+    }
+  ) => {
     const relationshipIds: Id<'relationships'>[] = []
     const currentTime = Date.now()
 
@@ -88,7 +106,19 @@ export const createTestJournalEntries = mutation({
       })
     ),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: MutationCtx,
+    args: {
+      userId: Id<'users'>
+      entries: {
+        relationshipId: Id<'relationships'>
+        content: string
+        mood?: string
+        tags?: string[]
+        isPrivate?: boolean
+      }[]
+    }
+  ) => {
     const entryIds: Id<'journalEntries'>[] = []
     const currentTime = Date.now()
 
@@ -115,11 +145,11 @@ export const cleanupTestUser = mutation({
   args: {
     clerkId: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx: MutationCtx, args: { clerkId: string }) => {
     // Find the user
     const user = await ctx.db
       .query('users')
-      .withIndex('by_clerk_id', q => q.eq('clerkId', args.clerkId))
+      .withIndex('by_clerk_id', (q: any) => q.eq('clerkId', args.clerkId))
       .first()
 
     if (!user) {
@@ -131,7 +161,7 @@ export const cleanupTestUser = mutation({
     // Delete journal entries
     const journalEntries = await ctx.db
       .query('journalEntries')
-      .withIndex('by_user', q => q.eq('userId', user._id))
+      .withIndex('by_user', (q: any) => q.eq('userId', user._id))
       .collect()
 
     for (const entry of journalEntries) {
@@ -142,13 +172,13 @@ export const cleanupTestUser = mutation({
     // Delete health scores
     const relationships = await ctx.db
       .query('relationships')
-      .withIndex('by_user', q => q.eq('userId', user._id))
+      .withIndex('by_user', (q: any) => q.eq('userId', user._id))
       .collect()
 
     for (const relationship of relationships) {
       const healthScores = await ctx.db
         .query('healthScores')
-        .withIndex('by_relationship', q =>
+        .withIndex('by_relationship', (q: any) =>
           q.eq('relationshipId', relationship._id)
         )
         .collect()
@@ -180,7 +210,7 @@ export const cleanupAllTestData = mutation({
   args: {
     testDomain: v.string(), // e.g., "test.resonant.local"
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx: MutationCtx, args: { testDomain: string }) => {
     let deletedCount = 0
 
     // Find all test users by email domain
@@ -193,7 +223,7 @@ export const cleanupAllTestData = mutation({
       // Delete journal entries
       const journalEntries = await ctx.db
         .query('journalEntries')
-        .withIndex('by_user', q => q.eq('userId', user._id))
+        .withIndex('by_user', (q: any) => q.eq('userId', user._id))
         .collect()
 
       for (const entry of journalEntries) {
@@ -204,7 +234,7 @@ export const cleanupAllTestData = mutation({
       // Delete relationships and health scores
       const relationships = await ctx.db
         .query('relationships')
-        .withIndex('by_user', q => q.eq('userId', user._id))
+        .withIndex('by_user', (q: any) => q.eq('userId', user._id))
         .collect()
 
       for (const relationship of relationships) {
@@ -242,7 +272,7 @@ export const getTestDataStats = query({
   args: {
     testDomain: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx: QueryCtx, args: { testDomain: string }) => {
     const allUsers = await ctx.db.query('users').collect()
     const testUsers = allUsers.filter(user =>
       user.email.includes(args.testDomain)
@@ -255,12 +285,12 @@ export const getTestDataStats = query({
     for (const user of testUsers) {
       const relationships = await ctx.db
         .query('relationships')
-        .withIndex('by_user', q => q.eq('userId', user._id))
+        .withIndex('by_user', (q: any) => q.eq('userId', user._id))
         .collect()
 
       const journalEntries = await ctx.db
         .query('journalEntries')
-        .withIndex('by_user', q => q.eq('userId', user._id))
+        .withIndex('by_user', (q: any) => q.eq('userId', user._id))
         .collect()
 
       totalRelationships += relationships.length
@@ -292,10 +322,10 @@ export const verifyTestUser = query({
   args: {
     clerkId: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx: QueryCtx, args: { clerkId: string }) => {
     const user = await ctx.db
       .query('users')
-      .withIndex('by_clerk_id', q => q.eq('clerkId', args.clerkId))
+      .withIndex('by_clerk_id', (q: any) => q.eq('clerkId', args.clerkId))
       .first()
 
     if (!user) {
@@ -304,12 +334,12 @@ export const verifyTestUser = query({
 
     const relationships = await ctx.db
       .query('relationships')
-      .withIndex('by_user', q => q.eq('userId', user._id))
+      .withIndex('by_user', (q: any) => q.eq('userId', user._id))
       .collect()
 
     const journalEntries = await ctx.db
       .query('journalEntries')
-      .withIndex('by_user', q => q.eq('userId', user._id))
+      .withIndex('by_user', (q: any) => q.eq('userId', user._id))
       .collect()
 
     return {

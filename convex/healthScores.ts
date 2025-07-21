@@ -4,7 +4,7 @@
  */
 
 import { v } from 'convex/values'
-import { mutation, query } from './_generated/server'
+import { mutation, query, MutationCtx, QueryCtx } from './_generated/server'
 import { Id } from './_generated/dataModel'
 import { HealthScoreComponents, HealthScoreTrends } from '../src/lib/types'
 
@@ -46,13 +46,24 @@ export const updateHealthScore = mutation({
       })
     ),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: MutationCtx,
+    args: {
+      relationshipId: Id<'relationships'>
+      userId: Id<'users'>
+      overallScore: number
+      componentScores: HealthScoreComponents
+      confidenceLevel: number
+      dataPoints: number
+      trendsData?: HealthScoreTrends
+    }
+  ) => {
     const now = Date.now()
 
     // Check if health score already exists
     const existing = await ctx.db
       .query('healthScores')
-      .withIndex('by_relationship', q =>
+      .withIndex('by_relationship', (q: any) =>
         q.eq('relationshipId', args.relationshipId)
       )
       .first()
@@ -88,10 +99,13 @@ export const getHealthScoreByRelationship = query({
   args: {
     relationshipId: v.id('relationships'),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: QueryCtx,
+    args: { relationshipId: Id<'relationships'> }
+  ) => {
     return await ctx.db
       .query('healthScores')
-      .withIndex('by_relationship', q =>
+      .withIndex('by_relationship', (q: any) =>
         q.eq('relationshipId', args.relationshipId)
       )
       .first()
@@ -110,10 +124,13 @@ export const getHealthScoresByUser = query({
       )
     ),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: QueryCtx,
+    args: { userId: Id<'users'>; sortBy?: 'score' | 'updated' | 'relationship' }
+  ) => {
     const scores = await ctx.db
       .query('healthScores')
-      .withIndex('by_user', q => q.eq('userId', args.userId))
+      .withIndex('by_user', (q: any) => q.eq('userId', args.userId))
       .collect()
 
     // Sort based on preference
@@ -135,17 +152,24 @@ export const calculateHealthScoreFromAnalyses = mutation({
     userId: v.id('users'),
     timeRangeDays: v.optional(v.number()),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: MutationCtx,
+    args: {
+      relationshipId: Id<'relationships'>
+      userId: Id<'users'>
+      timeRangeDays?: number
+    }
+  ) => {
     const timeRange = args.timeRangeDays || 30
     const cutoffTime = Date.now() - timeRange * 24 * 60 * 60 * 1000
 
     // Get all AI analyses for this relationship in the time range
     const analyses = await ctx.db
       .query('aiAnalysis')
-      .withIndex('by_relationship', q =>
+      .withIndex('by_relationship', (q: any) =>
         q.eq('relationshipId', args.relationshipId)
       )
-      .filter(q => q.gte(q.field('createdAt'), cutoffTime))
+      .filter((q: any) => q.gte(q.field('createdAt'), cutoffTime))
       .collect()
 
     if (analyses.length === 0) {
@@ -339,7 +363,7 @@ function calculateConfidenceLevel(
 
 // Helper function: Calculate trends
 async function calculateTrends(
-  ctx: any,
+  ctx: MutationCtx,
   relationshipId: Id<'relationships'>,
   currentScore: number
 ): Promise<HealthScoreTrends | undefined> {
@@ -379,17 +403,20 @@ export const getHealthScoreTrends = query({
     relationshipId: v.id('relationships'),
     timeRangeDays: v.optional(v.number()),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: QueryCtx,
+    args: { relationshipId: Id<'relationships'>; timeRangeDays?: number }
+  ) => {
     const timeRange = args.timeRangeDays || 90
     const cutoffTime = Date.now() - timeRange * 24 * 60 * 60 * 1000
 
     // Get sentiment analyses for trend calculation
     const sentimentAnalyses = await ctx.db
       .query('aiAnalysis')
-      .withIndex('by_relationship', q =>
+      .withIndex('by_relationship', (q: any) =>
         q.eq('relationshipId', args.relationshipId)
       )
-      .filter(q =>
+      .filter((q: any) =>
         q.and(
           q.eq(q.field('analysisType'), 'sentiment'),
           q.gte(q.field('createdAt'), cutoffTime)
@@ -449,11 +476,14 @@ export const recalculateAllHealthScores = mutation({
     userId: v.id('users'),
     timeRangeDays: v.optional(v.number()),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: MutationCtx,
+    args: { userId: Id<'users'>; timeRangeDays?: number }
+  ) => {
     // Get all relationships for user
     const relationships = await ctx.db
       .query('relationships')
-      .withIndex('by_user', q => q.eq('userId', args.userId))
+      .withIndex('by_user', (q: any) => q.eq('userId', args.userId))
       .collect()
 
     const results = []

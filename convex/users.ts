@@ -1,6 +1,13 @@
 import { v } from 'convex/values'
-import { mutation, query, internalMutation } from './_generated/server'
+import {
+  mutation,
+  query,
+  internalMutation,
+  MutationCtx,
+  QueryCtx,
+} from './_generated/server'
 import { ConvexError } from 'convex/values'
+import { Id } from './_generated/dataModel'
 import { validateUserInput } from './utils/validation'
 import { ERROR_MESSAGES } from './constants'
 
@@ -11,14 +18,17 @@ export const createUser = mutation({
     name: v.string(),
     email: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: MutationCtx,
+    args: { clerkId: string; name: string; email: string }
+  ) => {
     // Validate input using utility function
     validateUserInput(args)
 
     // Check for existing user
     const existingUser = await ctx.db
       .query('users')
-      .withIndex('by_clerk_id', q => q.eq('clerkId', args.clerkId))
+      .withIndex('by_clerk_id', (q: any) => q.eq('clerkId', args.clerkId))
       .first()
 
     if (existingUser) {
@@ -43,12 +53,12 @@ export const createUser = mutation({
 // Get current user by Clerk ID
 export const getCurrentUser = query({
   args: { clerkId: v.string() },
-  handler: async (ctx, args) => {
+  handler: async (ctx: QueryCtx, args: { clerkId: string }) => {
     validateUserInput({ clerkId: args.clerkId })
 
     return await ctx.db
       .query('users')
-      .withIndex('by_clerk_id', q => q.eq('clerkId', args.clerkId))
+      .withIndex('by_clerk_id', (q: any) => q.eq('clerkId', args.clerkId))
       .first()
   },
 })
@@ -56,7 +66,7 @@ export const getCurrentUser = query({
 // Get user by ID
 export const getUserById = query({
   args: { userId: v.id('users') },
-  handler: async (ctx, args) => {
+  handler: async (ctx: QueryCtx, args: { userId: Id<'users'> }) => {
     const user = await ctx.db.get(args.userId)
     if (!user) {
       throw new ConvexError(ERROR_MESSAGES.USER_NOT_FOUND)
@@ -75,7 +85,17 @@ export const updateUserPreferences = mutation({
       language: v.optional(v.string()),
     }),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: MutationCtx,
+    args: {
+      userId: Id<'users'>
+      preferences: {
+        theme?: 'light' | 'dark'
+        notifications?: boolean
+        language?: string
+      }
+    }
+  ) => {
     const user = await ctx.db.get(args.userId)
     if (!user) {
       throw new ConvexError(ERROR_MESSAGES.USER_NOT_FOUND)
@@ -99,10 +119,13 @@ export const updateUserFromClerk = internalMutation({
     name: v.string(),
     email: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: MutationCtx,
+    args: { clerkId: string; name: string; email: string }
+  ) => {
     const user = await ctx.db
       .query('users')
-      .withIndex('by_clerk_id', q => q.eq('clerkId', args.clerkId))
+      .withIndex('by_clerk_id', (q: any) => q.eq('clerkId', args.clerkId))
       .first()
 
     if (user) {
@@ -119,10 +142,10 @@ export const deleteUserByClerkId = internalMutation({
   args: {
     clerkId: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx: MutationCtx, args: { clerkId: string }) => {
     const user = await ctx.db
       .query('users')
-      .withIndex('by_clerk_id', q => q.eq('clerkId', args.clerkId))
+      .withIndex('by_clerk_id', (q: any) => q.eq('clerkId', args.clerkId))
       .first()
 
     if (user) {

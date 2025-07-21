@@ -1,6 +1,7 @@
 import { v } from 'convex/values'
-import { mutation, query } from './_generated/server'
+import { mutation, query, MutationCtx, QueryCtx } from './_generated/server'
 import { ConvexError } from 'convex/values'
+import { Id } from './_generated/dataModel'
 import { validateRelationshipName } from './utils/validation'
 import { ERROR_MESSAGES } from './constants'
 
@@ -18,7 +19,15 @@ export const createRelationship = mutation({
     ),
     photo: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: MutationCtx,
+    args: {
+      userId: Id<'users'>
+      name: string
+      type: 'partner' | 'family' | 'friend' | 'colleague' | 'other'
+      photo?: string
+    }
+  ) => {
     // Validate input using utility function
     validateRelationshipName(args.name)
 
@@ -63,7 +72,16 @@ export const updateRelationship = mutation({
     ),
     photo: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: MutationCtx,
+    args: {
+      relationshipId: Id<'relationships'>
+      userId: Id<'users'>
+      name?: string
+      type?: 'partner' | 'family' | 'friend' | 'colleague' | 'other'
+      photo?: string
+    }
+  ) => {
     // Get existing relationship
     const relationship = await ctx.db.get(args.relationshipId)
     if (!relationship) {
@@ -88,7 +106,7 @@ export const updateRelationship = mutation({
     }
 
     try {
-      const updateData: any = {
+      const updateData: Record<string, any> = {
         updatedAt: Date.now(),
       }
 
@@ -116,7 +134,10 @@ export const deleteRelationship = mutation({
     relationshipId: v.id('relationships'),
     userId: v.id('users'),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: MutationCtx,
+    args: { relationshipId: Id<'relationships'>; userId: Id<'users'> }
+  ) => {
     // Get existing relationship
     const relationship = await ctx.db.get(args.relationshipId)
     if (!relationship) {
@@ -134,7 +155,7 @@ export const deleteRelationship = mutation({
       // Check if there are any journal entries for this relationship
       const entries = await ctx.db
         .query('journalEntries')
-        .withIndex('by_relationship', q =>
+        .withIndex('by_relationship', (q: any) =>
           q.eq('relationshipId', args.relationshipId)
         )
         .first()
@@ -172,13 +193,21 @@ export const getRelationshipsByUser = query({
     limit: v.optional(v.number()),
     offset: v.optional(v.number()),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: QueryCtx,
+    args: {
+      userId: Id<'users'>
+      type?: 'partner' | 'family' | 'friend' | 'colleague' | 'other'
+      limit?: number
+      offset?: number
+    }
+  ) => {
     let query = ctx.db
       .query('relationships')
-      .withIndex('by_user', q => q.eq('userId', args.userId))
+      .withIndex('by_user', (q: any) => q.eq('userId', args.userId))
 
     if (args.type) {
-      query = query.filter(q => q.eq(q.field('type'), args.type))
+      query = query.filter((q: any) => q.eq(q.field('type'), args.type))
     }
 
     if (args.offset) {
@@ -197,7 +226,10 @@ export const getRelationshipById = query({
     relationshipId: v.id('relationships'),
     userId: v.id('users'),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: QueryCtx,
+    args: { relationshipId: Id<'relationships'>; userId: Id<'users'> }
+  ) => {
     const relationship = await ctx.db.get(args.relationshipId)
     if (!relationship) {
       throw new ConvexError('Relationship not found')
@@ -217,10 +249,10 @@ export const getRelationshipById = query({
 // Get relationships count by user
 export const getRelationshipsCount = query({
   args: { userId: v.id('users') },
-  handler: async (ctx, args) => {
+  handler: async (ctx: QueryCtx, args: { userId: Id<'users'> }) => {
     const relationships = await ctx.db
       .query('relationships')
-      .withIndex('by_user', q => q.eq('userId', args.userId))
+      .withIndex('by_user', (q: any) => q.eq('userId', args.userId))
       .collect()
 
     return relationships.length

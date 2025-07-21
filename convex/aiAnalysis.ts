@@ -4,7 +4,14 @@
  */
 
 import { v } from 'convex/values'
-import { mutation, query, action } from './_generated/server'
+import {
+  mutation,
+  query,
+  action,
+  MutationCtx,
+  QueryCtx,
+  ActionCtx,
+} from './_generated/server'
 import { Id } from './_generated/dataModel'
 import {
   AnalysisType,
@@ -50,7 +57,7 @@ export const createAnalysis = mutation({
       energyScore: v.optional(v.number()),
       resolutionScore: v.optional(v.number()),
       gratitudeScore: v.optional(v.number()),
-      additionalData: v.optional(v.any()),
+      additionalData: v.optional(v.record(v.string(), v.string())),
     }),
     metadata: v.object({
       modelVersion: v.string(),
@@ -59,7 +66,37 @@ export const createAnalysis = mutation({
       apiCosts: v.optional(v.number()),
     }),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: MutationCtx,
+    args: {
+      journalEntryId: Id<'journalEntries'>
+      relationshipId: Id<'relationships'>
+      userId: Id<'users'>
+      analysisType:
+        | 'sentiment'
+        | 'emotional_stability'
+        | 'energy_impact'
+        | 'conflict_resolution'
+        | 'gratitude'
+      analysisResults: {
+        sentimentScore?: number
+        emotions?: string[]
+        confidence: number
+        rawResponse: string
+        stabilityScore?: number
+        energyScore?: number
+        resolutionScore?: number
+        gratitudeScore?: number
+        additionalData?: Record<string, any>
+      }
+      metadata: {
+        modelVersion: string
+        processingTime: number
+        tokenCount?: number
+        apiCosts?: number
+      }
+    }
+  ) => {
     const now = Date.now()
 
     return await ctx.db.insert('aiAnalysis', {
@@ -84,20 +121,31 @@ export const getAnalysisByJournalEntry = query({
       )
     ),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: QueryCtx,
+    args: {
+      journalEntryId: Id<'journalEntries'>
+      analysisType?:
+        | 'sentiment'
+        | 'emotional_stability'
+        | 'energy_impact'
+        | 'conflict_resolution'
+        | 'gratitude'
+    }
+  ) => {
     if (args.analysisType) {
       return await ctx.db
         .query('aiAnalysis')
-        .withIndex('by_journal_entry', q =>
+        .withIndex('by_journal_entry', (q: any) =>
           q.eq('journalEntryId', args.journalEntryId)
         )
-        .filter(q => q.eq(q.field('analysisType'), args.analysisType))
+        .filter((q: any) => q.eq(q.field('analysisType'), args.analysisType))
         .first()
     }
 
     return await ctx.db
       .query('aiAnalysis')
-      .withIndex('by_journal_entry', q =>
+      .withIndex('by_journal_entry', (q: any) =>
         q.eq('journalEntryId', args.journalEntryId)
       )
       .collect()
@@ -119,13 +167,25 @@ export const getAnalysesByUser = query({
     ),
     limit: v.optional(v.number()),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: QueryCtx,
+    args: {
+      userId: Id<'users'>
+      analysisType?:
+        | 'sentiment'
+        | 'emotional_stability'
+        | 'energy_impact'
+        | 'conflict_resolution'
+        | 'gratitude'
+      limit?: number
+    }
+  ) => {
     let query = ctx.db
       .query('aiAnalysis')
-      .withIndex('by_user', q => q.eq('userId', args.userId))
+      .withIndex('by_user', (q: any) => q.eq('userId', args.userId))
 
     if (args.analysisType) {
-      query = query.filter(q =>
+      query = query.filter((q: any) =>
         q.eq(q.field('analysisType'), args.analysisType)
       )
     }
@@ -142,16 +202,19 @@ export const getSentimentTrends = query({
     relationshipId: v.id('relationships'),
     days: v.optional(v.number()),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: QueryCtx,
+    args: { relationshipId: Id<'relationships'>; days?: number }
+  ) => {
     const daysBack = args.days || 30
     const cutoffTime = Date.now() - daysBack * 24 * 60 * 60 * 1000
 
     const analyses = await ctx.db
       .query('aiAnalysis')
-      .withIndex('by_relationship', q =>
+      .withIndex('by_relationship', (q: any) =>
         q.eq('relationshipId', args.relationshipId)
       )
-      .filter(q =>
+      .filter((q: any) =>
         q.and(
           q.eq(q.field('analysisType'), 'sentiment'),
           q.gte(q.field('createdAt'), cutoffTime)
@@ -186,7 +249,20 @@ export const queueAnalysisForJournalEntry = mutation({
       v.union(v.literal('high'), v.literal('normal'), v.literal('low'))
     ),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: MutationCtx,
+    args: {
+      journalEntryId: Id<'journalEntries'>
+      analysisTypes: (
+        | 'sentiment'
+        | 'emotional_stability'
+        | 'energy_impact'
+        | 'conflict_resolution'
+        | 'gratitude'
+      )[]
+      priority?: 'high' | 'normal' | 'low'
+    }
+  ) => {
     // Get journal entry details
     const journalEntry = await ctx.db.get(args.journalEntryId)
     if (!journalEntry) {
@@ -196,7 +272,7 @@ export const queueAnalysisForJournalEntry = mutation({
     // Check if analyses already exist
     const existingAnalyses = await ctx.db
       .query('aiAnalysis')
-      .withIndex('by_journal_entry', q =>
+      .withIndex('by_journal_entry', (q: any) =>
         q.eq('journalEntryId', args.journalEntryId)
       )
       .collect()
@@ -250,7 +326,23 @@ export const processAnalysisQueue = action({
     priority: v.optional(v.string()),
     retryAttempt: v.optional(v.number()),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: ActionCtx,
+    args: {
+      journalEntryId: Id<'journalEntries'>
+      relationshipId: Id<'relationships'>
+      userId: Id<'users'>
+      analysisTypes: (
+        | 'sentiment'
+        | 'emotional_stability'
+        | 'energy_impact'
+        | 'conflict_resolution'
+        | 'gratitude'
+      )[]
+      priority?: string
+      retryAttempt?: number
+    }
+  ) => {
     const { GeminiClient } = await import('../src/lib/ai/gemini-client')
     const { RelationshipAnalyzer } = await import('../src/lib/ai/analysis')
 
@@ -273,7 +365,7 @@ export const processAnalysisQueue = action({
 
       for (const analysisType of args.analysisTypes) {
         try {
-          let analysisResult: any
+          let analysisResult: unknown
           const startTime = Date.now()
 
           switch (analysisType) {
@@ -319,24 +411,24 @@ export const processAnalysisQueue = action({
               analysisType,
               analysisResults: {
                 sentimentScore:
-                  analysisResult.sentiment_score ||
-                  analysisResult.sentimentScore,
+                  (analysisResult as any).sentiment_score ||
+                  (analysisResult as any).sentimentScore,
                 emotions:
-                  analysisResult.emotions_detected ||
-                  analysisResult.emotions ||
+                  (analysisResult as any).emotions_detected ||
+                  (analysisResult as any).emotions ||
                   [],
-                confidence: analysisResult.confidence,
+                confidence: (analysisResult as any).confidence,
                 rawResponse: JSON.stringify(analysisResult),
-                stabilityScore: analysisResult.stability_score,
-                energyScore: analysisResult.energy_impact_score,
-                resolutionScore: analysisResult.resolution_score,
-                gratitudeScore: analysisResult.gratitude_score,
+                stabilityScore: (analysisResult as any).stability_score,
+                energyScore: (analysisResult as any).energy_impact_score,
+                resolutionScore: (analysisResult as any).resolution_score,
+                gratitudeScore: (analysisResult as any).gratitude_score,
               },
               metadata: {
                 modelVersion: 'gemini-1.5-flash',
                 processingTime,
-                tokenCount: analysisResult.usage?.totalTokenCount,
-                apiCosts: analysisResult.usage?.estimatedCost,
+                tokenCount: (analysisResult as any).usage?.totalTokenCount,
+                apiCosts: (analysisResult as any).usage?.estimatedCost,
               },
             }
           )
@@ -431,7 +523,20 @@ export const queueBatchAnalysis = mutation({
     ),
     batchSize: v.optional(v.number()),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: MutationCtx,
+    args: {
+      journalEntryIds: Id<'journalEntries'>[]
+      analysisTypes: (
+        | 'sentiment'
+        | 'emotional_stability'
+        | 'energy_impact'
+        | 'conflict_resolution'
+        | 'gratitude'
+      )[]
+      batchSize?: number
+    }
+  ) => {
     const batchSize = args.batchSize || RATE_LIMIT_CONFIG.batchSize
     const batches = []
 
@@ -478,15 +583,18 @@ export const getAnalysisStats = query({
       v.union(v.literal('7d'), v.literal('30d'), v.literal('90d'))
     ),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: QueryCtx,
+    args: { userId: Id<'users'>; timeRange?: '7d' | '30d' | '90d' }
+  ) => {
     const timeRange = args.timeRange || '30d'
     const days = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90
     const cutoffTime = Date.now() - days * 24 * 60 * 60 * 1000
 
     const analyses = await ctx.db
       .query('aiAnalysis')
-      .withIndex('by_user', q => q.eq('userId', args.userId))
-      .filter(q => q.gte(q.field('createdAt'), cutoffTime))
+      .withIndex('by_user', (q: any) => q.eq('userId', args.userId))
+      .filter((q: any) => q.gte(q.field('createdAt'), cutoffTime))
       .collect()
 
     const stats = {

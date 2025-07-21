@@ -21,7 +21,7 @@ import ErrorBoundary, {
   DashboardErrorFallback,
   NetworkErrorFallback,
 } from '@/components/ui/error-boundary'
-import { DashboardStats } from '@/lib/types'
+import { DashboardStats, TrendDataPoint } from '@/lib/types'
 
 interface DashboardHeaderProps {
   user: { firstName?: string } | null
@@ -460,7 +460,7 @@ export default function DashboardContent() {
             }
           >
             <TrendChart
-              data={trendData.trends}
+              data={trendData.trends as TrendDataPoint[]}
               relationshipNames={trendData.relationshipNames}
               timeRange={trendData.timeRange}
               height={400}

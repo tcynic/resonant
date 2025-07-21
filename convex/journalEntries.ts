@@ -1,6 +1,7 @@
 import { v } from 'convex/values'
-import { mutation, query } from './_generated/server'
+import { mutation, query, MutationCtx, QueryCtx } from './_generated/server'
 import { ConvexError } from 'convex/values'
+import { Id } from './_generated/dataModel'
 
 // Create a new journal entry
 export const createEntry = mutation({
@@ -12,7 +13,17 @@ export const createEntry = mutation({
     isPrivate: v.optional(v.boolean()),
     tags: v.optional(v.array(v.string())),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: MutationCtx,
+    args: {
+      userId: Id<'users'>
+      relationshipId: Id<'relationships'>
+      content: string
+      mood?: string
+      isPrivate?: boolean
+      tags?: string[]
+    }
+  ) => {
     // Validate input
     if (!args.content?.trim()) {
       throw new ConvexError('Entry content is required')
@@ -76,7 +87,17 @@ export const updateEntry = mutation({
     isPrivate: v.optional(v.boolean()),
     tags: v.optional(v.array(v.string())),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: MutationCtx,
+    args: {
+      entryId: Id<'journalEntries'>
+      userId: Id<'users'>
+      content?: string
+      mood?: string
+      isPrivate?: boolean
+      tags?: string[]
+    }
+  ) => {
     // Get existing entry
     const entry = await ctx.db.get(args.entryId)
     if (!entry) {
@@ -107,7 +128,7 @@ export const updateEntry = mutation({
     }
 
     try {
-      const updateData: any = {
+      const updateData: Record<string, any> = {
         updatedAt: Date.now(),
       }
 
@@ -140,7 +161,10 @@ export const deleteEntry = mutation({
     entryId: v.id('journalEntries'),
     userId: v.id('users'),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: MutationCtx,
+    args: { entryId: Id<'journalEntries'>; userId: Id<'users'> }
+  ) => {
     // Get existing entry
     const entry = await ctx.db.get(args.entryId)
     if (!entry) {
@@ -169,13 +193,23 @@ export const getEntriesByUser = query({
     limit: v.optional(v.number()),
     offset: v.optional(v.number()),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: QueryCtx,
+    args: {
+      userId: Id<'users'>
+      isPrivate?: boolean
+      limit?: number
+      offset?: number
+    }
+  ) => {
     let query = ctx.db
       .query('journalEntries')
-      .withIndex('by_user', q => q.eq('userId', args.userId))
+      .withIndex('by_user', (q: any) => q.eq('userId', args.userId))
 
     if (args.isPrivate !== undefined) {
-      query = query.filter(q => q.eq(q.field('isPrivate'), args.isPrivate))
+      query = query.filter((q: any) =>
+        q.eq(q.field('isPrivate'), args.isPrivate)
+      )
     }
 
     const limit = args.limit || 20
@@ -191,7 +225,15 @@ export const getEntriesByRelationship = query({
     limit: v.optional(v.number()),
     offset: v.optional(v.number()),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: QueryCtx,
+    args: {
+      relationshipId: Id<'relationships'>
+      userId: Id<'users'>
+      limit?: number
+      offset?: number
+    }
+  ) => {
     // Verify relationship belongs to user
     const relationship = await ctx.db.get(args.relationshipId)
     if (!relationship) {
@@ -205,7 +247,7 @@ export const getEntriesByRelationship = query({
 
     let query = ctx.db
       .query('journalEntries')
-      .withIndex('by_relationship', q =>
+      .withIndex('by_relationship', (q: any) =>
         q.eq('relationshipId', args.relationshipId)
       )
 
@@ -220,7 +262,10 @@ export const getEntryById = query({
     entryId: v.id('journalEntries'),
     userId: v.id('users'),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: QueryCtx,
+    args: { entryId: Id<'journalEntries'>; userId: Id<'users'> }
+  ) => {
     const entry = await ctx.db.get(args.entryId)
     if (!entry) {
       throw new ConvexError('Journal entry not found')
@@ -247,27 +292,45 @@ export const searchEntries = query({
     tags: v.optional(v.array(v.string())),
     limit: v.optional(v.number()),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: QueryCtx,
+    args: {
+      userId: Id<'users'>
+      query?: string
+      relationshipId?: Id<'relationships'>
+      startDate?: number
+      endDate?: number
+      isPrivate?: boolean
+      tags?: string[]
+      limit?: number
+    }
+  ) => {
     let query = ctx.db
       .query('journalEntries')
-      .withIndex('by_user', q => q.eq('userId', args.userId))
+      .withIndex('by_user', (q: any) => q.eq('userId', args.userId))
 
     if (args.relationshipId) {
-      query = query.filter(q =>
+      query = query.filter((q: any) =>
         q.eq(q.field('relationshipId'), args.relationshipId)
       )
     }
 
     if (args.isPrivate !== undefined) {
-      query = query.filter(q => q.eq(q.field('isPrivate'), args.isPrivate))
+      query = query.filter((q: any) =>
+        q.eq(q.field('isPrivate'), args.isPrivate)
+      )
     }
 
     if (args.startDate !== undefined) {
-      query = query.filter(q => q.gte(q.field('createdAt'), args.startDate!))
+      query = query.filter((q: any) =>
+        q.gte(q.field('createdAt'), args.startDate!)
+      )
     }
 
     if (args.endDate !== undefined) {
-      query = query.filter(q => q.lte(q.field('createdAt'), args.endDate!))
+      query = query.filter((q: any) =>
+        q.lte(q.field('createdAt'), args.endDate!)
+      )
     }
 
     const limit = args.limit || 20
@@ -300,13 +363,16 @@ export const getEntriesCount = query({
     userId: v.id('users'),
     relationshipId: v.optional(v.id('relationships')),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx: QueryCtx,
+    args: { userId: Id<'users'>; relationshipId?: Id<'relationships'> }
+  ) => {
     let query = ctx.db
       .query('journalEntries')
-      .withIndex('by_user', q => q.eq('userId', args.userId))
+      .withIndex('by_user', (q: any) => q.eq('userId', args.userId))
 
     if (args.relationshipId) {
-      query = query.filter(q =>
+      query = query.filter((q: any) =>
         q.eq(q.field('relationshipId'), args.relationshipId)
       )
     }
