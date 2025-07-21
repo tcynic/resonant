@@ -39,7 +39,7 @@ const mockUser: MockUser = {
   _id: 'user-1',
   name: 'Test User',
   email: 'test@example.com',
-  clerkId: 'clerk_123'
+  clerkId: 'clerk_123',
 }
 
 const mockRelationships: MockRelationship[] = [
@@ -48,14 +48,14 @@ const mockRelationships: MockRelationship[] = [
     userId: 'user-1',
     name: 'Sarah Johnson',
     type: 'colleague',
-    photo: '/sarah.jpg'
+    photo: '/sarah.jpg',
   },
   {
     _id: 'rel-2',
     userId: 'user-1',
     name: 'John Smith',
-    type: 'friend'
-  }
+    type: 'friend',
+  },
 ]
 
 const mockJournalEntries: MockJournalEntry[] = [
@@ -68,7 +68,7 @@ const mockJournalEntries: MockJournalEntry[] = [
     tags: ['work', 'collaboration'],
     isPrivate: false,
     createdAt: Date.now() - 86400000,
-    updatedAt: Date.now() - 86400000
+    updatedAt: Date.now() - 86400000,
   },
   {
     _id: 'entry-2',
@@ -79,7 +79,7 @@ const mockJournalEntries: MockJournalEntry[] = [
     tags: ['social', 'weekend'],
     isPrivate: false,
     createdAt: Date.now() - 172800000,
-    updatedAt: Date.now() - 172800000
+    updatedAt: Date.now() - 172800000,
   },
   {
     _id: 'entry-3',
@@ -90,8 +90,8 @@ const mockJournalEntries: MockJournalEntry[] = [
     tags: ['work', 'presentation'],
     isPrivate: true,
     createdAt: Date.now() - 259200000,
-    updatedAt: Date.now() - 259200000
-  }
+    updatedAt: Date.now() - 259200000,
+  },
 ]
 
 describe('Search Functionality', () => {
@@ -99,11 +99,13 @@ describe('Search Functionality', () => {
     it('should reject queries shorter than 2 characters', () => {
       const shortQuery = 'a'
       expect(shortQuery.trim().length < 2).toBe(true)
-      
+
       // This would throw ConvexError in actual implementation
       expect(() => {
         if (shortQuery.trim().length < 2) {
-          throw new ConvexError('Search query must be at least 2 characters long')
+          throw new ConvexError(
+            'Search query must be at least 2 characters long'
+          )
         }
       }).toThrow('Search query must be at least 2 characters long')
     })
@@ -111,10 +113,12 @@ describe('Search Functionality', () => {
     it('should reject queries longer than 200 characters', () => {
       const longQuery = 'a'.repeat(201)
       expect(longQuery.length > 200).toBe(true)
-      
+
       expect(() => {
         if (longQuery.length > 200) {
-          throw new ConvexError('Search query too long (maximum 200 characters)')
+          throw new ConvexError(
+            'Search query too long (maximum 200 characters)'
+          )
         }
       }).toThrow('Search query too long (maximum 200 characters)')
     })
@@ -123,14 +127,18 @@ describe('Search Functionality', () => {
       const validQuery = 'conversation'
       expect(validQuery.trim().length >= 2).toBe(true)
       expect(validQuery.length <= 200).toBe(true)
-      
+
       // Should not throw
       expect(() => {
         if (!validQuery.trim() || validQuery.trim().length < 2) {
-          throw new ConvexError('Search query must be at least 2 characters long')
+          throw new ConvexError(
+            'Search query must be at least 2 characters long'
+          )
         }
         if (validQuery.length > 200) {
-          throw new ConvexError('Search query too long (maximum 200 characters)')
+          throw new ConvexError(
+            'Search query too long (maximum 200 characters)'
+          )
         }
       }).not.toThrow()
     })
@@ -150,18 +158,20 @@ describe('Search Functionality', () => {
 
     it('should filter entries by relationship', () => {
       const relationshipId = 'rel-1'
-      const filteredEntries = mockJournalEntries.filter(entry =>
-        entry.relationshipId === relationshipId
+      const filteredEntries = mockJournalEntries.filter(
+        entry => entry.relationshipId === relationshipId
       )
 
       expect(filteredEntries).toHaveLength(2)
-      expect(filteredEntries.every(entry => entry.relationshipId === 'rel-1')).toBe(true)
+      expect(
+        filteredEntries.every(entry => entry.relationshipId === 'rel-1')
+      ).toBe(true)
     })
 
     it('should filter out private entries when includePrivate is false', () => {
       const includePrivate = false
-      const filteredEntries = mockJournalEntries.filter(entry =>
-        includePrivate || !entry.isPrivate
+      const filteredEntries = mockJournalEntries.filter(
+        entry => includePrivate || !entry.isPrivate
       )
 
       expect(filteredEntries).toHaveLength(2)
@@ -170,8 +180,8 @@ describe('Search Functionality', () => {
 
     it('should include private entries when includePrivate is true', () => {
       const includePrivate = true
-      const filteredEntries = mockJournalEntries.filter(entry =>
-        includePrivate || !entry.isPrivate
+      const filteredEntries = mockJournalEntries.filter(
+        entry => includePrivate || !entry.isPrivate
       )
 
       expect(filteredEntries).toHaveLength(3) // All entries
@@ -183,7 +193,9 @@ describe('Search Functionality', () => {
       const includePrivate = false
 
       const filteredEntries = mockJournalEntries
-        .filter(entry => entry.content.toLowerCase().includes(searchQuery.toLowerCase()))
+        .filter(entry =>
+          entry.content.toLowerCase().includes(searchQuery.toLowerCase())
+        )
         .filter(entry => entry.relationshipId === relationshipId)
         .filter(entry => includePrivate || !entry.isPrivate)
 
@@ -194,17 +206,26 @@ describe('Search Functionality', () => {
 
   describe('Search Result Enhancement', () => {
     it('should create search snippet with highlighted terms', () => {
-      const content = 'Had a great conversation with Sarah about work projects and future planning'
+      const content =
+        'Had a great conversation with Sarah about work projects and future planning'
       const searchQuery = 'conversation'
       const maxLength = 50
 
-      const createSearchSnippet = (text: string, query: string, length: number) => {
+      const createSearchSnippet = (
+        text: string,
+        query: string,
+        length: number
+      ) => {
         const queryIndex = text.toLowerCase().indexOf(query.toLowerCase())
-        if (queryIndex === -1) return text.substring(0, length) + (text.length > length ? '...' : '')
+        if (queryIndex === -1)
+          return text.substring(0, length) + (text.length > length ? '...' : '')
 
         const contextLength = Math.floor((length - query.length) / 2)
         const start = Math.max(0, queryIndex - contextLength)
-        const end = Math.min(text.length, queryIndex + query.length + contextLength)
+        const end = Math.min(
+          text.length,
+          queryIndex + query.length + contextLength
+        )
 
         let snippet = text.substring(start, end)
         if (start > 0) snippet = '...' + snippet
@@ -221,16 +242,20 @@ describe('Search Functionality', () => {
 
     it('should enrich results with relationship data', () => {
       const entry = mockJournalEntries[0]
-      const relationship = mockRelationships.find(rel => rel._id === entry.relationshipId)
+      const relationship = mockRelationships.find(
+        rel => rel._id === entry.relationshipId
+      )
 
       const enrichedResult = {
         ...entry,
-        relationship: relationship ? {
-          _id: relationship._id,
-          name: relationship.name,
-          type: relationship.type,
-          photo: relationship.photo
-        } : null
+        relationship: relationship
+          ? {
+              _id: relationship._id,
+              name: relationship.name,
+              type: relationship.type,
+              photo: relationship.photo,
+            }
+          : null,
       }
 
       expect(enrichedResult.relationship).not.toBeNull()
@@ -247,7 +272,11 @@ describe('Search Functionality', () => {
       mockJournalEntries.forEach(entry => {
         const words = entry.content.toLowerCase().match(/\b\w+\b/g) || []
         words.forEach(word => {
-          if (word.length >= 3 && word.startsWith(partialQuery) && word !== partialQuery) {
+          if (
+            word.length >= 3 &&
+            word.startsWith(partialQuery) &&
+            word !== partialQuery
+          ) {
             suggestions.add(word)
           }
         })
@@ -256,15 +285,21 @@ describe('Search Functionality', () => {
         if (entry.tags) {
           entry.tags.forEach(tag => {
             const tagLower = tag.toLowerCase()
-            if (tagLower.length >= 3 && tagLower.startsWith(partialQuery) && tagLower !== partialQuery) {
+            if (
+              tagLower.length >= 3 &&
+              tagLower.startsWith(partialQuery) &&
+              tagLower !== partialQuery
+            ) {
               suggestions.add(tagLower)
             }
           })
         }
       })
 
-      const suggestionArray = Array.from(suggestions).sort((a, b) => a.length - b.length)
-      
+      const suggestionArray = Array.from(suggestions).sort(
+        (a, b) => a.length - b.length
+      )
+
       expect(suggestionArray).toContain('conversation')
     })
 
@@ -274,8 +309,8 @@ describe('Search Functionality', () => {
 
       const extractKeywords = (content: string, minLength: number = 3) => {
         const words = content.toLowerCase().match(/\b\w+\b/g) || []
-        return words.filter(word => 
-          word.length >= minLength && !stopWords.has(word)
+        return words.filter(
+          word => word.length >= minLength && !stopWords.has(word)
         )
       }
 
@@ -305,8 +340,13 @@ describe('Search Functionality', () => {
       const limit = 2
       const cursor = 'entry-2' // Start after entry-2
 
-      const cursorIndex = mockJournalEntries.findIndex(entry => entry._id === cursor)
-      const results = mockJournalEntries.slice(cursorIndex + 1, cursorIndex + 1 + limit)
+      const cursorIndex = mockJournalEntries.findIndex(
+        entry => entry._id === cursor
+      )
+      const results = mockJournalEntries.slice(
+        cursorIndex + 1,
+        cursorIndex + 1 + limit
+      )
 
       expect(results).toHaveLength(1) // Only entry-3 remains
       expect(results[0]._id).toBe('entry-3')
@@ -347,9 +387,9 @@ describe('Search Functionality', () => {
     it('should verify relationship ownership', () => {
       const userId = 'user-1'
       const relationshipId = 'rel-1'
-      
-      const relationship = mockRelationships.find(rel => 
-        rel._id === relationshipId && rel.userId === userId
+
+      const relationship = mockRelationships.find(
+        rel => rel._id === relationshipId && rel.userId === userId
       )
 
       expect(relationship).toBeDefined()
@@ -359,9 +399,9 @@ describe('Search Functionality', () => {
     it('should reject unauthorized relationship access', () => {
       const userId = 'user-1'
       const relationshipId = 'rel-unauthorized'
-      
-      const relationship = mockRelationships.find(rel => 
-        rel._id === relationshipId && rel.userId === userId
+
+      const relationship = mockRelationships.find(
+        rel => rel._id === relationshipId && rel.userId === userId
       )
 
       expect(relationship).toBeUndefined()
@@ -386,7 +426,7 @@ describe('Search Functionality', () => {
 
     it('should validate relationship array inputs', () => {
       const relationshipIds = ['rel-1', 'rel-invalid']
-      const validIds = relationshipIds.filter(id => 
+      const validIds = relationshipIds.filter(id =>
         mockRelationships.some(rel => rel._id === id && rel.userId === 'user-1')
       )
 

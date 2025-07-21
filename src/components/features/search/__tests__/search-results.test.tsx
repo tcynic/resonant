@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { SearchResults, SearchResult } from '../search-results'
 
@@ -12,6 +12,7 @@ interface MockImageProps {
 jest.mock('next/image', () => ({
   __esModule: true,
   default: ({ src, alt, ...props }: MockImageProps) => (
+    // eslint-disable-next-line @next/next/no-img-element
     <img src={src} alt={alt} {...props} />
   ),
 }))

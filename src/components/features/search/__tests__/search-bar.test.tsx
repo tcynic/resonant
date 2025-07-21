@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { SearchBar } from '../search-bar'
 
@@ -198,7 +198,6 @@ describe('SearchBar', () => {
   })
 
   it('should provide screen reader announcements', async () => {
-    const user = userEvent.setup()
     const suggestions = ['announcement test']
 
     render(

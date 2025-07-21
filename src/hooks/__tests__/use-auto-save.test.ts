@@ -3,7 +3,7 @@ import { useAutoSave } from '../journal/use-auto-save'
 
 // Mock the useDebounce hook to avoid timing issues
 jest.mock('../use-debounce', () => ({
-  useDebounce: jest.fn((value) => value), // Return value immediately without debouncing
+  useDebounce: jest.fn(value => value), // Return value immediately without debouncing
 }))
 
 describe('useAutoSave', () => {
@@ -43,10 +43,7 @@ describe('useAutoSave', () => {
     mockLocalStorage.getItem.mockReturnValue(null)
 
     const { result } = renderHook(() =>
-      useAutoSave(
-        { content: '', relationshipIds: [] },
-        defaultOptions
-      )
+      useAutoSave({ content: '', relationshipIds: [] }, defaultOptions)
     )
 
     // Wait for the initial effect to complete
@@ -216,10 +213,7 @@ describe('useAutoSave', () => {
 
   it('should not save empty content', async () => {
     const { result } = renderHook(() =>
-      useAutoSave(
-        { content: '', relationshipIds: [] },
-        defaultOptions
-      )
+      useAutoSave({ content: '', relationshipIds: [] }, defaultOptions)
     )
 
     await act(async () => {
@@ -234,15 +228,12 @@ describe('useAutoSave', () => {
     const existingDraft = JSON.stringify({
       content: 'Existing draft',
       relationshipIds: [],
-      timestamp: Date.now()
+      timestamp: Date.now(),
     })
     mockLocalStorage.getItem.mockReturnValue(existingDraft)
 
     const { result } = renderHook(() =>
-      useAutoSave(
-        { content: '', relationshipIds: [] },
-        defaultOptions
-      )
+      useAutoSave({ content: '', relationshipIds: [] }, defaultOptions)
     )
 
     // Wait for initial effect to complete

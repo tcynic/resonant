@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useUser } from '@clerk/nextjs'
 import { useQuery } from 'convex/react'
@@ -13,7 +13,6 @@ jest.mock('next/navigation')
 // Mock child components with simplified implementations
 interface MockSearchBarProps {
   onSearch: (query: string) => void
-  onClear: () => void
   onSuggestionSelect: (suggestion: string) => void
   suggestions: string[]
   isLoading: boolean
@@ -22,7 +21,6 @@ interface MockSearchBarProps {
 jest.mock('@/components/features/search/search-bar', () => ({
   SearchBar: ({
     onSearch,
-    onClear,
     onSuggestionSelect,
     suggestions,
     isLoading,
@@ -59,7 +57,6 @@ interface MockSearchResult {
 
 interface MockSearchResultsProps {
   results: MockSearchResult[]
-  searchQuery: string
   onResultClick: (result: MockSearchResult) => void
   isLoading: boolean
   hasMore: boolean
@@ -69,7 +66,6 @@ interface MockSearchResultsProps {
 jest.mock('@/components/features/search/search-results', () => ({
   SearchResults: ({
     results,
-    searchQuery,
     onResultClick,
     isLoading,
     hasMore,

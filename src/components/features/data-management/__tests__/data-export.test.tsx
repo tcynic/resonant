@@ -107,7 +107,6 @@ describe('DataExport', () => {
   })
 
   it('should show AI analysis stats when include analysis is enabled', async () => {
-    const user = userEvent.setup()
     render(<DataExport />)
 
     // Should show AI analysis stats by default

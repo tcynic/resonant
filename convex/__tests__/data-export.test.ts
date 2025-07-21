@@ -41,7 +41,7 @@ const mockUser: MockUser = {
   name: 'Test User',
   email: 'test@example.com',
   clerkId: 'clerk_123',
-  createdAt: Date.now() - 86400000 * 30 // 30 days ago
+  createdAt: Date.now() - 86400000 * 30, // 30 days ago
 }
 
 const mockRelationships = [
@@ -52,7 +52,7 @@ const mockRelationships = [
     type: 'colleague',
     photo: '/sarah.jpg',
     createdAt: Date.now() - 86400000 * 20,
-    updatedAt: Date.now() - 86400000 * 10
+    updatedAt: Date.now() - 86400000 * 10,
   },
   {
     _id: 'rel-2',
@@ -60,8 +60,8 @@ const mockRelationships = [
     name: 'John Smith',
     type: 'friend',
     createdAt: Date.now() - 86400000 * 15,
-    updatedAt: Date.now() - 86400000 * 5
-  }
+    updatedAt: Date.now() - 86400000 * 5,
+  },
 ]
 
 const mockJournalEntries = [
@@ -74,7 +74,7 @@ const mockJournalEntries = [
     tags: ['work', 'meeting'],
     isPrivate: false,
     createdAt: Date.now() - 86400000 * 7,
-    updatedAt: Date.now() - 86400000 * 7
+    updatedAt: Date.now() - 86400000 * 7,
   },
   {
     _id: 'entry-2',
@@ -85,8 +85,8 @@ const mockJournalEntries = [
     tags: ['social'],
     isPrivate: false,
     createdAt: Date.now() - 86400000 * 3,
-    updatedAt: Date.now() - 86400000 * 3
-  }
+    updatedAt: Date.now() - 86400000 * 3,
+  },
 ]
 
 const mockHealthScores = [
@@ -101,12 +101,12 @@ const mockHealthScores = [
       energyImpact: 85,
       conflictResolution: 85,
       gratitude: 90,
-      communicationFrequency: 80
+      communicationFrequency: 80,
     },
     lastUpdated: Date.now() - 86400000,
     dataPoints: 10,
-    confidenceLevel: 0.85
-  }
+    confidenceLevel: 0.85,
+  },
 ]
 
 const mockAiAnalysis = [
@@ -120,16 +120,16 @@ const mockAiAnalysis = [
       sentimentScore: 8,
       emotions: ['happiness', 'satisfaction'],
       confidence: 0.9,
-      rawResponse: 'Positive sentiment detected'
+      rawResponse: 'Positive sentiment detected',
     },
     metadata: {
       modelVersion: '1.0',
       processingTime: 150,
-      tokenCount: 25
+      tokenCount: 25,
     },
     createdAt: Date.now() - 86400000,
-    updatedAt: Date.now() - 86400000
-  }
+    updatedAt: Date.now() - 86400000,
+  },
 ]
 
 describe('Data Export Functionality', () => {
@@ -349,11 +349,12 @@ describe('Data Export Functionality', () => {
       const entrySize = 200 // Average entry size in bytes
       const relationshipSize = 150 // Average relationship size in bytes
 
-      const estimatedBytes = baseSize +
-        (mockJournalEntries.length * entrySize) +
-        (mockRelationships.length * relationshipSize)
+      const estimatedBytes =
+        baseSize +
+        mockJournalEntries.length * entrySize +
+        mockRelationships.length * relationshipSize
 
-      const estimatedMB = (estimatedBytes / (1024 * 1024))
+      const estimatedMB = estimatedBytes / (1024 * 1024)
 
       expect(estimatedBytes).toBeGreaterThan(0)
       expect(estimatedMB).toBeGreaterThan(0)
@@ -375,20 +376,28 @@ describe('Data Export Functionality', () => {
       const userId = 'user-1'
 
       // Simulate filtering user's data only
-      const userRelationships = mockRelationships.filter(rel => rel.userId === userId)
-      const userEntries = mockJournalEntries.filter(entry => entry.userId === userId)
-      const userHealthScores = mockHealthScores.filter(score => score.userId === userId)
+      const userRelationships = mockRelationships.filter(
+        rel => rel.userId === userId
+      )
+      const userEntries = mockJournalEntries.filter(
+        entry => entry.userId === userId
+      )
+      const userHealthScores = mockHealthScores.filter(
+        score => score.userId === userId
+      )
 
       expect(userRelationships.every(rel => rel.userId === userId)).toBe(true)
       expect(userEntries.every(entry => entry.userId === userId)).toBe(true)
-      expect(userHealthScores.every(score => score.userId === userId)).toBe(true)
+      expect(userHealthScores.every(score => score.userId === userId)).toBe(
+        true
+      )
     })
 
     it('should respect privacy settings in export', () => {
       const includePrivateEntries = false
 
-      const filteredEntries = mockJournalEntries.filter(entry =>
-        includePrivateEntries || !entry.isPrivate
+      const filteredEntries = mockJournalEntries.filter(
+        entry => includePrivateEntries || !entry.isPrivate
       )
 
       expect(filteredEntries.every(entry => !entry.isPrivate)).toBe(true)
@@ -416,15 +425,17 @@ describe('Data Export Functionality', () => {
           relationshipId: 'rel-missing',
           content: 'Entry with missing relationship',
           createdAt: Date.now(),
-          updatedAt: Date.now()
-        }
+          updatedAt: Date.now(),
+        },
       ]
 
       const enrichedEntries = entriesWithMissingRel.map(entry => {
-        const relationship = mockRelationships.find(rel => rel._id === entry.relationshipId)
+        const relationship = mockRelationships.find(
+          rel => rel._id === entry.relationshipId
+        )
         return {
           ...entry,
-          relationshipName: relationship?.name || 'Unknown Relationship'
+          relationshipName: relationship?.name || 'Unknown Relationship',
         }
       })
 
@@ -466,8 +477,8 @@ describe('Data Export Functionality', () => {
         userId: 'user-1',
         relationshipId: 'rel-1',
         content: `Entry number ${i}`,
-        createdAt: Date.now() - (i * 86400000),
-        updatedAt: Date.now() - (i * 86400000)
+        createdAt: Date.now() - i * 86400000,
+        updatedAt: Date.now() - i * 86400000,
       }))
 
       // Simulate chunked processing for large datasets
@@ -500,7 +511,7 @@ describe('Data Export Functionality', () => {
         exportedAt: Date.now(),
         version: '1.0',
         userAgent: 'Resonant Export System',
-        totalItems: mockJournalEntries.length + mockRelationships.length
+        totalItems: mockJournalEntries.length + mockRelationships.length,
       }
 
       expect(metadata.format).toBe('json')
