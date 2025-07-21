@@ -13,11 +13,13 @@ This document describes the comprehensive CI/CD integration and automation syste
 **Purpose**: Automated end-to-end testing with Playwright MCP browser automation
 
 **Triggers**:
+
 - Push to `main` or `develop` branches
 - Pull requests to `main`
 - Manual workflow dispatch
 
 **Features**:
+
 - Smart change detection (only runs when relevant files change)
 - Matrix strategy for parallel test execution (auth, user-journeys, advanced-features)
 - Comprehensive test reporting with artifacts
@@ -26,6 +28,7 @@ This document describes the comprehensive CI/CD integration and automation syste
 - Test result comments on pull requests
 
 **Test Groups**:
+
 - **Auth Tests**: Authentication flows and user management
 - **User Journeys**: Core user workflows (relationships, journal entries)
 - **Advanced Features**: Dashboard, search, filtering, responsive design
@@ -35,6 +38,7 @@ This document describes the comprehensive CI/CD integration and automation syste
 **Purpose**: Automated deployment and validation of test environment
 
 **Features**:
+
 - Convex backend function deployment to test environment
 - Test data seeding and validation
 - Health checks and smoke tests
@@ -42,6 +46,7 @@ This document describes the comprehensive CI/CD integration and automation syste
 - Environment-specific configurations
 
 **Deployment Steps**:
+
 1. Environment setup and configuration
 2. Convex function deployment
 3. Test data seeding
@@ -54,12 +59,14 @@ This document describes the comprehensive CI/CD integration and automation syste
 #### Test Data Management
 
 **`scripts/seed-test-data.js`**
+
 - Seeds comprehensive test data for all user personas
 - Supports both Convex database and mock environments
 - Graceful fallback for CI environments
 - Deterministic data generation for consistent testing
 
 **`scripts/validate-test-accounts.js`**
+
 - Validates test account accessibility and functionality
 - Checks email format, domain isolation, and account types
 - Provides detailed validation reports
@@ -68,12 +75,14 @@ This document describes the comprehensive CI/CD integration and automation syste
 #### Reporting and Monitoring
 
 **`scripts/generate-test-report.js`**
+
 - Generates comprehensive test reports in JSON, Markdown, and HTML formats
 - Aggregates test results, coverage data, and performance metrics
 - Creates visual reports with charts and summaries
 - Supports historical trend analysis
 
 **`scripts/test-dashboard.js`**
+
 - Creates interactive HTML dashboard for test monitoring
 - Real-time metrics display with auto-refresh
 - Performance tracking and alert system
@@ -81,6 +90,7 @@ This document describes the comprehensive CI/CD integration and automation syste
 - Resource usage monitoring
 
 **`scripts/performance-monitor.js`**
+
 - Advanced performance monitoring and analysis
 - Execution time, resource usage, and reliability tracking
 - Automated issue detection and recommendations
@@ -199,12 +209,12 @@ The system includes 4 comprehensive test user personas:
 
 ```javascript
 const thresholds = {
-  avgTestDuration: 5.0,        // seconds per test
-  totalExecutionTime: 900,     // 15 minutes total
-  memoryUsage: 512,           // MB peak memory
-  cpuUsage: 80,               // percent peak CPU
-  errorRate: 5.0,             // percent error rate
-  timeoutRate: 2.0            // percent timeout rate
+  avgTestDuration: 5.0, // seconds per test
+  totalExecutionTime: 900, // 15 minutes total
+  memoryUsage: 512, // MB peak memory
+  cpuUsage: 80, // percent peak CPU
+  errorRate: 5.0, // percent error rate
+  timeoutRate: 2.0, // percent timeout rate
 }
 ```
 
@@ -307,28 +317,31 @@ npm run test:performance
 ### Common Issues
 
 1. **Test Environment Connection**
+
    ```bash
    # Validate environment variables
    npm run test:setup:validate
-   
+
    # Check Convex connectivity
    npm run test:accounts:validate
    ```
 
 2. **Test Data Issues**
+
    ```bash
    # Re-seed test data
    npm run test:setup:seed
-   
+
    # Validate test accounts
    npm run test:accounts:validate
    ```
 
 3. **Performance Issues**
+
    ```bash
    # Analyze performance metrics
    npm run test:performance
-   
+
    # Check resource usage
    npm run test:dashboard
    ```

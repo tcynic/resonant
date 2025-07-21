@@ -3,7 +3,11 @@
  * Provides authenticated access to Gemini API with error handling and rate limiting
  */
 
-import { GoogleGenerativeAI, GenerativeModel, GenerationConfig } from '@google/generative-ai'
+import {
+  GoogleGenerativeAI,
+  GenerativeModel,
+  GenerationConfig,
+} from '@google/generative-ai'
 import { AIModelConfig, defaultAIConfig } from './dspy-config'
 import { withRateLimit, getAIRateLimiter } from './rate-limiter'
 import { checkBudget, getAICostTracker } from './cost-tracker'
@@ -47,7 +51,7 @@ export class GeminiClient {
 
   constructor(apiKey?: string, config?: Partial<AIModelConfig>) {
     const finalApiKey = apiKey || process.env.GOOGLE_GEMINI_API_KEY
-    
+
     if (!finalApiKey) {
       throw new GeminiAPIError('Google Gemini API key is required')
     }
@@ -55,7 +59,7 @@ export class GeminiClient {
     this.config = {
       ...defaultAIConfig,
       apiKey: finalApiKey,
-      ...config
+      ...config,
     }
 
     this.genAI = new GoogleGenerativeAI(this.config.apiKey)
@@ -67,12 +71,12 @@ export class GeminiClient {
       temperature: this.config.temperature,
       topP: this.config.topP,
       topK: this.config.topK,
-      maxOutputTokens: this.config.maxTokens
+      maxOutputTokens: this.config.maxTokens,
     }
 
     this.model = this.genAI.getGenerativeModel({
       model: this.config.model,
-      generationConfig
+      generationConfig,
     })
   }
 
@@ -88,7 +92,9 @@ export class GeminiClient {
     if (this.requestCount >= this.maxRequestsPerMinute) {
       const waitTime = 60000 - timeSinceLastRequest
       if (waitTime > 0) {
-        throw new GeminiRateLimitError(`Rate limit exceeded. Please wait ${Math.ceil(waitTime / 1000)} seconds.`)
+        throw new GeminiRateLimitError(
+          `Rate limit exceeded. Please wait ${Math.ceil(waitTime / 1000)} seconds.`
+        )
       }
     }
 
@@ -97,7 +103,7 @@ export class GeminiClient {
   }
 
   async generateContent(
-    prompt: string, 
+    prompt: string,
     analysisType: AnalysisType = 'sentiment',
     userId?: string,
     organizationId?: string
@@ -106,120 +112,144 @@ export class GeminiClient {
     const estimatedTokens = Math.ceil(prompt.length / 4) + 500 // Rough estimation
     const costTracker = getAICostTracker()
     const rateLimiter = getAIRateLimiter()
-    
+
     // Estimate cost (in cents)
     const estimatedCost = Math.ceil(
-      (estimatedTokens * 0.7 / 1000) * 0.035 * 100 + // Input tokens
-      (estimatedTokens * 0.3 / 1000) * 0.105 * 100 + // Output tokens  
-      0.01 * 100 // Base request cost
+      ((estimatedTokens * 0.7) / 1000) * 0.035 * 100 + // Input tokens
+        ((estimatedTokens * 0.3) / 1000) * 0.105 * 100 + // Output tokens
+        0.01 * 100 // Base request cost
     )
 
     // Check budget before proceeding
     await checkBudget(analysisType, estimatedCost, userId, organizationId)
 
     // Use rate limiting wrapper
-    return withRateLimit(async () => {
-      try {
-        await this.enforceRateLimit()
+    return withRateLimit(
+      async () => {
+        try {
+          await this.enforceRateLimit()
 
-        const startTime = Date.now()
-        const result = await this.model.generateContent(prompt)
-        const processingTime = Date.now() - startTime
+          const startTime = Date.now()
+          const result = await this.model.generateContent(prompt)
+          const processingTime = Date.now() - startTime
 
-        if (!result.response) {
-          throw new GeminiAPIError('No response received from Gemini API')
-        }
-
-        const response = result.response
-        const text = response.text()
-
-        if (!text) {
-          throw new GeminiAPIError('Empty response from Gemini API')
-        }
-
-        // Get actual usage for cost tracking
-        const usage = response.usageMetadata
-        const actualTokens = usage?.totalTokenCount || estimatedTokens
-        const actualCost = this.calculateActualCost(
-          usage?.promptTokenCount || Math.ceil(estimatedTokens * 0.7),
-          usage?.candidatesTokenCount || Math.ceil(estimatedTokens * 0.3)
-        )
-
-        // Record actual cost
-        costTracker.recordCost({
-          analysisType,
-          operation: 'generateContent',
-          inputTokens: usage?.promptTokenCount || Math.ceil(estimatedTokens * 0.7),
-          outputTokens: usage?.candidatesTokenCount || Math.ceil(estimatedTokens * 0.3),
-          totalTokens: actualTokens,
-          estimatedCost,
-          actualCost,
-          userId,
-          organizationId,
-          metadata: {
-            prompt: prompt.substring(0, 100), // First 100 chars for debugging
-            processingTime,
-            finishReason: response.candidates?.[0]?.finishReason
+          if (!result.response) {
+            throw new GeminiAPIError('No response received from Gemini API')
           }
-        })
 
-        // Record usage with rate limiter
-        rateLimiter.recordUsage(actualTokens, actualCost)
+          const response = result.response
+          const text = response.text()
 
-        return {
-          text,
-          usageMetadata: usage,
-          finishReason: response.candidates?.[0]?.finishReason
+          if (!text) {
+            throw new GeminiAPIError('Empty response from Gemini API')
+          }
+
+          // Get actual usage for cost tracking
+          const usage = response.usageMetadata
+          const actualTokens = usage?.totalTokenCount || estimatedTokens
+          const actualCost = this.calculateActualCost(
+            usage?.promptTokenCount || Math.ceil(estimatedTokens * 0.7),
+            usage?.candidatesTokenCount || Math.ceil(estimatedTokens * 0.3)
+          )
+
+          // Record actual cost
+          costTracker.recordCost({
+            analysisType,
+            operation: 'generateContent',
+            inputTokens:
+              usage?.promptTokenCount || Math.ceil(estimatedTokens * 0.7),
+            outputTokens:
+              usage?.candidatesTokenCount || Math.ceil(estimatedTokens * 0.3),
+            totalTokens: actualTokens,
+            estimatedCost,
+            actualCost,
+            userId,
+            organizationId,
+            metadata: {
+              prompt: prompt.substring(0, 100), // First 100 chars for debugging
+              processingTime,
+              finishReason: response.candidates?.[0]?.finishReason,
+            },
+          })
+
+          // Record usage with rate limiter
+          rateLimiter.recordUsage(actualTokens, actualCost)
+
+          return {
+            text,
+            usageMetadata: usage,
+            finishReason: response.candidates?.[0]?.finishReason,
+          }
+        } catch (error) {
+          // Handle specific API errors
+          if (error instanceof Error) {
+            if (
+              error.message.includes('quota') ||
+              error.message.includes('rate')
+            ) {
+              throw new GeminiRateLimitError(error.message)
+            }
+            if (error.message.includes('RESOURCE_EXHAUSTED')) {
+              throw new GeminiRateLimitError('API quota exhausted')
+            }
+            if (error.message.includes('invalid API key')) {
+              throw new GeminiAPIError('Invalid API key', 401, error)
+            }
+
+            throw new GeminiAPIError(
+              `Gemini API error: ${error.message}`,
+              undefined,
+              error
+            )
+          }
+
+          throw new GeminiAPIError('Unknown Gemini API error', undefined, error)
         }
-      } catch (error) {
-        // Handle specific API errors
-        if (error instanceof Error) {
-          if (error.message.includes('quota') || error.message.includes('rate')) {
-            throw new GeminiRateLimitError(error.message)
-          }
-          if (error.message.includes('RESOURCE_EXHAUSTED')) {
-            throw new GeminiRateLimitError('API quota exhausted')
-          }
-          if (error.message.includes('invalid API key')) {
-            throw new GeminiAPIError('Invalid API key', 401, error)
-          }
-          
-          throw new GeminiAPIError(`Gemini API error: ${error.message}`, undefined, error)
-        }
-        
-        throw new GeminiAPIError('Unknown Gemini API error', undefined, error)
-      }
-    }, analysisType, estimatedTokens, 'normal')
+      },
+      analysisType,
+      estimatedTokens,
+      'normal'
+    )
   }
 
-  private calculateActualCost(inputTokens: number, outputTokens: number): number {
+  private calculateActualCost(
+    inputTokens: number,
+    outputTokens: number
+  ): number {
     const inputCost = (inputTokens / 1000) * 0.035 // $0.000035 per token
     const outputCost = (outputTokens / 1000) * 0.105 // $0.000105 per token
     const baseCost = 0.01 // $0.0001 per request
-    
+
     // Return cost in cents
     return Math.ceil((inputCost + outputCost + baseCost) * 100)
   }
 
   async generateWithRetry(
-    prompt: string, 
+    prompt: string,
     analysisType: AnalysisType = 'sentiment',
     userId?: string,
     organizationId?: string,
-    maxRetries: number = 3, 
+    maxRetries: number = 3,
     retryDelay: number = 1000
   ): Promise<GeminiResponse> {
     let lastError: Error = new Error('No attempts made')
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        return await this.generateContent(prompt, analysisType, userId, organizationId)
+        return await this.generateContent(
+          prompt,
+          analysisType,
+          userId,
+          organizationId
+        )
       } catch (error) {
         lastError = error as Error
-        
+
         // Don't retry on certain errors
-        if (error instanceof GeminiAPIError && 
-            (error.statusCode === 401 || error.statusCode === 400)) {
+        if (
+          error instanceof GeminiAPIError &&
+          (error.statusCode === 401 || error.statusCode === 400)
+        ) {
           throw error
         }
 
@@ -230,7 +260,11 @@ export class GeminiClient {
       }
     }
 
-    throw new GeminiAPIError(`Failed after ${maxRetries} attempts: ${lastError!.message}`, undefined, lastError)
+    throw new GeminiAPIError(
+      `Failed after ${maxRetries} attempts: ${lastError!.message}`,
+      undefined,
+      lastError
+    )
   }
 
   // Helper method for structured JSON responses
@@ -248,18 +282,23 @@ ${JSON.stringify(schema, null, 2)}
 
 Ensure your response is valid JSON and includes all required fields.`
 
-    const response = await this.generateWithRetry(structuredPrompt, analysisType, userId, organizationId)
-    
+    const response = await this.generateWithRetry(
+      structuredPrompt,
+      analysisType,
+      userId,
+      organizationId
+    )
+
     try {
       const parsed = JSON.parse(response.text) as T
-      
+
       // Basic validation that all schema keys exist
       for (const key of Object.keys(schema)) {
         if (!(key in parsed)) {
           throw new Error(`Missing required field: ${key}`)
         }
       }
-      
+
       return parsed
     } catch (error) {
       throw new GeminiAPIError(
@@ -285,7 +324,7 @@ Ensure your response is valid JSON and includes all required fields.`
   getUsageStats(): { requestCount: number; lastRequestTime: number } {
     return {
       requestCount: this.requestCount,
-      lastRequestTime: this.lastRequestTime
+      lastRequestTime: this.lastRequestTime,
     }
   }
 }
@@ -293,7 +332,10 @@ Ensure your response is valid JSON and includes all required fields.`
 // Singleton instance for default usage
 let defaultClient: GeminiClient | null = null
 
-export function getGeminiClient(apiKey?: string, config?: Partial<AIModelConfig>): GeminiClient {
+export function getGeminiClient(
+  apiKey?: string,
+  config?: Partial<AIModelConfig>
+): GeminiClient {
   if (!defaultClient || apiKey || config) {
     defaultClient = new GeminiClient(apiKey, config)
   }

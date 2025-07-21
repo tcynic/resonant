@@ -233,6 +233,7 @@ GOOGLE_GEMINI_API_KEY=              # For AI analysis features
 For advanced end-to-end testing with Claude Code:
 
 ### Standard MCP Commands
+
 ```bash
 # Navigate and interact
 await mcp__playwright__browser_navigate({ url: 'http://localhost:3000' })
@@ -242,18 +243,23 @@ await mcp__playwright__browser_click({ element: 'submit button', ref: "button[ty
 ```
 
 ### Test Suite Execution
+
 ```javascript
 // Run comprehensive test suite
 const { runAllMCPTests } = require('./tests/e2e/mcp-demo.test.ts')
 await runAllMCPTests()
 
 // Run specific tests
-const { runAuthenticationTest, runJournalCreationTest } = require('./tests/e2e/mcp-demo.test.ts')
+const {
+  runAuthenticationTest,
+  runJournalCreationTest,
+} = require('./tests/e2e/mcp-demo.test.ts')
 await runAuthenticationTest()
 await runJournalCreationTest()
 ```
 
 ### MCP Testing Features
+
 - Real email verification testing in development
 - Authentication flow automation
 - Component interaction testing
@@ -269,3 +275,7 @@ await runJournalCreationTest()
 - **Components**: Functional components with TypeScript
 - **Imports**: Absolute imports using `@/` path mapping
 - **Validation**: Zod schemas for all form and API validation
+
+## Code Quality Checklist
+
+- Run prettier to check code formatting

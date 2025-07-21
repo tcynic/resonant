@@ -13,12 +13,15 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as aiAnalysis from "../aiAnalysis.js";
 import type * as constants from "../constants.js";
+import type * as healthScores from "../healthScores.js";
 import type * as http from "../http.js";
 import type * as journalEntries from "../journalEntries.js";
 import type * as relationships from "../relationships.js";
 import type * as test_testDataManager from "../test/testDataManager.js";
 import type * as users from "../users.js";
+import type * as utils_ai_helpers from "../utils/ai-helpers.js";
 import type * as utils_validation from "../utils/validation.js";
 
 /**
@@ -30,12 +33,15 @@ import type * as utils_validation from "../utils/validation.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  aiAnalysis: typeof aiAnalysis;
   constants: typeof constants;
+  healthScores: typeof healthScores;
   http: typeof http;
   journalEntries: typeof journalEntries;
   relationships: typeof relationships;
   "test/testDataManager": typeof test_testDataManager;
   users: typeof users;
+  "utils/ai-helpers": typeof utils_ai_helpers;
   "utils/validation": typeof utils_validation;
 }>;
 export declare const api: FilterApi<

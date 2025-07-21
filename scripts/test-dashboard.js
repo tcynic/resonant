@@ -5,28 +5,28 @@
  * Creates an interactive dashboard for monitoring test execution and metrics
  */
 
-const fs = require('fs');
-const path = require('path');
-const { config } = require('dotenv');
+const fs = require('fs')
+const path = require('path')
+const { config } = require('dotenv')
 
 // Load test environment variables
-config({ path: path.resolve(process.cwd(), '.env.test') });
+config({ path: path.resolve(process.cwd(), '.env.test') })
 
 async function generateTestDashboard() {
-  console.log('📊 Generating test execution dashboard...');
-  
-  const dashboardData = await gatherDashboardData();
-  await generateDashboardHTML(dashboardData);
-  await generateMetricsJSON(dashboardData);
-  
-  console.log('✅ Test dashboard generation completed');
-  return dashboardData;
+  console.log('📊 Generating test execution dashboard...')
+
+  const dashboardData = await gatherDashboardData()
+  await generateDashboardHTML(dashboardData)
+  await generateMetricsJSON(dashboardData)
+
+  console.log('✅ Test dashboard generation completed')
+  return dashboardData
 }
 
 async function gatherDashboardData() {
-  console.log('  📈 Gathering dashboard metrics...');
-  
-  const now = new Date();
+  console.log('  📈 Gathering dashboard metrics...')
+
+  const now = new Date()
   const dashboardData = {
     timestamp: now.toISOString(),
     lastUpdated: now.toLocaleString(),
@@ -36,10 +36,10 @@ async function gatherDashboardData() {
     testMetrics: await gatherTestMetrics(),
     performanceMetrics: await gatherPerformanceMetrics(),
     trendData: await gatherTrendData(),
-    alerts: await checkForAlerts()
-  };
-  
-  return dashboardData;
+    alerts: await checkForAlerts(),
+  }
+
+  return dashboardData
 }
 
 async function gatherTestMetrics() {
@@ -53,131 +53,139 @@ async function gatherTestMetrics() {
       auth: { total: 8, passed: 8, failed: 0, avgDuration: 2.3 },
       userJourneys: { total: 12, passed: 11, failed: 1, avgDuration: 4.7 },
       advancedFeatures: { total: 15, passed: 14, failed: 1, avgDuration: 3.2 },
-      smoke: { total: 6, passed: 6, failed: 0, avgDuration: 1.1 }
+      smoke: { total: 6, passed: 6, failed: 0, avgDuration: 1.1 },
     },
     coverage: {
       statements: 85.2,
       branches: 78.9,
       functions: 92.1,
-      lines: 86.7
+      lines: 86.7,
     },
     lastRun: {
       status: 'passed',
       duration: 847,
-      timestamp: new Date().toISOString()
-    }
-  };
-  
+      timestamp: new Date().toISOString(),
+    },
+  }
+
   // Calculate totals
   Object.values(metrics.testGroups).forEach(group => {
-    metrics.totalTests += group.total;
-    metrics.passedTests += group.passed;
-    metrics.failedTests += group.failed;
-  });
-  
-  return metrics;
+    metrics.totalTests += group.total
+    metrics.passedTests += group.passed
+    metrics.failedTests += group.failed
+  })
+
+  return metrics
 }
 
 async function gatherPerformanceMetrics() {
   return {
     averageTestDuration: 3.2,
     slowestTests: [
-      { name: 'dashboard data loading', duration: 12.4, group: 'advancedFeatures' },
-      { name: 'relationship creation flow', duration: 8.7, group: 'userJourneys' },
-      { name: 'journal entry with tags', duration: 6.9, group: 'userJourneys' }
+      {
+        name: 'dashboard data loading',
+        duration: 12.4,
+        group: 'advancedFeatures',
+      },
+      {
+        name: 'relationship creation flow',
+        duration: 8.7,
+        group: 'userJourneys',
+      },
+      { name: 'journal entry with tags', duration: 6.9, group: 'userJourneys' },
     ],
     fastestTests: [
       { name: 'homepage load', duration: 0.8, group: 'smoke' },
       { name: 'auth page accessibility', duration: 1.1, group: 'smoke' },
-      { name: 'sign-in form validation', duration: 1.3, group: 'auth' }
+      { name: 'sign-in form validation', duration: 1.3, group: 'auth' },
     ],
     resourceUsage: {
       memory: {
         peak: 256,
         average: 189,
-        unit: 'MB'
+        unit: 'MB',
       },
       cpu: {
         peak: 78,
         average: 45,
-        unit: '%'
-      }
+        unit: '%',
+      },
     },
     errorRate: 2.4,
-    timeoutRate: 0.8
-  };
+    timeoutRate: 0.8,
+  }
 }
 
 async function gatherTrendData() {
   // Simulate historical data for trend analysis
-  const days = 7;
+  const days = 7
   const trends = {
     passRate: [],
     executionTime: [],
-    coverage: []
-  };
-  
+    coverage: [],
+  }
+
   for (let i = days - 1; i >= 0; i--) {
-    const date = new Date();
-    date.setDate(date.getDate() - i);
-    
+    const date = new Date()
+    date.setDate(date.getDate() - i)
+
     trends.passRate.push({
       date: date.toISOString().split('T')[0],
-      value: 95 + Math.random() * 4 // 95-99%
-    });
-    
+      value: 95 + Math.random() * 4, // 95-99%
+    })
+
     trends.executionTime.push({
       date: date.toISOString().split('T')[0],
-      value: 800 + Math.random() * 200 // 800-1000 seconds
-    });
-    
+      value: 800 + Math.random() * 200, // 800-1000 seconds
+    })
+
     trends.coverage.push({
       date: date.toISOString().split('T')[0],
-      value: 84 + Math.random() * 4 // 84-88%
-    });
+      value: 84 + Math.random() * 4, // 84-88%
+    })
   }
-  
-  return trends;
+
+  return trends
 }
 
 async function checkForAlerts() {
-  const alerts = [];
-  
+  const alerts = []
+
   // Check for performance issues
-  const avgDuration = 3.2; // From performance metrics
+  const avgDuration = 3.2 // From performance metrics
   if (avgDuration > 5.0) {
     alerts.push({
       type: 'warning',
       category: 'performance',
       message: `Average test duration (${avgDuration}s) exceeds threshold (5.0s)`,
-      timestamp: new Date().toISOString()
-    });
+      timestamp: new Date().toISOString(),
+    })
   }
-  
+
   // Check for flaky tests
-  const flakyCount = 2; // From test metrics
+  const flakyCount = 2 // From test metrics
   if (flakyCount > 0) {
     alerts.push({
       type: 'info',
       category: 'reliability',
       message: `${flakyCount} flaky tests detected - consider investigation`,
-      timestamp: new Date().toISOString()
-    });
+      timestamp: new Date().toISOString(),
+    })
   }
-  
+
   // Check for coverage drops
-  const currentCoverage = 85.2;
-  const coverageThreshold = 80.0;
+  const currentCoverage = 85.2
+  const coverageThreshold = 80.0
   if (currentCoverage < coverageThreshold) {
     alerts.push({
       type: 'error',
       category: 'coverage',
       message: `Test coverage (${currentCoverage}%) below threshold (${coverageThreshold}%)`,
-      timestamp: new Date().toISOString()
-    });
+      timestamp: new Date().toISOString(),
+    })
   }
-  
-  return alerts;
+
+  return alerts
 }
 
 async function generateDashboardHTML(data) {
@@ -263,7 +271,9 @@ async function generateDashboardHTML(data) {
         <!-- Test Groups -->
         <div class="card">
             <h3>Test Groups Performance</h3>
-            ${Object.entries(data.testMetrics.testGroups).map(([name, group]) => `
+            ${Object.entries(data.testMetrics.testGroups)
+              .map(
+                ([name, group]) => `
                 <div class="test-group">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <strong>${name.charAt(0).toUpperCase() + name.slice(1)}</strong>
@@ -274,7 +284,9 @@ async function generateDashboardHTML(data) {
                     </div>
                     <small>Avg duration: ${group.avgDuration}s</small>
                 </div>
-            `).join('')}
+            `
+              )
+              .join('')}
         </div>
         
         <!-- Performance Metrics -->
@@ -286,13 +298,17 @@ async function generateDashboardHTML(data) {
                         <tr><th>Test</th><th>Duration</th><th>Group</th></tr>
                     </thead>
                     <tbody>
-                        ${data.performanceMetrics.slowestTests.map(test => `
+                        ${data.performanceMetrics.slowestTests
+                          .map(
+                            test => `
                             <tr>
                                 <td>${test.name}</td>
                                 <td>${test.duration}s</td>
                                 <td>${test.group}</td>
                             </tr>
-                        `).join('')}
+                        `
+                          )
+                          .join('')}
                     </tbody>
                 </table>
             </div>
@@ -307,16 +323,24 @@ async function generateDashboardHTML(data) {
         </div>
         
         <!-- Alerts -->
-        ${data.alerts.length > 0 ? `
+        ${
+          data.alerts.length > 0
+            ? `
         <div class="card">
             <h3>🚨 Active Alerts</h3>
-            ${data.alerts.map(alert => `
+            ${data.alerts
+              .map(
+                alert => `
                 <div class="alert ${alert.type}">
                     <strong>${alert.category.toUpperCase()}:</strong> ${alert.message}
                 </div>
-            `).join('')}
+            `
+              )
+              .join('')}
         </div>
-        ` : ''}
+        `
+            : ''
+        }
         
         <!-- Trend Chart -->
         <div class="card">
@@ -372,37 +396,41 @@ async function generateDashboardHTML(data) {
         }, 30000);
     </script>
 </body>
-</html>`;
+</html>`
 
-  const dashboardPath = path.join(process.cwd(), 'test-results', 'dashboard.html');
-  
+  const dashboardPath = path.join(
+    process.cwd(),
+    'test-results',
+    'dashboard.html'
+  )
+
   // Ensure directory exists
-  const dir = path.dirname(dashboardPath);
+  const dir = path.dirname(dashboardPath)
   if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+    fs.mkdirSync(dir, { recursive: true })
   }
-  
-  fs.writeFileSync(dashboardPath, html);
-  console.log(`  🌐 Dashboard HTML written to: ${dashboardPath}`);
+
+  fs.writeFileSync(dashboardPath, html)
+  console.log(`  🌐 Dashboard HTML written to: ${dashboardPath}`)
 }
 
 async function generateMetricsJSON(data) {
-  const metricsPath = path.join(process.cwd(), 'test-results', 'metrics.json');
-  fs.writeFileSync(metricsPath, JSON.stringify(data, null, 2));
-  console.log(`  💾 Metrics JSON written to: ${metricsPath}`);
+  const metricsPath = path.join(process.cwd(), 'test-results', 'metrics.json')
+  fs.writeFileSync(metricsPath, JSON.stringify(data, null, 2))
+  console.log(`  💾 Metrics JSON written to: ${metricsPath}`)
 }
 
 // Run if called directly
 if (require.main === module) {
   generateTestDashboard()
     .then(() => {
-      console.log('🎉 Test dashboard generation completed successfully');
-      process.exit(0);
+      console.log('🎉 Test dashboard generation completed successfully')
+      process.exit(0)
     })
-    .catch((error) => {
-      console.error('💥 Dashboard generation crashed:', error);
-      process.exit(1);
-    });
+    .catch(error => {
+      console.error('💥 Dashboard generation crashed:', error)
+      process.exit(1)
+    })
 }
 
-module.exports = { generateTestDashboard };
+module.exports = { generateTestDashboard }

@@ -13,17 +13,17 @@ export const AI_CONFIG = {
   RETRY_BASE_DELAY: 1000, // 1 second
   MAX_RETRY_DELAY: 30000, // 30 seconds
   ANALYSIS_TIMEOUT: parseInt(process.env.AI_ANALYSIS_TIMEOUT || '30000'), // 30 seconds
-  
+
   // Cost tracking (estimated costs in USD)
   ESTIMATED_COST_PER_TOKEN: 0.00001, // $0.01 per 1000 tokens
-  MAX_DAILY_COST: 10.00, // $10 daily limit
-  
+  MAX_DAILY_COST: 10.0, // $10 daily limit
+
   // Priority queue settings
   PRIORITY_WEIGHTS: {
     high: 3,
     normal: 1,
-    low: 0.5
-  }
+    low: 0.5,
+  },
 } as const
 
 // Analysis type priorities and dependencies
@@ -32,22 +32,24 @@ export const ANALYSIS_DEPENDENCIES: Record<AnalysisType, AnalysisType[]> = {
   emotional_stability: ['sentiment'], // Requires sentiment history
   energy_impact: [], // Independent analysis
   conflict_resolution: ['sentiment'], // Uses sentiment as input
-  gratitude: [] // Independent analysis
+  gratitude: [], // Independent analysis
 }
 
 // Analysis processing order based on dependencies
 export const ANALYSIS_PROCESSING_ORDER: AnalysisType[] = [
-  'sentiment',        // Must be first (base for others)
-  'energy_impact',    // Independent
-  'gratitude',        // Independent
+  'sentiment', // Must be first (base for others)
+  'energy_impact', // Independent
+  'gratitude', // Independent
   'emotional_stability', // Depends on sentiment
-  'conflict_resolution'  // Depends on sentiment
+  'conflict_resolution', // Depends on sentiment
 ]
 
 /**
  * Sort analysis types by processing order and dependencies
  */
-export function sortAnalysisTypesByDependencies(types: AnalysisType[]): AnalysisType[] {
+export function sortAnalysisTypesByDependencies(
+  types: AnalysisType[]
+): AnalysisType[] {
   return ANALYSIS_PROCESSING_ORDER.filter(type => types.includes(type))
 }
 
@@ -58,7 +60,7 @@ export function calculateRetryDelay(attempt: number): number {
   const baseDelay = AI_CONFIG.RETRY_BASE_DELAY
   const exponentialDelay = baseDelay * Math.pow(2, attempt - 1)
   const jitteredDelay = exponentialDelay * (0.8 + Math.random() * 0.4) // Add 20% jitter
-  
+
   return Math.min(jitteredDelay, AI_CONFIG.MAX_RETRY_DELAY)
 }
 
@@ -71,13 +73,13 @@ export function calculatePriorityScore(
   retryAttempt: number = 0
 ): number {
   const basePriority = AI_CONFIG.PRIORITY_WEIGHTS[priority]
-  
+
   // Boost priority for base analyses that others depend on
   const dependencyBoost = analysisType === 'sentiment' ? 1.5 : 1.0
-  
+
   // Reduce priority for retries to prevent retry loops from blocking new work
   const retryPenalty = Math.pow(0.8, retryAttempt)
-  
+
   return basePriority * dependencyBoost * retryPenalty
 }
 
@@ -91,31 +93,39 @@ export function validateAnalysisEnvironment(): {
 } {
   const errors: string[] = []
   const warnings: string[] = []
-  
+
   // Check required environment variables
   if (!process.env.GOOGLE_GEMINI_API_KEY) {
     errors.push('GOOGLE_GEMINI_API_KEY environment variable is required')
   }
-  
+
   // Validate rate limit configuration
-  if (AI_CONFIG.MAX_REQUESTS_PER_MINUTE < 1 || AI_CONFIG.MAX_REQUESTS_PER_MINUTE > 1000) {
-    warnings.push('AI_ANALYSIS_RATE_LIMIT should be between 1 and 1000 requests per minute')
+  if (
+    AI_CONFIG.MAX_REQUESTS_PER_MINUTE < 1 ||
+    AI_CONFIG.MAX_REQUESTS_PER_MINUTE > 1000
+  ) {
+    warnings.push(
+      'AI_ANALYSIS_RATE_LIMIT should be between 1 and 1000 requests per minute'
+    )
   }
-  
+
   // Validate batch size
   if (AI_CONFIG.BATCH_SIZE < 1 || AI_CONFIG.BATCH_SIZE > 50) {
     warnings.push('AI_ANALYSIS_BATCH_SIZE should be between 1 and 50')
   }
-  
+
   // Validate timeout
-  if (AI_CONFIG.ANALYSIS_TIMEOUT < 5000 || AI_CONFIG.ANALYSIS_TIMEOUT > 120000) {
+  if (
+    AI_CONFIG.ANALYSIS_TIMEOUT < 5000 ||
+    AI_CONFIG.ANALYSIS_TIMEOUT > 120000
+  ) {
     warnings.push('AI_ANALYSIS_TIMEOUT should be between 5 and 120 seconds')
   }
-  
+
   return {
     valid: errors.length === 0,
     errors,
-    warnings
+    warnings,
   }
 }
 
@@ -133,14 +143,16 @@ export function generateAnalysisMetadata(
   apiCosts?: number
 } {
   const processingTime = Date.now() - startTime
-  
+
   const metadata = {
     modelVersion,
     processingTime,
     tokenCount,
-    apiCosts: tokenCount ? tokenCount * AI_CONFIG.ESTIMATED_COST_PER_TOKEN : undefined
+    apiCosts: tokenCount
+      ? tokenCount * AI_CONFIG.ESTIMATED_COST_PER_TOKEN
+      : undefined,
   }
-  
+
   return metadata
 }
 
@@ -153,12 +165,12 @@ export function checkDailyCostLimit(todaysCosts: number): {
   warningThreshold: boolean
 } {
   const remainingBudget = AI_CONFIG.MAX_DAILY_COST - todaysCosts
-  const warningThreshold = todaysCosts > (AI_CONFIG.MAX_DAILY_COST * 0.8) // 80% warning
-  
+  const warningThreshold = todaysCosts > AI_CONFIG.MAX_DAILY_COST * 0.8 // 80% warning
+
   return {
     withinLimit: remainingBudget > 0,
     remainingBudget,
-    warningThreshold
+    warningThreshold,
   }
 }
 
@@ -179,13 +191,13 @@ export function sanitizeJournalContent(content: string): string {
     // Trim excessive whitespace
     .replace(/\s+/g, ' ')
     .trim()
-  
+
   // Truncate if too long (AI models have token limits)
   const maxLength = 2000 // Conservative limit for analysis
   if (sanitized.length > maxLength) {
     return sanitized.substring(0, maxLength) + '...'
   }
-  
+
   return sanitized
 }
 
@@ -212,49 +224,65 @@ export function validateAIResponse(
   normalizedResponse: any
 } {
   const errors: string[] = []
-  
+
   // Common validation
   if (!response || typeof response !== 'object') {
     errors.push('Response must be an object')
     return { valid: false, errors, normalizedResponse: null }
   }
-  
-  if (typeof response.confidence !== 'number' || response.confidence < 0 || response.confidence > 1) {
+
+  if (
+    typeof response.confidence !== 'number' ||
+    response.confidence < 0 ||
+    response.confidence > 1
+  ) {
     errors.push('Confidence must be a number between 0 and 1')
   }
-  
+
   // Type-specific validation
   switch (analysisType) {
     case 'sentiment':
-      if (typeof response.sentiment_score !== 'number' || response.sentiment_score < 1 || response.sentiment_score > 10) {
+      if (
+        typeof response.sentiment_score !== 'number' ||
+        response.sentiment_score < 1 ||
+        response.sentiment_score > 10
+      ) {
         errors.push('Sentiment score must be a number between 1 and 10')
       }
       if (!Array.isArray(response.emotions_detected)) {
         errors.push('Emotions detected must be an array')
       }
       break
-      
+
     case 'emotional_stability':
-      if (typeof response.stability_score !== 'number' || response.stability_score < 0 || response.stability_score > 100) {
+      if (
+        typeof response.stability_score !== 'number' ||
+        response.stability_score < 0 ||
+        response.stability_score > 100
+      ) {
         errors.push('Stability score must be a number between 0 and 100')
       }
       break
-      
+
     case 'energy_impact':
-      if (typeof response.energy_impact_score !== 'number' || response.energy_impact_score < 1 || response.energy_impact_score > 10) {
+      if (
+        typeof response.energy_impact_score !== 'number' ||
+        response.energy_impact_score < 1 ||
+        response.energy_impact_score > 10
+      ) {
         errors.push('Energy impact score must be a number between 1 and 10')
       }
       break
-      
+
     default:
       // For other types, just check basic structure
       break
   }
-  
+
   return {
     valid: errors.length === 0,
     errors,
-    normalizedResponse: response
+    normalizedResponse: response,
   }
 }
 
@@ -268,21 +296,21 @@ export function createBatchSchedule(
 ): Array<{ batchIndex: number; itemsInBatch: number; delayMs: number }> {
   const batches = Math.ceil(itemCount / batchSize)
   const minDelayBetweenBatches = (60000 / rateLimitPerMinute) * batchSize // Ensure rate limit compliance
-  
+
   const schedule = []
-  
+
   for (let i = 0; i < batches; i++) {
-    const remainingItems = itemCount - (i * batchSize)
+    const remainingItems = itemCount - i * batchSize
     const itemsInBatch = Math.min(batchSize, remainingItems)
     const delayMs = i * minDelayBetweenBatches
-    
+
     schedule.push({
       batchIndex: i,
       itemsInBatch,
-      delayMs
+      delayMs,
     })
   }
-  
+
   return schedule
 }
 
@@ -302,14 +330,14 @@ export function logAnalysisMetrics(
     processingTime,
     tokenCount,
     success,
-    error
+    error,
   }
-  
+
   // In development, log to console
   if (process.env.NODE_ENV === 'development') {
     console.log('AI Analysis Metrics:', JSON.stringify(metrics, null, 2))
   }
-  
+
   // In production, this could be sent to monitoring service
   // Example: sendToMonitoring(metrics)
 }

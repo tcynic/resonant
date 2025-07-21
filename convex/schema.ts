@@ -69,16 +69,16 @@ export default defineSchema({
       energyScore: v.optional(v.number()), // 1-10 for energy impact
       resolutionScore: v.optional(v.number()), // 1-10 for conflict resolution
       gratitudeScore: v.optional(v.number()), // 1-10 for gratitude
-      additionalData: v.optional(v.any()) // Flexible field for analysis-specific data
+      additionalData: v.optional(v.any()), // Flexible field for analysis-specific data
     }),
     metadata: v.object({
       modelVersion: v.string(),
       processingTime: v.number(),
       tokenCount: v.optional(v.number()),
-      apiCosts: v.optional(v.number())
+      apiCosts: v.optional(v.number()),
     }),
     createdAt: v.number(),
-    updatedAt: v.number()
+    updatedAt: v.number(),
   })
     .index('by_journal_entry', ['journalEntryId'])
     .index('by_relationship', ['relationshipId'])
@@ -92,21 +92,27 @@ export default defineSchema({
     userId: v.id('users'),
     overallScore: v.number(), // 0-100 scale
     componentScores: v.object({
-      sentiment: v.number(),           // 0-100
-      emotionalStability: v.number(),  // 0-100
-      energyImpact: v.number(),       // 0-100
-      conflictResolution: v.number(),  // 0-100
-      gratitude: v.number(),          // 0-100
-      communicationFrequency: v.number() // 0-100
+      sentiment: v.number(), // 0-100
+      emotionalStability: v.number(), // 0-100
+      energyImpact: v.number(), // 0-100
+      conflictResolution: v.number(), // 0-100
+      gratitude: v.number(), // 0-100
+      communicationFrequency: v.number(), // 0-100
     }),
     lastUpdated: v.number(),
     dataPoints: v.number(), // Number of entries used in calculation
     confidenceLevel: v.number(), // 0-1 overall confidence in the score
-    trendsData: v.optional(v.object({
-      improving: v.boolean(),
-      trendDirection: v.union(v.literal('up'), v.literal('down'), v.literal('stable')),
-      changeRate: v.number() // Percentage change over time
-    }))
+    trendsData: v.optional(
+      v.object({
+        improving: v.boolean(),
+        trendDirection: v.union(
+          v.literal('up'),
+          v.literal('down'),
+          v.literal('stable')
+        ),
+        changeRate: v.number(), // Percentage change over time
+      })
+    ),
   })
     .index('by_relationship', ['relationshipId'])
     .index('by_user', ['userId'])

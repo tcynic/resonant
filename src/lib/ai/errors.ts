@@ -27,7 +27,7 @@ export abstract class AIError extends Error {
     this.recoverable = recoverable
     this.retryable = retryable
     this.errorCode = errorCode
-    
+
     // Capture stack trace
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, this.constructor)
@@ -44,7 +44,7 @@ export abstract class AIError extends Error {
       context: this.context,
       recoverable: this.recoverable,
       retryable: this.retryable,
-      stack: this.stack
+      stack: this.stack,
     }
   }
 
@@ -80,7 +80,7 @@ export class AIServiceConnectionError extends AIError {
       'Check internet connection',
       'Verify API key configuration',
       'Try again in a few minutes',
-      'Contact support if issue persists'
+      'Contact support if issue persists',
     ]
   }
 }
@@ -97,7 +97,7 @@ export class AIServiceAuthError extends AIError {
       'AI_SERVICE_AUTH_ERROR',
       { service, statusCode, ...context },
       false, // Not recoverable without fixing auth
-      false  // Don't retry auth failures
+      false // Don't retry auth failures
     )
   }
 
@@ -110,7 +110,7 @@ export class AIServiceAuthError extends AIError {
       'Verify API key is valid',
       'Check API key permissions',
       'Contact administrator',
-      'Check service billing status'
+      'Check service billing status',
     ]
   }
 }
@@ -135,16 +135,20 @@ export class AIServiceRateLimitError extends AIError {
   }
 
   getUserMessage(): string {
-    const waitTime = this.retryAfter ? `Please wait ${Math.ceil(this.retryAfter / 1000)} seconds` : 'Please wait a moment'
+    const waitTime = this.retryAfter
+      ? `Please wait ${Math.ceil(this.retryAfter / 1000)} seconds`
+      : 'Please wait a moment'
     return `AI analysis is temporarily rate limited. ${waitTime} before trying again.`
   }
 
   getRecoveryActions(): string[] {
     return [
-      this.retryAfter ? `Wait ${Math.ceil(this.retryAfter / 1000)} seconds` : 'Wait before retrying',
+      this.retryAfter
+        ? `Wait ${Math.ceil(this.retryAfter / 1000)} seconds`
+        : 'Wait before retrying',
       'Reduce analysis frequency',
       'Try again later',
-      'Contact support for rate limit increase'
+      'Contact support for rate limit increase',
     ]
   }
 }
@@ -161,7 +165,7 @@ export class AIContentFilterError extends AIError {
       'AI_CONTENT_FILTER_ERROR',
       { reason, contentLength: content?.length, ...context },
       false, // Not recoverable without content changes
-      false  // Don't retry filtered content
+      false // Don't retry filtered content
     )
   }
 
@@ -174,7 +178,7 @@ export class AIContentFilterError extends AIError {
       'Modify the journal entry content',
       'Remove potentially sensitive information',
       'Try with a different entry',
-      'Contact support if content seems appropriate'
+      'Contact support if content seems appropriate',
     ]
   }
 }
@@ -193,7 +197,12 @@ export class AIAnalysisProcessingError extends AIError {
     super(
       `Failed to process ${analysisType} analysis at ${stage} stage: ${originalError?.message || 'Unknown processing error'}`,
       'AI_ANALYSIS_PROCESSING_ERROR',
-      { analysisType, stage, originalError: originalError?.message, ...context },
+      {
+        analysisType,
+        stage,
+        originalError: originalError?.message,
+        ...context,
+      },
       true,
       true
     )
@@ -210,7 +219,7 @@ export class AIAnalysisProcessingError extends AIError {
       'Try analyzing the entry again',
       'Check journal entry content',
       'Try a different analysis type',
-      'Contact support if issue persists'
+      'Contact support if issue persists',
     ]
   }
 }
@@ -243,7 +252,7 @@ export class AIDataValidationError extends AIError {
       'Retry the analysis',
       'Try with simpler journal entry',
       'Check entry for unusual characters',
-      'Contact support if issue persists'
+      'Contact support if issue persists',
     ]
   }
 }
@@ -265,7 +274,7 @@ export class AIResourceLimitError extends AIError {
       'AI_RESOURCE_LIMIT_ERROR',
       { limitType, currentUsage, limit, ...context },
       false, // Not recoverable until limit resets
-      false  // Don't retry until limit resets
+      false // Don't retry until limit resets
     )
     this.limitType = limitType
     this.currentUsage = currentUsage
@@ -283,7 +292,7 @@ export class AIResourceLimitError extends AIError {
       `Wait until ${resetTime} for limit reset`,
       'Contact support for limit increase',
       'Reduce analysis frequency',
-      'Prioritize most important entries'
+      'Prioritize most important entries',
     ]
   }
 }
@@ -316,7 +325,7 @@ export class AITimeoutError extends AIError {
       'Try again with a shorter journal entry',
       'Wait a moment and retry',
       'Check internet connection',
-      'Contact support if timeouts persist'
+      'Contact support if timeouts persist',
     ]
   }
 }
@@ -344,7 +353,9 @@ export class AIQueueError extends AIError {
   }
 
   getUserMessage(): string {
-    const waitMsg = this.estimatedWait ? ` (estimated wait: ${Math.ceil(this.estimatedWait / 1000)}s)` : ''
+    const waitMsg = this.estimatedWait
+      ? ` (estimated wait: ${Math.ceil(this.estimatedWait / 1000)}s)`
+      : ''
     return `AI analysis is queued${waitMsg}. Your analysis will be processed shortly.`
   }
 
@@ -353,7 +364,7 @@ export class AIQueueError extends AIError {
       'Wait for queue to process',
       'Try again in a few minutes',
       'Reduce analysis frequency during peak times',
-      'Contact support if delays persist'
+      'Contact support if delays persist',
     ]
   }
 }
@@ -371,10 +382,13 @@ export class AIPartialFailureError extends AIError {
     super(
       `Partial analysis failure: ${failedAnalyses.length} of ${successfulAnalyses.length + failedAnalyses.length} analyses failed`,
       'AI_PARTIAL_FAILURE_ERROR',
-      { 
+      {
         successfulAnalyses,
-        failedAnalyses: failedAnalyses.map(f => ({ type: f.type, error: f.error.message })),
-        ...context 
+        failedAnalyses: failedAnalyses.map(f => ({
+          type: f.type,
+          error: f.error.message,
+        })),
+        ...context,
       },
       true,
       true
@@ -392,7 +406,7 @@ export class AIPartialFailureError extends AIError {
       'Retry failed analyses individually',
       'Review successful results',
       'Check if partial results meet your needs',
-      'Contact support if specific analyses consistently fail'
+      'Contact support if specific analyses consistently fail',
     ]
   }
 }
@@ -405,17 +419,33 @@ export function createAIError(
 ): AIError {
   switch (type) {
     case 'connection':
-      return new AIServiceConnectionError(context.service as string || 'unknown', undefined, context)
+      return new AIServiceConnectionError(
+        (context.service as string) || 'unknown',
+        undefined,
+        context
+      )
     case 'auth':
-      return new AIServiceAuthError(context.service as string || 'unknown', context.statusCode as number, context)
+      return new AIServiceAuthError(
+        (context.service as string) || 'unknown',
+        context.statusCode as number,
+        context
+      )
     case 'rate_limit':
-      return new AIServiceRateLimitError(context.service as string || 'unknown', context.retryAfter as number, context)
+      return new AIServiceRateLimitError(
+        (context.service as string) || 'unknown',
+        context.retryAfter as number,
+        context
+      )
     case 'content_filter':
-      return new AIContentFilterError(message, context.content as string, context)
+      return new AIContentFilterError(
+        message,
+        context.content as string,
+        context
+      )
     case 'processing':
       return new AIAnalysisProcessingError(
-        context.analysisType as AnalysisType || 'sentiment',
-        context.stage as string || 'unknown',
+        (context.analysisType as AnalysisType) || 'sentiment',
+        (context.stage as string) || 'unknown',
         undefined,
         context
       )
@@ -423,28 +453,29 @@ export function createAIError(
       return new AIDataValidationError([message], context.data, context)
     case 'resource_limit':
       return new AIResourceLimitError(
-        context.limitType as any || 'daily',
-        context.currentUsage as number || 0,
-        context.limit as number || 0,
+        (context.limitType as 'daily' | 'monthly' | 'tokens' | 'requests') ||
+          'daily',
+        (context.currentUsage as number) || 0,
+        (context.limit as number) || 0,
         context
       )
     case 'timeout':
       return new AITimeoutError(
-        context.operation as string || 'unknown',
-        context.timeoutMs as number || 30000,
+        (context.operation as string) || 'unknown',
+        (context.timeoutMs as number) || 30000,
         context
       )
     case 'queue':
       return new AIQueueError(
         message,
-        context.queueSize as number || 0,
+        (context.queueSize as number) || 0,
         context.estimatedWait as number,
         context
       )
     default:
       // Fallback to generic processing error
       return new AIAnalysisProcessingError(
-        context.analysisType as AnalysisType || 'sentiment',
+        (context.analysisType as AnalysisType) || 'sentiment',
         'unknown',
         new Error(message),
         context
@@ -454,26 +485,35 @@ export function createAIError(
 
 // Error severity levels for logging and monitoring
 export enum AIErrorSeverity {
-  LOW = 'low',           // Temporary issues, retryable
-  MEDIUM = 'medium',     // Service degradation, some impact
-  HIGH = 'high',         // Significant failures, user impact
-  CRITICAL = 'critical'  // System-wide issues, immediate attention
+  LOW = 'low', // Temporary issues, retryable
+  MEDIUM = 'medium', // Service degradation, some impact
+  HIGH = 'high', // Significant failures, user impact
+  CRITICAL = 'critical', // System-wide issues, immediate attention
 }
 
 // Determine error severity
 export function getErrorSeverity(error: AIError): AIErrorSeverity {
-  if (error instanceof AIServiceAuthError || error instanceof AIResourceLimitError) {
+  if (
+    error instanceof AIServiceAuthError ||
+    error instanceof AIResourceLimitError
+  ) {
     return AIErrorSeverity.CRITICAL
   }
-  
-  if (error instanceof AIServiceConnectionError || error instanceof AIQueueError) {
+
+  if (
+    error instanceof AIServiceConnectionError ||
+    error instanceof AIQueueError
+  ) {
     return AIErrorSeverity.HIGH
   }
-  
-  if (error instanceof AIServiceRateLimitError || error instanceof AITimeoutError) {
+
+  if (
+    error instanceof AIServiceRateLimitError ||
+    error instanceof AITimeoutError
+  ) {
     return AIErrorSeverity.MEDIUM
   }
-  
+
   return AIErrorSeverity.LOW
 }
 
@@ -500,14 +540,14 @@ export function getRecoveryStrategy(error: AIError): AIErrorRecoveryStrategy {
     canRecover: error.recoverable,
     retryable: error.retryable,
     retryDelay: 1000,
-    maxRetries: 3
+    maxRetries: 3,
   }
 
   if (error instanceof AIServiceRateLimitError) {
     return {
       ...baseStrategy,
       retryDelay: error.retryAfter || 60000,
-      maxRetries: 1
+      maxRetries: 1,
     }
   }
 
@@ -515,7 +555,7 @@ export function getRecoveryStrategy(error: AIError): AIErrorRecoveryStrategy {
     return {
       ...baseStrategy,
       retryDelay: 2000,
-      maxRetries: 2
+      maxRetries: 2,
     }
   }
 
@@ -523,16 +563,19 @@ export function getRecoveryStrategy(error: AIError): AIErrorRecoveryStrategy {
     return {
       ...baseStrategy,
       retryDelay: 5000,
-      maxRetries: 3
+      maxRetries: 3,
     }
   }
 
-  if (error instanceof AIServiceAuthError || error instanceof AIContentFilterError) {
+  if (
+    error instanceof AIServiceAuthError ||
+    error instanceof AIContentFilterError
+  ) {
     return {
       ...baseStrategy,
       canRecover: false,
       retryable: false,
-      maxRetries: 0
+      maxRetries: 0,
     }
   }
 

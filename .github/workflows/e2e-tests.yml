@@ -130,20 +130,20 @@ jobs:
           echo "" >> test-summary.md
           echo "## Test Execution Summary" >> test-summary.md
           echo "" >> test-summary.md
-          
+
           # Count test files
           if [ -d "test-results" ]; then
             total_tests=$(find test-results -name "*.json" | wc -l)
             echo "- **Total Test Files**: $total_tests" >> test-summary.md
           fi
-          
+
           # Check for failures
           if [ -d "test-results/screenshots" ]; then
             echo "- **Test Failures**: Screenshots captured for failed tests" >> test-summary.md
           else
             echo "- **Test Failures**: No test failures detected" >> test-summary.md
           fi
-          
+
           echo "" >> test-summary.md
           echo "## Test Groups Executed" >> test-summary.md
           echo "- Authentication flows" >> test-summary.md
@@ -157,7 +157,7 @@ jobs:
           script: |
             const fs = require('fs');
             const testSummary = fs.readFileSync('test-summary.md', 'utf8');
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,

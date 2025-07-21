@@ -3,22 +3,19 @@
  * Tests error handling, recovery, monitoring, and fallback systems
  */
 
-import { describe, test, expect, beforeEach, jest, afterEach } from '@jest/globals'
+import { describe, test, expect, beforeEach, jest } from '@jest/globals'
 import {
   AIServiceConnectionError,
   AIServiceAuthError,
   AIServiceRateLimitError,
   AIAnalysisProcessingError,
-  AIDataValidationError,
-  AIResourceLimitError,
-  AITimeoutError,
   AIPartialFailureError,
   getErrorSeverity,
   getRecoveryStrategy,
-  AIErrorSeverity
+  AIErrorSeverity,
 } from '../errors'
 import { aiMonitoring, withMonitoring } from '../monitoring'
-import { aiFallback, withFallback, AIFallbackService } from '../fallback'
+import { aiFallback, withFallback } from '../fallback'
 import { aiRecovery, executeAIOperation } from '../recovery'
 
 // Set up environment
@@ -37,7 +34,10 @@ describe('Comprehensive Error Handling System', () => {
 
   describe('Error Classification and Severity', () => {
     test('should classify connection errors as HIGH severity', () => {
-      const error = new AIServiceConnectionError('gemini', new Error('Network timeout'))
+      const error = new AIServiceConnectionError(
+        'gemini',
+        new Error('Network timeout')
+      )
       expect(getErrorSeverity(error)).toBe(AIErrorSeverity.HIGH)
       expect(error.recoverable).toBe(true)
       expect(error.retryable).toBe(true)
@@ -59,11 +59,13 @@ describe('Comprehensive Error Handling System', () => {
 
     test('should provide user-friendly messages', () => {
       const connectionError = new AIServiceConnectionError('gemini')
-      expect(connectionError.getUserMessage()).toContain('temporarily unavailable')
-      
+      expect(connectionError.getUserMessage()).toContain(
+        'temporarily unavailable'
+      )
+
       const authError = new AIServiceAuthError('gemini')
       expect(authError.getUserMessage()).toContain('authentication failed')
-      
+
       const rateLimitError = new AIServiceRateLimitError('gemini', 30000)
       expect(rateLimitError.getUserMessage()).toContain('rate limited')
     })
@@ -116,7 +118,7 @@ describe('Comprehensive Error Handling System', () => {
         duration: 1500,
         success: true,
         tokens: 100,
-        confidence: 0.9
+        confidence: 0.9,
       })
 
       const performance = aiMonitoring.getPerformanceMetrics()
@@ -134,9 +136,13 @@ describe('Comprehensive Error Handling System', () => {
 
     test('should monitor operations with timing', async () => {
       const operation = jest.fn(() => Promise.resolve('success'))
-      
-      const result = await withMonitoring('test_operation', 'sentiment', operation)
-      
+
+      const result = await withMonitoring(
+        'test_operation',
+        'sentiment',
+        operation
+      )
+
       expect(result).toBe('success')
       expect(operation).toHaveBeenCalledTimes(1)
     })
@@ -144,9 +150,10 @@ describe('Comprehensive Error Handling System', () => {
 
   describe('Fallback System', () => {
     test('should perform rule-based sentiment analysis', async () => {
-      const positiveEntry = "I had an amazing day with my partner! We were so happy and connected."
+      const positiveEntry =
+        'I had an amazing day with my partner! We were so happy and connected.'
       const result = await aiFallback.analyzeSentimentFallback(positiveEntry)
-      
+
       expect(result.sentiment_score).toBeGreaterThan(6)
       expect(result.emotions_detected).toContain('joy')
       expect(result.confidence).toBeGreaterThan(0.5)
@@ -154,9 +161,10 @@ describe('Comprehensive Error Handling System', () => {
     })
 
     test('should analyze negative sentiment correctly', async () => {
-      const negativeEntry = "We had a terrible fight today. I feel so angry and hurt."
+      const negativeEntry =
+        'We had a terrible fight today. I feel so angry and hurt.'
       const result = await aiFallback.analyzeSentimentFallback(negativeEntry)
-      
+
       expect(result.sentiment_score).toBeLessThan(5)
       expect(result.emotions_detected).toContain('anger')
       expect(result.confidence).toBeGreaterThan(0.3)
@@ -166,11 +174,11 @@ describe('Comprehensive Error Handling System', () => {
       const sentimentHistory = [
         { score: 8, timestamp: Date.now(), emotions: ['happy'] },
         { score: 6, timestamp: Date.now() - 86400000, emotions: ['content'] },
-        { score: 7, timestamp: Date.now() - 172800000, emotions: ['positive'] }
+        { score: 7, timestamp: Date.now() - 172800000, emotions: ['positive'] },
       ]
-      
+
       const result = await aiFallback.analyzeStabilityFallback(sentimentHistory)
-      
+
       expect(result.stability_score).toBeGreaterThan(0)
       expect(result.trend_direction).toMatch(/improving|declining|stable/)
       expect(result.volatility_level).toMatch(/low|moderate|high/)
@@ -179,21 +187,29 @@ describe('Comprehensive Error Handling System', () => {
 
     test('should activate and deactivate fallback mode', () => {
       expect(aiFallback.isFallbackActive()).toBe(false)
-      
+
       aiFallback.activateFallback('Test reason')
       expect(aiFallback.isFallbackActive()).toBe(true)
       expect(aiFallback.getFallbackReason()).toBe('Test reason')
-      
+
       aiFallback.deactivateFallback()
       expect(aiFallback.isFallbackActive()).toBe(false)
     })
 
     test('should use fallback with withFallback helper', async () => {
-      const primaryOperation = jest.fn(() => Promise.reject(new AIServiceConnectionError('gemini')))
-      const fallbackOperation = jest.fn(() => Promise.resolve('fallback_result'))
-      
-      const result = await withFallback(primaryOperation, fallbackOperation, 'test_operation')
-      
+      const primaryOperation = jest.fn(() =>
+        Promise.reject(new AIServiceConnectionError('gemini'))
+      )
+      const fallbackOperation = jest.fn(() =>
+        Promise.resolve('fallback_result')
+      )
+
+      const result = await withFallback(
+        primaryOperation,
+        fallbackOperation,
+        'test_operation'
+      )
+
       expect(result).toBe('fallback_result')
       expect(primaryOperation).toHaveBeenCalledTimes(1)
       expect(fallbackOperation).toHaveBeenCalledTimes(1)
@@ -204,13 +220,13 @@ describe('Comprehensive Error Handling System', () => {
   describe('Circuit Breaker and Recovery', () => {
     test('should execute operation successfully', async () => {
       const operation = jest.fn(() => Promise.resolve('success'))
-      
+
       const result = await executeAIOperation(
         operation,
         'test_operation',
         'sentiment'
       )
-      
+
       expect(result).toBe('success')
       expect(operation).toHaveBeenCalledTimes(1)
     })
@@ -219,7 +235,7 @@ describe('Comprehensive Error Handling System', () => {
       // Test the retry strategy configuration rather than execution timing
       const connectionError = new AIServiceConnectionError('gemini')
       const strategy = getRecoveryStrategy(connectionError)
-      
+
       expect(strategy.retryable).toBe(true)
       expect(strategy.maxRetries).toBe(3)
       expect(strategy.retryDelay).toBe(5000)
@@ -229,23 +245,25 @@ describe('Comprehensive Error Handling System', () => {
       // Test fallback decision logic
       const connectionError = new AIServiceConnectionError('gemini')
       const authError = new AIServiceAuthError('gemini')
-      
+
       expect(aiFallback.shouldUseFallback(connectionError)).toBe(true)
       expect(aiFallback.shouldUseFallback(authError)).toBe(false) // Not retryable by default
     })
 
     test('should track recovery status', () => {
       const status = aiRecovery.getRecoveryStatus()
-      
+
       expect(status).toHaveProperty('circuitBreakers')
       expect(status).toHaveProperty('activeRecoveryAttempts')
       expect(status).toHaveProperty('fallbackStatus')
-      expect(status.fallbackStatus.capabilities).toContain('Rule-based sentiment analysis')
+      expect(status.fallbackStatus.capabilities).toContain(
+        'Rule-based sentiment analysis'
+      )
     })
 
     test('should provide health status for recovery system', () => {
       const health = aiRecovery.getHealthStatus()
-      
+
       expect(health.status).toMatch(/healthy|degraded|down/)
       expect(Array.isArray(health.issues)).toBe(true)
       expect(Array.isArray(health.recommendations)).toBe(true)
@@ -256,18 +274,25 @@ describe('Comprehensive Error Handling System', () => {
     test('should handle partial analysis failures', () => {
       const successfulAnalyses = ['sentiment', 'energy_impact'] as const
       const failedAnalyses = [
-        { type: 'emotional_stability' as const, error: new Error('Stability analysis failed') }
+        {
+          type: 'emotional_stability' as const,
+          error: new Error('Stability analysis failed'),
+        },
       ]
-      
+
       const partialError = new AIPartialFailureError(
         [...successfulAnalyses],
         failedAnalyses
       )
-      
+
       expect(partialError.successfulAnalyses).toEqual(successfulAnalyses)
       expect(partialError.failedAnalyses).toHaveLength(1)
-      expect(partialError.getUserMessage()).toContain('Some AI analyses completed successfully')
-      expect(partialError.getRecoveryActions()).toContain('Retry failed analyses individually')
+      expect(partialError.getUserMessage()).toContain(
+        'Some AI analyses completed successfully'
+      )
+      expect(partialError.getRecoveryActions()).toContain(
+        'Retry failed analyses individually'
+      )
     })
   })
 
@@ -275,19 +300,19 @@ describe('Comprehensive Error Handling System', () => {
     test('should integrate all error handling components', () => {
       // Test that all components are properly integrated
       const error = new AIServiceConnectionError('gemini')
-      
+
       // Error classification
       const severity = getErrorSeverity(error)
       expect(severity).toBeDefined()
-      
+
       // Recovery strategy
       const strategy = getRecoveryStrategy(error)
       expect(strategy).toBeDefined()
-      
+
       // Fallback eligibility
       const shouldFallback = aiFallback.shouldUseFallback(error)
       expect(shouldFallback).toBe(true)
-      
+
       // Recovery status
       const status = aiRecovery.getRecoveryStatus()
       expect(status).toBeDefined()
@@ -301,16 +326,16 @@ describe('Comprehensive Error Handling System', () => {
         analysisType: 'sentiment',
         operation: 'test',
         duration: 1000,
-        success: true
+        success: true,
       })
 
       const metrics = aiMonitoring.exportMetrics()
-      
+
       expect(metrics).toHaveProperty('errors')
       expect(metrics).toHaveProperty('performance')
       expect(metrics).toHaveProperty('health')
       expect(metrics).toHaveProperty('alerts')
-      
+
       expect(metrics.errors.total).toBeGreaterThan(0)
       expect(metrics.performance.totalRequests).toBeGreaterThan(0)
       expect(metrics.health.status).toMatch(/healthy|degraded|down/)
@@ -327,7 +352,7 @@ describe('Comprehensive Error Handling System', () => {
       )
 
       const errorJson = error.toJSON()
-      
+
       expect(errorJson.name).toBe('AIAnalysisProcessingError')
       expect(errorJson.errorCode).toBe('AI_ANALYSIS_PROCESSING_ERROR')
       expect(errorJson.context.userId).toBe('test-user')

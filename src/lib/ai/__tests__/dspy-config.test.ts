@@ -2,26 +2,28 @@
  * Tests for DSPy-inspired configuration framework
  */
 
-import { 
-  DSPyModule, 
-  SentimentAnalysisSignature, 
+import {
+  DSPyModule,
+  SentimentAnalysisSignature,
   createSignature,
   DSPyField,
-  DSPyExample
+  DSPyExample,
 } from '../dspy-config'
 import { z } from 'zod'
 
 // Mock DSPy module for testing
 class TestModule extends DSPyModule {
-  async forward(inputs: Record<string, unknown>): Promise<Record<string, unknown>> {
+  async forward(
+    inputs: Record<string, unknown>
+  ): Promise<Record<string, unknown>> {
     this.validateInputs(inputs)
-    
+
     // Simple mock implementation
     const output = {
       test_output: `Processed: ${inputs.test_input}`,
-      confidence: 0.95
+      confidence: 0.95,
     }
-    
+
     this.validateOutputs(output)
     return output
   }
@@ -36,27 +38,27 @@ describe('DSPyModule', () => {
         type: 'string',
         description: 'Test input field',
         required: true,
-        validation: z.string().min(1)
+        validation: z.string().min(1),
       },
       optional_input: {
         type: 'string',
         description: 'Optional test input',
-        required: false
-      }
+        required: false,
+      },
     },
     {
       test_output: {
         type: 'string',
         description: 'Test output field',
         required: true,
-        validation: z.string()
+        validation: z.string(),
       },
       confidence: {
         type: 'number',
         description: 'Confidence score',
         required: true,
-        validation: z.number().min(0).max(1)
-      }
+        validation: z.number().min(0).max(1),
+      },
     }
   )
 
@@ -74,12 +76,16 @@ describe('DSPyModule', () => {
 
     it('should throw error for missing required inputs', () => {
       const inputs = { optional_input: 'present' }
-      expect(() => testModule.validateInputs(inputs)).toThrow('Required input field \'test_input\' is missing')
+      expect(() => testModule.validateInputs(inputs)).toThrow(
+        "Required input field 'test_input' is missing"
+      )
     })
 
     it('should validate input schemas', () => {
       const inputs = { test_input: '' } // Empty string should fail min(1)
-      expect(() => testModule.validateInputs(inputs)).toThrow('Validation failed for field \'test_input\'')
+      expect(() => testModule.validateInputs(inputs)).toThrow(
+        "Validation failed for field 'test_input'"
+      )
     })
 
     it('should allow optional inputs to be missing', () => {
@@ -90,24 +96,28 @@ describe('DSPyModule', () => {
 
   describe('output validation', () => {
     it('should validate required outputs successfully', () => {
-      const outputs = { 
+      const outputs = {
         test_output: 'valid output',
-        confidence: 0.95
+        confidence: 0.95,
       }
       expect(() => testModule.validateOutputs(outputs)).not.toThrow()
     })
 
     it('should throw error for missing required outputs', () => {
       const outputs = { test_output: 'present' }
-      expect(() => testModule.validateOutputs(outputs)).toThrow('Required output field \'confidence\' is missing')
+      expect(() => testModule.validateOutputs(outputs)).toThrow(
+        "Required output field 'confidence' is missing"
+      )
     })
 
     it('should validate output schemas', () => {
-      const outputs = { 
+      const outputs = {
         test_output: 'valid output',
-        confidence: 1.5 // Should fail max(1)
+        confidence: 1.5, // Should fail max(1)
       }
-      expect(() => testModule.validateOutputs(outputs)).toThrow('Validation failed for output field \'confidence\'')
+      expect(() => testModule.validateOutputs(outputs)).toThrow(
+        "Validation failed for output field 'confidence'"
+      )
     })
   })
 
@@ -115,7 +125,7 @@ describe('DSPyModule', () => {
     it('should generate proper prompt format', () => {
       const inputs = { test_input: 'sample input' }
       const prompt = testModule.getPrompt(inputs)
-      
+
       expect(prompt).toContain('Task: Test signature for validation')
       expect(prompt).toContain('test_input: sample input')
       expect(prompt).toContain('Expected Output Format:')
@@ -126,17 +136,19 @@ describe('DSPyModule', () => {
     it('should include examples when available', () => {
       const signatureWithExamples = {
         ...testSignature,
-        examples: [{
-          inputs: { test_input: 'example input' },
-          outputs: { test_output: 'example output', confidence: 0.9 },
-          description: 'Sample example'
-        }]
+        examples: [
+          {
+            inputs: { test_input: 'example input' },
+            outputs: { test_output: 'example output', confidence: 0.9 },
+            description: 'Sample example',
+          },
+        ],
       }
-      
+
       const moduleWithExamples = new TestModule(signatureWithExamples)
       const inputs = { test_input: 'sample input' }
       const prompt = moduleWithExamples.getPrompt(inputs)
-      
+
       expect(prompt).toContain('Examples:')
       expect(prompt).toContain('example input')
       expect(prompt).toContain('example output')
@@ -148,7 +160,7 @@ describe('DSPyModule', () => {
     it('should process inputs and return validated outputs', async () => {
       const inputs = { test_input: 'test data' }
       const result = await testModule.forward(inputs)
-      
+
       expect(result).toHaveProperty('test_output')
       expect(result).toHaveProperty('confidence')
       expect(result.test_output).toContain('test data')
@@ -157,7 +169,9 @@ describe('DSPyModule', () => {
 
     it('should throw error for invalid inputs', async () => {
       const inputs = { invalid_input: 'test' }
-      await expect(testModule.forward(inputs)).rejects.toThrow('Required input field \'test_input\' is missing')
+      await expect(testModule.forward(inputs)).rejects.toThrow(
+        "Required input field 'test_input' is missing"
+      )
     })
   })
 })
@@ -167,14 +181,16 @@ describe('SentimentAnalysisSignature', () => {
     expect(SentimentAnalysisSignature.name).toBe('SentimentAnalysis')
     expect(SentimentAnalysisSignature.inputs).toHaveProperty('journal_entry')
     expect(SentimentAnalysisSignature.outputs).toHaveProperty('sentiment_score')
-    expect(SentimentAnalysisSignature.outputs).toHaveProperty('emotions_detected')
+    expect(SentimentAnalysisSignature.outputs).toHaveProperty(
+      'emotions_detected'
+    )
     expect(SentimentAnalysisSignature.outputs).toHaveProperty('confidence')
   })
 
   it('should have valid examples', () => {
     expect(SentimentAnalysisSignature.examples).toBeDefined()
     expect(SentimentAnalysisSignature.examples!.length).toBeGreaterThan(0)
-    
+
     const example = SentimentAnalysisSignature.examples![0]
     expect(example.inputs).toHaveProperty('journal_entry')
     expect(example.outputs).toHaveProperty('sentiment_score')
@@ -183,8 +199,9 @@ describe('SentimentAnalysisSignature', () => {
   })
 
   it('should validate sentiment score range', () => {
-    const sentimentValidation = SentimentAnalysisSignature.outputs.sentiment_score.validation!
-    
+    const sentimentValidation =
+      SentimentAnalysisSignature.outputs.sentiment_score.validation!
+
     expect(() => sentimentValidation.parse(5)).not.toThrow()
     expect(() => sentimentValidation.parse(1)).not.toThrow()
     expect(() => sentimentValidation.parse(10)).not.toThrow()
@@ -193,8 +210,9 @@ describe('SentimentAnalysisSignature', () => {
   })
 
   it('should validate confidence range', () => {
-    const confidenceValidation = SentimentAnalysisSignature.outputs.confidence.validation!
-    
+    const confidenceValidation =
+      SentimentAnalysisSignature.outputs.confidence.validation!
+
     expect(() => confidenceValidation.parse(0.5)).not.toThrow()
     expect(() => confidenceValidation.parse(0)).not.toThrow()
     expect(() => confidenceValidation.parse(1)).not.toThrow()
@@ -209,25 +227,33 @@ describe('createSignature', () => {
       text: {
         type: 'string',
         description: 'Input text',
-        required: true
-      }
+        required: true,
+      },
     }
-    
+
     const outputs: Record<string, DSPyField> = {
       result: {
         type: 'string',
         description: 'Output result',
-        required: true
-      }
+        required: true,
+      },
     }
-    
-    const examples: DSPyExample[] = [{
-      inputs: { text: 'example' },
-      outputs: { result: 'processed' }
-    }]
-    
-    const signature = createSignature('TestSig', 'Test description', inputs, outputs, examples)
-    
+
+    const examples: DSPyExample[] = [
+      {
+        inputs: { text: 'example' },
+        outputs: { result: 'processed' },
+      },
+    ]
+
+    const signature = createSignature(
+      'TestSig',
+      'Test description',
+      inputs,
+      outputs,
+      examples
+    )
+
     expect(signature.name).toBe('TestSig')
     expect(signature.description).toBe('Test description')
     expect(signature.inputs).toEqual(inputs)
@@ -242,7 +268,7 @@ describe('createSignature', () => {
       { input: { type: 'string', description: 'test', required: true } },
       { output: { type: 'string', description: 'test', required: true } }
     )
-    
+
     expect(signature.examples).toBeUndefined()
   })
 })

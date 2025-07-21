@@ -3,155 +3,173 @@
  * Core analysis functions for relationship health scoring using DSPy framework
  */
 
-import { DSPyModule, DSPySignature, DSPyField } from './dspy-config'
-import { GeminiClient, getGeminiClient, SentimentAnalysisResult } from './gemini-client'
-import { formatPrompt, SENTIMENT_ANALYSIS_PROMPT } from './prompts'
+import { DSPyModule, DSPySignature } from './dspy-config'
+import {
+  GeminiClient,
+  getGeminiClient,
+  SentimentAnalysisResult,
+} from './gemini-client'
+// Removed unused imports from prompts
 import { z } from 'zod'
 import { executeAIOperation } from './recovery'
 import { withMonitoring } from './monitoring'
 import { aiFallback } from './fallback'
-import { AIAnalysisProcessingError, AIDataValidationError, createAIError } from './errors'
+import { AIAnalysisProcessingError, AIDataValidationError } from './errors'
 
 // DSPy Signatures following official patterns
 const SentimentAnalysisSignature: DSPySignature = {
   name: 'SentimentAnalysis',
-  description: 'Analyze sentiment of relationship journal entries with emotional intelligence',
+  description:
+    'Analyze sentiment of relationship journal entries with emotional intelligence',
   inputs: {
     journal_entry: {
       type: 'string',
       description: "User's journal entry text about their relationship",
       required: true,
-      validation: z.string().min(10).max(2000)
-    }
+      validation: z.string().min(10).max(2000),
+    },
   },
   outputs: {
     sentiment_score: {
-      type: 'number', 
-      description: "Sentiment score 1-10, where 1=very negative, 10=very positive",
+      type: 'number',
+      description:
+        'Sentiment score 1-10, where 1=very negative, 10=very positive',
       required: true,
-      validation: z.number().min(1).max(10)
+      validation: z.number().min(1).max(10),
     },
     emotions_detected: {
       type: 'array',
-      description: "List of emotions found with individual analysis",
+      description: 'List of emotions found with individual analysis',
       required: true,
-      validation: z.array(z.string())
+      validation: z.array(z.string()),
     },
     confidence: {
       type: 'number',
-      description: "AI confidence in analysis 0-1",
+      description: 'AI confidence in analysis 0-1',
       required: true,
-      validation: z.number().min(0).max(1)
+      validation: z.number().min(0).max(1),
     },
     explanation: {
       type: 'string',
-      description: "Brief explanation of the sentiment analysis",
+      description: 'Brief explanation of the sentiment analysis',
       required: false,
-      validation: z.string().optional()
-    }
+      validation: z.string().optional(),
+    },
   },
   examples: [
     {
-      inputs: { journal_entry: "I had a wonderful day with my partner. We laughed and felt so connected." },
-      outputs: { 
-        sentiment_score: 8.5, 
-        emotions_detected: ["joy", "love", "connection"], 
+      inputs: {
+        journal_entry:
+          'I had a wonderful day with my partner. We laughed and felt so connected.',
+      },
+      outputs: {
+        sentiment_score: 8.5,
+        emotions_detected: ['joy', 'love', 'connection'],
         confidence: 0.92,
-        explanation: "Very positive emotional content with strong connection indicators"
-      }
+        explanation:
+          'Very positive emotional content with strong connection indicators',
+      },
     },
     {
-      inputs: { journal_entry: "We had another argument today. I feel frustrated and disconnected." },
-      outputs: { 
-        sentiment_score: 2.5, 
-        emotions_detected: ["frustration", "sadness", "disconnection"], 
+      inputs: {
+        journal_entry:
+          'We had another argument today. I feel frustrated and disconnected.',
+      },
+      outputs: {
+        sentiment_score: 2.5,
+        emotions_detected: ['frustration', 'sadness', 'disconnection'],
         confidence: 0.88,
-        explanation: "Negative sentiment with conflict and emotional distance"
-      }
-    }
-  ]
+        explanation: 'Negative sentiment with conflict and emotional distance',
+      },
+    },
+  ],
 }
 
 const EmotionalStabilitySignature: DSPySignature = {
-  name: 'EmotionalStability', 
-  description: 'Analyze emotional stability patterns over time in relationship dynamics',
+  name: 'EmotionalStability',
+  description:
+    'Analyze emotional stability patterns over time in relationship dynamics',
   inputs: {
     sentiment_history: {
       type: 'array',
-      description: "Recent sentiment scores and timestamps for trend analysis",
+      description: 'Recent sentiment scores and timestamps for trend analysis',
       required: true,
-      validation: z.array(z.object({
-        score: z.number(),
-        timestamp: z.number(),
-        emotions: z.array(z.string()).optional()
-      }))
-    }
+      validation: z.array(
+        z.object({
+          score: z.number(),
+          timestamp: z.number(),
+          emotions: z.array(z.string()).optional(),
+        })
+      ),
+    },
   },
   outputs: {
     stability_score: {
       type: 'number',
-      description: "Emotional stability score 0-100, higher means more stable",
+      description: 'Emotional stability score 0-100, higher means more stable',
       required: true,
-      validation: z.number().min(0).max(100)
+      validation: z.number().min(0).max(100),
     },
     trend_direction: {
       type: 'string',
-      description: "Overall emotional trend: improving, declining, or stable",
+      description: 'Overall emotional trend: improving, declining, or stable',
       required: true,
-      validation: z.enum(['improving', 'declining', 'stable'])
+      validation: z.enum(['improving', 'declining', 'stable']),
     },
     volatility_level: {
       type: 'string',
-      description: "Emotional volatility: low, moderate, high", 
+      description: 'Emotional volatility: low, moderate, high',
       required: true,
-      validation: z.enum(['low', 'moderate', 'high'])
+      validation: z.enum(['low', 'moderate', 'high']),
     },
     recovery_patterns: {
       type: 'string',
-      description: "How quickly emotions recover from negative states",
+      description: 'How quickly emotions recover from negative states',
       required: true,
-      validation: z.string()
-    }
-  }
+      validation: z.string(),
+    },
+  },
 }
 
 const EnergyImpactSignature: DSPySignature = {
   name: 'EnergyImpact',
-  description: 'Analyze how relationship interactions affect personal energy levels',
+  description:
+    'Analyze how relationship interactions affect personal energy levels',
   inputs: {
     journal_entry: {
       type: 'string',
-      description: "Journal entry describing relationship interaction",
+      description: 'Journal entry describing relationship interaction',
       required: true,
-      validation: z.string().min(10).max(2000)
-    }
+      validation: z.string().min(10).max(2000),
+    },
   },
   outputs: {
     energy_score: {
       type: 'number',
-      description: "Energy impact score 1-10, where 1=very draining, 10=very energizing",
+      description:
+        'Energy impact score 1-10, where 1=very draining, 10=very energizing',
       required: true,
-      validation: z.number().min(1).max(10)
+      validation: z.number().min(1).max(10),
     },
     energy_indicators: {
       type: 'array',
-      description: "Specific words/phrases indicating energy impact",
+      description: 'Specific words/phrases indicating energy impact',
       required: true,
-      validation: z.array(z.string())
+      validation: z.array(z.string()),
     },
     overall_effect: {
       type: 'string',
-      description: "General energy effect category",
+      description: 'General energy effect category',
       required: true,
-      validation: z.enum(['energizing', 'neutral', 'draining'])
+      validation: z.enum(['energizing', 'neutral', 'draining']),
     },
     explanation: {
       type: 'string',
-      description: "Analysis of why this interaction had the energy impact",
+      description: 'Analysis of why this interaction had the energy impact',
       required: true,
-      validation: z.string()
-    }
-  }
+      validation: z.string(),
+    },
+  },
 }
 
 // Validation schemas for responses
@@ -159,21 +177,21 @@ const SentimentResponseSchema = z.object({
   sentiment_score: z.number().min(1).max(10),
   emotions_detected: z.array(z.string()),
   confidence: z.number().min(0).max(1),
-  explanation: z.string().optional()
+  explanation: z.string().optional(),
 })
 
 const EmotionalStabilityResponseSchema = z.object({
   stability_score: z.number().min(0).max(100),
   trend_direction: z.enum(['improving', 'declining', 'stable']),
   volatility_level: z.enum(['low', 'moderate', 'high']),
-  recovery_patterns: z.string()
+  recovery_patterns: z.string(),
 })
 
 const EnergyImpactResponseSchema = z.object({
   energy_score: z.number().min(1).max(10),
   energy_indicators: z.array(z.string()),
   overall_effect: z.enum(['energizing', 'neutral', 'draining']),
-  explanation: z.string()
+  explanation: z.string(),
 })
 
 // Enhanced DSPy Module Implementations
@@ -185,61 +203,69 @@ export class SentimentAnalysisModule extends DSPyModule {
     this.geminiClient = geminiClient || getGeminiClient()
   }
 
-  async forward(inputs: Record<string, unknown>): Promise<Record<string, unknown>> {
-    return withMonitoring('sentiment_analysis', 'sentiment', async () => {
-      // Validate inputs using DSPy signature
-      try {
-        this.validateInputs(inputs)
-      } catch (error) {
-        throw new AIDataValidationError(['Input validation failed'], inputs, {
-          analysisType: 'sentiment',
-          stage: 'input_validation'
-        })
-      }
-
-      // Generate DSPy-style prompt with examples
-      const prompt = this.generatePromptWithExamples(inputs)
-      
-      try {
-        const response = await this.geminiClient.generateStructuredResponse<SentimentAnalysisResult>(
-          prompt,
-          {
-            sentiment_score: 'number between 1-10',
-            emotions_detected: 'array of emotion strings',
-            confidence: 'number between 0-1',
-            explanation: 'optional brief explanation'
-          }
-        )
-
-        // Validate outputs using signature validation
-        let validatedResponse: any
+  async forward(
+    inputs: Record<string, unknown>
+  ): Promise<Record<string, unknown>> {
+    return withMonitoring(
+      'sentiment_analysis',
+      'sentiment',
+      async () => {
+        // Validate inputs using DSPy signature
         try {
-          validatedResponse = SentimentResponseSchema.parse(response)
-          this.validateOutputs(validatedResponse)
-        } catch (validationError) {
-          throw new AIDataValidationError(
-            validationError instanceof z.ZodError 
-              ? validationError.issues.map((e: z.ZodIssue) => e.message)
-              : ['Response validation failed'],
-            response,
-            { analysisType: 'sentiment', stage: 'output_validation' }
+          this.validateInputs(inputs)
+        } catch {
+          throw new AIDataValidationError(['Input validation failed'], inputs, {
+            analysisType: 'sentiment',
+            stage: 'input_validation',
+          })
+        }
+
+        // Generate DSPy-style prompt with examples
+        const prompt = this.generatePromptWithExamples(inputs)
+
+        try {
+          const response =
+            await this.geminiClient.generateStructuredResponse<SentimentAnalysisResult>(
+              prompt,
+              {
+                sentiment_score: 'number between 1-10',
+                emotions_detected: 'array of emotion strings',
+                confidence: 'number between 0-1',
+                explanation: 'optional brief explanation',
+              }
+            )
+
+          // Validate outputs using signature validation
+          let validatedResponse: SentimentAnalysisResult
+          try {
+            validatedResponse = SentimentResponseSchema.parse(response)
+            this.validateOutputs(validatedResponse)
+          } catch (validationError) {
+            throw new AIDataValidationError(
+              validationError instanceof z.ZodError
+                ? validationError.issues.map((e: z.ZodIssue) => e.message)
+                : ['Response validation failed'],
+              response,
+              { analysisType: 'sentiment', stage: 'output_validation' }
+            )
+          }
+
+          return validatedResponse as Record<string, unknown>
+        } catch (error) {
+          if (error instanceof AIDataValidationError) {
+            throw error
+          }
+
+          throw new AIAnalysisProcessingError(
+            'sentiment',
+            'ai_generation',
+            error instanceof Error ? error : new Error('Unknown error'),
+            { journalEntry: inputs.journal_entry }
           )
         }
-
-        return validatedResponse as Record<string, unknown>
-      } catch (error) {
-        if (error instanceof AIDataValidationError) {
-          throw error
-        }
-        
-        throw new AIAnalysisProcessingError(
-          'sentiment',
-          'ai_generation',
-          error instanceof Error ? error : new Error('Unknown error'),
-          { journalEntry: inputs.journal_entry }
-        )
-      }
-    }, { journalEntry: inputs.journal_entry })
+      },
+      { journalEntry: inputs.journal_entry }
+    )
   }
 
   private generatePromptWithExamples(inputs: Record<string, unknown>): string {
@@ -252,10 +278,16 @@ Task: Analyze the sentiment of the following relationship journal entry and prov
 4. A brief explanation of your reasoning
 
 Examples:
-${this.signature.examples?.map(example => `
+${
+  this.signature.examples
+    ?.map(
+      example => `
 Input: ${example.inputs.journal_entry}
 Output: ${JSON.stringify(example.outputs, null, 2)}
-`).join('\n') || ''}
+`
+    )
+    .join('\n') || ''
+}
 
 Now analyze this entry:
 Journal Entry: ${inputs.journal_entry}
@@ -265,7 +297,9 @@ Respond in valid JSON format with the required fields.`
     return basePrompt
   }
 
-  async analyzeSentiment(journalEntry: string): Promise<SentimentAnalysisResult> {
+  async analyzeSentiment(
+    journalEntry: string
+  ): Promise<SentimentAnalysisResult> {
     return executeAIOperation(
       async () => {
         const result = await this.forward({ journal_entry: journalEntry })
@@ -290,11 +324,13 @@ export class EmotionalStabilityModule extends DSPyModule {
     this.geminiClient = geminiClient || getGeminiClient()
   }
 
-  async forward(inputs: Record<string, unknown>): Promise<Record<string, unknown>> {
+  async forward(
+    inputs: Record<string, unknown>
+  ): Promise<Record<string, unknown>> {
     this.validateInputs(inputs)
 
     const prompt = this.generateStabilityPrompt(inputs)
-    
+
     try {
       const response = await this.geminiClient.generateStructuredResponse(
         prompt,
@@ -302,7 +338,7 @@ export class EmotionalStabilityModule extends DSPyModule {
           stability_score: 'number 0-100',
           trend_direction: 'improving/declining/stable',
           volatility_level: 'low/moderate/high',
-          recovery_patterns: 'string analysis'
+          recovery_patterns: 'string analysis',
         }
       )
 
@@ -311,22 +347,32 @@ export class EmotionalStabilityModule extends DSPyModule {
 
       return validatedResponse as Record<string, unknown>
     } catch (error) {
-      throw new Error(`Emotional stability analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      throw new Error(
+        `Emotional stability analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      )
     }
   }
 
   private generateStabilityPrompt(inputs: Record<string, unknown>): string {
-    const sentimentHistory = inputs.sentiment_history as Array<{ score: number; timestamp: number; emotions?: string[] }>
-    
+    const sentimentHistory = inputs.sentiment_history as Array<{
+      score: number
+      timestamp: number
+      emotions?: string[]
+    }>
+
     return `${this.signature.description}
 
 Task: Analyze emotional stability patterns from historical sentiment data.
 
 Sentiment History (most recent first):
-${sentimentHistory.map((entry, index) => `
+${sentimentHistory
+  .map(
+    (entry, index) => `
 ${index + 1}. Score: ${entry.score}/10, Date: ${new Date(entry.timestamp).toLocaleDateString()}
    Emotions: ${entry.emotions?.join(', ') || 'N/A'}
-`).join('')}
+`
+  )
+  .join('')}
 
 Calculate:
 1. stability_score (0-100): Higher scores indicate more emotional stability
@@ -343,7 +389,13 @@ Consider factors:
 Respond in valid JSON format.`
   }
 
-  async analyzeStability(sentimentHistory: Array<{ score: number; timestamp: number; emotions?: string[] }>) {
+  async analyzeStability(
+    sentimentHistory: Array<{
+      score: number
+      timestamp: number
+      emotions?: string[]
+    }>
+  ) {
     const result = await this.forward({ sentiment_history: sentimentHistory })
     return result
   }
@@ -357,11 +409,13 @@ export class EnergyImpactModule extends DSPyModule {
     this.geminiClient = geminiClient || getGeminiClient()
   }
 
-  async forward(inputs: Record<string, unknown>): Promise<Record<string, unknown>> {
+  async forward(
+    inputs: Record<string, unknown>
+  ): Promise<Record<string, unknown>> {
     this.validateInputs(inputs)
 
     const prompt = this.generateEnergyPrompt(inputs)
-    
+
     try {
       const response = await this.geminiClient.generateStructuredResponse(
         prompt,
@@ -369,7 +423,7 @@ export class EnergyImpactModule extends DSPyModule {
           energy_score: 'number 1-10',
           energy_indicators: 'array of strings',
           overall_effect: 'energizing/neutral/draining',
-          explanation: 'string explanation'
+          explanation: 'string explanation',
         }
       )
 
@@ -378,7 +432,9 @@ export class EnergyImpactModule extends DSPyModule {
 
       return validatedResponse as Record<string, unknown>
     } catch (error) {
-      throw new Error(`Energy impact analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      throw new Error(
+        `Energy impact analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      )
     }
   }
 
@@ -412,7 +468,7 @@ Respond in valid JSON format.`
 // DSPy-based relationship analysis orchestrator
 export class RelationshipAnalyzer {
   private sentimentModule: SentimentAnalysisModule
-  private stabilityModule: EmotionalStabilityModule  
+  private stabilityModule: EmotionalStabilityModule
   private energyModule: EnergyImpactModule
 
   constructor(geminiClient?: GeminiClient) {
@@ -422,7 +478,9 @@ export class RelationshipAnalyzer {
     this.energyModule = new EnergyImpactModule(client)
   }
 
-  async analyzeSentiment(journalEntry: string): Promise<SentimentAnalysisResult> {
+  async analyzeSentiment(
+    journalEntry: string
+  ): Promise<SentimentAnalysisResult> {
     return executeAIOperation(
       async () => await this.sentimentModule.analyzeSentiment(journalEntry),
       'relationship_sentiment_analysis',
@@ -432,7 +490,13 @@ export class RelationshipAnalyzer {
     )
   }
 
-  async analyzeEmotionalStability(sentimentHistory: Array<{ score: number; timestamp: number; emotions?: string[] }>) {
+  async analyzeEmotionalStability(
+    sentimentHistory: Array<{
+      score: number
+      timestamp: number
+      emotions?: string[]
+    }>
+  ) {
     return executeAIOperation(
       async () => await this.stabilityModule.analyzeStability(sentimentHistory),
       'emotional_stability_analysis',
@@ -445,7 +509,7 @@ export class RelationshipAnalyzer {
   async analyzeEnergyImpact(journalEntry: string) {
     return executeAIOperation(
       async () => await this.energyModule.analyzeEnergyImpact(journalEntry),
-      'energy_impact_analysis', 
+      'energy_impact_analysis',
       'energy_impact',
       async () => aiFallback.analyzeEnergyFallback(journalEntry),
       { journalEntry }
@@ -455,19 +519,24 @@ export class RelationshipAnalyzer {
   // Comprehensive analysis following DSPy multi-stage pipeline pattern
   async analyzeJournalEntry(
     journalEntry: string,
-    sentimentHistory?: Array<{ score: number; timestamp: number; emotions?: string[] }>
+    sentimentHistory?: Array<{
+      score: number
+      timestamp: number
+      emotions?: string[]
+    }>
   ) {
     try {
       // Stage 1: Sentiment analysis (foundation for other analyses)
       const sentiment = await this.analyzeSentiment(journalEntry)
-      
+
       // Stage 2: Energy impact analysis (independent)
       const energy = await this.analyzeEnergyImpact(journalEntry)
-      
+
       // Stage 3: Stability analysis (requires sentiment history)
-      const stability = sentimentHistory && sentimentHistory.length > 0 
-        ? await this.analyzeEmotionalStability(sentimentHistory)
-        : null
+      const stability =
+        sentimentHistory && sentimentHistory.length > 0
+          ? await this.analyzeEmotionalStability(sentimentHistory)
+          : null
 
       return {
         sentiment,
@@ -475,30 +544,49 @@ export class RelationshipAnalyzer {
         stability,
         metadata: {
           timestamp: Date.now(),
-          modules_used: ['sentiment', 'energy', stability ? 'stability' : null].filter(Boolean),
-          overall_confidence: this.calculateOverallConfidence(sentiment, energy, stability)
-        }
+          modules_used: [
+            'sentiment',
+            'energy',
+            stability ? 'stability' : null,
+          ].filter(Boolean),
+          overall_confidence: this.calculateOverallConfidence(
+            sentiment,
+            energy,
+            stability
+          ),
+        },
       }
     } catch (error) {
-      throw new Error(`Journal entry analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      throw new Error(
+        `Journal entry analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      )
     }
   }
 
   // DSPy-inspired confidence calculation
-  private calculateOverallConfidence(sentiment: any, energy: any, stability: any): number {
+  private calculateOverallConfidence(
+    sentiment: SentimentAnalysisResult,
+    energy: Record<string, unknown>,
+    stability: Record<string, unknown> | null
+  ): number {
     const confidences = [
       sentiment.confidence || 0,
       energy.confidence || 0.8, // Default confidence for energy analysis
-      stability?.confidence || null
+      stability?.confidence || null,
     ].filter((c): c is number => c !== null)
 
     if (confidences.length === 0) return 0.5
-    
+
     // Weighted average with higher weight for sentiment (primary analysis)
     const weights = stability ? [0.5, 0.25, 0.25] : [0.7, 0.3]
-    const weightedSum = confidences.reduce((sum, conf, index) => sum + (conf * weights[index]), 0)
-    const totalWeight = weights.slice(0, confidences.length).reduce((sum, w) => sum + w, 0)
-    
+    const weightedSum = confidences.reduce(
+      (sum, conf, index) => sum + conf * weights[index],
+      0
+    )
+    const totalWeight = weights
+      .slice(0, confidences.length)
+      .reduce((sum, w) => sum + w, 0)
+
     return Math.round((weightedSum / totalWeight) * 100) / 100
   }
 }
@@ -532,7 +620,10 @@ export function calculateConfidenceScore(
   return Math.max(0, Math.min(1, adjustedConfidence))
 }
 
-export function validateAnalysisResult(result: unknown, schema: z.ZodSchema): boolean {
+export function validateAnalysisResult(
+  result: unknown,
+  schema: z.ZodSchema
+): boolean {
   try {
     schema.parse(result)
     return true
@@ -545,7 +636,9 @@ export function validateAnalysisResult(result: unknown, schema: z.ZodSchema): bo
 // Export singleton analyzer instance
 let defaultAnalyzer: RelationshipAnalyzer | null = null
 
-export function getRelationshipAnalyzer(geminiClient?: GeminiClient): RelationshipAnalyzer {
+export function getRelationshipAnalyzer(
+  geminiClient?: GeminiClient
+): RelationshipAnalyzer {
   if (!defaultAnalyzer || geminiClient) {
     defaultAnalyzer = new RelationshipAnalyzer(geminiClient)
   }

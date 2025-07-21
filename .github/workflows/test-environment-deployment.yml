@@ -83,14 +83,14 @@ jobs:
           # Start the application
           npm run start &
           APP_PID=$!
-          
+
           # Wait for startup
           sleep 10
-          
+
           # Health check endpoints
           curl -f http://localhost:3000/api/health || echo "Health check endpoint not available"
           curl -f http://localhost:3000 || (echo "Application health check failed" && kill $APP_PID && exit 1)
-          
+
           # Stop the application
           kill $APP_PID
 
@@ -149,7 +149,7 @@ jobs:
           echo "NEXT_PUBLIC_CONVEX_URL_TEST=${{ secrets.CONVEX_URL_TEST }}" >> .env.test
           echo "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY_TEST=${{ secrets.CLERK_PUBLISHABLE_KEY_TEST }}" >> .env.test
           echo "CLERK_SECRET_KEY_TEST=${{ secrets.CLERK_SECRET_KEY_TEST }}" >> .env.test
-          
+
           # Run smoke tests
           npm run test:smoke
 

@@ -136,15 +136,19 @@ Identify expressions of gratitude, appreciation, and positive acknowledgment in 
 `
 
 // Utility function to replace placeholders in prompts
-export function formatPrompt(template: string, variables: Record<string, unknown>): string {
+export function formatPrompt(
+  template: string,
+  variables: Record<string, unknown>
+): string {
   let formatted = template
-  
+
   for (const [key, value] of Object.entries(variables)) {
     const placeholder = `{${key}}`
-    const replacement = typeof value === 'string' ? value : JSON.stringify(value)
+    const replacement =
+      typeof value === 'string' ? value : JSON.stringify(value)
     formatted = formatted.replace(new RegExp(placeholder, 'g'), replacement)
   }
-  
+
   return formatted
 }
 
@@ -152,17 +156,19 @@ export function formatPrompt(template: string, variables: Record<string, unknown
 export function validatePrompt(prompt: string): boolean {
   const placeholderRegex = /{[^}]+}/g
   const unreplacedPlaceholders = prompt.match(placeholderRegex)
-  
+
   if (unreplacedPlaceholders) {
-    throw new Error(`Unreplaced placeholders found: ${unreplacedPlaceholders.join(', ')}`)
+    throw new Error(
+      `Unreplaced placeholders found: ${unreplacedPlaceholders.join(', ')}`
+    )
   }
-  
+
   return true
 }
 
 // Helper to create prompts with common metadata
 export function createAnalysisPrompt(
-  template: string, 
+  template: string,
   variables: Record<string, unknown>,
   metadata?: {
     userId?: string
@@ -172,13 +178,13 @@ export function createAnalysisPrompt(
 ): string {
   const prompt = formatPrompt(template, variables)
   validatePrompt(prompt)
-  
+
   // Add metadata as comments for debugging
   if (metadata && process.env.NODE_ENV === 'development') {
     const metadataComment = `<!-- Analysis Metadata: ${JSON.stringify(metadata)} -->\n`
     return metadataComment + prompt
   }
-  
+
   return prompt
 }
 
@@ -188,7 +194,7 @@ export const PROMPT_TEMPLATES = {
   EMOTIONAL_STABILITY: EMOTIONAL_STABILITY_PROMPT,
   ENERGY_IMPACT: ENERGY_IMPACT_PROMPT,
   CONFLICT_RESOLUTION: CONFLICT_RESOLUTION_PROMPT,
-  GRATITUDE_DETECTION: GRATITUDE_DETECTION_PROMPT
+  GRATITUDE_DETECTION: GRATITUDE_DETECTION_PROMPT,
 } as const
 
 export type PromptType = keyof typeof PROMPT_TEMPLATES

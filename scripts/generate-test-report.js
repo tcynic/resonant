@@ -5,16 +5,16 @@
  * Generates comprehensive test reports from Playwright results
  */
 
-const fs = require('fs');
-const path = require('path');
-const { config } = require('dotenv');
+const fs = require('fs')
+const path = require('path')
+const { config } = require('dotenv')
 
 // Load test environment variables
-config({ path: path.resolve(process.cwd(), '.env.test') });
+config({ path: path.resolve(process.cwd(), '.env.test') })
 
 async function generateTestReport() {
-  console.log('📊 Generating comprehensive test report...');
-  
+  console.log('📊 Generating comprehensive test report...')
+
   const reportData = {
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'test',
@@ -23,25 +23,25 @@ async function generateTestReport() {
     testResults: await gatherTestResults(),
     coverage: await gatherCoverageData(),
     performance: await gatherPerformanceMetrics(),
-    summary: null
-  };
+    summary: null,
+  }
 
   // Generate summary
-  reportData.summary = generateSummary(reportData);
+  reportData.summary = generateSummary(reportData)
 
   // Write reports in multiple formats
-  await writeJsonReport(reportData);
-  await writeMarkdownReport(reportData);
-  await writeHtmlReport(reportData);
+  await writeJsonReport(reportData)
+  await writeMarkdownReport(reportData)
+  await writeHtmlReport(reportData)
 
-  console.log('✅ Test report generation completed');
-  return reportData;
+  console.log('✅ Test report generation completed')
+  return reportData
 }
 
 async function gatherTestResults() {
-  console.log('  📋 Gathering test results...');
-  
-  const testResultsDir = path.join(process.cwd(), 'test-results');
+  console.log('  📋 Gathering test results...')
+
+  const testResultsDir = path.join(process.cwd(), 'test-results')
   const resultsData = {
     totalTests: 0,
     passedTests: 0,
@@ -50,118 +50,120 @@ async function gatherTestResults() {
     testGroups: {
       auth: { total: 0, passed: 0, failed: 0 },
       userJourneys: { total: 0, passed: 0, failed: 0 },
-      advancedFeatures: { total: 0, passed: 0, failed: 0 }
+      advancedFeatures: { total: 0, passed: 0, failed: 0 },
     },
     executionTime: null,
-    errors: []
-  };
+    errors: [],
+  }
 
   try {
     // Check if test results directory exists
     if (!fs.existsSync(testResultsDir)) {
-      console.log('    ⚠️  No test results directory found');
-      return resultsData;
+      console.log('    ⚠️  No test results directory found')
+      return resultsData
     }
 
     // Look for Playwright JSON reports
-    const reportFiles = fs.readdirSync(testResultsDir)
-      .filter(file => file.endsWith('.json'));
+    const reportFiles = fs
+      .readdirSync(testResultsDir)
+      .filter(file => file.endsWith('.json'))
 
     for (const file of reportFiles) {
-      const filePath = path.join(testResultsDir, file);
+      const filePath = path.join(testResultsDir, file)
       try {
-        const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-        
+        const data = JSON.parse(fs.readFileSync(filePath, 'utf8'))
+
         // Process Playwright test results
         if (data.suites) {
           for (const suite of data.suites) {
             for (const spec of suite.specs || []) {
-              resultsData.totalTests++;
-              
-              const testPassed = spec.tests?.every(test => 
+              resultsData.totalTests++
+
+              const testPassed = spec.tests?.every(test =>
                 test.results?.every(result => result.status === 'passed')
-              );
-              
+              )
+
               if (testPassed) {
-                resultsData.passedTests++;
+                resultsData.passedTests++
               } else {
-                resultsData.failedTests++;
+                resultsData.failedTests++
               }
             }
           }
         }
-        
       } catch (error) {
-        console.log(`    ❌ Error reading ${file}: ${error.message}`);
-        resultsData.errors.push(`Failed to parse ${file}: ${error.message}`);
+        console.log(`    ❌ Error reading ${file}: ${error.message}`)
+        resultsData.errors.push(`Failed to parse ${file}: ${error.message}`)
       }
     }
 
-    console.log(`    ✅ Processed ${reportFiles.length} test result files`);
-    
+    console.log(`    ✅ Processed ${reportFiles.length} test result files`)
   } catch (error) {
-    console.log(`    ❌ Error gathering test results: ${error.message}`);
-    resultsData.errors.push(`Test results gathering failed: ${error.message}`);
+    console.log(`    ❌ Error gathering test results: ${error.message}`)
+    resultsData.errors.push(`Test results gathering failed: ${error.message}`)
   }
 
-  return resultsData;
+  return resultsData
 }
 
 async function gatherCoverageData() {
-  console.log('  📈 Gathering coverage data...');
-  
+  console.log('  📈 Gathering coverage data...')
+
   const coverageData = {
     statements: { total: 0, covered: 0, percentage: 0 },
     branches: { total: 0, covered: 0, percentage: 0 },
     functions: { total: 0, covered: 0, percentage: 0 },
-    lines: { total: 0, covered: 0, percentage: 0 }
-  };
+    lines: { total: 0, covered: 0, percentage: 0 },
+  }
 
   try {
-    const coveragePath = path.join(process.cwd(), 'coverage', 'coverage-summary.json');
-    
+    const coveragePath = path.join(
+      process.cwd(),
+      'coverage',
+      'coverage-summary.json'
+    )
+
     if (fs.existsSync(coveragePath)) {
-      const coverageReport = JSON.parse(fs.readFileSync(coveragePath, 'utf8'));
-      
+      const coverageReport = JSON.parse(fs.readFileSync(coveragePath, 'utf8'))
+
       if (coverageReport.total) {
-        const total = coverageReport.total;
+        const total = coverageReport.total
         coverageData.statements = {
           total: total.statements.total,
           covered: total.statements.covered,
-          percentage: total.statements.pct
-        };
+          percentage: total.statements.pct,
+        }
         coverageData.branches = {
           total: total.branches.total,
           covered: total.branches.covered,
-          percentage: total.branches.pct
-        };
+          percentage: total.branches.pct,
+        }
         coverageData.functions = {
           total: total.functions.total,
           covered: total.functions.covered,
-          percentage: total.functions.pct
-        };
+          percentage: total.functions.pct,
+        }
         coverageData.lines = {
           total: total.lines.total,
           covered: total.lines.covered,
-          percentage: total.lines.pct
-        };
+          percentage: total.lines.pct,
+        }
       }
-      
-      console.log('    ✅ Coverage data loaded');
+
+      console.log('    ✅ Coverage data loaded')
     } else {
-      console.log('    ⚠️  No coverage data found');
+      console.log('    ⚠️  No coverage data found')
     }
-    
   } catch (error) {
-    console.log(`    ❌ Error gathering coverage data: ${error.message}`);
+    console.log(`    ❌ Error gathering coverage data: ${error.message}`)
   }
 
-  return coverageData;
+  return coverageData
 }
 
 async function gatherPerformanceMetrics() {
-  console.log('  ⚡ Gathering performance metrics...');
-  
+  console.log('  ⚡ Gathering performance metrics...')
+
   const performanceData = {
     averageTestDuration: 0,
     slowestTest: null,
@@ -169,51 +171,57 @@ async function gatherPerformanceMetrics() {
     totalExecutionTime: 0,
     resourceUsage: {
       memory: null,
-      cpu: null
-    }
-  };
+      cpu: null,
+    },
+  }
 
   // In a real implementation, we would parse actual performance data
   // For now, we'll return placeholder data
-  
-  return performanceData;
+
+  return performanceData
 }
 
 function generateSummary(reportData) {
-  const { testResults } = reportData;
-  
-  const passRate = testResults.totalTests > 0 
-    ? (testResults.passedTests / testResults.totalTests) * 100
-    : 0;
+  const { testResults } = reportData
 
-  const status = passRate === 100 ? 'PASSED' : passRate >= 90 ? 'WARNING' : 'FAILED';
-  
+  const passRate =
+    testResults.totalTests > 0
+      ? (testResults.passedTests / testResults.totalTests) * 100
+      : 0
+
+  const status =
+    passRate === 100 ? 'PASSED' : passRate >= 90 ? 'WARNING' : 'FAILED'
+
   return {
     status,
     passRate: passRate.toFixed(1),
     totalTests: testResults.totalTests,
     passedTests: testResults.passedTests,
     failedTests: testResults.failedTests,
-    hasErrors: testResults.errors.length > 0
-  };
+    hasErrors: testResults.errors.length > 0,
+  }
 }
 
 async function writeJsonReport(reportData) {
-  const reportPath = path.join(process.cwd(), 'test-results', 'comprehensive-report.json');
-  
+  const reportPath = path.join(
+    process.cwd(),
+    'test-results',
+    'comprehensive-report.json'
+  )
+
   // Ensure directory exists
-  const dir = path.dirname(reportPath);
+  const dir = path.dirname(reportPath)
   if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+    fs.mkdirSync(dir, { recursive: true })
   }
-  
-  fs.writeFileSync(reportPath, JSON.stringify(reportData, null, 2));
-  console.log(`  💾 JSON report written to: ${reportPath}`);
+
+  fs.writeFileSync(reportPath, JSON.stringify(reportData, null, 2))
+  console.log(`  💾 JSON report written to: ${reportPath}`)
 }
 
 async function writeMarkdownReport(reportData) {
-  const { summary, testResults, coverage } = reportData;
-  
+  const { summary, testResults, coverage } = reportData
+
   const markdown = `# Test Execution Report
 
 ## Summary
@@ -247,26 +255,34 @@ async function writeMarkdownReport(reportData) {
 - **Functions**: ${coverage.functions.percentage}% (${coverage.functions.covered}/${coverage.functions.total})
 - **Lines**: ${coverage.lines.percentage}% (${coverage.lines.covered}/${coverage.lines.total})
 
-${testResults.errors.length > 0 ? `## Errors
+${
+  testResults.errors.length > 0
+    ? `## Errors
 
 ${testResults.errors.map(error => `- ${error}`).join('\n')}
-` : ''}
+`
+    : ''
+}
 
 ---
 *Report generated by Resonant Test Automation System*
-`;
+`
 
-  const reportPath = path.join(process.cwd(), 'test-results', 'test-report.md');
-  fs.writeFileSync(reportPath, markdown);
-  console.log(`  📝 Markdown report written to: ${reportPath}`);
+  const reportPath = path.join(process.cwd(), 'test-results', 'test-report.md')
+  fs.writeFileSync(reportPath, markdown)
+  console.log(`  📝 Markdown report written to: ${reportPath}`)
 }
 
 async function writeHtmlReport(reportData) {
-  const { summary } = reportData;
-  
-  const statusColor = summary.status === 'PASSED' ? '#22c55e' : 
-                     summary.status === 'WARNING' ? '#f59e0b' : '#ef4444';
-  
+  const { summary } = reportData
+
+  const statusColor =
+    summary.status === 'PASSED'
+      ? '#22c55e'
+      : summary.status === 'WARNING'
+        ? '#f59e0b'
+        : '#ef4444'
+
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -321,24 +337,28 @@ async function writeHtmlReport(reportData) {
         </div>
     </div>
 </body>
-</html>`;
+</html>`
 
-  const reportPath = path.join(process.cwd(), 'test-results', 'test-report.html');
-  fs.writeFileSync(reportPath, html);
-  console.log(`  🌐 HTML report written to: ${reportPath}`);
+  const reportPath = path.join(
+    process.cwd(),
+    'test-results',
+    'test-report.html'
+  )
+  fs.writeFileSync(reportPath, html)
+  console.log(`  🌐 HTML report written to: ${reportPath}`)
 }
 
 // Run if called directly
 if (require.main === module) {
   generateTestReport()
     .then(() => {
-      console.log('🎉 Test report generation completed successfully');
-      process.exit(0);
+      console.log('🎉 Test report generation completed successfully')
+      process.exit(0)
     })
-    .catch((error) => {
-      console.error('💥 Report generation crashed:', error);
-      process.exit(1);
-    });
+    .catch(error => {
+      console.error('💥 Report generation crashed:', error)
+      process.exit(1)
+    })
 }
 
-module.exports = { generateTestReport };
+module.exports = { generateTestReport }

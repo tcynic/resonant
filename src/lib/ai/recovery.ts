@@ -3,24 +3,24 @@
  * Implements sophisticated retry logic with exponential backoff and circuit breakers
  */
 
-import { AIError, getRecoveryStrategy, AIErrorRecoveryStrategy } from './errors'
+import { AIError, getRecoveryStrategy } from './errors'
 import { aiMonitoring } from './monitoring'
 import { aiFallback, withFallback } from './fallback'
 import { AnalysisType } from '../types'
 
 // Circuit breaker states
 enum CircuitState {
-  CLOSED = 'closed',     // Normal operation
-  OPEN = 'open',         // Circuit is open, calls fail fast
-  HALF_OPEN = 'half_open' // Testing if service is recovered
+  CLOSED = 'closed', // Normal operation
+  OPEN = 'open', // Circuit is open, calls fail fast
+  HALF_OPEN = 'half_open', // Testing if service is recovered
 }
 
 // Circuit breaker configuration
 interface CircuitBreakerConfig {
-  failureThreshold: number      // Number of failures before opening circuit
-  recoveryTimeoutMs: number     // Time to wait before testing recovery
-  successThreshold: number      // Number of successes needed to close circuit
-  timeWindowMs: number         // Time window for failure counting
+  failureThreshold: number // Number of failures before opening circuit
+  recoveryTimeoutMs: number // Time to wait before testing recovery
+  successThreshold: number // Number of successes needed to close circuit
+  timeWindowMs: number // Time window for failure counting
 }
 
 // Retry configuration
@@ -36,7 +36,7 @@ const defaultCircuitConfig: CircuitBreakerConfig = {
   failureThreshold: 5,
   recoveryTimeoutMs: 30000, // 30 seconds
   successThreshold: 3,
-  timeWindowMs: 60000 // 1 minute
+  timeWindowMs: 60000, // 1 minute
 }
 
 const defaultRetryConfig: RetryConfig = {
@@ -44,7 +44,7 @@ const defaultRetryConfig: RetryConfig = {
   baseDelayMs: 1000,
   maxDelayMs: 30000,
   backoffMultiplier: 2,
-  jitterFactor: 0.1
+  jitterFactor: 0.1,
 }
 
 // Circuit breaker implementation
@@ -59,7 +59,10 @@ class CircuitBreaker {
     this.config = { ...defaultCircuitConfig, ...config }
   }
 
-  async execute<T>(operation: () => Promise<T>, fallback?: () => Promise<T>): Promise<T> {
+  async execute<T>(
+    operation: () => Promise<T>,
+    fallback?: () => Promise<T>
+  ): Promise<T> {
     // Fast fail if circuit is open and recovery timeout hasn't elapsed
     if (this.state === CircuitState.OPEN) {
       const timeSinceLastFailure = Date.now() - this.lastFailureTime
@@ -67,16 +70,24 @@ class CircuitBreaker {
         if (fallback) {
           aiMonitoring.logError(
             new (class extends AIError {
-              getUserMessage() { return 'Service temporarily unavailable, using fallback' }
-              getRecoveryActions() { return ['Wait for service recovery', 'Try again later'] }
+              getUserMessage() {
+                return 'Service temporarily unavailable, using fallback'
+              }
+              getRecoveryActions() {
+                return ['Wait for service recovery', 'Try again later']
+              }
             })('Circuit breaker open - using fallback', 'CIRCUIT_BREAKER_OPEN'),
             { circuitState: this.state, timeSinceLastFailure }
           )
           return await fallback()
         }
         throw new (class extends AIError {
-          getUserMessage() { return 'Service temporarily unavailable. Please try again later.' }
-          getRecoveryActions() { return ['Wait for service recovery', 'Try again in a few minutes'] }
+          getUserMessage() {
+            return 'Service temporarily unavailable. Please try again later.'
+          }
+          getRecoveryActions() {
+            return ['Wait for service recovery', 'Try again in a few minutes']
+          }
         })('Circuit breaker is open', 'CIRCUIT_BREAKER_OPEN')
       } else {
         // Try to transition to half-open
@@ -91,12 +102,16 @@ class CircuitBreaker {
       return result
     } catch (error) {
       this.onFailure()
-      
+
       // Use fallback if available and appropriate
-      if (fallback && error instanceof AIError && aiFallback.shouldUseFallback(error)) {
+      if (
+        fallback &&
+        error instanceof AIError &&
+        aiFallback.shouldUseFallback(error)
+      ) {
         return await fallback()
       }
-      
+
       throw error
     }
   }
@@ -126,9 +141,14 @@ class CircuitBreaker {
     this.lastFailureTime = now
     this.cleanOldFailures()
 
-    if (this.state === CircuitState.CLOSED && this.failures.length >= this.config.failureThreshold) {
+    if (
+      this.state === CircuitState.CLOSED &&
+      this.failures.length >= this.config.failureThreshold
+    ) {
       this.state = CircuitState.OPEN
-      console.warn(`🚨 Circuit breaker opened after ${this.failures.length} failures`)
+      console.warn(
+        `🚨 Circuit breaker opened after ${this.failures.length} failures`
+      )
     } else if (this.state === CircuitState.HALF_OPEN) {
       this.state = CircuitState.OPEN
       this.successes = 0
@@ -146,7 +166,7 @@ class CircuitBreaker {
     return {
       state: this.state,
       failures: this.failures.length,
-      successes: this.successes
+      successes: this.successes,
     }
   }
 
@@ -176,31 +196,31 @@ class RetryManager {
     while (attempt <= this.config.maxAttempts) {
       try {
         const result = await operation()
-        
+
         // Log successful retry if it wasn't the first attempt
         if (attempt > 1) {
           aiMonitoring.recordMetric({
             timestamp: Date.now(),
             analysisType: (context.analysisType as AnalysisType) || 'sentiment',
-            operation: context.operation as string || 'retry',
+            operation: (context.operation as string) || 'retry',
             duration: 0,
             success: true,
             retryAttempt: attempt,
-            userId: context.userId as string
+            userId: context.userId as string,
           })
         }
-        
+
         return result
       } catch (error) {
         lastError = error as Error
-        
+
         // Check if error is retryable
         if (error instanceof AIError) {
           const strategy = getRecoveryStrategy(error)
           if (!strategy.retryable || attempt >= this.config.maxAttempts) {
             throw error
           }
-          
+
           // Use custom retry delay if specified
           if (strategy.retryDelay && strategy.retryDelay > 0) {
             await this.delay(strategy.retryDelay)
@@ -208,29 +228,31 @@ class RetryManager {
             continue
           }
         }
-        
+
         // Check if we should retry
         if (attempt >= this.config.maxAttempts) {
           break
         }
-        
+
         // Calculate delay with exponential backoff and jitter
         const delay = this.calculateDelay(attempt)
-        
-        console.warn(`⏳ Retry ${attempt}/${this.config.maxAttempts} after ${delay}ms for: ${error instanceof Error ? error.message : 'Unknown error'}`)
-        
+
+        console.warn(
+          `⏳ Retry ${attempt}/${this.config.maxAttempts} after ${delay}ms for: ${error instanceof Error ? error.message : 'Unknown error'}`
+        )
+
         // Record failed attempt
         aiMonitoring.recordMetric({
           timestamp: Date.now(),
           analysisType: (context.analysisType as AnalysisType) || 'sentiment',
-          operation: context.operation as string || 'retry',
+          operation: (context.operation as string) || 'retry',
           duration: 0,
           success: false,
           error: error instanceof AIError ? error : undefined,
           retryAttempt: attempt,
-          userId: context.userId as string
+          userId: context.userId as string,
         })
-        
+
         await this.delay(delay)
         attempt++
       }
@@ -238,23 +260,37 @@ class RetryManager {
 
     // All retries exhausted
     throw new (class extends AIError {
-      getUserMessage() { return 'Operation failed after multiple attempts. Please try again later.' }
-      getRecoveryActions() { return ['Wait longer before retrying', 'Check service status', 'Contact support'] }
+      getUserMessage() {
+        return 'Operation failed after multiple attempts. Please try again later.'
+      }
+      getRecoveryActions() {
+        return [
+          'Wait longer before retrying',
+          'Check service status',
+          'Contact support',
+        ]
+      }
     })(
       `Operation failed after ${this.config.maxAttempts} attempts: ${lastError.message}`,
       'RETRY_EXHAUSTED',
-      { maxAttempts: this.config.maxAttempts, lastError: lastError.message, ...context }
+      {
+        maxAttempts: this.config.maxAttempts,
+        lastError: lastError.message,
+        ...context,
+      }
     )
   }
 
   private calculateDelay(attempt: number): number {
     // Exponential backoff: baseDelay * (multiplier ^ (attempt - 1))
-    const exponentialDelay = this.config.baseDelayMs * Math.pow(this.config.backoffMultiplier, attempt - 1)
-    
+    const exponentialDelay =
+      this.config.baseDelayMs *
+      Math.pow(this.config.backoffMultiplier, attempt - 1)
+
     // Apply jitter to prevent thundering herd
     const jitter = 1 + (Math.random() - 0.5) * 2 * this.config.jitterFactor
     const delayWithJitter = exponentialDelay * jitter
-    
+
     // Clamp to max delay
     return Math.min(delayWithJitter, this.config.maxDelayMs)
   }
@@ -270,10 +306,7 @@ export class AIRecoveryService {
   private retryManager: RetryManager
   private recoveryAttempts: Map<string, number> = new Map()
 
-  constructor(
-    retryConfig: Partial<RetryConfig> = {},
-    circuitConfig: Partial<CircuitBreakerConfig> = {}
-  ) {
+  constructor(retryConfig: Partial<RetryConfig> = {}) {
     this.retryManager = new RetryManager(retryConfig)
   }
 
@@ -289,8 +322,15 @@ export class AIRecoveryService {
       skipRetry?: boolean
     }
   ): Promise<T> {
-    const { operationId, analysisType, fallback, context = {}, skipCircuitBreaker, skipRetry } = options
-    
+    const {
+      operationId,
+      analysisType,
+      fallback,
+      context = {},
+      skipCircuitBreaker,
+      skipRetry,
+    } = options
+
     // Get or create circuit breaker for this operation
     let circuitBreaker: CircuitBreaker | undefined
     if (!skipCircuitBreaker) {
@@ -312,7 +352,7 @@ export class AIRecoveryService {
           return await this.retryManager.executeWithRetry(operation, {
             ...context,
             analysisType,
-            operation: operationId
+            operation: operationId,
           })
         }
       }
@@ -321,15 +361,19 @@ export class AIRecoveryService {
       if (circuitBreaker) {
         result = await circuitBreaker.execute(executeOperation, fallback)
       } else {
-        result = await withFallback(executeOperation, fallback || (() => {
-          throw new Error('No fallback available')
-        }), operationId)
+        result = await withFallback(
+          executeOperation,
+          fallback ||
+            (() => {
+              throw new Error('No fallback available')
+            }),
+          operationId
+        )
       }
 
       // Success - clean up recovery tracking
       this.recoveryAttempts.delete(attemptKey)
       return result
-
     } catch (error) {
       // Track failed recovery attempt
       const attempts = this.recoveryAttempts.get(attemptKey) || 0
@@ -343,7 +387,7 @@ export class AIRecoveryService {
           analysisType,
           recoveryAttempts: attempts + 1,
           circuitBreakerState: circuitBreaker?.getState().state,
-          fallbackAvailable: !!fallback
+          fallbackAvailable: !!fallback,
         })
       }
 
@@ -353,11 +397,17 @@ export class AIRecoveryService {
 
   // Get recovery status for monitoring
   getRecoveryStatus(): {
-    circuitBreakers: Record<string, { state: CircuitState; failures: number; successes: number }>
+    circuitBreakers: Record<
+      string,
+      { state: CircuitState; failures: number; successes: number }
+    >
     activeRecoveryAttempts: number
     fallbackStatus: ReturnType<typeof aiFallback.getStatus>
   } {
-    const circuitStatus: Record<string, any> = {}
+    const circuitStatus: Record<
+      string,
+      { state: CircuitState; failures: number; successes: number }
+    > = {}
     for (const [id, breaker] of this.circuitBreakers.entries()) {
       circuitStatus[id] = breaker.getState()
     }
@@ -365,7 +415,7 @@ export class AIRecoveryService {
     return {
       circuitBreakers: circuitStatus,
       activeRecoveryAttempts: this.recoveryAttempts.size,
-      fallbackStatus: aiFallback.getStatus()
+      fallbackStatus: aiFallback.getStatus(),
     }
   }
 
@@ -382,7 +432,7 @@ export class AIRecoveryService {
 
   // Reset all circuit breakers
   resetAllCircuitBreakers(): void {
-    for (const [id, breaker] of this.circuitBreakers.entries()) {
+    for (const [, breaker] of this.circuitBreakers.entries()) {
       breaker.reset()
     }
     console.info('🔧 All circuit breakers reset')
@@ -396,11 +446,12 @@ export class AIRecoveryService {
   } {
     const issues: string[] = []
     const recommendations: string[] = []
-    
+
     // Check circuit breaker states
-    const openCircuits = Array.from(this.circuitBreakers.entries())
-      .filter(([_, breaker]) => breaker.getState().state === CircuitState.OPEN)
-    
+    const openCircuits = Array.from(this.circuitBreakers.entries()).filter(
+      ([, breaker]) => breaker.getState().state === CircuitState.OPEN
+    )
+
     if (openCircuits.length > 0) {
       issues.push(`${openCircuits.length} circuit breaker(s) open`)
       recommendations.push('Investigate failing operations')
@@ -414,7 +465,9 @@ export class AIRecoveryService {
 
     // Check active recovery attempts
     if (this.recoveryAttempts.size > 10) {
-      issues.push(`High number of recovery attempts: ${this.recoveryAttempts.size}`)
+      issues.push(
+        `High number of recovery attempts: ${this.recoveryAttempts.size}`
+      )
       recommendations.push('Check for systematic issues')
     }
 
@@ -422,7 +475,10 @@ export class AIRecoveryService {
     let status: 'healthy' | 'degraded' | 'down'
     if (issues.length === 0) {
       status = 'healthy'
-    } else if (openCircuits.length === this.circuitBreakers.size && this.circuitBreakers.size > 0) {
+    } else if (
+      openCircuits.length === this.circuitBreakers.size &&
+      this.circuitBreakers.size > 0
+    ) {
       status = 'down'
     } else {
       status = 'degraded'
@@ -434,7 +490,7 @@ export class AIRecoveryService {
   // Cleanup old recovery attempts
   cleanup(): void {
     const cutoff = Date.now() - 300000 // 5 minutes
-    for (const [key, _] of this.recoveryAttempts.entries()) {
+    for (const [key] of this.recoveryAttempts.entries()) {
       const timestamp = parseInt(key.split('_').pop() || '0')
       if (timestamp < cutoff) {
         this.recoveryAttempts.delete(key)
@@ -461,7 +517,7 @@ export async function executeAIOperation<T>(
     operationId,
     analysisType,
     fallback,
-    context
+    context,
   })
 }
 

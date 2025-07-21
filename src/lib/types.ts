@@ -56,7 +56,7 @@ export interface JournalEntry {
 }
 
 // AI Analysis types
-export type AnalysisType = 
+export type AnalysisType =
   | 'sentiment'
   | 'emotional_stability'
   | 'energy_impact'
@@ -64,16 +64,16 @@ export type AnalysisType =
   | 'gratitude'
 
 export interface AIAnalysisResults {
-  sentimentScore?: number       // 1-10 scale
+  sentimentScore?: number // 1-10 scale
   emotions?: string[]
-  confidence: number           // 0-1 scale
+  confidence: number // 0-1 scale
   rawResponse: string
   // Type-specific results
-  stabilityScore?: number      // 0-100 for emotional stability
-  energyScore?: number         // 1-10 for energy impact
-  resolutionScore?: number     // 1-10 for conflict resolution
-  gratitudeScore?: number      // 1-10 for gratitude
-  additionalData?: unknown     // Flexible field for analysis-specific data
+  stabilityScore?: number // 0-100 for emotional stability
+  energyScore?: number // 1-10 for energy impact
+  resolutionScore?: number // 1-10 for conflict resolution
+  gratitudeScore?: number // 1-10 for gratitude
+  additionalData?: unknown // Flexible field for analysis-specific data
 }
 
 export interface AIAnalysisMetadata {
@@ -97,11 +97,11 @@ export interface AIAnalysis {
 
 // Health Score types (updated for AI-based scoring)
 export interface HealthScoreComponents {
-  sentiment: number            // 0-100
-  emotionalStability: number   // 0-100
-  energyImpact: number        // 0-100
-  conflictResolution: number  // 0-100
-  gratitude: number           // 0-100
+  sentiment: number // 0-100
+  emotionalStability: number // 0-100
+  energyImpact: number // 0-100
+  conflictResolution: number // 0-100
+  gratitude: number // 0-100
   communicationFrequency: number // 0-100
 }
 
@@ -115,11 +115,11 @@ export interface HealthScore {
   _id: string
   relationshipId: string
   userId: string
-  overallScore: number         // 0-100 scale
+  overallScore: number // 0-100 scale
   componentScores: HealthScoreComponents
   lastUpdated: number
-  dataPoints: number          // Number of entries used in calculation
-  confidenceLevel: number     // 0-1 overall confidence in the score
+  dataPoints: number // Number of entries used in calculation
+  confidenceLevel: number // 0-1 overall confidence in the score
   trendsData?: HealthScoreTrends
 }
 

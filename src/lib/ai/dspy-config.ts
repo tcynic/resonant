@@ -35,7 +35,9 @@ export abstract class DSPyModule {
     this.signature = signature
   }
 
-  abstract forward(inputs: Record<string, unknown>): Promise<Record<string, unknown>>
+  abstract forward(
+    inputs: Record<string, unknown>
+  ): Promise<Record<string, unknown>>
 
   // Public getter for accessing signature in tests
   getSignature(): DSPySignature {
@@ -47,11 +49,13 @@ export abstract class DSPyModule {
       if (field.required && !(key in inputs)) {
         throw new Error(`Required input field '${key}' is missing`)
       }
-      
+
       if (key in inputs && field.validation) {
         const result = field.validation.safeParse(inputs[key])
         if (!result.success) {
-          throw new Error(`Validation failed for field '${key}': ${result.error.message}`)
+          throw new Error(
+            `Validation failed for field '${key}': ${result.error.message}`
+          )
         }
       }
     }
@@ -63,11 +67,13 @@ export abstract class DSPyModule {
       if (field.required && !(key in outputs)) {
         throw new Error(`Required output field '${key}' is missing`)
       }
-      
+
       if (key in outputs && field.validation) {
         const result = field.validation.safeParse(outputs[key])
         if (!result.success) {
-          throw new Error(`Validation failed for output field '${key}': ${result.error.message}`)
+          throw new Error(
+            `Validation failed for output field '${key}': ${result.error.message}`
+          )
         }
       }
     }
@@ -76,21 +82,21 @@ export abstract class DSPyModule {
 
   getPrompt(inputs: Record<string, unknown>): string {
     let prompt = `Task: ${this.signature.description}\n\n`
-    
+
     // Add input fields
     prompt += 'Inputs:\n'
-    for (const [key, field] of Object.entries(this.signature.inputs)) {
+    for (const [key] of Object.entries(this.signature.inputs)) {
       if (key in inputs) {
         prompt += `${key}: ${inputs[key]}\n`
       }
     }
-    
+
     // Add expected output format
     prompt += '\nExpected Output Format:\n'
     for (const [key, field] of Object.entries(this.signature.outputs)) {
       prompt += `${key}: ${field.description}\n`
     }
-    
+
     // Add examples if available
     if (this.signature.examples && this.signature.examples.length > 0) {
       prompt += '\nExamples:\n'
@@ -104,7 +110,7 @@ export abstract class DSPyModule {
         prompt += '\n'
       })
     }
-    
+
     return prompt
   }
 }
@@ -125,73 +131,85 @@ export const defaultAIConfig: Omit<AIModelConfig, 'apiKey'> = {
   temperature: 0.3,
   maxTokens: 1000,
   topP: 0.95,
-  topK: 40
+  topK: 40,
 }
 
 // Sentiment Analysis Signature
 export const SentimentAnalysisSignature: DSPySignature = {
   name: 'SentimentAnalysis',
-  description: 'Analyze the sentiment of journal entry text and extract emotional indicators',
+  description:
+    'Analyze the sentiment of journal entry text and extract emotional indicators',
   inputs: {
     journal_entry: {
       type: 'string',
       description: "User's journal entry text",
       required: true,
-      validation: z.string().min(1, 'Journal entry cannot be empty')
-    }
+      validation: z.string().min(1, 'Journal entry cannot be empty'),
+    },
   },
   outputs: {
     sentiment_score: {
       type: 'number',
-      description: 'Sentiment score 1-10, where 1=very negative, 10=very positive',
+      description:
+        'Sentiment score 1-10, where 1=very negative, 10=very positive',
       required: true,
-      validation: z.number().min(1).max(10)
+      validation: z.number().min(1).max(10),
     },
     emotions_detected: {
       type: 'array',
       description: 'List of emotions found with individual scores',
       required: true,
-      validation: z.array(z.string())
+      validation: z.array(z.string()),
     },
     confidence: {
       type: 'number',
       description: 'AI confidence in analysis 0-1',
       required: true,
-      validation: z.number().min(0).max(1)
+      validation: z.number().min(0).max(1),
     },
     explanation: {
       type: 'string',
       description: 'Brief explanation of the sentiment analysis',
       required: false,
-      validation: z.string()
-    }
+      validation: z.string(),
+    },
   },
   examples: [
     {
       inputs: {
-        journal_entry: "I had a wonderful day with my partner. We went for a walk and talked about our future together."
+        journal_entry:
+          'I had a wonderful day with my partner. We went for a walk and talked about our future together.',
       },
       outputs: {
         sentiment_score: 8.5,
-        emotions_detected: ["joy", "love", "contentment", "optimism"],
+        emotions_detected: ['joy', 'love', 'contentment', 'optimism'],
         confidence: 0.92,
-        explanation: "The text contains positive emotional indicators like 'wonderful', future planning suggests optimism, and romantic context indicates love and contentment."
+        explanation:
+          "The text contains positive emotional indicators like 'wonderful', future planning suggests optimism, and romantic context indicates love and contentment.",
       },
-      description: "Positive relationship entry with multiple positive emotions"
+      description:
+        'Positive relationship entry with multiple positive emotions',
     },
     {
       inputs: {
-        journal_entry: "We had another fight today. I'm feeling really frustrated and don't know if this is working."
+        journal_entry:
+          "We had another fight today. I'm feeling really frustrated and don't know if this is working.",
       },
       outputs: {
         sentiment_score: 2.5,
-        emotions_detected: ["frustration", "uncertainty", "sadness", "disappointment"],
+        emotions_detected: [
+          'frustration',
+          'uncertainty',
+          'sadness',
+          'disappointment',
+        ],
         confidence: 0.88,
-        explanation: "Conflict is mentioned with negative emotional language. Uncertainty about relationship future indicates distress."
+        explanation:
+          'Conflict is mentioned with negative emotional language. Uncertainty about relationship future indicates distress.',
       },
-      description: "Negative relationship entry showing conflict and doubt"
-    }
-  ]
+      description: 'Negative relationship entry showing conflict and doubt',
+    },
+  ],
 }
 
 // Export utilities for creating new signatures
@@ -207,6 +225,6 @@ export function createSignature(
     description,
     inputs,
     outputs,
-    examples
+    examples,
   }
 }
