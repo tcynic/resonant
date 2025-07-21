@@ -277,7 +277,9 @@ export const queueAnalysisForJournalEntry = mutation({
       )
       .collect()
 
-    const existingTypes = new Set(existingAnalyses.map((a: any) => a.analysisType))
+    const existingTypes = new Set(
+      existingAnalyses.map((a: any) => a.analysisType)
+    )
     const newAnalysisTypes = args.analysisTypes.filter(
       type => !existingTypes.has(type)
     )
