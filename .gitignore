@@ -55,6 +55,10 @@ next-env.d.ts
 # Convex
 /convex/_generated/
 !/convex/_generated/.gitkeep
+# Track stub files for Vercel builds (these get overwritten during development)
+!/convex/_generated/api.js
+!/convex/_generated/api.d.ts
+!/convex/_generated/dataModel.d.ts
 
 # AI & Machine Learning
 # Cache files and temporary data
