@@ -10,3 +10,5 @@ yarn.lock
 .env*
 convex/_generated/
 .bmad-core/
+test-results/
+vercel.json
