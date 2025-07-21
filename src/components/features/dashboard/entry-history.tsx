@@ -352,9 +352,9 @@ export default function EntryHistory({
 
   const relationshipOptions: RelationshipOption[] =
     relationships?.map((rel: Relationship) => ({
-      id: rel._id,
+      id: rel._id as Id<'relationships'>,
       name: rel.name,
-      selected: filters.relationshipIds.includes(rel._id),
+      selected: filters.relationshipIds.includes(rel._id as Id<'relationships'>),
     })) || []
 
   const handleFilterChange = (key: keyof FilterState, value: unknown) => {
