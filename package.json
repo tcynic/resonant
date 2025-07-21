@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "prebuild": "npm run lint && npm run typecheck && npm run format:check",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -11,6 +12,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
+    "check": "npm run lint && npm run typecheck && npm run format:check",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:ci": "jest --ci --coverage --passWithNoTests",
