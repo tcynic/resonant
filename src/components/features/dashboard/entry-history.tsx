@@ -265,12 +265,12 @@ function EntryCard({
               <span>
                 {typeof entry.mood === 'string'
                   ? '😊'
-                  : (entry.mood as any).emoji || '😊'}
+                  : (entry.mood as { emoji?: string }).emoji || '😊'}
               </span>
               <span>
                 {typeof entry.mood === 'string'
                   ? entry.mood
-                  : (entry.mood as any).type || entry.mood}
+                  : (entry.mood as { type?: string }).type || entry.mood}
               </span>
             </span>
           )}
@@ -323,7 +323,7 @@ export default function EntryHistory({
   // Get user's relationships for filter options
   const relationships = useQuery(
     api.relationships.getRelationshipsByUser,
-    user?.id ? { userId: user.id as any } : 'skip'
+    user?.id ? { userId: user.id as Id<'users'> } : 'skip'
   )
 
   // Get filtered journal entries
@@ -331,7 +331,7 @@ export default function EntryHistory({
     api.dashboard.getFilteredJournalEntries,
     user?.id
       ? {
-          userId: user.id as any,
+          userId: user.id as Id<'users'>,
           relationshipIds:
             filters.relationshipIds.length > 0
               ? filters.relationshipIds

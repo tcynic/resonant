@@ -2,6 +2,10 @@ import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import DashboardContent from '../dashboard-content'
+import { useQuery } from 'convex/react'
+
+// Type for mock query function
+type MockQueryFn = jest.MockedFunction<typeof useQuery>
 
 // Mock Clerk
 jest.mock('@clerk/nextjs', () => ({
@@ -108,8 +112,6 @@ jest.mock('@/components/ui/error-boundary', () => ({
   ),
 }))
 
-import { useQuery } from 'convex/react'
-
 // Mock data
 const mockDashboardData = {
   relationships: [
@@ -212,8 +214,8 @@ describe('DashboardContent', () => {
   beforeEach(() => {
     // Mock useQuery with simple call counting
     let callCount = 0
-    ;(useQuery as jest.MockedFunction<typeof useQuery>).mockImplementation(
-      (api: any, ...args: any[]) => {
+    ;(useQuery as MockQueryFn).mockImplementation(
+      (api: unknown, ...args: unknown[]) => {
         // Handle 'skip' queries first
         if (args.length > 0 && args[0] === 'skip') {
           return undefined
@@ -264,7 +266,7 @@ describe('DashboardContent', () => {
   })
 
   it('should display error state when data fails to load', () => {
-    ;(useQuery as jest.MockedFunction<typeof useQuery>).mockReturnValue(null)
+    ;(useQuery as MockQueryFn).mockReturnValue(null)
 
     render(<DashboardContent />)
 
@@ -277,8 +279,8 @@ describe('DashboardContent', () => {
   it('should display empty state when no relationships exist', () => {
     // Mock useQuery with simple call counting for empty state
     let callCount = 0
-    ;(useQuery as jest.MockedFunction<typeof useQuery>).mockImplementation(
-      (api: any, ...args: any[]) => {
+    ;(useQuery as MockQueryFn).mockImplementation(
+      (api: unknown, ...args: unknown[]) => {
         if (args.length > 0 && args[0] === 'skip') {
           return undefined
         }
@@ -339,9 +341,12 @@ describe('DashboardContent', () => {
   })
 
   it('should not render trend chart when no data', () => {
-    ;(useQuery as jest.MockedFunction<typeof useQuery>).mockImplementation(
-      (api: any, ...args: any[]) => {
-        const apiName = api?._name || api?.name || String(api)
+    ;(useQuery as MockQueryFn).mockImplementation(
+      (api: unknown, ..._args: unknown[]) => {
+        const apiName =
+          (api as { _name?: string; name?: string })?._name ||
+          (api as { _name?: string; name?: string })?.name ||
+          String(api)
         if (typeof apiName === 'string') {
           if (apiName.includes('getDashboardTrends')) {
             return { trends: [], relationshipNames: [], timeRange: {} }
@@ -462,8 +467,8 @@ describe('DashboardContent', () => {
 
     // Mock useQuery with simple call counting for low score state
     let callCount = 0
-    ;(useQuery as jest.MockedFunction<typeof useQuery>).mockImplementation(
-      (api: any, ...args: any[]) => {
+    ;(useQuery as MockQueryFn).mockImplementation(
+      (api: unknown, ...args: unknown[]) => {
         if (args.length > 0 && args[0] === 'skip') {
           return undefined
         }

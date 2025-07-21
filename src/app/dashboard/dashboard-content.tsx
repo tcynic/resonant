@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useUser } from '@clerk/nextjs'
 import { useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
+import { Id } from '../../../convex/_generated/dataModel'
 import {
   performanceMonitor,
   usePerformanceMonitor,
@@ -305,24 +306,24 @@ export default function DashboardContent() {
 
   const dashboardData = useQuery(
     api.dashboard.getDashboardData,
-    user?.id ? { userId: user.id as any } : 'skip'
+    user?.id ? { userId: user.id as Id<'users'> } : 'skip'
   )
 
   const dashboardStats = useQuery(
     api.dashboard.getDashboardStats,
-    user?.id ? { userId: user.id as any } : 'skip'
+    user?.id ? { userId: user.id as Id<'users'> } : 'skip'
   )
 
   const recentActivity = useQuery(
     api.dashboard.getRecentActivity,
-    user?.id ? { userId: user.id as any, limit: 10 } : 'skip'
+    user?.id ? { userId: user.id as Id<'users'>, limit: 10 } : 'skip'
   )
 
   const trendData = useQuery(
     api.dashboard.getDashboardTrends,
     user?.id
       ? {
-          userId: user.id as any,
+          userId: user.id as Id<'users'>,
           timeRangeDays:
             selectedTimeRange === 'week'
               ? 7
@@ -389,7 +390,7 @@ export default function DashboardContent() {
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <DashboardHeader
-          user={user as any}
+          user={user ? { firstName: user.firstName || undefined } : null}
           stats={dashboardStats}
           isLoading={false}
         />

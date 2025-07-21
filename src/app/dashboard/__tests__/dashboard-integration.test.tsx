@@ -223,7 +223,7 @@ describe('Dashboard Integration Tests', () => {
       trendData: initialTrendData,
     }
     ;(useQuery as jest.MockedFunction<typeof useQuery>).mockImplementation(
-      (api: any, ...args: any[]) => {
+      (api: unknown, ...args: unknown[]) => {
         if (args.length > 0 && args[0] === 'skip') {
           return undefined
         }
