@@ -422,14 +422,16 @@ export default function DashboardContent() {
               }
             >
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                {dashboardData.relationships.map((relationship: RelationshipWithScore) => (
-                  <HealthScoreCard
-                    key={relationship._id}
-                    relationship={relationship}
-                    healthScore={relationship.healthScore}
-                    showDetails={false}
-                  />
-                ))}
+                {dashboardData.relationships.map(
+                  (relationship: RelationshipWithScore) => (
+                    <HealthScoreCard
+                      key={relationship._id}
+                      relationship={relationship}
+                      healthScore={relationship.healthScore}
+                      showDetails={false}
+                    />
+                  )
+                )}
               </div>
             </ErrorBoundary>
           </div>
