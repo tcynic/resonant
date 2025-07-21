@@ -20,6 +20,21 @@ const createMockMutationRef = () => ({
   _returns: {}
 });
 
+// Known query functions that should always return query type
+const queryFunctions = new Set([
+  'get',
+  'list', 
+  'find',
+  'search',
+  'count',
+  'getRelationshipsByUser',
+  'getDashboardData',
+  'getDashboardStats',
+  'getFilteredJournalEntries',
+  'getDashboardTrends',
+  'getRecentActivity'
+]);
+
 // Known mutation functions - update this list as needed
 const mutationFunctions = new Set([
   'create',
@@ -34,6 +49,15 @@ const mutationFunctions = new Set([
 const createMockModule = (moduleName) => new Proxy({}, {
   get: (target, prop) => {
     const functionName = String(prop);
+    
+    // First check if it's explicitly a query function
+    if (queryFunctions.has(functionName) || 
+        functionName.startsWith('get') ||
+        functionName.startsWith('list') ||
+        functionName.startsWith('find')) {
+      return createMockQueryRef();
+    }
+    
     // Check if this looks like a mutation based on common patterns
     const isMutation = mutationFunctions.has(functionName) || 
                      functionName.startsWith('create') ||
