@@ -322,6 +322,7 @@ export default function EntryHistory({
 
   // Get user's relationships for filter options
   const relationships = useQuery(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     api.relationships.getRelationshipsByUser as any,
     user?.id ? { userId: user.id as Id<'users'> } : 'skip'
   )
