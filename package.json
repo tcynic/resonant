@@ -37,7 +37,8 @@
     "test:performance": "node scripts/performance-monitor.js",
     "ci:test-pipeline": "npm run test:setup:validate && npm run test:ci:auth && npm run test:ci:journeys && npm run test:ci:advanced && npm run test:report:generate",
     "convex:dev": "npx convex dev",
-    "convex:deploy": "npx convex deploy"
+    "convex:deploy": "npx convex deploy",
+    "convex:codegen": "npx convex codegen"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.25.4",

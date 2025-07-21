@@ -56,6 +56,11 @@ jobs:
           echo "Deploying Convex functions to test environment..."
           convex deploy --cmd-url-env-var-name=NEXT_PUBLIC_CONVEX_URL_TEST
 
+      - name: Generate Convex TypeScript files
+        run: |
+          echo "Generating Convex TypeScript definitions..."
+          npx convex codegen
+
       - name: Validate Convex deployment
         run: |
           echo "Validating Convex deployment..."
