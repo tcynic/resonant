@@ -375,7 +375,7 @@ describe('Search Functionality', () => {
 
     it('should reject search for non-existent users', () => {
       const userId = 'invalid-user'
-      const user = userId === 'user-1' ? mockUser : null
+      const user = userId === mockUser._id ? mockUser : null
 
       expect(() => {
         if (!user) {

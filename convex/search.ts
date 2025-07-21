@@ -56,10 +56,9 @@ export const searchJournalEntries = query({
         })
 
       // Get paginated results
-      const paginationOpts = cursor ? { cursor } : {}
       const searchResults = await searchBuilder.paginate({
         numItems: Math.min(limit, 50), // Cap at 50 for performance
-        ...paginationOpts,
+        cursor: cursor || null,
       })
 
       let results = searchResults.page

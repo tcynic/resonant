@@ -357,10 +357,12 @@ export const createExportJob = mutation({
         },
       }
 
+      const exportDataString = JSON.stringify(exportData)
       const exportResult = {
         data: exportData,
         format,
         fileName: `resonant-export-${format}-${new Date().toISOString().split('T')[0]}.${format}`,
+        size: new TextEncoder().encode(exportDataString).length,
       }
 
       return {

@@ -136,7 +136,7 @@ describe('Data Export Functionality', () => {
   describe('Export Job Validation', () => {
     it('should validate user exists', () => {
       const userId = 'user-1'
-      const user = userId === 'user-1' ? mockUser : null
+      const user = userId === mockUser._id ? mockUser : null
 
       expect(() => {
         if (!user) {
@@ -146,8 +146,8 @@ describe('Data Export Functionality', () => {
     })
 
     it('should reject export for non-existent users', () => {
-      const userId = 'invalid-user'
-      const user = userId === 'user-1' ? mockUser : null
+      const userId = 'invalid-user' 
+      const user = userId === mockUser._id ? mockUser : null
 
       expect(() => {
         if (!user) {
