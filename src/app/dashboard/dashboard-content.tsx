@@ -6,6 +6,7 @@ import { useUser } from '@clerk/nextjs'
 import { useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import { Id } from '../../../convex/_generated/dataModel'
+import { RelationshipWithScore } from '@/lib/types'
 import {
   performanceMonitor,
   usePerformanceMonitor,
@@ -421,7 +422,7 @@ export default function DashboardContent() {
               }
             >
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                {dashboardData.relationships.map((relationship: any) => (
+                {dashboardData.relationships.map((relationship: RelationshipWithScore) => (
                   <HealthScoreCard
                     key={relationship._id}
                     relationship={relationship}
