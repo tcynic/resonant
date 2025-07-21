@@ -421,7 +421,7 @@ export default function DashboardContent() {
               }
             >
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                {dashboardData.relationships.map(relationship => (
+                {dashboardData.relationships.map((relationship: any) => (
                   <HealthScoreCard
                     key={relationship._id}
                     relationship={relationship}
