@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "prebuild": "npm run lint && npm run format:check",
+    "prebuild": "npm run convex:codegen-optional && npm run lint && npm run format:check",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -38,7 +38,8 @@
     "ci:test-pipeline": "npm run test:setup:validate && npm run test:ci:auth && npm run test:ci:journeys && npm run test:ci:advanced && npm run test:report:generate",
     "convex:dev": "npx convex dev",
     "convex:deploy": "npx convex deploy",
-    "convex:codegen": "npx convex codegen"
+    "convex:codegen": "npx convex codegen",
+    "convex:codegen-optional": "npx convex codegen || echo 'Convex codegen skipped - using stub files for build compatibility'"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.25.4",
