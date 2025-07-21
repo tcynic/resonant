@@ -457,7 +457,7 @@ export const getHealthScoreTrends = query({
 
     // Calculate weekly averages
     const trends = Object.values(weeklyTrends)
-      .map(week => ({
+      .map((week: { timestamp: number; scores: number[]; count: number }) => ({
         timestamp: week.timestamp,
         averageScore:
           week.scores.reduce((sum, score) => sum + score, 0) /
