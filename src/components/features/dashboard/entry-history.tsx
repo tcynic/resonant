@@ -322,7 +322,7 @@ export default function EntryHistory({
 
   // Get user's relationships for filter options
   const relationships = useQuery(
-    api.relationships.getRelationshipsByUser,
+    api.relationships.getRelationshipsByUser as any,
     user?.id ? { userId: user.id as Id<'users'> } : 'skip'
   )
 
