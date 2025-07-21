@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import Image from 'next/image'
 import Card, { CardHeader, CardContent } from '@/components/ui/card'
 import { AnalysisErrorFallback } from '@/components/ui/error-boundary'
 import { HealthScore, Relationship } from '@/lib/types'
@@ -143,9 +144,11 @@ export default function HealthScoreCard({
             <div className="flex-1">
               <div className="flex items-center space-x-3">
                 {relationship.photo ? (
-                  <img
+                  <Image
                     src={relationship.photo}
                     alt={relationship.name}
+                    width={48}
+                    height={48}
                     className="w-12 h-12 rounded-full object-cover"
                   />
                 ) : (
@@ -188,9 +191,11 @@ export default function HealthScoreCard({
               </p>
             </div>
             {relationship.photo && (
-              <img
+              <Image
                 src={relationship.photo}
                 alt={relationship.name}
+                width={48}
+                height={48}
                 className="w-12 h-12 rounded-full object-cover"
               />
             )}
@@ -247,9 +252,11 @@ export default function HealthScoreCard({
           <div className="flex-1">
             <div className="flex items-center space-x-3">
               {relationship.photo ? (
-                <img
+                <Image
                   src={relationship.photo}
                   alt={relationship.name}
+                  width={40}
+                  height={40}
                   className="w-10 h-10 rounded-full object-cover"
                 />
               ) : (

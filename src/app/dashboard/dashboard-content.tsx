@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useUser } from '@clerk/nextjs'
 import { useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
@@ -19,15 +20,10 @@ import ErrorBoundary, {
   DashboardErrorFallback,
   NetworkErrorFallback,
 } from '@/components/ui/error-boundary'
-import {
-  DashboardData,
-  DashboardStats,
-  DashboardTrends,
-  RecentActivity as RecentActivityType,
-} from '@/lib/types'
+import { DashboardStats } from '@/lib/types'
 
 interface DashboardHeaderProps {
-  user: any
+  user: { firstName?: string } | null
   stats: DashboardStats | undefined
   isLoading?: boolean
 }
@@ -81,7 +77,7 @@ function DashboardHeader({
             {getGreeting()}, {user?.firstName || 'there'}!
           </h1>
           <p className="text-gray-600 mt-1">
-            Here's how your relationships are doing today
+            Here&apos;s how your relationships are doing today
           </p>
         </div>
         <div className="flex items-center space-x-4">
@@ -234,12 +230,12 @@ function EmptyDashboard({ userName }: EmptyDashboardProps) {
                     Start by adding the important relationships in your life -
                     family, friends, colleagues, or partners.
                   </p>
-                  <a
+                  <Link
                     href="/relationships"
                     className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
                   >
                     Add Relationship
-                  </a>
+                  </Link>
                 </div>
               </div>
             </Card>
@@ -255,12 +251,12 @@ function EmptyDashboard({ userName }: EmptyDashboardProps) {
                     Write about your interactions, thoughts, and feelings about
                     your relationships.
                   </p>
-                  <a
+                  <Link
                     href="/journal/new"
                     className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors"
                   >
                     Create First Entry
-                  </a>
+                  </Link>
                 </div>
               </div>
             </Card>
@@ -273,9 +269,7 @@ function EmptyDashboard({ userName }: EmptyDashboardProps) {
 
 export default function DashboardContent() {
   const { user } = useUser()
-  const [selectedTimeRange, setSelectedTimeRange] = useState<
-    'week' | 'month' | 'quarter'
-  >('month')
+  const [selectedTimeRange] = useState<'week' | 'month' | 'quarter'>('month')
 
   const { startRender, endRender } = usePerformanceMonitor('dashboard-content')
 
@@ -311,24 +305,24 @@ export default function DashboardContent() {
 
   const dashboardData = useQuery(
     api.dashboard.getDashboardData,
-    user?.id ? { userId: user.id as any } : 'skip'
+    user?.id ? { userId: user.id } : 'skip'
   )
 
   const dashboardStats = useQuery(
     api.dashboard.getDashboardStats,
-    user?.id ? { userId: user.id as any } : 'skip'
+    user?.id ? { userId: user.id } : 'skip'
   )
 
   const recentActivity = useQuery(
     api.dashboard.getRecentActivity,
-    user?.id ? { userId: user.id as any, limit: 10 } : 'skip'
+    user?.id ? { userId: user.id, limit: 10 } : 'skip'
   )
 
   const trendData = useQuery(
     api.dashboard.getDashboardTrends,
     user?.id
       ? {
-          userId: user.id as any,
+          userId: user.id,
           timeRangeDays:
             selectedTimeRange === 'week'
               ? 7
@@ -478,7 +472,7 @@ export default function DashboardContent() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <a
+              <Link
                 href="/journal/new"
                 className="flex items-center p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
               >
@@ -491,9 +485,9 @@ export default function DashboardContent() {
                     Reflect on your relationships
                   </p>
                 </div>
-              </a>
+              </Link>
 
-              <a
+              <Link
                 href="/relationships/new"
                 className="flex items-center p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors"
               >
@@ -506,9 +500,9 @@ export default function DashboardContent() {
                     Track a new relationship
                   </p>
                 </div>
-              </a>
+              </Link>
 
-              <a
+              <Link
                 href="/journal"
                 className="flex items-center p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors"
               >
@@ -517,7 +511,7 @@ export default function DashboardContent() {
                   <h4 className="font-medium text-gray-900">View History</h4>
                   <p className="text-sm text-gray-600">Browse past entries</p>
                 </div>
-              </a>
+              </Link>
             </div>
           </CardContent>
         </Card>

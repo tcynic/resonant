@@ -10,7 +10,6 @@ export default function ConnectionStatus({
   className = '',
 }: ConnectionStatusProps) {
   const [isOnline, setIsOnline] = useState(true)
-  const [lastUpdateTime, setLastUpdateTime] = useState(Date.now())
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true)

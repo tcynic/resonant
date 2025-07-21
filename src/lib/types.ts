@@ -201,3 +201,80 @@ export interface JournalEntrySearchOptions extends SearchOptions {
   isPrivate?: boolean
   tags?: string[]
 }
+
+// Dashboard-specific types
+export interface DashboardSummary {
+  totalRelationships: number
+  trackedRelationships: number
+  averageHealthScore: number
+  totalAnalyses: number
+  lastUpdated: number
+}
+
+export interface RelationshipWithScore extends Relationship {
+  healthScore: HealthScore | null
+}
+
+export interface DashboardData {
+  relationships: RelationshipWithScore[]
+  recentEntries: JournalEntry[]
+  summary: DashboardSummary
+}
+
+export interface FilteredJournalEntry extends JournalEntry {
+  relationshipName: string
+}
+
+export interface TrendDataPoint {
+  timestamp: number
+  date: string
+  [relationshipName: string]: number | string
+}
+
+export interface DashboardTrends {
+  trends: TrendDataPoint[]
+  relationshipNames: string[]
+  timeRange: {
+    start: number
+    end: number
+    granularity: 'day' | 'week' | 'month'
+  }
+}
+
+export interface ActivityItem extends JournalEntry {
+  relationship: Relationship | null
+  analysisStatus: {
+    total: number
+    hasAnalysis: boolean
+    sentimentScore: number | null
+    emotions: string[]
+    confidence: number | null
+  }
+  preview: string
+}
+
+export interface RecentActivity {
+  activities: ActivityItem[]
+  totalCount: number
+  analysisRate: number
+}
+
+export interface DashboardStats {
+  totals: {
+    relationships: number
+    journalEntries: number
+    trackedRelationships: number
+  }
+  activity: {
+    entriesThisWeek: number
+    entriesThisMonth: number
+    averageEntriesPerWeek: number
+  }
+  health: {
+    averageScore: number
+    improvingRelationships: number
+    decliningRelationships: number
+    stableRelationships: number
+  }
+  lastUpdated: number
+}

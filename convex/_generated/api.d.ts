@@ -15,6 +15,7 @@ import type {
 } from "convex/server";
 import type * as aiAnalysis from "../aiAnalysis.js";
 import type * as constants from "../constants.js";
+import type * as dashboard from "../dashboard.js";
 import type * as healthScores from "../healthScores.js";
 import type * as http from "../http.js";
 import type * as journalEntries from "../journalEntries.js";
@@ -35,6 +36,7 @@ import type * as utils_validation from "../utils/validation.js";
 declare const fullApi: ApiFromModules<{
   aiAnalysis: typeof aiAnalysis;
   constants: typeof constants;
+  dashboard: typeof dashboard;
   healthScores: typeof healthScores;
   http: typeof http;
   journalEntries: typeof journalEntries;

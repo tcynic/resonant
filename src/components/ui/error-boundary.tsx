@@ -81,7 +81,6 @@ function DefaultErrorFallback({ error }: { error?: Error }) {
 
 // Specific error fallback components for different scenarios
 export function DashboardErrorFallback({
-  error,
   onRetry,
 }: {
   error?: Error
@@ -98,7 +97,7 @@ export function DashboardErrorFallback({
             Dashboard Error
           </h3>
           <p className="text-red-700 mb-4 max-w-md mx-auto">
-            We couldn't load your dashboard data. This might be a temporary
+            We couldn&apos;t load your dashboard data. This might be a temporary
             network issue.
           </p>
           <div className="flex flex-col sm:flex-row gap-2 justify-center">

@@ -19,7 +19,6 @@ import {
   TIME_PERIOD_CONFIG,
   DEFAULT_TREND_CHART_CONFIG,
   DEFAULT_CHART_THEME,
-  generateAccessibilityConfig,
   type TimePeriod,
 } from '@/lib/chart-config'
 
@@ -228,7 +227,7 @@ export default function TrendChart({
               <Tooltip content={<CustomTooltip />} />
               <Legend
                 wrapperStyle={{ paddingTop: '20px' }}
-                onClick={(e: any) =>
+                onClick={(e: { value?: string }) =>
                   toggleRelationshipVisibility(e.value || '')
                 }
                 iconType="line"

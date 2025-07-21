@@ -6,8 +6,8 @@ import { HealthScore, Relationship } from '@/lib/types'
 
 // Mock data
 const mockRelationship: Relationship = {
-  _id: 'rel-1' as any,
-  userId: 'user-1' as any,
+  _id: 'rel-1' as never,
+  userId: 'user-1' as never,
   name: 'Test Partner',
   type: 'partner',
   photo: undefined,
@@ -16,9 +16,9 @@ const mockRelationship: Relationship = {
 }
 
 const mockHealthScore: HealthScore = {
-  _id: 'score-1' as any,
-  relationshipId: 'rel-1' as any,
-  userId: 'user-1' as any,
+  _id: 'score-1' as never,
+  relationshipId: 'rel-1' as never,
+  userId: 'user-1' as never,
   overallScore: 85,
   componentScores: {
     sentiment: 8.5,

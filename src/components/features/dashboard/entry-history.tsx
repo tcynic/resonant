@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useUser } from '@clerk/nextjs'
 import { useQuery } from 'convex/react'
 import { api } from '../../../../convex/_generated/api'
@@ -193,7 +194,17 @@ function EntryCard({
   entry,
   relationshipName,
 }: {
-  entry: any
+  entry: {
+    _id: string
+    content: string
+    createdAt: number
+    mood?: string
+    tags?: string[]
+    analysisStatus?: {
+      sentimentScore?: number | null
+      emotions?: string[]
+    }
+  }
   relationshipName: string
 }) {
   const formatDate = (timestamp: number) => {
@@ -305,7 +316,7 @@ export default function EntryHistory({
   // Get user's relationships for filter options
   const relationships = useQuery(
     api.relationships.getRelationshipsByUser,
-    user?.id ? { userId: user.id as any } : 'skip'
+    user?.id ? { userId: user.id } : 'skip'
   )
 
   // Get filtered journal entries
@@ -313,7 +324,7 @@ export default function EntryHistory({
     api.dashboard.getFilteredJournalEntries,
     user?.id
       ? {
-          userId: user.id as any,
+          userId: user.id,
           relationshipIds:
             filters.relationshipIds.length > 0
               ? filters.relationshipIds
@@ -331,13 +342,13 @@ export default function EntryHistory({
   )
 
   const relationshipOptions: RelationshipOption[] =
-    relationships?.map((rel: any) => ({
+    relationships?.map(rel => ({
       id: rel._id,
       name: rel.name,
       selected: filters.relationshipIds.includes(rel._id),
     })) || []
 
-  const handleFilterChange = (key: keyof FilterState, value: any) => {
+  const handleFilterChange = (key: keyof FilterState, value: unknown) => {
     setFilters(prev => ({ ...prev, [key]: value }))
   }
 
@@ -479,12 +490,12 @@ export default function EntryHistory({
                 Clear Filters
               </button>
             ) : (
-              <a
+              <Link
                 href="/journal/new"
                 className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700"
               >
                 Create First Entry
-              </a>
+              </Link>
             )}
           </div>
         ) : (

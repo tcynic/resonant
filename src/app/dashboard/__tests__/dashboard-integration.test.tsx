@@ -25,7 +25,13 @@ jest.mock('convex/react', () => ({
 
 // Mock dashboard components for faster rendering
 jest.mock('@/components/features/dashboard/health-score-card', () => {
-  return function MockHealthScoreCard({ relationship, healthScore }: any) {
+  return function MockHealthScoreCard({
+    relationship,
+    healthScore,
+  }: {
+    relationship: { name: string }
+    healthScore?: { overallScore: number } | null
+  }) {
     return (
       <div data-testid="health-score-card">
         <span data-testid="relationship-name">{relationship.name}</span>
@@ -38,7 +44,13 @@ jest.mock('@/components/features/dashboard/health-score-card', () => {
 })
 
 jest.mock('@/components/features/dashboard/trend-chart', () => {
-  return function MockTrendChart({ data, relationshipNames }: any) {
+  return function MockTrendChart({
+    data,
+    relationshipNames,
+  }: {
+    data: unknown[]
+    relationshipNames: string[]
+  }) {
     return (
       <div data-testid="trend-chart">
         <span data-testid="trend-relationships">
@@ -51,12 +63,18 @@ jest.mock('@/components/features/dashboard/trend-chart', () => {
 })
 
 jest.mock('@/components/features/dashboard/recent-activity', () => {
-  return function MockRecentActivity({ activities, totalCount }: any) {
+  return function MockRecentActivity({
+    activities,
+    totalCount,
+  }: {
+    activities: Array<{ relationship?: { name: string } | null }>
+    totalCount: number
+  }) {
     return (
       <div data-testid="recent-activity">
         <span data-testid="activity-count">{totalCount}</span>
         <div data-testid="activity-list">
-          {activities.map((activity: any, index: number) => (
+          {activities.map((activity, index: number) => (
             <div key={index} data-testid="activity-item">
               {activity.relationship?.name || 'Unknown'}
             </div>
@@ -80,7 +98,11 @@ jest.mock('@/components/features/dashboard/connection-status', () => {
 })
 
 jest.mock('@/components/features/dashboard/real-time-indicator', () => {
-  return function MockRealTimeIndicator({ lastUpdated }: any) {
+  return function MockRealTimeIndicator({
+    lastUpdated,
+  }: {
+    lastUpdated?: number
+  }) {
     return (
       <div data-testid="real-time-indicator">
         {lastUpdated ? 'Updated' : 'Loading...'}
@@ -92,8 +114,8 @@ jest.mock('@/components/features/dashboard/real-time-indicator', () => {
 // Mock error boundary
 jest.mock('@/components/ui/error-boundary', () => ({
   __esModule: true,
-  default: ({ children }: any) => children,
-  DashboardErrorFallback: ({ error }: any) => (
+  default: ({ children }: { children: React.ReactNode }) => children,
+  DashboardErrorFallback: ({ error }: { error?: Error }) => (
     <div data-testid="dashboard-error">Error: {error?.message}</div>
   ),
   NetworkErrorFallback: () => (
@@ -181,7 +203,7 @@ const initialTrendData = {
   },
 }
 
-const { useQuery } = require('convex/react')
+import { useQuery } from 'convex/react'
 
 describe('Dashboard Integration Tests', () => {
   let queryCallCount = 0
@@ -199,28 +221,28 @@ describe('Dashboard Integration Tests', () => {
       dashboardStats: initialDashboardStats,
       recentActivity: initialRecentActivity,
       trendData: initialTrendData,
-    }
-
-    useQuery.mockImplementation((api: any, args: any) => {
-      if (args === 'skip') {
-        return undefined
-      }
-
-      queryCallCount++
-
-      switch (queryCallCount) {
-        case 1:
-          return currentData.dashboardData
-        case 2:
-          return currentData.dashboardStats
-        case 3:
-          return currentData.recentActivity
-        case 4:
-          return currentData.trendData
-        default:
+    }(useQuery as jest.MockedFunction<typeof useQuery>).mockImplementation(
+      (api: unknown, args: unknown) => {
+        if (args === 'skip') {
           return undefined
+        }
+
+        queryCallCount++
+
+        switch (queryCallCount) {
+          case 1:
+            return currentData.dashboardData
+          case 2:
+            return currentData.dashboardStats
+          case 3:
+            return currentData.recentActivity
+          case 4:
+            return currentData.trendData
+          default:
+            return undefined
+        }
       }
-    })
+    )
   })
 
   afterEach(() => {

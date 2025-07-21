@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import Card, { CardHeader, CardContent } from '@/components/ui/card'
 import { ActivityItem } from '@/lib/types'
@@ -23,7 +24,7 @@ interface SentimentBadgeProps {
   confidence: number | null
 }
 
-function SentimentBadge({ score, emotions, confidence }: SentimentBadgeProps) {
+function SentimentBadge({ score }: SentimentBadgeProps) {
   if (score === null) {
     return (
       <div className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-500">
@@ -87,9 +88,11 @@ function ActivityItemComponent({ activity }: ActivityItemComponentProps) {
       {/* Relationship Avatar */}
       <div className="flex-shrink-0">
         {activity.relationship?.photo ? (
-          <img
+          <Image
             src={activity.relationship.photo}
             alt={activity.relationship.name}
+            width={40}
+            height={40}
             className="w-10 h-10 rounded-full object-cover"
           />
         ) : (

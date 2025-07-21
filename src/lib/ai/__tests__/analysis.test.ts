@@ -30,7 +30,19 @@ describe('Enhanced DSPy Analysis Modules', () => {
       getConfig: jest.fn(),
       updateConfig: jest.fn(),
       getUsageStats: jest.fn(),
-    } as jest.Mocked<GeminiClient>
+      genAI: {} as any,
+      model: {} as any,
+      config: {} as any,
+      requestCount: 0,
+      totalTokens: 0,
+      totalCost: 0,
+      lastRequestTime: 0,
+      isInitialized: true,
+      maxRequestsPerMinute: 60,
+      initializeModel: jest.fn(),
+      enforceRateLimit: jest.fn(),
+      calculateActualCost: jest.fn(),
+    } as unknown as jest.Mocked<GeminiClient>
   })
 
   describe('SentimentAnalysisModule', () => {

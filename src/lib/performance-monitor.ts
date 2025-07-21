@@ -10,7 +10,7 @@ export interface PerformanceMetric {
   startTime: number
   endTime?: number
   duration?: number
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
 export interface DashboardPerformanceData {
@@ -36,7 +36,7 @@ class PerformanceMonitor {
   /**
    * Start timing a performance metric
    */
-  startTiming(name: string, metadata?: Record<string, any>): void {
+  startTiming(name: string, metadata?: Record<string, unknown>): void {
     if (!this.enabled) return
 
     this.metrics.set(name, {
@@ -167,9 +167,9 @@ class PerformanceMonitor {
   measureMemoryUsage(): number | undefined {
     if (!this.enabled) return undefined
 
-    // @ts-ignore - performance.memory is not in TypeScript types but exists in Chrome
+    // @ts-expect-error performance.memory is not in TypeScript types but exists in Chrome
     if (performance.memory) {
-      // @ts-ignore
+      // @ts-expect-error performance.memory type definition missing
       return performance.memory.usedJSHeapSize / 1024 / 1024 // Convert to MB
     }
 
@@ -259,7 +259,7 @@ export function withPerformanceMonitoring<P extends object>(
 export async function measureAsyncOperation<T>(
   name: string,
   operation: () => Promise<T>,
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 ): Promise<T> {
   performanceMonitor.startTiming(name, metadata)
 
@@ -285,7 +285,7 @@ export function initializeWebVitals() {
       if (entry.entryType === 'largest-contentful-paint') {
         performanceMonitor.startTiming('lcp')
         performanceMonitor.endTiming('lcp')
-        // @ts-ignore
+        // @ts-expect-error metrics is private but needed for LCP measurement
         performanceMonitor.metrics.get('lcp')!.duration = entry.startTime
       }
     })
@@ -293,7 +293,7 @@ export function initializeWebVitals() {
 
   try {
     observer.observe({ entryTypes: ['largest-contentful-paint'] })
-  } catch (e) {
+  } catch {
     // Observer not supported
   }
 }

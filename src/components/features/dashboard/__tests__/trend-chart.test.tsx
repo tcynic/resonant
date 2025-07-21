@@ -6,7 +6,7 @@ import { TrendDataPoint } from '@/lib/types'
 
 // Mock Recharts
 jest.mock('recharts', () => ({
-  LineChart: ({ children }: any) => (
+  LineChart: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="line-chart">{children}</div>
   ),
   Line: () => <div data-testid="line" />,
@@ -15,7 +15,7 @@ jest.mock('recharts', () => ({
   CartesianGrid: () => <div data-testid="cartesian-grid" />,
   Tooltip: () => <div data-testid="tooltip" />,
   Legend: () => <div data-testid="legend" />,
-  ResponsiveContainer: ({ children }: any) => (
+  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="responsive-container">{children}</div>
   ),
 }))

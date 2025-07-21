@@ -1,5 +1,3 @@
-import React from 'react'
-import { render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom'
 
 // Since the actual RecentActivity component is complex and depends on specific types,
@@ -7,12 +5,13 @@ import '@testing-library/jest-dom'
 describe('RecentActivity Component', () => {
   it('should be importable', () => {
     // This test ensures the component file structure is correct
-    expect(() => require('../recent-activity')).not.toThrow()
+    expect(() => import('../recent-activity')).not.toThrow()
   })
 
-  it('should export a default component', () => {
-    const RecentActivity = require('../recent-activity').default
-    expect(typeof RecentActivity).toBe('function')
+  it('should export a default component', async () => {
+    const RecentActivity = await import('../recent-activity')
+    expect(RecentActivity.default).toBeDefined()
+    expect(typeof RecentActivity.default).toBe('function')
   })
 
   // Add more specific tests once component is fully implemented

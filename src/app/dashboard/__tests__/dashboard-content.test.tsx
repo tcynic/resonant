@@ -20,13 +20,21 @@ jest.mock('convex/react', () => ({
 
 // Mock dashboard components
 jest.mock('@/components/features/dashboard/health-score-card', () => {
-  return function MockHealthScoreCard({ relationship }: any) {
+  return function MockHealthScoreCard({
+    relationship,
+  }: {
+    relationship: { name: string }
+  }) {
     return <div data-testid="health-score-card">{relationship.name}</div>
   }
 })
 
 jest.mock('@/components/features/dashboard/trend-chart', () => {
-  return function MockTrendChart({ relationshipNames }: any) {
+  return function MockTrendChart({
+    relationshipNames,
+  }: {
+    relationshipNames: string[]
+  }) {
     return (
       <div data-testid="trend-chart">
         Trend Chart: {relationshipNames.join(', ')}
@@ -36,7 +44,12 @@ jest.mock('@/components/features/dashboard/trend-chart', () => {
 })
 
 jest.mock('@/components/features/dashboard/recent-activity', () => {
-  return function MockRecentActivity({ activities, totalCount }: any) {
+  return function MockRecentActivity({
+    totalCount,
+  }: {
+    activities?: unknown[]
+    totalCount: number
+  }) {
     return (
       <div data-testid="recent-activity">
         Recent Activity: {totalCount} items
@@ -66,16 +79,28 @@ jest.mock('@/components/features/dashboard/real-time-indicator', () => {
 // Mock error boundary
 jest.mock('@/components/ui/error-boundary', () => ({
   __esModule: true,
-  default: ({ children, fallback }: any) => {
+  default: ({
+    children,
+    fallback,
+  }: {
+    children?: React.ReactNode
+    fallback?: React.ReactNode
+  }) => {
     return children || fallback
   },
-  DashboardErrorFallback: ({ error, onRetry }: any) => (
+  DashboardErrorFallback: ({
+    error,
+    onRetry,
+  }: {
+    error?: Error
+    onRetry?: () => void
+  }) => (
     <div data-testid="dashboard-error">
       Error: {error?.message}
       {onRetry && <button onClick={onRetry}>Retry</button>}
     </div>
   ),
-  NetworkErrorFallback: ({ onRetry }: any) => (
+  NetworkErrorFallback: ({ onRetry }: { onRetry?: () => void }) => (
     <div data-testid="network-error">
       Network Error
       {onRetry && <button onClick={onRetry}>Retry</button>}
@@ -83,7 +108,7 @@ jest.mock('@/components/ui/error-boundary', () => ({
   ),
 }))
 
-const { useQuery } = require('convex/react')
+import { useQuery } from 'convex/react'
 
 // Mock data
 const mockDashboardData = {
@@ -186,8 +211,9 @@ const mockTrendData = {
 describe('DashboardContent', () => {
   beforeEach(() => {
     // Mock useQuery with simple call counting
-    let callCount = 0
-    useQuery.mockImplementation((api: any, args: any) => {
+    let callCount = 0(
+      useQuery as jest.MockedFunction<typeof useQuery>
+    ).mockImplementation((api: unknown, args: unknown) => {
       // Handle 'skip' queries first
       if (args === 'skip') {
         return undefined
@@ -225,7 +251,9 @@ describe('DashboardContent', () => {
   })
 
   it('should display loading state when data is undefined', () => {
-    useQuery.mockReturnValue(undefined)
+    ;(useQuery as jest.MockedFunction<typeof useQuery>).mockReturnValue(
+      undefined
+    )
 
     render(<DashboardContent />)
 
@@ -247,8 +275,9 @@ describe('DashboardContent', () => {
 
   it('should display empty state when no relationships exist', () => {
     // Mock useQuery with simple call counting for empty state
-    let callCount = 0
-    useQuery.mockImplementation((api: any, args: any) => {
+    let callCount = 0(
+      useQuery as jest.MockedFunction<typeof useQuery>
+    ).mockImplementation((api: unknown, args: unknown) => {
       if (args === 'skip') {
         return undefined
       }
@@ -308,7 +337,7 @@ describe('DashboardContent', () => {
   })
 
   it('should not render trend chart when no data', () => {
-    useQuery.mockImplementation((api: any) => {
+    (useQuery as jest.MockedFunction<typeof useQuery>).mockImplementation((api: unknown) => {
       const apiName = api?._name || api?.name || String(api)
       if (typeof apiName === 'string') {
         if (apiName.includes('getDashboardTrends')) {
@@ -428,8 +457,9 @@ describe('DashboardContent', () => {
     }
 
     // Mock useQuery with simple call counting for low score state
-    let callCount = 0
-    useQuery.mockImplementation((api: any, args: any) => {
+    let callCount = 0(
+      useQuery as jest.MockedFunction<typeof useQuery>
+    ).mockImplementation((api: unknown, args: unknown) => {
       if (args === 'skip') {
         return undefined
       }
