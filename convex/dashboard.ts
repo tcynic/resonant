@@ -283,7 +283,12 @@ export const getDashboardTrends = query({
           date: new Date(parseInt(timestamp)).toISOString(),
         }
 
-        Object.entries(relationshipData as Record<string, { scores: number[]; relationshipName: string }>).forEach(([relationshipId, data]) => {
+        Object.entries(
+          relationshipData as Record<
+            string,
+            { scores: number[]; relationshipName: string }
+          >
+        ).forEach(([relationshipId, data]) => {
           if (data.scores.length > 0) {
             const average =
               data.scores.reduce((sum, score) => sum + score, 0) /
