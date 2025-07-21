@@ -24,6 +24,7 @@ describe('Authentication Middleware', () => {
       '/sign-in(.*)',
       '/sign-up(.*)',
       '/',
+      '/test-journal-demo',
     ])
   })
 

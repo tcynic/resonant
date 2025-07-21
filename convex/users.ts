@@ -63,6 +63,19 @@ export const getCurrentUser = query({
   },
 })
 
+// Get user by Clerk ID (convenience function)
+export const getUserByClerkId = query({
+  args: { clerkId: v.string() },
+  handler: async (ctx: QueryCtx, args: { clerkId: string }) => {
+    validateUserInput({ clerkId: args.clerkId })
+
+    return await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', (q: any) => q.eq('clerkId', args.clerkId))
+      .first()
+  },
+})
+
 // Get user by ID
 export const getUserById = query({
   args: { userId: v.id('users') },
@@ -104,6 +117,62 @@ export const updateUserPreferences = mutation({
     try {
       await ctx.db.patch(args.userId, {
         preferences: args.preferences,
+      })
+      return true
+    } catch (error) {
+      throw new ConvexError(ERROR_MESSAGES.USER_UPDATE_FAILED)
+    }
+  },
+})
+
+// Update user privacy settings
+export const updatePrivacySettings = mutation({
+  args: {
+    userId: v.id('users'),
+    preferences: v.object({
+      theme: v.optional(v.union(v.literal('light'), v.literal('dark'))),
+      notifications: v.optional(v.boolean()),
+      language: v.optional(v.string()),
+      dataSharing: v.optional(v.boolean()),
+      analyticsOptIn: v.optional(v.boolean()),
+      marketingOptIn: v.optional(v.boolean()),
+      searchIndexing: v.optional(v.boolean()),
+      dataRetention: v.optional(
+        v.union(
+          v.literal('1year'),
+          v.literal('3years'),
+          v.literal('indefinite')
+        )
+      ),
+    }),
+  },
+  handler: async (
+    ctx: MutationCtx,
+    args: {
+      userId: Id<'users'>
+      preferences: {
+        theme?: 'light' | 'dark'
+        notifications?: boolean
+        language?: string
+        dataSharing?: boolean
+        analyticsOptIn?: boolean
+        marketingOptIn?: boolean
+        searchIndexing?: boolean
+        dataRetention?: '1year' | '3years' | 'indefinite'
+      }
+    }
+  ) => {
+    const user = await ctx.db.get(args.userId)
+    if (!user) {
+      throw new ConvexError(ERROR_MESSAGES.USER_NOT_FOUND)
+    }
+
+    try {
+      await ctx.db.patch(args.userId, {
+        preferences: {
+          ...user.preferences,
+          ...args.preferences,
+        },
       })
       return true
     } catch (error) {

@@ -45,7 +45,12 @@ export default defineSchema({
   })
     .index('by_user', ['userId'])
     .index('by_relationship', ['relationshipId'])
-    .index('by_user_and_private', ['userId', 'isPrivate']),
+    .index('by_user_and_private', ['userId', 'isPrivate'])
+    .index('by_user_created', ['userId', 'createdAt'])
+    .searchIndex('search_content', {
+      searchField: 'content',
+      filterFields: ['userId', 'relationshipId', 'isPrivate'],
+    }),
 
   // AI Analysis Results
   aiAnalysis: defineTable({

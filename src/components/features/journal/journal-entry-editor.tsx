@@ -13,7 +13,11 @@ import Checkbox from '@/components/ui/checkbox'
 import MoodSelector from './mood-selector'
 import TagInput from './tag-input'
 import RelationshipPicker from './relationship-picker'
-import { useAutoSave, useDraftLoader } from '@/hooks/journal/use-auto-save'
+import { useAutoSave, useDraftRecovery } from '@/hooks/useAutoSave'
+import {
+  AutoSaveStatus,
+  DraftRecovery,
+} from '@/components/features/data-management/draft-recovery'
 
 interface JournalEntryEditorProps {
   entry?: JournalEntry
@@ -55,27 +59,23 @@ export default function JournalEntryEditor({
     tags,
   }
 
-  const { saveStatus, lastSaved, clearDraft, hasDraft } = useAutoSave(
-    autoSaveData,
-    {
-      key: draftKey,
-      enabled: !isEditing && content.trim().length > 0,
-    }
-  )
+  const autoSaveResult = useAutoSave(autoSaveData, {
+    key: draftKey,
+    enabled: !isEditing && content.trim().length > 10, // Only save meaningful content
+    delay: 30000, // 30 seconds
+  })
 
-  // Load draft for new entries
-  const draft = useDraftLoader(draftKey)
-
-  // Load draft data on mount for new entries
-  useEffect(() => {
-    if (!isEditing && draft && !content) {
+  // Draft recovery for new entries
+  const draftRecovery = useDraftRecovery(
+    draftKey,
+    (draft: typeof autoSaveData) => {
       setContent(draft.content || '')
       setRelationshipIds(draft.relationshipIds || [])
       setMood(draft.mood as MoodType)
       setIsPrivate(draft.isPrivate ?? true)
       setTags(draft.tags || [])
     }
-  }, [draft, isEditing, content])
+  )
 
   // Update character count
   useEffect(() => {
@@ -134,7 +134,7 @@ export default function JournalEntryEditor({
 
         // Clear draft after successful save
         if (newEntryId) {
-          clearDraft()
+          autoSaveResult.clearDraft()
         }
       }
     } catch (error) {
@@ -148,23 +148,25 @@ export default function JournalEntryEditor({
     }
   }
 
-  const getSaveStatusText = () => {
-    switch (saveStatus) {
-      case 'saving':
-        return 'Saving draft...'
-      case 'saved':
-        return lastSaved
-          ? `Draft saved at ${lastSaved.toLocaleTimeString()}`
-          : 'Draft saved'
-      case 'error':
-        return 'Failed to save draft'
-      default:
-        return hasDraft ? 'Draft available' : ''
-    }
-  }
-
   return (
     <div className="space-y-6">
+      {/* Draft Recovery Notification */}
+      <DraftRecovery
+        isVisible={!isEditing && draftRecovery.hasDraft}
+        draftTimestamp={draftRecovery.draftTimestamp}
+        onRecover={() => {
+          const draft = draftRecovery.recoverDraft()
+          if (draft) {
+            setContent(draft.content || '')
+            setRelationshipIds(draft.relationshipIds || [])
+            setMood(draft.mood as MoodType)
+            setIsPrivate(draft.isPrivate ?? true)
+            setTags(draft.tags || [])
+          }
+        }}
+        onDismiss={() => draftRecovery.clearDraft()}
+      />
+
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
@@ -176,15 +178,12 @@ export default function JournalEntryEditor({
               <p className="text-sm text-gray-600">
                 Share your thoughts and feelings
               </p>
-              {saveStatus !== 'idle' && (
-                <p
-                  className={`text-xs ${
-                    saveStatus === 'error' ? 'text-red-600' : 'text-green-600'
-                  }`}
-                >
-                  {getSaveStatusText()}
-                </p>
-              )}
+              <AutoSaveStatus
+                isAutoSaving={autoSaveResult.isAutoSaving}
+                isDrafted={autoSaveResult.isDrafted}
+                lastSaved={autoSaveResult.lastSaved}
+                error={autoSaveResult.error}
+              />
             </div>
           )}
         </div>
