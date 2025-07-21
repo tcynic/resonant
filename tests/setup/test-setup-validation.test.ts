@@ -80,7 +80,9 @@ test.describe('Test Setup Validation', () => {
 
   test('should validate browser helper readiness', async ({ page }) => {
     await test.step('Check browser helper', async () => {
-      const { createBrowserHelper } = await import('../helpers/mcp-browser-helper')
+      const { createBrowserHelper } = await import(
+        '../helpers/mcp-browser-helper'
+      )
       const browser = createBrowserHelper(page)
 
       expect(browser).toBeDefined()

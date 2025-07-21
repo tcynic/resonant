@@ -15,27 +15,27 @@ test.describe('Authentication Flow Tests (MCP)', () => {
 
   test('should display landing page correctly', async ({ page }) => {
     const browser = createBrowserHelper(page)
-      await test.step('Navigate to landing page', async () => {
-        console.log('📱 Testing with MCP browser integration')
-        console.log('🏠 Navigating to landing page...')
+    await test.step('Navigate to landing page', async () => {
+      console.log('📱 Testing with MCP browser integration')
+      console.log('🏠 Navigating to landing page...')
 
-        try {
-          await browser.navigate('/')
-          await browser.snapshot()
+      try {
+        await browser.navigate('/')
+        await browser.snapshot()
 
-          // These assertions would work once MCP integration is complete
-          // await browser.waitForElement('heading[role="heading"]')
-          // const isVisible = await browser.isElementVisible('text=Resonant')
-          // expect(isVisible).toBe(true)
-        } catch (error) {
-          console.log(
-            'ℹ️  MCP browser integration not yet complete:',
-            (error as Error).message
-          )
-          test.skip(true, 'MCP browser integration configuration in progress')
-        }
-      })
+        // These assertions would work once MCP integration is complete
+        // await browser.waitForElement('heading[role="heading"]')
+        // const isVisible = await browser.isElementVisible('text=Resonant')
+        // expect(isVisible).toBe(true)
+      } catch (error) {
+        console.log(
+          'ℹ️  MCP browser integration not yet complete:',
+          (error as Error).message
+        )
+        test.skip(true, 'MCP browser integration configuration in progress')
+      }
     })
+  })
 
   test('should navigate to sign-up page', async () => {
     await test.step('Navigate to sign-up', async () => {

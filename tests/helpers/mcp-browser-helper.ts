@@ -106,9 +106,17 @@ export class BrowserHelper {
    */
   async signInUser(email: string, password: string): Promise<void> {
     console.log(`🔑 Sign In User: ${email}`)
-    await this.page.fill('input[type="email"], input[name="email"], #email', email)
-    await this.page.fill('input[type="password"], input[name="password"], #password', password)
-    await this.page.click('button[type="submit"], button:has-text("Sign in"), button:has-text("Sign In")')
+    await this.page.fill(
+      'input[type="email"], input[name="email"], #email',
+      email
+    )
+    await this.page.fill(
+      'input[type="password"], input[name="password"], #password',
+      password
+    )
+    await this.page.click(
+      'button[type="submit"], button:has-text("Sign in"), button:has-text("Sign In")'
+    )
   }
 
   /**
@@ -129,7 +137,10 @@ export { BrowserHelper as MCPBrowserHelper }
 /**
  * Factory function to create browser helper
  */
-export function createBrowserHelper(page: Page, baseURL?: string): BrowserHelper {
+export function createBrowserHelper(
+  page: Page,
+  baseURL?: string
+): BrowserHelper {
   return new BrowserHelper(page, baseURL || 'http://localhost:3000')
 }
 

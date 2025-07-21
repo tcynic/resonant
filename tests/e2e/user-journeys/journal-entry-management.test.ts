@@ -12,8 +12,13 @@ test.describe('Journal Entry Management Journey', () => {
   async function signInUser(page: any, email: string, password: string) {
     await page.goto('/sign-in')
     await page.fill('input[type="email"], input[name="email"], #email', email)
-    await page.fill('input[type="password"], input[name="password"], #password', password)
-    await page.click('button[type="submit"], button:has-text("Sign in"), button:has-text("Sign In")')
+    await page.fill(
+      'input[type="password"], input[name="password"], #password',
+      password
+    )
+    await page.click(
+      'button[type="submit"], button:has-text("Sign in"), button:has-text("Sign In")'
+    )
     await page.waitForSelector('text=Dashboard', { timeout: 15000 })
   }
 

@@ -342,7 +342,10 @@ describe('DashboardContent', () => {
 
   it('should not render trend chart when no data', () => {
     ;(useQuery as MockQueryFn).mockImplementation(
-      (api: unknown, ..._args: unknown[]) => {
+      (api: unknown, ...args: unknown[]) => {
+        if (args.length > 0 && args[0] === 'skip') {
+          return undefined
+        }
         const apiName =
           (api as { _name?: string; name?: string })?._name ||
           (api as { _name?: string; name?: string })?.name ||
