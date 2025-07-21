@@ -7,7 +7,7 @@ import { useQuery } from 'convex/react'
 import { api } from '../../../../convex/_generated/api'
 import Card, { CardHeader, CardContent } from '@/components/ui/card'
 import { Id } from '../../../../convex/_generated/dataModel'
-import { Relationship } from '@/lib/types'
+import { Relationship, FilteredJournalEntry } from '@/lib/types'
 
 interface EntryHistoryProps {
   className?: string
@@ -511,7 +511,7 @@ export default function EntryHistory({
           </div>
         ) : (
           <div className="space-y-4">
-            {entriesData.entries.map(entry => (
+            {entriesData.entries.map((entry: FilteredJournalEntry) => (
               <EntryCard
                 key={entry._id}
                 entry={entry}
