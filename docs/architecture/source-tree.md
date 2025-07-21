@@ -263,7 +263,7 @@ convex/
 ├── utils/                     # Backend utility functions
 │   ├── validation.ts          # Input validation utilities
 │   ├── auth.ts                # Authentication utilities
-│   └── ai-helpers.ts          # AI processing helpers
+│   └── ai_helpers.ts          # AI processing helpers
 ├── http.ts                    # HTTP actions and webhooks
 ├── crons.ts                   # Scheduled functions
 ├── _generated/                # Generated Convex files
