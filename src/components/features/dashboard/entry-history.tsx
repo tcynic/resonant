@@ -7,6 +7,7 @@ import { useQuery } from 'convex/react'
 import { api } from '../../../../convex/_generated/api'
 import Card, { CardHeader, CardContent } from '@/components/ui/card'
 import { Id } from '../../../../convex/_generated/dataModel'
+import { Relationship } from '@/lib/types'
 
 interface EntryHistoryProps {
   className?: string
@@ -350,7 +351,7 @@ export default function EntryHistory({
   )
 
   const relationshipOptions: RelationshipOption[] =
-    relationships?.map(rel => ({
+    relationships?.map((rel: Relationship) => ({
       id: rel._id,
       name: rel.name,
       selected: filters.relationshipIds.includes(rel._id),
