@@ -211,30 +211,31 @@ const mockTrendData = {
 describe('DashboardContent', () => {
   beforeEach(() => {
     // Mock useQuery with simple call counting
-    let callCount = 0(
-      useQuery as jest.MockedFunction<typeof useQuery>
-    ).mockImplementation((api: unknown, args: unknown) => {
-      // Handle 'skip' queries first
-      if (args === 'skip') {
-        return undefined
-      }
-
-      // Return mock data based on call order in component
-      callCount++
-
-      switch (callCount) {
-        case 1: // dashboardData
-          return mockDashboardData
-        case 2: // dashboardStats
-          return mockDashboardStats
-        case 3: // recentActivity
-          return mockRecentActivity
-        case 4: // trendData
-          return mockTrendData
-        default:
+    let callCount = 0
+    ;(useQuery as jest.MockedFunction<typeof useQuery>).mockImplementation(
+      (api: any, ...args: any[]) => {
+        // Handle 'skip' queries first
+        if (args.length > 0 && args[0] === 'skip') {
           return undefined
+        }
+
+        // Return mock data based on call order in component
+        callCount++
+
+        switch (callCount) {
+          case 1: // dashboardData
+            return mockDashboardData
+          case 2: // dashboardStats
+            return mockDashboardStats
+          case 3: // recentActivity
+            return mockRecentActivity
+          case 4: // trendData
+            return mockTrendData
+          default:
+            return undefined
+        }
       }
-    })
+    )
   })
 
   afterEach(() => {
@@ -263,7 +264,7 @@ describe('DashboardContent', () => {
   })
 
   it('should display error state when data fails to load', () => {
-    useQuery.mockReturnValue(null)
+    ;(useQuery as jest.MockedFunction<typeof useQuery>).mockReturnValue(null)
 
     render(<DashboardContent />)
 
@@ -275,26 +276,27 @@ describe('DashboardContent', () => {
 
   it('should display empty state when no relationships exist', () => {
     // Mock useQuery with simple call counting for empty state
-    let callCount = 0(
-      useQuery as jest.MockedFunction<typeof useQuery>
-    ).mockImplementation((api: unknown, args: unknown) => {
-      if (args === 'skip') {
-        return undefined
-      }
-
-      callCount++
-
-      switch (callCount) {
-        case 1: // dashboardData
-          return { relationships: [], recentEntries: [], summary: {} }
-        case 2: // dashboardStats
-          return mockDashboardStats
-        case 3: // recentActivity
-          return mockRecentActivity
-        default:
+    let callCount = 0
+    ;(useQuery as jest.MockedFunction<typeof useQuery>).mockImplementation(
+      (api: any, ...args: any[]) => {
+        if (args.length > 0 && args[0] === 'skip') {
           return undefined
+        }
+
+        callCount++
+
+        switch (callCount) {
+          case 1: // dashboardData
+            return { relationships: [], recentEntries: [], summary: {} }
+          case 2: // dashboardStats
+            return mockDashboardStats
+          case 3: // recentActivity
+            return mockRecentActivity
+          default:
+            return undefined
+        }
       }
-    })
+    )
 
     render(<DashboardContent />)
 
@@ -338,7 +340,7 @@ describe('DashboardContent', () => {
 
   it('should not render trend chart when no data', () => {
     ;(useQuery as jest.MockedFunction<typeof useQuery>).mockImplementation(
-      (api: unknown) => {
+      (api: any, ...args: any[]) => {
         const apiName = api?._name || api?.name || String(api)
         if (typeof apiName === 'string') {
           if (apiName.includes('getDashboardTrends')) {
@@ -459,28 +461,29 @@ describe('DashboardContent', () => {
     }
 
     // Mock useQuery with simple call counting for low score state
-    let callCount = 0(
-      useQuery as jest.MockedFunction<typeof useQuery>
-    ).mockImplementation((api: unknown, args: unknown) => {
-      if (args === 'skip') {
-        return undefined
-      }
-
-      callCount++
-
-      switch (callCount) {
-        case 1: // dashboardData
-          return mockDashboardData
-        case 2: // dashboardStats
-          return lowScoreStats
-        case 3: // recentActivity
-          return mockRecentActivity
-        case 4: // trendData
-          return mockTrendData
-        default:
+    let callCount = 0
+    ;(useQuery as jest.MockedFunction<typeof useQuery>).mockImplementation(
+      (api: any, ...args: any[]) => {
+        if (args.length > 0 && args[0] === 'skip') {
           return undefined
+        }
+
+        callCount++
+
+        switch (callCount) {
+          case 1: // dashboardData
+            return mockDashboardData
+          case 2: // dashboardStats
+            return lowScoreStats
+          case 3: // recentActivity
+            return mockRecentActivity
+          case 4: // trendData
+            return mockTrendData
+          default:
+            return undefined
+        }
       }
-    })
+    )
 
     render(<DashboardContent />)
 

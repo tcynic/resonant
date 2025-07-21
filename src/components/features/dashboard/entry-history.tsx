@@ -254,17 +254,24 @@ function EntryCard({
       </div>
 
       <p className="text-sm text-gray-700 mb-3 line-clamp-3">
-        {entry.preview ||
-          entry.content.substring(0, 150) +
-            (entry.content.length > 150 ? '...' : '')}
+        {entry.content.substring(0, 150) +
+          (entry.content.length > 150 ? '...' : '')}
       </p>
 
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4 text-xs text-gray-500">
           {entry.mood && (
             <span className="flex items-center space-x-1">
-              <span>{entry.mood.emoji}</span>
-              <span>{entry.mood.type}</span>
+              <span>
+                {typeof entry.mood === 'string'
+                  ? '😊'
+                  : (entry.mood as any).emoji || '😊'}
+              </span>
+              <span>
+                {typeof entry.mood === 'string'
+                  ? entry.mood
+                  : (entry.mood as any).type || entry.mood}
+              </span>
             </span>
           )}
           {entry.tags && entry.tags.length > 0 && (
@@ -316,7 +323,7 @@ export default function EntryHistory({
   // Get user's relationships for filter options
   const relationships = useQuery(
     api.relationships.getRelationshipsByUser,
-    user?.id ? { userId: user.id } : 'skip'
+    user?.id ? { userId: user.id as any } : 'skip'
   )
 
   // Get filtered journal entries
@@ -324,7 +331,7 @@ export default function EntryHistory({
     api.dashboard.getFilteredJournalEntries,
     user?.id
       ? {
-          userId: user.id,
+          userId: user.id as any,
           relationshipIds:
             filters.relationshipIds.length > 0
               ? filters.relationshipIds

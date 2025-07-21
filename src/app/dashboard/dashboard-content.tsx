@@ -305,24 +305,24 @@ export default function DashboardContent() {
 
   const dashboardData = useQuery(
     api.dashboard.getDashboardData,
-    user?.id ? { userId: user.id } : 'skip'
+    user?.id ? { userId: user.id as any } : 'skip'
   )
 
   const dashboardStats = useQuery(
     api.dashboard.getDashboardStats,
-    user?.id ? { userId: user.id } : 'skip'
+    user?.id ? { userId: user.id as any } : 'skip'
   )
 
   const recentActivity = useQuery(
     api.dashboard.getRecentActivity,
-    user?.id ? { userId: user.id, limit: 10 } : 'skip'
+    user?.id ? { userId: user.id as any, limit: 10 } : 'skip'
   )
 
   const trendData = useQuery(
     api.dashboard.getDashboardTrends,
     user?.id
       ? {
-          userId: user.id,
+          userId: user.id as any,
           timeRangeDays:
             selectedTimeRange === 'week'
               ? 7
@@ -388,7 +388,11 @@ export default function DashboardContent() {
     <div className="min-h-screen bg-gray-50 px-4 py-8">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
-        <DashboardHeader user={user} stats={dashboardStats} isLoading={false} />
+        <DashboardHeader
+          user={user as any}
+          stats={dashboardStats}
+          isLoading={false}
+        />
 
         {/* Stats Grid */}
         <StatsGrid stats={dashboardStats} />

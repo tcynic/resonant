@@ -205,7 +205,10 @@ class PerformanceMonitor {
       }
 
       // Extract data points from metadata
-      if (metric.metadata?.dataPoints) {
+      if (
+        metric.metadata?.dataPoints &&
+        typeof metric.metadata.dataPoints === 'number'
+      ) {
         report.totalDataPoints += metric.metadata.dataPoints
       }
     })

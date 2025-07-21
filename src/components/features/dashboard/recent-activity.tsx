@@ -21,10 +21,10 @@ interface ActivityItemComponentProps {
 interface SentimentBadgeProps {
   score: number | null
   emotions: string[]
-  confidence: number | null
+  confidence?: number | null
 }
 
-function SentimentBadge({ score }: SentimentBadgeProps) {
+function SentimentBadge({ score, confidence }: SentimentBadgeProps) {
   if (score === null) {
     return (
       <div className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-500">

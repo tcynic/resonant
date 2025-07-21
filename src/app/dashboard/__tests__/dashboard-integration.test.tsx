@@ -221,9 +221,10 @@ describe('Dashboard Integration Tests', () => {
       dashboardStats: initialDashboardStats,
       recentActivity: initialRecentActivity,
       trendData: initialTrendData,
-    }(useQuery as jest.MockedFunction<typeof useQuery>).mockImplementation(
-      (api: unknown, args: unknown) => {
-        if (args === 'skip') {
+    }
+    ;(useQuery as jest.MockedFunction<typeof useQuery>).mockImplementation(
+      (api: any, ...args: any[]) => {
+        if (args.length > 0 && args[0] === 'skip') {
           return undefined
         }
 

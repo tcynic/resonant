@@ -276,6 +276,109 @@ await runJournalCreationTest()
 - **Imports**: Absolute imports using `@/` path mapping
 - **Validation**: Zod schemas for all form and API validation
 
+## TypeScript Best Practices: Avoiding `any` Types
+
+The `@typescript-eslint/no-explicit-any` rule helps prevent using the `any` type, which disables TypeScript's type checking and can lead to runtime errors.
+
+### Why Avoid `any`?
+- `any` bypasses all type checking
+- It's "infectious" - spreads through your codebase
+- Can hide bugs that TypeScript would normally catch
+- Makes refactoring harder
+
+### Common Patterns to Replace `any`
+
+1. **Use `unknown` instead of `any` for truly unknown types**:
+   ```typescript
+   // ❌ Bad
+   function parseData(data: any) { ... }
+   
+   // ✅ Good
+   function parseData(data: unknown) { ... }
+   ```
+
+2. **For JSON parsing, use `unknown`**:
+   ```typescript
+   // ❌ Bad
+   const data = JSON.parse(raw); // implicitly any
+   
+   // ✅ Good
+   const data: unknown = JSON.parse(raw);
+   ```
+
+3. **For function parameters, define specific types**:
+   ```typescript
+   // ❌ Bad
+   function greet(friend: any) { ... }
+   
+   // ✅ Good
+   function greet(friend: string) { ... }
+   // or
+   function greet(friend: { name: string }) { ... }
+   ```
+
+4. **For arrays, specify element types**:
+   ```typescript
+   // ❌ Bad
+   const items: any[] = [];
+   
+   // ✅ Good
+   const items: string[] = [];
+   const items: Array<string | number> = [];
+   ```
+
+5. **For test mocks, use specific types or type assertions**:
+   ```typescript
+   // ❌ Bad
+   const mockFn = jest.fn((api: any, args: any) => { ... });
+   
+   // ✅ Good
+   const mockFn = jest.fn((api: unknown, ...args: unknown[]) => { ... });
+   // or create specific mock types
+   type MockQuery = jest.MockedFunction<typeof useQuery>;
+   ```
+
+6. **For object types, define interfaces or use Record**:
+   ```typescript
+   // ❌ Bad
+   const config: any = {};
+   
+   // ✅ Good
+   const config: Record<string, unknown> = {};
+   // or define specific interface
+   interface Config { ... }
+   ```
+
+7. **For type assertions, prefer `unknown` first**:
+   ```typescript
+   // ❌ Bad
+   const userId = user.id as any;
+   
+   // ✅ Good
+   const userId = user.id as string;
+   // or if truly unknown
+   const userId = user.id as unknown as string;
+   ```
+
+### Special Cases
+
+- **Convex/Database IDs**: When dealing with database IDs that have specific types, use type assertions sparingly and document why
+- **Third-party libraries**: If types are missing, consider adding type definitions or using `unknown`
+- **Migration code**: Use `// @ts-expect-error` with explanation instead of `any`
+
+### ESLint Configuration
+These rules are configured to catch `any` usage:
+```javascript
+{
+  "@typescript-eslint/no-explicit-any": "error",
+  "@typescript-eslint/no-unsafe-assignment": "error",
+  "@typescript-eslint/no-unsafe-member-access": "error",
+  "@typescript-eslint/no-unsafe-call": "error",
+  "@typescript-eslint/no-unsafe-return": "error",
+  "@typescript-eslint/no-unsafe-argument": "error"
+}
+```
+
 ## Code Quality Checklist
 
 - Run prettier to check code formatting
