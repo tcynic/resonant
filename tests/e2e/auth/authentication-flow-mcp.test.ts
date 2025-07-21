@@ -5,10 +5,7 @@
  */
 
 import { test, expect } from '@playwright/test'
-import {
-  createMCPBrowser,
-  withMCPBrowser,
-} from '../../helpers/mcp-browser-helper'
+import { createBrowserHelper } from '../../helpers/mcp-browser-helper'
 
 test.describe('Authentication Flow Tests (MCP)', () => {
   test.beforeEach(async () => {
@@ -16,9 +13,8 @@ test.describe('Authentication Flow Tests (MCP)', () => {
     console.log('🚀 Initializing MCP browser test session')
   })
 
-  test(
-    'should display landing page correctly',
-    withMCPBrowser(async browser => {
+  test('should display landing page correctly', async ({ page }) => {
+    const browser = createBrowserHelper(page)
       await test.step('Navigate to landing page', async () => {
         console.log('📱 Testing with MCP browser integration')
         console.log('🏠 Navigating to landing page...')
@@ -40,7 +36,6 @@ test.describe('Authentication Flow Tests (MCP)', () => {
         }
       })
     })
-  )
 
   test('should navigate to sign-up page', async () => {
     await test.step('Navigate to sign-up', async () => {

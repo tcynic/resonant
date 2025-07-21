@@ -1,19 +1,21 @@
 /**
  * Journal Entry Management User Journey Tests
  *
- * Tests core journal entry creation, editing, and deletion flows using MCP browser automation
+ * Tests core journal entry creation, editing, and deletion flows using standard Playwright
  */
 
 import { test, expect } from '@playwright/test'
 import { getTestUserCredentials } from '../../accounts/test-user-personas'
-import { MCPBrowserHelper } from '../../helpers/mcp-browser-helper'
 
 test.describe('Journal Entry Management Journey', () => {
-  let mcpHelper: MCPBrowserHelper
-
-  test.beforeEach(async ({ page }) => {
-    mcpHelper = new MCPBrowserHelper(page)
-  })
+  // Helper function to sign in a user
+  async function signInUser(page: any, email: string, password: string) {
+    await page.goto('/sign-in')
+    await page.fill('input[type="email"], input[name="email"], #email', email)
+    await page.fill('input[type="password"], input[name="password"], #password', password)
+    await page.click('button[type="submit"], button:has-text("Sign in"), button:has-text("Sign In")')
+    await page.waitForSelector('text=Dashboard', { timeout: 15000 })
+  }
 
   test('should complete journal entry creation flow for new user', async ({
     page,
@@ -21,14 +23,10 @@ test.describe('Journal Entry Management Journey', () => {
     const { email, password, user } = getTestUserCredentials('newUser')
 
     await test.step('Authenticate as new user', async () => {
-      await mcpHelper.navigateToSignIn()
-      await mcpHelper.signInUser(email, password)
-      await mcpHelper.waitForAuthentication()
+      await signInUser(page, email, password)
     })
 
     await test.step('Navigate to journal page', async () => {
-      // In actual MCP environment:
-      // await mcp__playwright__browser_navigate({ url: '/journal' })
       await page.goto('/journal')
 
       // Verify empty state for new user
@@ -37,11 +35,6 @@ test.describe('Journal Entry Management Journey', () => {
     })
 
     await test.step('Create first journal entry', async () => {
-      // In actual MCP environment:
-      // await mcp__playwright__browser_click({
-      //   element: 'create new entry button',
-      //   ref: '[data-testid="create-entry-btn"]'
-      // })
       await page.getByRole('button', { name: /new entry/i }).click()
 
       // Verify navigation to entry editor
@@ -56,12 +49,6 @@ test.describe('Journal Entry Management Journey', () => {
         .fill('My First Journal Entry')
 
       // Fill main content
-      // In actual MCP environment:
-      // await mcp__playwright__browser_type({
-      //   element: 'journal content editor',
-      //   ref: '[data-testid="journal-content"]',
-      //   text: 'Today was a great day. I felt really positive about starting this journey of reflection and growth.'
-      // })
       await page
         .getByRole('textbox', { name: /content/i })
         .fill(
@@ -72,11 +59,6 @@ test.describe('Journal Entry Management Journey', () => {
     })
 
     await test.step('Select mood for entry', async () => {
-      // In actual MCP environment:
-      // await mcp__playwright__browser_click({
-      //   element: 'happy mood selector',
-      //   ref: '[data-testid="mood-happy"]'
-      // })
       await page.getByRole('button', { name: /happy/i }).click()
 
       // Verify mood selected
@@ -87,12 +69,6 @@ test.describe('Journal Entry Management Journey', () => {
     })
 
     await test.step('Add tags to entry', async () => {
-      // In actual MCP environment:
-      // await mcp__playwright__browser_type({
-      //   element: 'tag input field',
-      //   ref: '[data-testid="tag-input"]',
-      //   text: 'gratitude'
-      // })
       await page.getByRole('textbox', { name: /add tags/i }).fill('gratitude')
       await page.getByRole('textbox', { name: /add tags/i }).press('Enter')
 
@@ -107,11 +83,6 @@ test.describe('Journal Entry Management Journey', () => {
     })
 
     await test.step('Save journal entry', async () => {
-      // In actual MCP environment:
-      // await mcp__playwright__browser_click({
-      //   element: 'save entry button',
-      //   ref: '[data-testid="save-entry"]'
-      // })
       await page.getByRole('button', { name: /save entry/i }).click()
 
       // Verify success and navigation
@@ -139,9 +110,7 @@ test.describe('Journal Entry Management Journey', () => {
     const { email, password, user } = getTestUserCredentials('activeUser')
 
     await test.step('Authenticate as active user', async () => {
-      await mcpHelper.navigateToSignIn()
-      await mcpHelper.signInUser(email, password)
-      await mcpHelper.waitForAuthentication()
+      await signInUser(page, email, password)
     })
 
     await test.step('Navigate to journal and select entry to edit', async () => {
@@ -153,11 +122,6 @@ test.describe('Journal Entry Management Journey', () => {
         .first()
       await expect(firstEntry).toBeVisible()
 
-      // In actual MCP environment:
-      // await mcp__playwright__browser_click({
-      //   element: 'edit entry button',
-      //   ref: '[data-testid="edit-entry-btn"]'
-      // })
       await firstEntry.getByRole('button', { name: /edit/i }).click()
 
       // Verify navigation to edit page
@@ -233,9 +197,7 @@ test.describe('Journal Entry Management Journey', () => {
     const { email, password, user } = getTestUserCredentials('activeUser')
 
     await test.step('Authenticate and navigate to journal', async () => {
-      await mcpHelper.navigateToSignIn()
-      await mcpHelper.signInUser(email, password)
-      await mcpHelper.waitForAuthentication()
+      await signInUser(page, email, password)
       await page.goto('/journal')
     })
 
@@ -250,16 +212,9 @@ test.describe('Journal Entry Management Journey', () => {
         .locator('[data-testid="entry-title"]')
         .textContent()
 
-      // In actual MCP environment:
-      // await mcp__playwright__browser_click({
-      //   element: 'delete entry button',
-      //   ref: '[data-testid="delete-entry-btn"]'
-      // })
       await firstEntry.getByRole('button', { name: /delete/i }).click()
 
       // Handle confirmation dialog
-      // In actual MCP environment:
-      // await mcp__playwright__browser_handle_dialog({ accept: true })
       page.on('dialog', dialog => dialog.accept())
 
       // Verify deletion
@@ -279,9 +234,7 @@ test.describe('Journal Entry Management Journey', () => {
     const { email, password, user } = getTestUserCredentials('activeUser')
 
     await test.step('Authenticate and create new entry', async () => {
-      await mcpHelper.navigateToSignIn()
-      await mcpHelper.signInUser(email, password)
-      await mcpHelper.waitForAuthentication()
+      await signInUser(page, email, password)
       await page.goto('/journal/new')
     })
 
@@ -301,11 +254,6 @@ test.describe('Journal Entry Management Journey', () => {
     })
 
     await test.step('Select relationships for entry', async () => {
-      // In actual MCP environment:
-      // await mcp__playwright__browser_click({
-      //   element: 'relationship picker',
-      //   ref: '[data-testid="relationship-picker"]'
-      // })
       await page.getByRole('button', { name: /add relationships/i }).click()
 
       // Select multiple relationships
@@ -346,9 +294,7 @@ test.describe('Journal Entry Management Journey', () => {
     const { email, password, user } = getTestUserCredentials('newUser')
 
     await test.step('Authenticate and navigate to new entry', async () => {
-      await mcpHelper.navigateToSignIn()
-      await mcpHelper.signInUser(email, password)
-      await mcpHelper.waitForAuthentication()
+      await signInUser(page, email, password)
       await page.goto('/journal/new')
     })
 
@@ -367,11 +313,6 @@ test.describe('Journal Entry Management Journey', () => {
       ]
 
       for (const mood of moods) {
-        // In actual MCP environment:
-        // await mcp__playwright__browser_click({
-        //   element: `${mood} mood button`,
-        //   ref: `[data-testid="mood-${mood}"]`
-        // })
         await page.getByRole('button', { name: new RegExp(mood, 'i') }).click()
 
         // Verify mood selected
@@ -406,9 +347,7 @@ test.describe('Journal Entry Management Journey', () => {
     const { email, password, user } = getTestUserCredentials('newUser')
 
     await test.step('Authenticate and navigate to new entry', async () => {
-      await mcpHelper.navigateToSignIn()
-      await mcpHelper.signInUser(email, password)
-      await mcpHelper.waitForAuthentication()
+      await signInUser(page, email, password)
       await page.goto('/journal/new')
     })
 
@@ -468,9 +407,7 @@ test.describe('Journal Entry Management Journey', () => {
     const { email, password, user } = getTestUserCredentials('activeUser')
 
     await test.step('Authenticate and navigate to new entry', async () => {
-      await mcpHelper.navigateToSignIn()
-      await mcpHelper.signInUser(email, password)
-      await mcpHelper.waitForAuthentication()
+      await signInUser(page, email, password)
       await page.goto('/journal/new')
     })
 

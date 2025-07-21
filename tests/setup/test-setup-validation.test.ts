@@ -78,17 +78,17 @@ test.describe('Test Setup Validation', () => {
     })
   })
 
-  test('should validate MCP integration readiness', async () => {
-    await test.step('Check MCP browser helper', async () => {
-      const { createMCPBrowser } = await import('../helpers/mcp-browser-helper')
-      const browser = createMCPBrowser()
+  test('should validate browser helper readiness', async ({ page }) => {
+    await test.step('Check browser helper', async () => {
+      const { createBrowserHelper } = await import('../helpers/mcp-browser-helper')
+      const browser = createBrowserHelper(page)
 
       expect(browser).toBeDefined()
       expect(typeof browser.navigate).toBe('function')
       expect(typeof browser.click).toBe('function')
       expect(typeof browser.type).toBe('function')
 
-      console.log('✅ MCP browser helper interface ready')
+      console.log('✅ Browser helper interface ready')
     })
 
     await test.step('Check authentication helpers', async () => {

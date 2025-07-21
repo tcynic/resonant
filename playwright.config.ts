@@ -5,23 +5,23 @@ import { config } from 'dotenv'
 config({ path: '.env.test' })
 
 /**
- * Playwright configuration for E2E testing with MCP integration
+ * Playwright configuration for E2E testing
  * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
   testDir: './tests/e2e',
 
-  /* Run tests in files in parallel - reduced for MCP integration */
-  fullyParallel: false,
+  /* Run tests in files in parallel */
+  fullyParallel: true,
 
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
 
   /* Retry on CI only */
-  retries: process.env.CI ? 1 : 0,
+  retries: process.env.CI ? 2 : 0,
 
-  /* Opt out of parallel tests for MCP integration */
-  workers: 1,
+  /* Use default worker count on CI, limit locally for stability */
+  workers: process.env.CI ? undefined : 1,
 
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [['line'], ['json', { outputFile: 'test-results/results.json' }]],
@@ -47,18 +47,32 @@ export default defineConfig({
     ignoreHTTPSErrors: true,
   },
 
-  /* Configure projects for testing - simplified for MCP */
+  /* Configure projects for major browsers */
   projects: [
     {
-      name: 'mcp-browser',
-      use: {
-        viewport: { width: 1280, height: 720 },
-        // Skip browser launch - handled by MCP server
-        launchOptions: {
-          // Disable local browser launch
-        },
-      },
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
     },
+
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+    },
+
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+    },
+
+    /* Test against mobile viewports. */
+    // {
+    //   name: 'Mobile Chrome',
+    //   use: { ...devices['Pixel 5'] },
+    // },
+    // {
+    //   name: 'Mobile Safari',
+    //   use: { ...devices['iPhone 12'] },
+    // },
   ],
 
   /* Test output directories */
@@ -75,4 +89,12 @@ export default defineConfig({
   /* Global setup and teardown */
   globalSetup: require.resolve('./tests/setup/global-setup.ts'),
   globalTeardown: require.resolve('./tests/setup/global-teardown.ts'),
+
+  /* Run your local dev server before starting the tests */
+  webServer: {
+    command: 'npm run dev',
+    url: 'http://localhost:3000',
+    reuseExistingServer: !process.env.CI,
+    timeout: 120000,
+  },
 })
