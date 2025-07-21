@@ -9,3 +9,4 @@ package-lock.json
 yarn.lock
 .env*
 convex/_generated/
+.bmad-core/
