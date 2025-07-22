@@ -4,8 +4,17 @@ import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../convex/_generated/api'
 import { Id } from '../../convex/_generated/dataModel'
 
+interface ConvexUser {
+  _id: string
+  clerkId: string
+  name: string
+  email: string
+  createdAt: number
+  preferences?: unknown
+}
+
 interface ConvexUserState {
-  convexUser: any | null | undefined
+  convexUser: ConvexUser | null | undefined
   isLoading: boolean
   isCreating: boolean
   error: string | null
@@ -55,8 +64,11 @@ export function useConvexUser(): ConvexUserState {
       try {
         const userData = {
           clerkId: user.id,
-          name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Unknown User',
-          email: user.emailAddresses?.[0]?.emailAddress || `${user.id}@unknown.com`,
+          name:
+            `${user.firstName || ''} ${user.lastName || ''}`.trim() ||
+            'Unknown User',
+          email:
+            user.emailAddresses?.[0]?.emailAddress || `${user.id}@unknown.com`,
         }
 
         await createUser(userData)
@@ -70,7 +82,16 @@ export function useConvexUser(): ConvexUserState {
     }
 
     syncUser()
-  }, [user?.id, clerkLoaded, convexUser, createUser, isCreating])
+  }, [
+    user?.id,
+    user?.firstName,
+    user?.lastName,
+    user?.emailAddresses,
+    clerkLoaded,
+    convexUser,
+    createUser,
+    isCreating,
+  ])
 
   return {
     convexUser,
@@ -86,7 +107,7 @@ export function useConvexUser(): ConvexUserState {
  */
 export function useConvexUserId(): Id<'users'> | null {
   const { convexUser, isLoading } = useConvexUser()
-  
+
   if (isLoading || !convexUser) {
     return null
   }

@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { useUser } from '@clerk/nextjs'
 import { useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
-import { Id } from '../../../convex/_generated/dataModel'
 import { RelationshipWithScore } from '@/lib/types'
 import {
   performanceMonitor,
@@ -273,9 +272,14 @@ function EmptyDashboard({ userName }: EmptyDashboardProps) {
 export default function DashboardContent() {
   const { user } = useUser()
   const [selectedTimeRange] = useState<'week' | 'month' | 'quarter'>('month')
-  
+
   // Use the custom hook to handle user sync
-  const { convexUser, isLoading: userSyncLoading, isCreating, error: userSyncError } = useConvexUser()
+  const {
+    convexUser,
+    isLoading: userSyncLoading,
+    isCreating,
+    error: userSyncError,
+  } = useConvexUser()
 
   const { startRender, endRender } = usePerformanceMonitor('dashboard-content')
 
@@ -351,8 +355,8 @@ export default function DashboardContent() {
   // Check for errors in critical data
   const hasDataError =
     userSyncError !== null ||
-    dashboardData === null || 
-    dashboardStats === null || 
+    dashboardData === null ||
+    dashboardStats === null ||
     recentActivity === null
   const isLoading =
     userSyncLoading ||
@@ -387,7 +391,8 @@ export default function DashboardContent() {
               Setting up your account...
             </h2>
             <p className="text-gray-600 mb-4">
-              We're creating your profile in our database. This should only take a moment.
+              We&apos;re creating your profile in our database. This should only
+              take a moment.
             </p>
             <div className="inline-flex items-center space-x-2">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>

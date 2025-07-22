@@ -11,7 +11,9 @@ export async function POST(req: Request) {
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET
 
   if (!WEBHOOK_SECRET) {
-    throw new Error('Please add CLERK_WEBHOOK_SECRET from Clerk Dashboard to .env or .env.local')
+    throw new Error(
+      'Please add CLERK_WEBHOOK_SECRET from Clerk Dashboard to .env or .env.local'
+    )
   }
 
   // Get the headers
@@ -29,7 +31,6 @@ export async function POST(req: Request) {
 
   // Get the body
   const payload = await req.text()
-  const body = JSON.parse(payload)
 
   // Create a new Svix instance with your secret.
   const wh = new Webhook(WEBHOOK_SECRET)
@@ -57,46 +58,54 @@ export async function POST(req: Request) {
     switch (eventType) {
       case 'user.created': {
         console.log('User created webhook received:', evt.data.id)
-        
+
         // Extract user data from Clerk webhook
         const userData = {
           clerkId: evt.data.id,
-          name: `${evt.data.first_name || ''} ${evt.data.last_name || ''}`.trim() || 'Unknown User',
-          email: evt.data.email_addresses?.[0]?.email_address || `${evt.data.id}@unknown.com`,
+          name:
+            `${evt.data.first_name || ''} ${evt.data.last_name || ''}`.trim() ||
+            'Unknown User',
+          email:
+            evt.data.email_addresses?.[0]?.email_address ||
+            `${evt.data.id}@unknown.com`,
         }
 
         // Create user in Convex using the public mutation
         await convex.mutation(api.users.createUser, userData)
-        
+
         console.log('User created successfully in Convex:', userData.clerkId)
         break
       }
 
       case 'user.updated': {
         console.log('User updated webhook received:', evt.data.id)
-        
+
         // Extract updated user data
         const userData = {
           clerkId: evt.data.id,
-          name: `${evt.data.first_name || ''} ${evt.data.last_name || ''}`.trim() || 'Unknown User',
-          email: evt.data.email_addresses?.[0]?.email_address || `${evt.data.id}@unknown.com`,
+          name:
+            `${evt.data.first_name || ''} ${evt.data.last_name || ''}`.trim() ||
+            'Unknown User',
+          email:
+            evt.data.email_addresses?.[0]?.email_address ||
+            `${evt.data.id}@unknown.com`,
         }
 
         // Update user in Convex using internal mutation
         await convex.mutation(api.users.updateUserFromClerk, userData)
-        
+
         console.log('User updated successfully in Convex:', userData.clerkId)
         break
       }
 
       case 'user.deleted': {
         console.log('User deleted webhook received:', evt.data.id)
-        
+
         // Delete user from Convex using internal mutation
         await convex.mutation(api.users.deleteUserByClerkId, {
           clerkId: evt.data.id!,
         })
-        
+
         console.log('User deleted successfully from Convex:', evt.data.id)
         break
       }

@@ -140,6 +140,7 @@ convex/                   # Backend functions and schema
    - Copy the webhook secret
 
 2. **Environment Configuration:**
+
    ```bash
    # Add to .env.local
    CLERK_WEBHOOK_SECRET=whsec_your_webhook_secret_here
