@@ -112,7 +112,7 @@ export default function RelationshipForm({
       return true
     } catch (error: unknown) {
       const validationErrors: Record<string, string> = {}
-      
+
       // Handle ZodError properly
       if (error && typeof error === 'object' && 'issues' in error) {
         const zodError = error as {
@@ -123,7 +123,7 @@ export default function RelationshipForm({
           validationErrors[fieldName] = issue.message
         })
       }
-      
+
       setErrors(validationErrors)
       return false
     }
