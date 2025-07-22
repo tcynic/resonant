@@ -49,6 +49,7 @@ export default function RelationshipForm({
 
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitSuccess, setSubmitSuccess] = useState(false)
   const [photoPreview, setPhotoPreview] = useState<string | null>(
     relationship?.photo || null
   )
@@ -157,12 +158,20 @@ export default function RelationshipForm({
         relationshipId = await createRelationship(formData)
       }
 
-      onSuccess?.(relationshipId)
+      setSubmitSuccess(true)
+
+      // Show success briefly before calling onSuccess
+      setTimeout(() => {
+        onSuccess?.(relationshipId)
+      }, 1000)
 
       // Reset form if not editing
       if (!isEditing) {
-        setFormData({ name: '', type: 'friend', photo: '' })
-        setPhotoPreview(null)
+        setTimeout(() => {
+          setFormData({ name: '', type: 'friend', photo: '' })
+          setPhotoPreview(null)
+          setSubmitSuccess(false)
+        }, 1500)
       }
     } catch (error: unknown) {
       const errorMessage =
@@ -264,6 +273,30 @@ export default function RelationshipForm({
         </div>
       )}
 
+      {/* Success Message */}
+      {submitSuccess && (
+        <div className="bg-green-50 border border-green-200 rounded-md p-3">
+          <div className="flex items-center">
+            <svg
+              className="w-4 h-4 text-green-600 mr-2"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <p className="text-sm text-green-600">
+              {isEditing
+                ? 'Relationship updated successfully!'
+                : 'Relationship created successfully!'}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Form Actions */}
       <div
         className={`flex ${isModal ? 'justify-end' : 'justify-start'} space-x-3`}
@@ -281,15 +314,17 @@ export default function RelationshipForm({
         <Button
           type="submit"
           isLoading={isSubmitting}
-          disabled={!isReady || isSubmitting}
+          disabled={!isReady || isSubmitting || submitSuccess}
         >
-          {isSubmitting
-            ? isEditing
-              ? 'Updating...'
-              : 'Creating...'
-            : isEditing
-              ? 'Update Relationship'
-              : 'Create Relationship'}
+          {submitSuccess
+            ? '✓ Success!'
+            : isSubmitting
+              ? isEditing
+                ? 'Updating...'
+                : 'Creating...'
+              : isEditing
+                ? 'Update Relationship'
+                : 'Create Relationship'}
         </Button>
       </div>
     </form>

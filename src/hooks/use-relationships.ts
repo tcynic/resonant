@@ -1,184 +1,112 @@
-// TODO: Re-enable when ready for production
-// import { useUser } from '@clerk/nextjs'
-// TODO: Re-enable these imports when Convex integration is complete
-// import { useMutation, useQuery } from 'convex/react'
+import { useMutation, useQuery } from 'convex/react'
+import { api } from '../../convex/_generated/api'
 import {
   CreateRelationshipData,
   UpdateRelationshipData,
-  Relationship,
+  RelationshipType,
 } from '@/lib/types'
-// TODO: Re-enable RelationshipType import when type filtering is implemented
-// RelationshipType,
-
-// TODO: Re-enable Convex API imports when generated files are available
-// Import Convex API - these will be mocked in tests
-// let api: {
-//   users: { getCurrentUser: string }
-//   relationships: {
-//     createRelationship: string
-//     updateRelationship: string
-//     deleteRelationship: string
-//     getRelationshipsByUser: string
-//     getRelationshipsCount: string
-//   }
-// }
-
-// try {
-//   // eslint-disable-next-line @typescript-eslint/no-require-imports
-//   const convexApi = require('../../convex/_generated/api')
-//   api = convexApi.api
-// } catch {
-//   // Handle case where generated files don't exist (e.g., in tests)
-//   api = {
-//     users: { getCurrentUser: 'users:getCurrentUser' },
-//     relationships: {
-//       createRelationship: 'relationships:createRelationship',
-//       updateRelationship: 'relationships:updateRelationship',
-//       deleteRelationship: 'relationships:deleteRelationship',
-//       getRelationshipsByUser: 'relationships:getRelationshipsByUser',
-//       getRelationshipsCount: 'relationships:getRelationshipsCount',
-//     },
-//   }
-// }
+import { Id } from '../../convex/_generated/dataModel'
+import { useConvexUser } from './use-convex-user'
 
 export function useRelationships() {
-  // TODO: Re-enable user authentication when ready for production
-  // const { user } = useUser()
+  const { convexUser } = useConvexUser()
 
-  // Mock data for development until Convex is fully integrated
-  const currentUser = { _id: 'mock_user_id' }
-  const relationships: Relationship[] = []
-  const relationshipsCount = 0
+  const relationships = useQuery(
+    api.relationships.getRelationshipsByUser,
+    convexUser?._id ? { userId: convexUser._id as Id<'users'> } : 'skip'
+  )
 
-  // TODO: Replace with actual Convex queries when generated files are available
-  // const currentUser = useQuery(
-  //   api.users.getCurrentUser,
-  //   user ? { clerkId: user.id } : 'skip'
-  // )
-  // const relationships = useQuery(
-  //   api.relationships.getRelationshipsByUser,
-  //   currentUser ? { userId: currentUser._id } : 'skip'
-  // )
-  // const relationshipsCount = useQuery(
-  //   api.relationships.getRelationshipsCount,
-  //   currentUser ? { userId: currentUser._id } : 'skip'
-  // )
+  const relationshipsCount = useQuery(
+    api.relationships.getRelationshipsCount,
+    convexUser?._id ? { userId: convexUser._id as Id<'users'> } : 'skip'
+  )
 
   return {
     relationships: relationships || [],
     relationshipsCount: relationshipsCount || 0,
-    isLoading: currentUser === undefined,
-    currentUser,
+    isLoading: !convexUser || relationships === undefined,
+    currentUser: convexUser,
   }
 }
 
-export function useRelationshipsByType() {
-  // TODO: Re-enable user authentication when ready for production
-  // const { user } = useUser()
+export function useRelationshipsByType(type?: RelationshipType) {
+  const { convexUser } = useConvexUser()
 
-  // Mock data for development until Convex is fully integrated
-  const currentUser = { _id: 'mock_user_id' }
-  const relationships: Relationship[] = []
-
-  // TODO: Replace with actual Convex queries when generated files are available
-  // const currentUser = useQuery(
-  //   api.users.getCurrentUser,
-  //   user ? { clerkId: user.id } : 'skip'
-  // )
-  // const relationships = useQuery(
-  //   api.relationships.getRelationshipsByUser,
-  //   currentUser ? { userId: currentUser._id, type } : 'skip'
-  // )
+  const relationships = useQuery(
+    api.relationships.getRelationshipsByUser,
+    convexUser?._id
+      ? {
+          userId: convexUser._id as Id<'users'>,
+          type: type,
+        }
+      : 'skip'
+  )
 
   return {
     relationships: relationships || [],
-    isLoading: false, // Set to false for development
-    currentUser,
+    isLoading: !convexUser || relationships === undefined,
+    currentUser: convexUser,
   }
 }
 
 export function useRelationshipMutations() {
-  // TODO: Re-enable user authentication when ready for production
-  // const { user } = useUser()
+  const { convexUser } = useConvexUser()
 
-  // Mock data for development until Convex is fully integrated
-  const currentUser = { _id: 'mock_user_id' }
-
-  // TODO: Replace with actual Convex mutations when generated files are available
-  // const currentUser = useQuery(
-  //   api.users.getCurrentUser,
-  //   user ? { clerkId: user.id } : 'skip'
-  // )
-  // const createRelationshipMutation = useMutation(
-  //   api.relationships.createRelationship
-  // )
-  // const updateRelationshipMutation = useMutation(
-  //   api.relationships.updateRelationship
-  // )
-  // const deleteRelationshipMutation = useMutation(
-  //   api.relationships.deleteRelationship
-  // )
+  const createRelationshipMutation = useMutation(
+    api.relationships.createRelationship
+  )
+  const updateRelationshipMutation = useMutation(
+    api.relationships.updateRelationship
+  )
+  const deleteRelationshipMutation = useMutation(
+    api.relationships.deleteRelationship
+  )
 
   const createRelationship = async (data: CreateRelationshipData) => {
-    if (!currentUser) {
+    if (!convexUser?._id) {
       throw new Error('User not authenticated')
     }
 
-    // Mock implementation for development
-    console.log('Mock createRelationship called with:', data)
-    return `mock_relationship_${Date.now()}`
-
-    // TODO: Replace with actual Convex mutation call
-    // return await createRelationshipMutation({
-    //   userId: currentUser._id,
-    //   name: data.name,
-    //   type: data.type,
-    //   photo: data.photo,
-    // })
+    return await createRelationshipMutation({
+      userId: convexUser._id as Id<'users'>,
+      name: data.name,
+      type: data.type,
+      photo: data.photo,
+    })
   }
 
   const updateRelationship = async (
     relationshipId: string,
     data: UpdateRelationshipData
   ) => {
-    if (!currentUser) {
+    if (!convexUser?._id) {
       throw new Error('User not authenticated')
     }
 
-    // Mock implementation for development
-    console.log('Mock updateRelationship called with:', relationshipId, data)
-    return true
-
-    // TODO: Replace with actual Convex mutation call
-    // return await updateRelationshipMutation({
-    //   relationshipId,
-    //   userId: currentUser._id,
-    //   name: data.name,
-    //   type: data.type,
-    //   photo: data.photo,
-    // })
+    return await updateRelationshipMutation({
+      relationshipId: relationshipId as Id<'relationships'>,
+      userId: convexUser._id as Id<'users'>,
+      name: data.name,
+      type: data.type,
+      photo: data.photo,
+    })
   }
 
   const deleteRelationship = async (relationshipId: string) => {
-    if (!currentUser) {
+    if (!convexUser?._id) {
       throw new Error('User not authenticated')
     }
 
-    // Mock implementation for development
-    console.log('Mock deleteRelationship called with:', relationshipId)
-    return true
-
-    // TODO: Replace with actual Convex mutation call
-    // return await deleteRelationshipMutation({
-    //   relationshipId,
-    //   userId: currentUser._id,
-    // })
+    return await deleteRelationshipMutation({
+      relationshipId: relationshipId as Id<'relationships'>,
+      userId: convexUser._id as Id<'users'>,
+    })
   }
 
   return {
     createRelationship,
     updateRelationship,
     deleteRelationship,
-    isReady: !!currentUser,
+    isReady: !!convexUser?._id,
   }
 }

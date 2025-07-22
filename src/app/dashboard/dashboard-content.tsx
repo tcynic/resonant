@@ -12,6 +12,8 @@ import {
   usePerformanceMonitor,
 } from '@/lib/performance-monitor'
 import { useConvexUser } from '@/hooks/use-convex-user'
+import { useIsClient } from '@/hooks/use-is-client'
+import { safeWindow, safeTimeFormatting } from '@/lib/client-utils'
 import HealthScoreCard from '@/components/features/dashboard/health-score-card'
 import TrendChart from '@/components/features/dashboard/trend-chart'
 import RecentActivity from '@/components/features/dashboard/recent-activity'
@@ -45,31 +47,12 @@ function DashboardHeader({
   isLoading = false,
 }: DashboardHeaderProps) {
   const [isRefreshing, setIsRefreshing] = useState(false)
-
-  const getGreeting = () => {
-    const hour = new Date().getHours()
-    if (hour < 12) return 'Good morning'
-    if (hour < 17) return 'Good afternoon'
-    return 'Good evening'
-  }
+  const isClient = useIsClient()
 
   const handleRefresh = async () => {
     setIsRefreshing(true)
     // Force a page refresh to get latest data
-    window.location.reload()
-  }
-
-  const formatLastUpdated = (timestamp: number) => {
-    const now = Date.now()
-    const diff = now - timestamp
-    const minutes = Math.floor(diff / (60 * 1000))
-    const hours = Math.floor(diff / (60 * 60 * 1000))
-    const days = Math.floor(diff / (24 * 60 * 60 * 1000))
-
-    if (minutes < 1) return 'Just now'
-    if (minutes < 60) return `${minutes}m ago`
-    if (hours < 24) return `${hours}h ago`
-    return `${days}d ago`
+    safeWindow.reload()
   }
 
   return (
@@ -77,7 +60,8 @@ function DashboardHeader({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
-            {getGreeting()}, {user?.firstName || 'there'}!
+            {isClient ? safeTimeFormatting.getGreeting() : 'Hello'},{' '}
+            {user?.firstName || 'there'}!
           </h1>
           <p className="text-gray-600 mt-1">
             Here&apos;s how your relationships are doing today
@@ -87,7 +71,7 @@ function DashboardHeader({
           <div className="text-right">
             <p className="text-sm text-gray-500">
               {stats
-                ? `Updated ${formatLastUpdated(stats.lastUpdated)}`
+                ? `Updated ${safeTimeFormatting.formatLastUpdated(stats.lastUpdated)}`
                 : 'Loading...'}
             </p>
             <div className="flex items-center justify-end space-x-2 mt-1">
@@ -302,7 +286,7 @@ export default function DashboardContent() {
     }, 0)
 
     return () => clearTimeout(timer)
-  })
+  }, [startRender, endRender])
 
   // Get dashboard data with performance monitoring
   useEffect(() => {
@@ -374,7 +358,7 @@ export default function DashboardContent() {
         <div className="max-w-7xl mx-auto">
           <DashboardErrorFallback
             error={new Error(`Failed to sync user: ${userSyncError}`)}
-            onRetry={() => window.location.reload()}
+            onRetry={() => safeWindow.reload()}
           />
         </div>
       </div>
@@ -414,7 +398,7 @@ export default function DashboardContent() {
         <div className="max-w-7xl mx-auto">
           <DashboardErrorFallback
             error={new Error('Failed to load dashboard data')}
-            onRetry={() => window.location.reload()}
+            onRetry={() => safeWindow.reload()}
           />
         </div>
       </div>
@@ -470,9 +454,7 @@ export default function DashboardContent() {
             <ErrorBoundary
               fallback={
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                  <NetworkErrorFallback
-                    onRetry={() => window.location.reload()}
-                  />
+                  <NetworkErrorFallback onRetry={() => safeWindow.reload()} />
                 </div>
               }
             >
@@ -495,9 +477,7 @@ export default function DashboardContent() {
           <div>
             <ErrorBoundary
               fallback={
-                <NetworkErrorFallback
-                  onRetry={() => window.location.reload()}
-                />
+                <NetworkErrorFallback onRetry={() => safeWindow.reload()} />
               }
             >
               <RecentActivity
@@ -514,7 +494,7 @@ export default function DashboardContent() {
         {trendData && trendData.trends.length > 0 && (
           <ErrorBoundary
             fallback={
-              <NetworkErrorFallback onRetry={() => window.location.reload()} />
+              <NetworkErrorFallback onRetry={() => safeWindow.reload()} />
             }
           >
             <TrendChart
@@ -582,7 +562,7 @@ export default function DashboardContent() {
         {/* Entry History with Filtering */}
         <ErrorBoundary
           fallback={
-            <NetworkErrorFallback onRetry={() => window.location.reload()} />
+            <NetworkErrorFallback onRetry={() => safeWindow.reload()} />
           }
         >
           <EntryHistory initialLimit={10} />

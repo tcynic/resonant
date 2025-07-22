@@ -1,6 +1,8 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { useIsClient } from '@/hooks/use-is-client'
+import { safeWindow } from '@/lib/client-utils'
 
 interface ConnectionStatusProps {
   className?: string
@@ -9,16 +11,22 @@ interface ConnectionStatusProps {
 export default function ConnectionStatus({
   className = '',
 }: ConnectionStatusProps) {
-  const [isOnline, setIsOnline] = useState(true)
+  const isClient = useIsClient()
+  const [isOnline, setIsOnline] = useState(true) // Default to online for SSR
   const [, setLastUpdateTime] = useState(Date.now())
 
   useEffect(() => {
+    if (!isClient) return
+
+    // Set initial online status from navigator
+    setIsOnline(safeWindow.online())
+
     const handleOnline = () => setIsOnline(true)
     const handleOffline = () => setIsOnline(false)
 
     // Listen for online/offline events
-    window.addEventListener('online', handleOnline)
-    window.addEventListener('offline', handleOffline)
+    safeWindow.addEventListener('online', handleOnline)
+    safeWindow.addEventListener('offline', handleOffline)
 
     // Update timestamp periodically to show live status
     const interval = setInterval(() => {
@@ -26,11 +34,11 @@ export default function ConnectionStatus({
     }, 30000) // Update every 30 seconds
 
     return () => {
-      window.removeEventListener('online', handleOnline)
-      window.removeEventListener('offline', handleOffline)
+      safeWindow.removeEventListener('online', handleOnline)
+      safeWindow.removeEventListener('offline', handleOffline)
       clearInterval(interval)
     }
-  }, [])
+  }, [isClient])
 
   if (!isOnline) {
     return (

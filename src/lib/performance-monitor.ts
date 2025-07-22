@@ -4,6 +4,7 @@
  */
 
 import React from 'react'
+import { safePerformance, isClient } from './client-utils'
 
 export interface PerformanceMetric {
   name: string
@@ -37,11 +38,11 @@ class PerformanceMonitor {
    * Start timing a performance metric
    */
   startTiming(name: string, metadata?: Record<string, unknown>): void {
-    if (!this.enabled) return
+    if (!this.enabled || !isClient()) return
 
     this.metrics.set(name, {
       name,
-      startTime: performance.now(),
+      startTime: safePerformance.now(),
       metadata,
     })
   }
@@ -50,7 +51,7 @@ class PerformanceMonitor {
    * End timing a performance metric
    */
   endTiming(name: string): number {
-    if (!this.enabled) return 0
+    if (!this.enabled || !isClient()) return 0
 
     const metric = this.metrics.get(name)
     if (!metric) {
@@ -58,7 +59,7 @@ class PerformanceMonitor {
       return 0
     }
 
-    const endTime = performance.now()
+    const endTime = safePerformance.now()
     const duration = endTime - metric.startTime
 
     metric.endTime = endTime
@@ -165,15 +166,9 @@ class PerformanceMonitor {
    * Measure memory usage (if available)
    */
   measureMemoryUsage(): number | undefined {
-    if (!this.enabled) return undefined
+    if (!this.enabled || !isClient()) return undefined
 
-    // @ts-expect-error performance.memory is not in TypeScript types but exists in Chrome
-    if (performance.memory) {
-      // @ts-expect-error performance.memory type definition missing
-      return performance.memory.usedJSHeapSize / 1024 / 1024 // Convert to MB
-    }
-
-    return undefined
+    return safePerformance.memory()
   }
 
   /**
@@ -280,25 +275,22 @@ export async function measureAsyncOperation<T>(
  * Web Vitals integration (if available)
  */
 export function initializeWebVitals() {
-  if (!performanceMonitor['enabled']) return
+  if (!performanceMonitor['enabled'] || !isClient()) return
 
   // Core Web Vitals
-  const observer = new PerformanceObserver(list => {
-    list.getEntries().forEach(entry => {
-      if (entry.entryType === 'largest-contentful-paint') {
-        performanceMonitor.startTiming('lcp')
-        performanceMonitor.endTiming('lcp')
-        // @ts-expect-error metrics is private but needed for LCP measurement
-        performanceMonitor.metrics.get('lcp')!.duration = entry.startTime
-      }
-    })
-  })
-
-  try {
-    observer.observe({ entryTypes: ['largest-contentful-paint'] })
-  } catch {
-    // Observer not supported
-  }
+  safePerformance.observe(
+    list => {
+      list.getEntries().forEach(entry => {
+        if (entry.entryType === 'largest-contentful-paint') {
+          performanceMonitor.startTiming('lcp')
+          performanceMonitor.endTiming('lcp')
+          // @ts-expect-error metrics is private but needed for LCP measurement
+          performanceMonitor.metrics.get('lcp')!.duration = entry.startTime
+        }
+      })
+    },
+    { entryTypes: ['largest-contentful-paint'] }
+  )
 }
 
 /**
@@ -310,6 +302,6 @@ export function exportPerformanceData(): string {
 }
 
 // Initialize Web Vitals monitoring in browser
-if (typeof window !== 'undefined') {
+if (isClient()) {
   initializeWebVitals()
 }
