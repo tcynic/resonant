@@ -240,7 +240,7 @@ export const cleanupAllTestData = mutation({
       for (const relationship of relationships) {
         const healthScores = await ctx.db
           .query('healthScores')
-          .withIndex('by_relationship', q =>
+          .withIndex('by_relationship', (q: any) =>
             q.eq('relationshipId', relationship._id)
           )
           .collect()
@@ -299,7 +299,7 @@ export const getTestDataStats = query({
       for (const relationship of relationships) {
         const healthScores = await ctx.db
           .query('healthScores')
-          .withIndex('by_relationship', q =>
+          .withIndex('by_relationship', (q: any) =>
             q.eq('relationshipId', relationship._id)
           )
           .collect()
