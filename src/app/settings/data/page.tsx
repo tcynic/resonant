@@ -7,7 +7,24 @@ export const dynamic = 'force-dynamic'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import Button from '@/components/ui/button'
-import { DataExport } from '@/components/features/data-management/data-export'
+import dynamicImport from 'next/dynamic'
+
+// Dynamically import the DataExport component to prevent SSR
+const DataExport = dynamicImport(
+  () =>
+    import('@/components/features/data-management/data-export').then(mod => ({
+      default: mod.DataExport,
+    })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        <span className="ml-2 text-sm text-gray-600">Loading...</span>
+      </div>
+    ),
+  }
+)
 
 export default function DataExportPage() {
   const router = useRouter()
