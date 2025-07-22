@@ -11,6 +11,7 @@ import {
   performanceMonitor,
   usePerformanceMonitor,
 } from '@/lib/performance-monitor'
+import { useConvexUser } from '@/hooks/use-convex-user'
 import HealthScoreCard from '@/components/features/dashboard/health-score-card'
 import TrendChart from '@/components/features/dashboard/trend-chart'
 import RecentActivity from '@/components/features/dashboard/recent-activity'
@@ -272,6 +273,9 @@ function EmptyDashboard({ userName }: EmptyDashboardProps) {
 export default function DashboardContent() {
   const { user } = useUser()
   const [selectedTimeRange] = useState<'week' | 'month' | 'quarter'>('month')
+  
+  // Use the custom hook to handle user sync
+  const { convexUser, isLoading: userSyncLoading, isCreating, error: userSyncError } = useConvexUser()
 
   const { startRender, endRender } = usePerformanceMonitor('dashboard-content')
 
@@ -297,34 +301,34 @@ export default function DashboardContent() {
 
   // Get dashboard data with performance monitoring
   useEffect(() => {
-    if (user?.id) {
+    if (convexUser?._id) {
       performanceMonitor.startTiming('dashboard-data-fetch', {
-        userId: user.id,
+        userId: convexUser._id,
         timeRange: selectedTimeRange,
       })
     }
-  }, [user?.id, selectedTimeRange])
+  }, [convexUser?._id, selectedTimeRange])
 
   const dashboardData = useQuery(
     api.dashboard.getDashboardData,
-    user?.id ? { userId: user.id as Id<'users'> } : 'skip'
+    convexUser?._id ? { userId: convexUser._id } : 'skip'
   )
 
   const dashboardStats = useQuery(
     api.dashboard.getDashboardStats,
-    user?.id ? { userId: user.id as Id<'users'> } : 'skip'
+    convexUser?._id ? { userId: convexUser._id } : 'skip'
   )
 
   const recentActivity = useQuery(
     api.dashboard.getRecentActivity,
-    user?.id ? { userId: user.id as Id<'users'>, limit: 10 } : 'skip'
+    convexUser?._id ? { userId: convexUser._id, limit: 10 } : 'skip'
   )
 
   const trendData = useQuery(
     api.dashboard.getDashboardTrends,
-    user?.id
+    convexUser?._id
       ? {
-          userId: user.id as Id<'users'>,
+          userId: convexUser._id,
           timeRangeDays:
             selectedTimeRange === 'week'
               ? 7
@@ -346,11 +350,54 @@ export default function DashboardContent() {
 
   // Check for errors in critical data
   const hasDataError =
-    dashboardData === null || dashboardStats === null || recentActivity === null
+    userSyncError !== null ||
+    dashboardData === null || 
+    dashboardStats === null || 
+    recentActivity === null
   const isLoading =
+    userSyncLoading ||
     dashboardData === undefined ||
     dashboardStats === undefined ||
     recentActivity === undefined
+
+  // Handle user sync error
+  if (userSyncError) {
+    return (
+      <div className="min-h-screen bg-gray-50 px-4 py-8">
+        <div className="max-w-7xl mx-auto">
+          <DashboardErrorFallback
+            error={new Error(`Failed to sync user: ${userSyncError}`)}
+            onRetry={() => window.location.reload()}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  // Handle case where user is being created in Convex
+  if (isCreating) {
+    return (
+      <div className="min-h-screen bg-gray-50 px-4 py-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-white p-6 rounded-lg shadow-sm text-center">
+            <div className="w-16 h-16 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center">
+              <span className="text-2xl">⚙️</span>
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              Setting up your account...
+            </h2>
+            <p className="text-gray-600 mb-4">
+              We're creating your profile in our database. This should only take a moment.
+            </p>
+            <div className="inline-flex items-center space-x-2">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+              <span className="text-sm text-gray-500">Please wait...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   // Handle errors in critical data
   if (hasDataError) {

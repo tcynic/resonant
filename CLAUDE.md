@@ -131,6 +131,25 @@ convex/                   # Backend functions and schema
 - Protected routes: All others require authentication
 - User sync: Automatic Convex user creation via Clerk webhooks
 
+**Webhook Setup for User Synchronization:**
+
+1. **Create Webhook in Clerk Dashboard:**
+   - Go to Clerk Dashboard > Webhooks
+   - Create new webhook pointing to: `https://yourdomain.com/api/webhooks/clerk`
+   - Select events: `user.created`, `user.updated`, `user.deleted`
+   - Copy the webhook secret
+
+2. **Environment Configuration:**
+   ```bash
+   # Add to .env.local
+   CLERK_WEBHOOK_SECRET=whsec_your_webhook_secret_here
+   ```
+
+3. **Automatic Fallback:**
+   - Uses `useConvexUser()` hook for client-side user sync fallback
+   - Automatically creates missing users when they access the application
+   - Handles webhook failures gracefully
+
 #### Type Safety
 
 - Shared types in `src/lib/types.ts` cover all data models
