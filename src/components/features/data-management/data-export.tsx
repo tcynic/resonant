@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '@/convex/_generated/api'
@@ -30,17 +30,23 @@ export function DataExport({ className = '' }: DataExportProps) {
   const [exportComplete, setExportComplete] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null)
+  const [isClient, setIsClient] = useState(false)
 
-  // Get user data
+  // Ensure we're on the client side before making Convex calls
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  // Get user data - only run on client side
   const userData = useQuery(
     api.users.getUserByClerkId,
-    user?.id ? { clerkId: user.id } : 'skip'
+    isClient && user?.id ? { clerkId: user.id } : 'skip'
   )
 
-  // Get export statistics
+  // Get export statistics - only run on client side
   const exportStats = useQuery(
     api.dataExport.getExportStatistics,
-    userData?._id ? { userId: userData._id } : 'skip'
+    isClient && userData?._id ? { userId: userData._id } : 'skip'
   )
 
   // Create export job mutation
@@ -99,11 +105,14 @@ export function DataExport({ className = '' }: DataExportProps) {
     })
   }
 
-  if (!user || !userData) {
+  if (!isClient || !user || !userData) {
     return (
       <Card className={`p-6 ${className}`}>
         <div className="flex items-center justify-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          <span className="ml-2 text-sm text-gray-600">
+            {!isClient ? 'Initializing...' : 'Loading user data...'}
+          </span>
         </div>
       </Card>
     )

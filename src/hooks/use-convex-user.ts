@@ -112,5 +112,5 @@ export function useConvexUserId(): Id<'users'> | null {
     return null
   }
 
-  return convexUser._id
+  return convexUser._id as Id<'users'>
 }

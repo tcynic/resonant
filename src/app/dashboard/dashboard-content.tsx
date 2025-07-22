@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useUser } from '@clerk/nextjs'
 import { useQuery } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
+import { Id } from '../../../convex/_generated/dataModel'
 import { RelationshipWithScore } from '@/lib/types'
 import {
   performanceMonitor,
@@ -315,24 +316,26 @@ export default function DashboardContent() {
 
   const dashboardData = useQuery(
     api.dashboard.getDashboardData,
-    convexUser?._id ? { userId: convexUser._id } : 'skip'
+    convexUser?._id ? { userId: convexUser._id as Id<'users'> } : 'skip'
   )
 
   const dashboardStats = useQuery(
     api.dashboard.getDashboardStats,
-    convexUser?._id ? { userId: convexUser._id } : 'skip'
+    convexUser?._id ? { userId: convexUser._id as Id<'users'> } : 'skip'
   )
 
   const recentActivity = useQuery(
     api.dashboard.getRecentActivity,
-    convexUser?._id ? { userId: convexUser._id, limit: 10 } : 'skip'
+    convexUser?._id
+      ? { userId: convexUser._id as Id<'users'>, limit: 10 }
+      : 'skip'
   )
 
   const trendData = useQuery(
     api.dashboard.getDashboardTrends,
     convexUser?._id
       ? {
-          userId: convexUser._id,
+          userId: convexUser._id as Id<'users'>,
           timeRangeDays:
             selectedTimeRange === 'week'
               ? 7

@@ -181,8 +181,8 @@ export const updatePrivacySettings = mutation({
   },
 })
 
-// Internal function for webhook - update user from Clerk
-export const updateUserFromClerk = internalMutation({
+// Function for webhook - update user from Clerk
+export const updateUserFromClerk = mutation({
   args: {
     clerkId: v.string(),
     name: v.string(),
@@ -206,8 +206,8 @@ export const updateUserFromClerk = internalMutation({
   },
 })
 
-// Internal function for webhook - delete user by Clerk ID
-export const deleteUserByClerkId = internalMutation({
+// Function for webhook - delete user by Clerk ID
+export const deleteUserByClerkId = mutation({
   args: {
     clerkId: v.string(),
   },
