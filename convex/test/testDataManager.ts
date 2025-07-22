@@ -215,7 +215,7 @@ export const cleanupAllTestData = mutation({
 
     // Find all test users by email domain
     const allUsers = await ctx.db.query('users').collect()
-    const testUsers = allUsers.filter(user =>
+    const testUsers = allUsers.filter((user: any) =>
       user.email.includes(args.testDomain)
     )
 
@@ -274,7 +274,7 @@ export const getTestDataStats = query({
   },
   handler: async (ctx: QueryCtx, args: { testDomain: string }) => {
     const allUsers = await ctx.db.query('users').collect()
-    const testUsers = allUsers.filter(user =>
+    const testUsers = allUsers.filter((user: any) =>
       user.email.includes(args.testDomain)
     )
 
