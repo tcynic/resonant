@@ -1,6 +1,9 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
+
+// Force dynamic rendering to prevent prerender errors with Convex
+export const dynamic = 'force-dynamic'
 import { useUser } from '@clerk/nextjs'
 import { useQuery } from 'convex/react'
 import { api } from '@/convex/_generated/api'
