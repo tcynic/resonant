@@ -1,5 +1,8 @@
 'use client'
 
+// Force dynamic rendering to prevent prerender errors with Convex
+export const dynamic = 'force-dynamic'
+
 // import { useState } from 'react' // Not currently used
 import { useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
