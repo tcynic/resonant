@@ -312,7 +312,7 @@ export const getTestDataStats = query({
       totalRelationships,
       totalJournalEntries,
       totalHealthScores,
-      userEmails: testUsers.map(u => u.email),
+      userEmails: testUsers.map((u: any) => u.email),
     }
   },
 })
