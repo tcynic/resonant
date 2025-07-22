@@ -178,7 +178,7 @@ export const calculateHealthScoreFromAnalyses = mutation({
 
     // Group analyses by type
     const analysesByType = analyses.reduce(
-      (acc, analysis) => {
+      (acc: any, analysis: any) => {
         if (!acc[analysis.analysisType]) {
           acc[analysis.analysisType] = []
         }
@@ -427,7 +427,7 @@ export const getHealthScoreTrends = query({
 
     // Group by week for trend visualization
     const weeklyTrends = sentimentAnalyses.reduce(
-      (acc, analysis) => {
+      (acc: any, analysis: any) => {
         const weekStart =
           Math.floor(analysis.createdAt / (7 * 24 * 60 * 60 * 1000)) *
           (7 * 24 * 60 * 60 * 1000)
