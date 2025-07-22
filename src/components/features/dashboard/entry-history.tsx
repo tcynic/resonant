@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useUser } from '@clerk/nextjs'
 import { useQuery } from 'convex/react'
 import { api } from '../../../../convex/_generated/api'
 import Card, { CardHeader, CardContent } from '@/components/ui/card'
 import { Id } from '../../../../convex/_generated/dataModel'
 import { Relationship, FilteredJournalEntry } from '@/lib/types'
+import { useConvexUser } from '@/hooks/use-convex-user'
 
 interface EntryHistoryProps {
   className?: string
@@ -304,7 +304,7 @@ export default function EntryHistory({
   initialLimit = 20,
   showHeader = true,
 }: EntryHistoryProps) {
-  const { user } = useUser()
+  const { convexUser } = useConvexUser()
   const [filters, setFilters] = useState<FilterState>({
     relationshipIds: [],
     startDate: '',
@@ -323,17 +323,16 @@ export default function EntryHistory({
 
   // Get user's relationships for filter options
   const relationships = useQuery(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    api.relationships.getRelationshipsByUser as any,
-    user?.id ? { userId: user.id as Id<'users'> } : 'skip'
+    api.relationships.getRelationshipsByUser,
+    convexUser?._id ? { userId: convexUser._id as Id<'users'> } : 'skip'
   )
 
   // Get filtered journal entries
   const entriesData = useQuery(
     api.dashboard.getFilteredJournalEntries,
-    user?.id
+    convexUser?._id
       ? {
-          userId: user.id as Id<'users'>,
+          userId: convexUser._id as Id<'users'>,
           relationshipIds:
             filters.relationshipIds.length > 0
               ? filters.relationshipIds

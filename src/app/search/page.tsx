@@ -6,6 +6,9 @@ export const dynamic = 'force-dynamic'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import Button from '@/components/ui/button'
+import ErrorBoundary, {
+  NetworkErrorFallback,
+} from '@/components/ui/error-boundary'
 import dynamicImport from 'next/dynamic'
 
 // Dynamically import the SearchContent component to prevent SSR
@@ -53,7 +56,13 @@ export default function SearchPage() {
       </div>
 
       {/* Search Content */}
-      <SearchContent />
+      <ErrorBoundary
+        fallback={
+          <NetworkErrorFallback onRetry={() => window.location.reload()} />
+        }
+      >
+        <SearchContent />
+      </ErrorBoundary>
     </div>
   )
 }

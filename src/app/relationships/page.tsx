@@ -7,6 +7,9 @@ import RelationshipsList from '@/components/features/relationships/relationships
 import RelationshipForm from '@/components/features/relationships/relationship-form'
 import DeleteRelationshipModal from '@/components/features/relationships/delete-relationship-modal'
 import Modal from '@/components/ui/modal'
+import ErrorBoundary, {
+  NetworkErrorFallback,
+} from '@/components/ui/error-boundary'
 import { useRelationships } from '@/hooks/use-relationships'
 import { Relationship } from '@/lib/types'
 
@@ -89,11 +92,17 @@ export default function RelationshipsPage() {
   return (
     <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
       {/* Main Content */}
-      <RelationshipsList
-        onCreateNew={handleCreateNew}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
+      <ErrorBoundary
+        fallback={
+          <NetworkErrorFallback onRetry={() => window.location.reload()} />
+        }
+      >
+        <RelationshipsList
+          onCreateNew={handleCreateNew}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+      </ErrorBoundary>
 
       {/* Create Relationship Modal */}
       <Modal
@@ -101,11 +110,13 @@ export default function RelationshipsPage() {
         onClose={handleCloseModals}
         title="Add New Relationship"
       >
-        <RelationshipForm
-          onSuccess={handleFormSuccess}
-          onCancel={handleCloseModals}
-          isModal={true}
-        />
+        <ErrorBoundary>
+          <RelationshipForm
+            onSuccess={handleFormSuccess}
+            onCancel={handleCloseModals}
+            isModal={true}
+          />
+        </ErrorBoundary>
       </Modal>
 
       {/* Edit Relationship Modal */}
@@ -114,21 +125,25 @@ export default function RelationshipsPage() {
         onClose={handleCloseModals}
         title="Edit Relationship"
       >
-        <RelationshipForm
-          relationship={selectedRelationship || undefined}
-          onSuccess={handleFormSuccess}
-          onCancel={handleCloseModals}
-          isModal={true}
-        />
+        <ErrorBoundary>
+          <RelationshipForm
+            relationship={selectedRelationship || undefined}
+            onSuccess={handleFormSuccess}
+            onCancel={handleCloseModals}
+            isModal={true}
+          />
+        </ErrorBoundary>
       </Modal>
 
       {/* Delete Confirmation Modal */}
-      <DeleteRelationshipModal
-        isOpen={isDeleteModalOpen}
-        onClose={handleCloseModals}
-        relationship={selectedRelationship}
-        onSuccess={handleDeleteSuccess}
-      />
+      <ErrorBoundary>
+        <DeleteRelationshipModal
+          isOpen={isDeleteModalOpen}
+          onClose={handleCloseModals}
+          relationship={selectedRelationship}
+          onSuccess={handleDeleteSuccess}
+        />
+      </ErrorBoundary>
     </div>
   )
 }
