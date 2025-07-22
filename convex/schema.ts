@@ -11,6 +11,25 @@ export default defineSchema({
       v.object({
         theme: v.optional(v.union(v.literal('light'), v.literal('dark'))),
         notifications: v.optional(v.boolean()),
+        reminderSettings: v.optional(
+          v.object({
+            enabled: v.boolean(),
+            frequency: v.union(
+              v.literal('daily'),
+              v.literal('every2days'),
+              v.literal('weekly')
+            ),
+            preferredTime: v.string(), // "HH:MM" format
+            timezone: v.string(), // IANA timezone
+            doNotDisturbStart: v.string(), // "HH:MM"
+            doNotDisturbEnd: v.string(), // "HH:MM"
+            reminderTypes: v.object({
+              gentleNudge: v.boolean(),
+              relationshipFocus: v.boolean(),
+              healthScoreAlerts: v.boolean(),
+            }),
+          })
+        ),
         language: v.optional(v.string()),
         dataSharing: v.optional(v.boolean()),
         analyticsOptIn: v.optional(v.boolean()),
@@ -133,4 +152,58 @@ export default defineSchema({
     .index('by_relationship', ['relationshipId'])
     .index('by_user', ['userId'])
     .index('by_score', ['overallScore']),
+
+  // Reminder delivery tracking
+  reminderLogs: defineTable({
+    userId: v.id('users'),
+    reminderType: v.union(
+      v.literal('gentle_nudge'),
+      v.literal('relationship_focus'),
+      v.literal('health_alert')
+    ),
+    targetRelationshipId: v.optional(v.id('relationships')), // For relationship-specific reminders
+    scheduledTime: v.number(),
+    deliveredTime: v.optional(v.number()),
+    status: v.union(
+      v.literal('scheduled'),
+      v.literal('delivered'),
+      v.literal('clicked'),
+      v.literal('dismissed'),
+      v.literal('failed')
+    ),
+    content: v.string(), // The actual reminder message
+    metadata: v.object({
+      triggerReason: v.string(), // Why this reminder was sent
+      healthScoreAtTime: v.optional(v.number()),
+      daysSinceLastEntry: v.optional(v.number()),
+    }),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_user', ['userId'])
+    .index('by_user_and_status', ['userId', 'status'])
+    .index('by_scheduled_time', ['scheduledTime']),
+
+  // User pattern analysis
+  userPatterns: defineTable({
+    userId: v.id('users'),
+    patternType: v.union(
+      v.literal('journaling_frequency'),
+      v.literal('optimal_timing'),
+      v.literal('engagement_response')
+    ),
+    analysisData: v.object({
+      averageDaysBetweenEntries: v.optional(v.number()),
+      mostActiveHours: v.optional(v.array(v.number())), // Hours of day (0-23)
+      bestResponseTimes: v.optional(v.array(v.string())), // "HH:MM" format
+      engagementScore: v.optional(v.number()), // 0-100 based on reminder responses
+      lastCalculated: v.number(),
+    }),
+    confidenceLevel: v.number(), // 0-1 based on data availability
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_user', ['userId'])
+    .index('by_pattern_type', ['patternType'])
+    .index('by_user_and_type', ['userId', 'patternType']),
 })
