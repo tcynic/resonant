@@ -28,7 +28,7 @@ export const CreateRelationshipSchema = z.object({
     .min(1, 'Relationship name is required')
     .max(100, 'Name too long'),
   type: RelationshipTypeSchema,
-  photo: z.string().url('Invalid photo URL').optional(),
+  photo: z.string().url('Invalid photo URL').optional().or(z.literal('')),
 })
 
 export const UpdateRelationshipSchema = z.object({

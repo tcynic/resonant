@@ -112,14 +112,18 @@ export default function RelationshipForm({
       return true
     } catch (error: unknown) {
       const validationErrors: Record<string, string> = {}
-      if (error && typeof error === 'object' && 'errors' in error) {
+      
+      // Handle ZodError properly
+      if (error && typeof error === 'object' && 'issues' in error) {
         const zodError = error as {
-          errors: Array<{ path: Array<string | number>; message: string }>
+          issues: Array<{ path: Array<string | number>; message: string }>
         }
-        zodError.errors?.forEach(err => {
-          validationErrors[err.path[0]] = err.message
+        zodError.issues?.forEach(issue => {
+          const fieldName = issue.path[0]?.toString() || 'form'
+          validationErrors[fieldName] = issue.message
         })
       }
+      
       setErrors(validationErrors)
       return false
     }
