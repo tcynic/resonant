@@ -14,8 +14,8 @@ import {
   SearchFiltersComponent,
   SearchFilters,
 } from '@/components/features/search/search-filters'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import Card from '@/components/ui/card'
+import Button from '@/components/ui/button'
 import { ArrowLeft, BookOpen } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
@@ -107,6 +107,16 @@ export default function SearchPage() {
   }, [searchData, searchQuery, nextCursor, searchResults.length])
 
   // Trigger search loading state
+  // Handle search clear
+  const handleClearSearch = useCallback(() => {
+    setSearchQuery('')
+    setSearchResults([])
+    setHasSearched(false)
+    setHasMore(false)
+    setNextCursor(undefined)
+    setIsSearching(false)
+  }, [])
+
   const performSearch = useCallback(
     (query: string, loadMore: boolean = false) => {
       if (query.trim().length >= 2) {
@@ -132,16 +142,6 @@ export default function SearchPage() {
     },
     [performSearch, handleClearSearch]
   )
-
-  // Handle search clear
-  const handleClearSearch = useCallback(() => {
-    setSearchQuery('')
-    setSearchResults([])
-    setHasSearched(false)
-    setHasMore(false)
-    setNextCursor(undefined)
-    setIsSearching(false)
-  }, [])
 
   // Handle load more
   const handleLoadMore = useCallback(() => {

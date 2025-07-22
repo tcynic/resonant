@@ -13,6 +13,8 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as _generated_stubs_api from "../_generated_stubs/api.js";
+import type * as _generated_stubs_server from "../_generated_stubs/server.js";
 import type * as aiAnalysis from "../aiAnalysis.js";
 import type * as constants from "../constants.js";
 import type * as dashboard from "../dashboard.js";
@@ -39,6 +41,8 @@ import type * as utils_validation from "../utils/validation.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  "_generated_stubs/api": typeof _generated_stubs_api;
+  "_generated_stubs/server": typeof _generated_stubs_server;
   aiAnalysis: typeof aiAnalysis;
   constants: typeof constants;
   dashboard: typeof dashboard;

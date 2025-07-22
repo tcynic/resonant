@@ -14,9 +14,9 @@ import {
   Clock,
   HardDrive,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
+import Button from '@/components/ui/button'
+import Card from '@/components/ui/card'
+import Checkbox from '@/components/ui/checkbox'
 
 interface DataExportProps {
   className?: string
@@ -252,7 +252,7 @@ export function DataExport({ className = '' }: DataExportProps) {
             <label className="flex items-center space-x-3">
               <Checkbox
                 checked={includeAnalysis}
-                onChange={checked => setIncludeAnalysis(checked)}
+                onChange={e => setIncludeAnalysis(e.target.checked)}
               />
               <div>
                 <div className="font-medium text-gray-900">
@@ -366,7 +366,7 @@ export function DataExport({ className = '' }: DataExportProps) {
             If your download didn&apos;t start automatically:
           </p>
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={() => {
               const link = document.createElement('a')

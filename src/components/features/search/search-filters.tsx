@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { Filter, X, Calendar, User, Eye, EyeOff, Tag } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
+import Button from '@/components/ui/button'
+import Card from '@/components/ui/card'
 // Select component not needed for current implementation
-import { Input } from '@/components/ui/input'
-import { Checkbox } from '@/components/ui/checkbox'
+import Input from '@/components/ui/input'
+import Checkbox from '@/components/ui/checkbox'
 
 export interface SearchFilters {
   relationshipIds: string[]
@@ -185,7 +185,7 @@ export function SearchFiltersComponent({
       {/* Filter Toggle Button */}
       <div className="flex items-center justify-between mb-4">
         <Button
-          variant="outline"
+          variant="secondary"
           size="sm"
           onClick={() => setIsExpanded(!isExpanded)}
           className="flex items-center space-x-2"
@@ -271,7 +271,7 @@ export function SearchFiltersComponent({
               ].map(preset => (
                 <Button
                   key={preset.value}
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   onClick={() => handleDatePreset(preset.value)}
                   className="text-xs"

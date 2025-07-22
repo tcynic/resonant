@@ -9,6 +9,11 @@ export interface User {
     theme?: 'light' | 'dark'
     notifications?: boolean
     language?: string
+    dataSharing?: boolean
+    analyticsOptIn?: boolean
+    marketingOptIn?: boolean
+    searchIndexing?: boolean
+    dataRetention?: '1year' | '3years' | 'indefinite'
   }
 }
 

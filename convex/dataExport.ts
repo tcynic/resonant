@@ -10,7 +10,7 @@ export const exportUserData = query({
     format: v.optional(v.union(v.literal('json'), v.literal('csv'))),
     includeAnalysis: v.optional(v.boolean()),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     const { userId, format = 'json', includeAnalysis = false } = args
 
     // Verify user exists
@@ -23,13 +23,13 @@ export const exportUserData = query({
       // Get user's relationships
       const relationships = await ctx.db
         .query('relationships')
-        .withIndex('by_user', q => q.eq('userId', userId))
+        .withIndex('by_user', (q: any) => q.eq('userId', userId))
         .collect()
 
       // Get user's journal entries
       const journalEntries = await ctx.db
         .query('journalEntries')
-        .withIndex('by_user', q => q.eq('userId', userId))
+        .withIndex('by_user', (q: any) => q.eq('userId', userId))
         .collect()
 
       // Get health scores if requested
@@ -37,7 +37,7 @@ export const exportUserData = query({
       if (includeAnalysis) {
         healthScores = await ctx.db
           .query('healthScores')
-          .withIndex('by_user', q => q.eq('userId', userId))
+          .withIndex('by_user', (q: any) => q.eq('userId', userId))
           .collect()
       }
 
@@ -46,12 +46,14 @@ export const exportUserData = query({
       if (includeAnalysis) {
         aiAnalysis = await ctx.db
           .query('aiAnalysis')
-          .withIndex('by_user', q => q.eq('userId', userId))
+          .withIndex('by_user', (q: any) => q.eq('userId', userId))
           .collect()
       }
 
       // Create relationship lookup map for easier access
-      const relationshipMap = new Map(relationships.map(rel => [rel._id, rel]))
+      const relationshipMap = new Map(
+        relationships.map((rel: any) => [rel._id, rel])
+      )
 
       // Prepare export data
       const exportData = {
@@ -82,7 +84,7 @@ export const exportUserData = query({
           createdAt: new Date(user.createdAt).toISOString(),
           preferences: user.preferences || {},
         },
-        relationships: relationships.map(rel => ({
+        relationships: relationships.map((rel: any) => ({
           id: rel._id,
           name: rel.name,
           type: rel.type,
@@ -90,7 +92,7 @@ export const exportUserData = query({
           createdAt: new Date(rel.createdAt).toISOString(),
           updatedAt: new Date(rel.updatedAt).toISOString(),
         })),
-        journalEntries: journalEntries.map(entry => {
+        journalEntries: journalEntries.map((entry: any) => {
           const relationship = relationshipMap.get(entry.relationshipId)
           return {
             id: entry._id,
@@ -102,16 +104,16 @@ export const exportUserData = query({
             updatedAt: new Date(entry.updatedAt).toISOString(),
             relationship: relationship
               ? {
-                  id: relationship._id,
-                  name: relationship.name,
-                  type: relationship.type,
+                  id: (relationship as any)._id,
+                  name: (relationship as any).name,
+                  type: (relationship as any).type,
                 }
               : null,
           }
         }),
         ...(includeAnalysis
           ? {
-              healthScores: healthScores.map(score => ({
+              healthScores: healthScores.map((score: any) => ({
                 id: score._id,
                 relationshipId: score.relationshipId,
                 overallScore: score.overallScore,
@@ -121,7 +123,7 @@ export const exportUserData = query({
                 confidenceLevel: score.confidenceLevel,
                 trendsData: score.trendsData,
               })),
-              aiAnalysis: aiAnalysis.map(analysis => ({
+              aiAnalysis: aiAnalysis.map((analysis: any) => ({
                 id: analysis._id,
                 journalEntryId: analysis.journalEntryId,
                 relationshipId: analysis.relationshipId,
@@ -155,7 +157,7 @@ export const getExportStatistics = query({
   args: {
     userId: v.id('users'),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     const { userId } = args
 
     // Verify user exists
@@ -168,38 +170,38 @@ export const getExportStatistics = query({
       // Get counts for each data type
       const relationshipsCount = await ctx.db
         .query('relationships')
-        .withIndex('by_user', q => q.eq('userId', userId))
+        .withIndex('by_user', (q: any) => q.eq('userId', userId))
         .collect()
-        .then(results => results.length)
+        .then((results: any) => results.length)
 
       const journalEntriesCount = await ctx.db
         .query('journalEntries')
-        .withIndex('by_user', q => q.eq('userId', userId))
+        .withIndex('by_user', (q: any) => q.eq('userId', userId))
         .collect()
-        .then(results => results.length)
+        .then((results: any) => results.length)
 
       const healthScoresCount = await ctx.db
         .query('healthScores')
-        .withIndex('by_user', q => q.eq('userId', userId))
+        .withIndex('by_user', (q: any) => q.eq('userId', userId))
         .collect()
-        .then(results => results.length)
+        .then((results: any) => results.length)
 
       const aiAnalysisCount = await ctx.db
         .query('aiAnalysis')
-        .withIndex('by_user', q => q.eq('userId', userId))
+        .withIndex('by_user', (q: any) => q.eq('userId', userId))
         .collect()
-        .then(results => results.length)
+        .then((results: any) => results.length)
 
       // Get date range of data
       const firstEntry = await ctx.db
         .query('journalEntries')
-        .withIndex('by_user_created', q => q.eq('userId', userId))
+        .withIndex('by_user_created', (q: any) => q.eq('userId', userId))
         .order('asc')
         .first()
 
       const lastEntry = await ctx.db
         .query('journalEntries')
-        .withIndex('by_user_created', q => q.eq('userId', userId))
+        .withIndex('by_user_created', (q: any) => q.eq('userId', userId))
         .order('desc')
         .first()
 
@@ -253,7 +255,7 @@ export const createExportJob = mutation({
     includeAnalysis: v.boolean(),
     email: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     const { userId, format, includeAnalysis, email } = args
 
     // Verify user exists
@@ -274,13 +276,13 @@ export const createExportJob = mutation({
       // Get user's relationships
       const relationships = await ctx.db
         .query('relationships')
-        .withIndex('by_user', q => q.eq('userId', userId))
+        .withIndex('by_user', (q: any) => q.eq('userId', userId))
         .collect()
 
       // Get user's journal entries
       const journalEntries = await ctx.db
         .query('journalEntries')
-        .withIndex('by_user', q => q.eq('userId', userId))
+        .withIndex('by_user', (q: any) => q.eq('userId', userId))
         .collect()
 
       // Get health scores if requested
@@ -288,7 +290,7 @@ export const createExportJob = mutation({
       if (includeAnalysis) {
         healthScores = await ctx.db
           .query('healthScores')
-          .withIndex('by_user', q => q.eq('userId', userId))
+          .withIndex('by_user', (q: any) => q.eq('userId', userId))
           .collect()
       }
 
@@ -297,7 +299,7 @@ export const createExportJob = mutation({
       if (includeAnalysis) {
         aiAnalysis = await ctx.db
           .query('aiAnalysis')
-          .withIndex('by_user', q => q.eq('userId', userId))
+          .withIndex('by_user', (q: any) => q.eq('userId', userId))
           .collect()
       }
 
@@ -309,7 +311,7 @@ export const createExportJob = mutation({
           email: user.email,
           createdAt: user.createdAt,
         },
-        relationships: relationships.map(rel => ({
+        relationships: relationships.map((rel: any) => ({
           id: rel._id,
           name: rel.name,
           type: rel.type,
@@ -317,7 +319,7 @@ export const createExportJob = mutation({
           createdAt: rel.createdAt,
           updatedAt: rel.updatedAt,
         })),
-        journalEntries: journalEntries.map(entry => ({
+        journalEntries: journalEntries.map((entry: any) => ({
           id: entry._id,
           relationshipId: entry.relationshipId,
           content: entry.content,
@@ -328,7 +330,7 @@ export const createExportJob = mutation({
           updatedAt: entry.updatedAt,
         })),
         ...(includeAnalysis && {
-          healthScores: healthScores.map(score => ({
+          healthScores: healthScores.map((score: any) => ({
             id: score._id,
             relationshipId: score.relationshipId,
             overallScore: score.overallScore,
@@ -338,7 +340,7 @@ export const createExportJob = mutation({
             confidenceLevel: score.confidenceLevel,
             trendsData: score.trendsData,
           })),
-          aiAnalysis: aiAnalysis.map(analysis => ({
+          aiAnalysis: aiAnalysis.map((analysis: any) => ({
             id: analysis._id,
             journalEntryId: analysis.journalEntryId,
             relationshipId: analysis.relationshipId,
@@ -393,7 +395,7 @@ export const convertToCSV = query({
       v.literal('healthScores')
     ),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     const { userId, dataType } = args
 
     // Verify user exists
@@ -410,13 +412,13 @@ export const convertToCSV = query({
         case 'relationships':
           const relationships = await ctx.db
             .query('relationships')
-            .withIndex('by_user', q => q.eq('userId', userId))
+            .withIndex('by_user', (q: any) => q.eq('userId', userId))
             .collect()
 
           csvContent = [
             'ID,Name,Type,Created,Updated',
             ...relationships.map(
-              rel =>
+              (rel: any) =>
                 `"${rel._id}","${rel.name}","${rel.type}","${new Date(rel.createdAt).toISOString()}","${new Date(rel.updatedAt).toISOString()}"`
             ),
           ].join('\n')
@@ -426,7 +428,7 @@ export const convertToCSV = query({
         case 'journalEntries':
           const entries = await ctx.db
             .query('journalEntries')
-            .withIndex('by_user', q => q.eq('userId', userId))
+            .withIndex('by_user', (q: any) => q.eq('userId', userId))
             .collect()
 
           // Get relationships for lookup
@@ -434,20 +436,20 @@ export const convertToCSV = query({
             (
               await ctx.db
                 .query('relationships')
-                .withIndex('by_user', q => q.eq('userId', userId))
+                .withIndex('by_user', (q: any) => q.eq('userId', userId))
                 .collect()
-            ).map(rel => [rel._id, rel])
+            ).map((rel: any) => [rel._id, rel])
           )
 
           csvContent = [
             'ID,Content,Relationship,Mood,Tags,Private,Created,Updated',
-            ...entries.map(entry => {
+            ...entries.map((entry: any) => {
               const relationship = relationshipMap.get(entry.relationshipId)
               const contentSafe = entry.content
                 .replace(/"/g, '""')
                 .replace(/\n/g, ' ')
               const tags = (entry.tags || []).join(';')
-              return `"${entry._id}","${contentSafe}","${relationship?.name || 'Unknown'}","${entry.mood || ''}","${tags}","${entry.isPrivate || false}","${new Date(entry.createdAt).toISOString()}","${new Date(entry.updatedAt).toISOString()}"`
+              return `"${entry._id}","${contentSafe}","${(relationship as any)?.name || 'Unknown'}","${entry.mood || ''}","${tags}","${entry.isPrivate || false}","${new Date(entry.createdAt).toISOString()}","${new Date(entry.updatedAt).toISOString()}"`
             }),
           ].join('\n')
           fileName = 'journal-entries.csv'
@@ -456,13 +458,13 @@ export const convertToCSV = query({
         case 'healthScores':
           const scores = await ctx.db
             .query('healthScores')
-            .withIndex('by_user', q => q.eq('userId', userId))
+            .withIndex('by_user', (q: any) => q.eq('userId', userId))
             .collect()
 
           csvContent = [
             'ID,Relationship,Overall Score,Sentiment,Emotional Stability,Energy Impact,Conflict Resolution,Gratitude,Communication Frequency,Last Updated,Data Points,Confidence',
             ...scores.map(
-              score =>
+              (score: any) =>
                 `"${score._id}","${score.relationshipId}","${score.overallScore}","${score.componentScores.sentiment}","${score.componentScores.emotionalStability}","${score.componentScores.energyImpact}","${score.componentScores.conflictResolution}","${score.componentScores.gratitude}","${score.componentScores.communicationFrequency}","${new Date(score.lastUpdated).toISOString()}","${score.dataPoints}","${score.confidenceLevel}"`
             ),
           ].join('\n')

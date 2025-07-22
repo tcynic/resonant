@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Search, X, Loader2 } from 'lucide-react'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
+import Input from '@/components/ui/input'
+import Button from '@/components/ui/button'
 
 export interface SearchBarProps {
   onSearch: (query: string) => void
@@ -35,7 +35,7 @@ export function SearchBar({
 
   const inputRef = useRef<HTMLInputElement>(null)
   const suggestionsRef = useRef<HTMLDivElement>(null)
-  const debounceRef = useRef<NodeJS.Timeout>()
+  const debounceRef = useRef<NodeJS.Timeout | null>(null)
 
   // Debounced search function
   const debouncedSearch = useCallback(() => {

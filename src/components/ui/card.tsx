@@ -1,6 +1,6 @@
 import React from 'react'
 
-interface CardProps {
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode
   className?: string
   padding?: 'none' | 'sm' | 'md' | 'lg'
@@ -10,6 +10,7 @@ export default function Card({
   children,
   className = '',
   padding = 'md',
+  ...props
 }: CardProps) {
   const paddingClasses = {
     none: '',
@@ -24,7 +25,11 @@ export default function Card({
     ${className}
   `.trim()
 
-  return <div className={classes}>{children}</div>
+  return (
+    <div className={classes} {...props}>
+      {children}
+    </div>
+  )
 }
 
 interface CardHeaderProps {

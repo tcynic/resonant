@@ -17,7 +17,7 @@ export const getDashboardData = query({
       .collect()
 
     // Get health scores for all relationships efficiently
-    const relationshipIds = relationships.map(rel => rel._id)
+    const relationshipIds = relationships.map((rel: any) => rel._id)
     const allHealthScores = await ctx.db
       .query('healthScores')
       .withIndex('by_user', (q: any) => q.eq('userId', args.userId))
@@ -25,7 +25,7 @@ export const getDashboardData = query({
 
     // Create a map for efficient lookup
     const healthScoreMap = new Map()
-    allHealthScores.forEach(score => {
+    allHealthScores.forEach((score: any) => {
       const existing = healthScoreMap.get(score.relationshipId)
       if (!existing || score.lastUpdated > existing.lastUpdated) {
         healthScoreMap.set(score.relationshipId, score)
@@ -33,7 +33,7 @@ export const getDashboardData = query({
     })
 
     const healthScores = relationships.map(
-      rel => healthScoreMap.get(rel._id) || null
+      (rel: any) => healthScoreMap.get(rel._id) || null
     )
 
     // Get recent journal entries (last 10)
@@ -44,26 +44,30 @@ export const getDashboardData = query({
       .take(10)
 
     // Combine relationships with their health scores
-    const relationshipsWithScores = relationships.map((relationship, index) => {
-      const healthScore = healthScores[index]
-      return {
-        ...relationship,
-        healthScore,
+    const relationshipsWithScores = relationships.map(
+      (relationship: any, index: number) => {
+        const healthScore = healthScores[index]
+        return {
+          ...relationship,
+          healthScore,
+        }
       }
-    })
+    )
 
     // Calculate summary statistics
-    const validScores = healthScores.filter(score => score !== null)
+    const validScores = healthScores.filter((score: any) => score !== null)
     const averageScore =
       validScores.length > 0
         ? Math.round(
-            validScores.reduce((sum, score) => sum + score!.overallScore, 0) /
-              validScores.length
+            validScores.reduce(
+              (sum: number, score: any) => sum + score!.overallScore,
+              0
+            ) / validScores.length
           )
         : 0
 
     const totalDataPoints = validScores.reduce(
-      (sum, score) => sum + (score?.dataPoints || 0),
+      (sum: number, score: any) => sum + (score?.dataPoints || 0),
       0
     )
 
@@ -76,8 +80,8 @@ export const getDashboardData = query({
         averageHealthScore: averageScore,
         totalAnalyses: totalDataPoints,
         lastUpdated: Math.max(
-          ...validScores.map(score => score?.lastUpdated || 0),
-          ...recentEntries.map(entry => entry.updatedAt)
+          ...validScores.map((score: any) => score?.lastUpdated || 0),
+          ...recentEntries.map((entry: any) => entry.updatedAt)
         ),
       },
     }
@@ -153,19 +157,19 @@ export const getFilteredJournalEntries = query({
     const results = hasMore ? entries.slice(0, limit) : entries
 
     // Get relationship names for the entries
-    const relationshipIds = [
-      ...new Set(results.map(entry => entry.relationshipId)),
-    ]
+    const relationshipIds = Array.from(
+      new Set(results.map((entry: any) => entry.relationshipId))
+    )
     const relationships = await Promise.all(
-      relationshipIds.map(id => ctx.db.get(id))
+      relationshipIds.map((id: any) => ctx.db.get(id))
     )
 
     const relationshipMap = new Map(
-      relationships.filter(Boolean).map(rel => [rel!._id, rel!.name])
+      relationships.filter(Boolean).map((rel: any) => [rel!._id, rel!.name])
     )
 
     // Enhance entries with relationship names
-    const enhancedEntries = results.map(entry => ({
+    const enhancedEntries = results.map((entry: any) => ({
       ...entry,
       relationshipName: relationshipMap.get(entry.relationshipId) || 'Unknown',
     }))
@@ -208,11 +212,11 @@ export const getDashboardTrends = query({
         .query('relationships')
         .withIndex('by_user', (q: any) => q.eq('userId', args.userId))
         .collect()
-      relationshipIds = relationships.map(rel => rel._id)
+      relationshipIds = relationships.map((rel: any) => rel._id)
     }
 
     // Get sentiment analyses for the specified relationships and time range
-    const analysesPromises = relationshipIds.map(relationshipId =>
+    const analysesPromises = relationshipIds!.map((relationshipId: any) =>
       ctx.db
         .query('aiAnalysis')
         .withIndex('by_relationship', (q: any) =>
@@ -231,10 +235,10 @@ export const getDashboardTrends = query({
 
     // Get relationship names
     const relationships = await Promise.all(
-      relationshipIds.map(id => ctx.db.get(id))
+      relationshipIds!.map((id: any) => ctx.db.get(id))
     )
     const relationshipMap = new Map(
-      relationships.filter(Boolean).map(rel => [rel!._id, rel!.name])
+      relationships.filter(Boolean).map((rel: any) => [rel!._id, rel!.name])
     )
 
     // Group analyses by time period
@@ -288,11 +292,13 @@ export const getDashboardTrends = query({
             string,
             { scores: number[]; relationshipName: string }
           >
-        ).forEach(([relationshipId, data]) => {
+        ).forEach(([relationshipId, data]: [string, any]) => {
           if (data.scores.length > 0) {
             const average =
-              data.scores.reduce((sum, score) => sum + score, 0) /
-              data.scores.length
+              data.scores.reduce(
+                (sum: number, score: number) => sum + score,
+                0
+              ) / data.scores.length
             dataPoint[data.relationshipName] = Math.round(average)
             dataPoint[`${data.relationshipName}_count`] = data.scores.length
           }
@@ -300,7 +306,7 @@ export const getDashboardTrends = query({
 
         return dataPoint
       })
-      .sort((a, b) => a.timestamp - b.timestamp)
+      .sort((a: any, b: any) => a.timestamp - b.timestamp)
 
     return {
       trends,
@@ -334,7 +340,7 @@ export const getRecentActivity = query({
       .take(limit)
 
     // Get AI analyses for these entries
-    const analysisPromises = recentEntries.map(entry =>
+    const analysisPromises = recentEntries.map((entry: any) =>
       ctx.db
         .query('aiAnalysis')
         .withIndex('by_journal_entry', (q: any) =>
@@ -346,24 +352,24 @@ export const getRecentActivity = query({
     const allAnalyses = await Promise.all(analysisPromises)
 
     // Get relationship names
-    const relationshipIds = [
-      ...new Set(recentEntries.map(entry => entry.relationshipId)),
-    ]
+    const relationshipIds = Array.from(
+      new Set(recentEntries.map((entry: any) => entry.relationshipId))
+    )
     const relationships = await Promise.all(
-      relationshipIds.map(id => ctx.db.get(id))
+      relationshipIds.map((id: any) => ctx.db.get(id))
     )
     const relationshipMap = new Map(
-      relationships.filter(Boolean).map(rel => [rel!._id, rel!])
+      relationships.filter(Boolean).map((rel: any) => [rel!._id, rel!])
     )
 
     // Combine entries with their analysis data
-    const activityItems = recentEntries.map((entry, index) => {
+    const activityItems = recentEntries.map((entry: any, index: number) => {
       const analyses = allAnalyses[index]
       const relationship = relationshipMap.get(entry.relationshipId)
 
       // Get sentiment analysis if available
       const sentimentAnalysis = analyses.find(
-        a => a.analysisType === 'sentiment'
+        (a: any) => a.analysisType === 'sentiment'
       )
       const sentimentScore = sentimentAnalysis?.analysisResults.sentimentScore
 
@@ -389,8 +395,8 @@ export const getRecentActivity = query({
       activities: activityItems,
       totalCount: activityItems.length,
       analysisRate:
-        activityItems.filter(item => item.analysisStatus.hasAnalysis).length /
-        activityItems.length,
+        activityItems.filter((item: any) => item.analysisStatus.hasAnalysis)
+          .length / activityItems.length,
     }
   },
 })
@@ -421,21 +427,21 @@ export const getDashboardStats = query({
     const lastMonth = now - 30 * 24 * 60 * 60 * 1000
 
     const recentEntries = journalEntries.filter(
-      entry => entry.createdAt >= lastWeek
+      (entry: any) => entry.createdAt >= lastWeek
     )
     const monthlyEntries = journalEntries.filter(
-      entry => entry.createdAt >= lastMonth
+      (entry: any) => entry.createdAt >= lastMonth
     )
 
     // Calculate health score statistics
     const validHealthScores = healthScores.filter(
-      score => score.overallScore > 0
+      (score: any) => score.overallScore > 0
     )
     const averageHealthScore =
       validHealthScores.length > 0
         ? Math.round(
             validHealthScores.reduce(
-              (sum, score) => sum + score.overallScore,
+              (sum: number, score: any) => sum + score.overallScore,
               0
             ) / validHealthScores.length
           )
@@ -443,11 +449,11 @@ export const getDashboardStats = query({
 
     // Find trending relationships (improving vs declining)
     const improvingRelationships = healthScores.filter(
-      score => score.trendsData?.trendDirection === 'up'
+      (score: any) => score.trendsData?.trendDirection === 'up'
     ).length
 
     const decliningRelationships = healthScores.filter(
-      score => score.trendsData?.trendDirection === 'down'
+      (score: any) => score.trendsData?.trendDirection === 'down'
     ).length
 
     return {
@@ -464,7 +470,8 @@ export const getDashboardStats = query({
             (journalEntries.length /
               Math.max(
                 1,
-                (now - Math.min(...journalEntries.map(e => e.createdAt))) /
+                (now -
+                  Math.min(...journalEntries.map((e: any) => e.createdAt))) /
                   (7 * 24 * 60 * 60 * 1000)
               )) *
               10
@@ -480,8 +487,8 @@ export const getDashboardStats = query({
           decliningRelationships,
       },
       lastUpdated: Math.max(
-        ...healthScores.map(score => score.lastUpdated),
-        ...journalEntries.map(entry => entry.updatedAt)
+        ...healthScores.map((score: any) => score.lastUpdated),
+        ...journalEntries.map((entry: any) => entry.updatedAt)
       ),
     }
   },

@@ -258,10 +258,10 @@ export default function JournalEntryEditor({
           )}
         </div>
         <div className="flex space-x-3">
-          {!isEditing && hasDraft && (
+          {!isEditing && draftRecovery.hasDraft && (
             <Button
               variant="secondary"
-              onClick={clearDraft}
+              onClick={() => draftRecovery.clearDraft()}
               disabled={isLoading}
             >
               Clear Draft

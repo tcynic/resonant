@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { AlertCircle, RotateCcw, X, Clock } from 'lucide-react'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import Card from '@/components/ui/card'
+import Button from '@/components/ui/button'
 
 export interface DraftRecoveryProps {
   isVisible: boolean
@@ -210,7 +210,6 @@ export function AutoSaveStatus({
       {error && (
         <AlertCircle
           className="w-3 h-3"
-          title={error.message}
           aria-label={`Error: ${error.message}`}
         />
       )}

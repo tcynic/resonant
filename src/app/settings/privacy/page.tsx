@@ -3,7 +3,7 @@
 // import { useState } from 'react' // Not currently used
 import { useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import Button from '@/components/ui/button'
 import { PrivacySettings } from '@/components/features/data-management/privacy-settings'
 
 export default function PrivacySettingsPage() {

@@ -17,9 +17,9 @@ import {
   CheckCircle,
   Info,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
+import Button from '@/components/ui/button'
+import Card from '@/components/ui/card'
+import Checkbox from '@/components/ui/checkbox'
 
 interface PrivacySettings {
   dataSharing: boolean
@@ -159,7 +159,9 @@ export function PrivacySettings({ className = '' }: PrivacySettingsProps) {
           <div className="flex items-start space-x-3">
             <Checkbox
               checked={settings.dataSharing}
-              onChange={checked => handleSettingChange('dataSharing', checked)}
+              onChange={e =>
+                handleSettingChange('dataSharing', e.target.checked)
+              }
             />
             <div className="flex-1">
               <div className="font-medium text-gray-900 mb-1">
@@ -176,8 +178,8 @@ export function PrivacySettings({ className = '' }: PrivacySettingsProps) {
           <div className="flex items-start space-x-3">
             <Checkbox
               checked={settings.searchIndexing}
-              onChange={checked =>
-                handleSettingChange('searchIndexing', checked)
+              onChange={e =>
+                handleSettingChange('searchIndexing', e.target.checked)
               }
             />
             <div className="flex-1">
@@ -207,8 +209,8 @@ export function PrivacySettings({ className = '' }: PrivacySettingsProps) {
           <div className="flex items-start space-x-3">
             <Checkbox
               checked={settings.analyticsOptIn}
-              onChange={checked =>
-                handleSettingChange('analyticsOptIn', checked)
+              onChange={e =>
+                handleSettingChange('analyticsOptIn', e.target.checked)
               }
             />
             <div className="flex-1">
@@ -226,8 +228,8 @@ export function PrivacySettings({ className = '' }: PrivacySettingsProps) {
           <div className="flex items-start space-x-3">
             <Checkbox
               checked={settings.marketingOptIn}
-              onChange={checked =>
-                handleSettingChange('marketingOptIn', checked)
+              onChange={e =>
+                handleSettingChange('marketingOptIn', e.target.checked)
               }
             />
             <div className="flex-1">

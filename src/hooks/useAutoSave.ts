@@ -41,8 +41,8 @@ export function useAutoSave<T>(
   const [lastSaved, setLastSaved] = useState<Date | undefined>()
   const [error, setError] = useState<Error | undefined>()
 
-  const timeoutRef = useRef<NodeJS.Timeout>()
-  const lastContentRef = useRef<T>()
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const lastContentRef = useRef<T | undefined>(undefined)
 
   // Generate storage key
   const storageKey = `draft_${key}`

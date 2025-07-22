@@ -12,6 +12,17 @@ export default defineSchema({
         theme: v.optional(v.union(v.literal('light'), v.literal('dark'))),
         notifications: v.optional(v.boolean()),
         language: v.optional(v.string()),
+        dataSharing: v.optional(v.boolean()),
+        analyticsOptIn: v.optional(v.boolean()),
+        marketingOptIn: v.optional(v.boolean()),
+        searchIndexing: v.optional(v.boolean()),
+        dataRetention: v.optional(
+          v.union(
+            v.literal('1year'),
+            v.literal('3years'),
+            v.literal('indefinite')
+          )
+        ),
       })
     ),
   }).index('by_clerk_id', ['clerkId']),
