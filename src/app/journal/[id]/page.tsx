@@ -22,7 +22,7 @@ export default function JournalEntryViewPage() {
   // Find the relationship for this entry
   const relationship = useMemo(() => {
     if (!journalEntry || !journalEntry.relationshipId) return undefined
-    return relationships.find(r => r._id === journalEntry.relationshipId)
+    return relationships.find((r) => r._id === journalEntry.relationshipId)
   }, [journalEntry, relationships])
 
   // Find related entries with the same relationship
