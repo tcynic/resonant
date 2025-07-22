@@ -13,7 +13,7 @@ export const searchJournalEntries = query({
     limit: v.optional(v.number()),
     cursor: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     const {
       userId,
       searchQuery,
@@ -42,7 +42,7 @@ export const searchJournalEntries = query({
       // Build search query using the search index
       let searchBuilder = ctx.db
         .query('journalEntries')
-        .withSearchIndex('search_content', q => {
+        .withSearchIndex('search_content', (q: any) => {
           let query = q
             .search('content', searchQuery.trim())
             .eq('userId', userId)
@@ -67,7 +67,7 @@ export const searchJournalEntries = query({
       if (relationshipIds.length > 0) {
         // Verify relationships belong to user
         const relationships = await Promise.all(
-          relationshipIds.map(id => ctx.db.get(id))
+          relationshipIds.map((id: any) => ctx.db.get(id))
         )
 
         const validRelationshipIds = relationships
@@ -78,14 +78,14 @@ export const searchJournalEntries = query({
           throw new ConvexError('No valid relationships found')
         }
 
-        results = results.filter(entry =>
+        results = results.filter((entry: any) =>
           validRelationshipIds.includes(entry.relationshipId)
         )
       }
 
       // Enrich results with relationship data
       const enrichedResults = await Promise.all(
-        results.map(async entry => {
+        results.map(async (entry: any) => {
           const relationship = await ctx.db.get(entry.relationshipId)
 
           return {
@@ -131,7 +131,7 @@ export const getSearchSuggestions = query({
     partialQuery: v.string(),
     limit: v.optional(v.number()),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     const { userId, partialQuery, limit = 5 } = args
 
     if (partialQuery.length < 2) {
@@ -141,7 +141,7 @@ export const getSearchSuggestions = query({
     // Get user's recent entries to extract keywords
     const recentEntries = await ctx.db
       .query('journalEntries')
-      .withIndex('by_user_created', q => q.eq('userId', userId))
+      .withIndex('by_user_created', (q: any) => q.eq('userId', userId))
       .order('desc')
       .take(100) // Look at recent 100 entries for suggestions
 
@@ -149,7 +149,7 @@ export const getSearchSuggestions = query({
     const words = new Set<string>()
     const partial = partialQuery.toLowerCase()
 
-    recentEntries.forEach(entry => {
+    recentEntries.forEach((entry: any) => {
       // Extract words from content
       const contentWords = entry.content.toLowerCase().match(/\b\w+\b/g) || []
 
@@ -188,12 +188,12 @@ export const getRelationshipSearchResults = query({
     searchQuery: v.string(),
     relationshipIds: v.array(v.id('relationships')),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx: any, args: any) => {
     const { userId, searchQuery, relationshipIds } = args
 
     // Get relationship names for display
     const relationships = await Promise.all(
-      relationshipIds.map(async id => {
+      relationshipIds.map(async (id: any) => {
         const rel = await ctx.db.get(id)
         return rel && rel.userId === userId ? rel : null
       })
@@ -206,7 +206,7 @@ export const getRelationshipSearchResults = query({
       validRelationships.map(async relationship => {
         const searchResults = await ctx.db
           .query('journalEntries')
-          .withSearchIndex('search_content', q =>
+          .withSearchIndex('search_content', (q: any) =>
             q
               .search('content', searchQuery)
               .eq('userId', userId)
