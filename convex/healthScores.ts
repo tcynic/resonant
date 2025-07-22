@@ -136,9 +136,9 @@ export const getHealthScoresByUser = query({
     // Sort based on preference
     switch (args.sortBy) {
       case 'score':
-        return scores.sort((a, b) => b.overallScore - a.overallScore)
+        return scores.sort((a: any, b: any) => b.overallScore - a.overallScore)
       case 'updated':
-        return scores.sort((a, b) => b.lastUpdated - a.lastUpdated)
+        return scores.sort((a: any, b: any) => b.lastUpdated - a.lastUpdated)
       default:
         return scores
     }
