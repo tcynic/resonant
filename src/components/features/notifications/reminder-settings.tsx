@@ -274,7 +274,7 @@ export function ReminderSettings({ className = '' }: ReminderSettingsProps) {
             {browserNotificationPermission !== 'granted' && (
               <Button
                 onClick={requestNotificationPermission}
-                variant="outline"
+                variant="secondary"
                 size="sm"
               >
                 Enable Notifications

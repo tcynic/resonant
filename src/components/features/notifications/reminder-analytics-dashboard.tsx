@@ -347,7 +347,7 @@ export function ReminderAnalyticsDashboard({
 
           <Button
             onClick={exportAnalytics}
-            variant="outline"
+            variant="secondary"
             size="sm"
             className="flex items-center space-x-2"
           >
