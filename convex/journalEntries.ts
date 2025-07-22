@@ -340,7 +340,7 @@ export const searchEntries = query({
     if (args.query) {
       const searchTerm = args.query.toLowerCase()
       entries = entries.filter(
-        entry =>
+        (entry: any) =>
           entry.content.toLowerCase().includes(searchTerm) ||
           entry.mood?.toLowerCase().includes(searchTerm)
       )
@@ -349,7 +349,8 @@ export const searchEntries = query({
     // Apply tags filter
     if (args.tags && args.tags.length > 0) {
       entries = entries.filter(
-        entry => entry.tags && args.tags!.some(tag => entry.tags!.includes(tag))
+        (entry: any) =>
+          entry.tags && args.tags!.some(tag => entry.tags!.includes(tag))
       )
     }
 
