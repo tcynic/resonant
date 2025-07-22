@@ -157,12 +157,17 @@ export function useBrowserNotifications(): UseBrowserNotificationsReturn {
           }
 
           // Handle reminder-specific clicks
-          if (options.data?.reminderId) {
-            handleNotificationClick(options.data.reminderId)
+          if (
+            options.data?.reminderId &&
+            typeof options.data.reminderId === 'string'
+          ) {
+            handleNotificationClick(
+              options.data.reminderId as Id<'reminderLogs'>
+            )
           }
 
           // Navigate to relevant page
-          if (options.data?.route) {
+          if (options.data?.route && typeof options.data.route === 'string') {
             router.push(options.data.route)
           } else {
             router.push('/dashboard')
@@ -215,8 +220,14 @@ export function useBrowserNotifications(): UseBrowserNotificationsReturn {
 
         switch (type) {
           case 'NOTIFICATION_CLICKED':
-            if (data.reminderId && handleNotificationClickRef.current) {
-              handleNotificationClickRef.current(data.reminderId)
+            if (
+              data.reminderId &&
+              typeof data.reminderId === 'string' &&
+              handleNotificationClickRef.current
+            ) {
+              handleNotificationClickRef.current(
+                data.reminderId as Id<'reminderLogs'>
+              )
             }
             break
           default:

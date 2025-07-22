@@ -104,7 +104,9 @@ export default defineSchema({
       energyScore: v.optional(v.number()), // 1-10 for energy impact
       resolutionScore: v.optional(v.number()), // 1-10 for conflict resolution
       gratitudeScore: v.optional(v.number()), // 1-10 for gratitude
-      additionalData: v.optional(v.any()), // Flexible field for analysis-specific data
+      additionalData: v.optional(
+        v.record(v.string(), v.union(v.string(), v.number(), v.boolean()))
+      ), // Flexible field for analysis-specific data
     }),
     metadata: v.object({
       modelVersion: v.string(),

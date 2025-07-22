@@ -8,6 +8,8 @@ import {
   calculateNextReminderTime,
   generateReminderContent,
   isWithinDoNotDisturbHours,
+  RelationshipAttentionAnalysis,
+  UserJournalingPattern,
 } from './utils/reminder_logic'
 
 // Get all scheduled reminders for processing
@@ -324,8 +326,8 @@ export const generateSmartReminders = internalMutation({
   ): Promise<
     | {
         scheduledCount: number
-        patternAnalysis: any
-        relationshipsAnalysis: any[]
+        patternAnalysis: UserJournalingPattern
+        relationshipsAnalysis: RelationshipAttentionAnalysis[]
       }
     | { message: string }
   > => {
@@ -374,7 +376,7 @@ export const generateSmartReminders = internalMutation({
       .withIndex('by_user', q => q.eq('userId', args.userId))
       .collect()
 
-    let relationshipsAnalysis: any[] = []
+    let relationshipsAnalysis: RelationshipAttentionAnalysis[] = []
 
     if (relationships.length > 0) {
       // Get health scores for all relationships

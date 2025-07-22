@@ -154,7 +154,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
   const contextValue: NotificationContextType = {
     browserNotifications,
     isNotificationEnabled,
-    reminderSettings,
+    reminderSettings: reminderSettings ?? null,
   }
 
   return (
