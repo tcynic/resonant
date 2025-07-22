@@ -48,8 +48,9 @@ export function useBrowserNotifications(): UseBrowserNotificationsReturn {
   const markReminderClicked = useMutation(api.notifications.markReminderClicked)
 
   // Store the handleNotificationClick function in a ref to avoid dependency cycles
-  const handleNotificationClickRef =
-    useRef<(reminderId: Id<'reminderLogs'>) => Promise<void>>()
+  const handleNotificationClickRef = useRef<
+    ((reminderId: Id<'reminderLogs'>) => Promise<void>) | null
+  >(null)
 
   // Handle notification click events
   const handleNotificationClick = useCallback(
