@@ -22,6 +22,7 @@ This guide provides practical implementation details for testing the Resonant ap
 ### Convex Backend Mocking
 
 #### Jest Mock Setup for Convex Hooks
+
 ```typescript
 // test-utils/convex-mocks.ts
 
@@ -57,12 +58,17 @@ export const createMockQueryResponse = <T>(data: T, isLoading = false) => {
   return data
 }
 
-export const createMockMutation = <T>(mockImplementation?: (args: any) => Promise<T>) => {
+export const createMockMutation = <T>(
+  mockImplementation?: (args: any) => Promise<T>
+) => {
   return jest.fn(mockImplementation || (() => Promise.resolve({} as T)))
 }
 
 // Example usage in tests
-export const setupJournalEntryMocks = (mockUseQuery: jest.Mock, mockUseMutation: jest.Mock) => {
+export const setupJournalEntryMocks = (
+  mockUseQuery: jest.Mock,
+  mockUseMutation: jest.Mock
+) => {
   const mockEntries = [
     {
       _id: 'entry_1',
@@ -70,7 +76,7 @@ export const setupJournalEntryMocks = (mockUseQuery: jest.Mock, mockUseMutation:
       mood: 'happy',
       relationshipId: 'rel_1',
       createdAt: Date.now(),
-    }
+    },
   ]
 
   // Mock query responses
@@ -80,7 +86,7 @@ export const setupJournalEntryMocks = (mockUseQuery: jest.Mock, mockUseMutation:
     }
     if (api.toString().includes('relationships.list')) {
       return createMockQueryResponse([
-        { _id: 'rel_1', name: 'Sarah', type: 'friend' }
+        { _id: 'rel_1', name: 'Sarah', type: 'friend' },
       ])
     }
     return createMockQueryResponse(null)
@@ -89,7 +95,7 @@ export const setupJournalEntryMocks = (mockUseQuery: jest.Mock, mockUseMutation:
   // Mock mutation responses
   mockUseMutation.mockImplementation((api: any) => {
     if (api.toString().includes('journalEntries.create')) {
-      return createMockMutation((args) => 
+      return createMockMutation(args =>
         Promise.resolve({ ...args, _id: 'new_entry_id', createdAt: Date.now() })
       )
     }
@@ -99,6 +105,7 @@ export const setupJournalEntryMocks = (mockUseQuery: jest.Mock, mockUseMutation:
 ```
 
 #### Convex Test Client Setup
+
 ```typescript
 // test-utils/convex-test-client.ts
 
@@ -111,9 +118,9 @@ export class ConvexTestEnvironment {
 
   constructor() {
     this.testClient = new ConvexTestClient({
-      deployment: process.env.CONVEX_TEST_DEPLOYMENT_URL!
+      deployment: process.env.CONVEX_TEST_DEPLOYMENT_URL!,
     })
-    
+
     this.reactClient = new ConvexReactClient(
       process.env.CONVEX_TEST_DEPLOYMENT_URL!
     )
@@ -124,28 +131,34 @@ export class ConvexTestEnvironment {
     const testUser = await this.testClient.mutation(api.users.create, {
       name: 'Test User',
       email: 'test@example.com',
-      clerkId: 'test_clerk_id'
+      clerkId: 'test_clerk_id',
     })
 
     // Create test relationships
-    const testRelationship = await this.testClient.mutation(api.relationships.create, {
-      userId: testUser,
-      name: 'Test Friend',
-      type: 'friend'
-    })
+    const testRelationship = await this.testClient.mutation(
+      api.relationships.create,
+      {
+        userId: testUser,
+        name: 'Test Friend',
+        type: 'friend',
+      }
+    )
 
     // Create test journal entries
-    const testEntry = await this.testClient.mutation(api.journalEntries.create, {
-      userId: testUser,
-      relationshipId: testRelationship,
-      content: 'Test journal entry content for integration testing',
-      mood: 'happy'
-    })
+    const testEntry = await this.testClient.mutation(
+      api.journalEntries.create,
+      {
+        userId: testUser,
+        relationshipId: testRelationship,
+        content: 'Test journal entry content for integration testing',
+        mood: 'happy',
+      }
+    )
 
     return {
       testUser,
       testRelationship,
-      testEntry
+      testEntry,
     }
   }
 
@@ -160,7 +173,9 @@ export class ConvexTestEnvironment {
 }
 
 // Integration test helper
-export const withConvexTestEnvironment = async (testFn: (env: ConvexTestEnvironment) => Promise<void>) => {
+export const withConvexTestEnvironment = async (
+  testFn: (env: ConvexTestEnvironment) => Promise<void>
+) => {
   const env = new ConvexTestEnvironment()
   try {
     await env.setupTestData()
@@ -174,6 +189,7 @@ export const withConvexTestEnvironment = async (testFn: (env: ConvexTestEnvironm
 ### Clerk Authentication Mocking
 
 #### Clerk Mock Setup
+
 ```typescript
 // test-utils/clerk-mocks.ts
 
@@ -263,6 +279,7 @@ export const createMockClerkWebhookEvent = (type: string, userData: any) => ({
 ### AI Service Mocking
 
 #### Gemini AI Client Mocking
+
 ```typescript
 // test-utils/ai-mocks.ts
 
@@ -287,7 +304,7 @@ export const mockGeminiClient = () => {
   }))
 
   // Default mock implementations
-  mockAnalyzeJournalEntry.mockImplementation((content: string) => 
+  mockAnalyzeJournalEntry.mockImplementation((content: string) =>
     Promise.resolve({
       sentimentScore: 0.7,
       emotionalKeywords: ['happy', 'excited', 'grateful'],
@@ -326,15 +343,24 @@ export const mockGeminiClient = () => {
 
 // AI rate limiting simulation
 export const simulateRateLimitError = (mockFn: jest.Mock) => {
-  mockFn.mockRejectedValueOnce(new Error('Rate limit exceeded. Please try again later.'))
+  mockFn.mockRejectedValueOnce(
+    new Error('Rate limit exceeded. Please try again later.')
+  )
 }
 
 // AI processing delay simulation
-export const simulateProcessingDelay = (mockFn: jest.Mock, delay: number = 2000) => {
-  mockFn.mockImplementation((...args) => 
-    new Promise(resolve => 
-      setTimeout(() => resolve(mockFn.getMockImplementation()(...args)), delay)
-    )
+export const simulateProcessingDelay = (
+  mockFn: jest.Mock,
+  delay: number = 2000
+) => {
+  mockFn.mockImplementation(
+    (...args) =>
+      new Promise(resolve =>
+        setTimeout(
+          () => resolve(mockFn.getMockImplementation()(...args)),
+          delay
+        )
+      )
   )
 }
 ```
@@ -346,6 +372,7 @@ export const simulateProcessingDelay = (mockFn: jest.Mock, delay: number = 2000)
 ### Real-time Subscription Testing
 
 #### Testing Real-time Updates
+
 ```typescript
 // test-utils/real-time-testing.ts
 
@@ -364,7 +391,7 @@ export class RealTimeTestHarness {
   // Subscribe to real-time updates
   async subscribeToUpdates<T>(queryName: string, args: any): Promise<T[]> {
     const updates: T[] = []
-    
+
     const { result } = renderHook(
       () => useQuery(api[queryName], args),
       {
@@ -390,7 +417,7 @@ export class RealTimeTestHarness {
     subscriptionKey: string
   ) {
     const initialData = this.subscriptions.get(subscriptionKey) || []
-    
+
     // Trigger mutation
     await act(async () => {
       await this.convexClient.mutation(api[mutation], mutationArgs)
@@ -414,11 +441,11 @@ export class RealTimeTestHarness {
 // Example: Testing journal entry real-time updates
 export const testJournalEntryRealTimeUpdates = async () => {
   const harness = new RealTimeTestHarness()
-  
+
   try {
     // Subscribe to journal entries
     await harness.subscribeToUpdates('journalEntries.list', { userId: 'test_user' })
-    
+
     // Create new entry and verify real-time update
     await harness.triggerUpdateAndVerify(
       'journalEntries.create',
@@ -440,39 +467,40 @@ export const testJournalEntryRealTimeUpdates = async () => {
 ```
 
 #### Connection State Testing
+
 ```typescript
 // Connection state and offline testing
 export const testConvexConnectionStates = () => {
   describe('Convex Connection States', () => {
     test('handles connection loss gracefully', async () => {
       const { result } = renderHook(() => useConvexAuth())
-      
+
       // Simulate connection loss
       await act(async () => {
         mockConvexClient.simulateConnectionLoss()
       })
-      
+
       expect(result.current.isOnline).toBe(false)
-      
+
       // Verify offline UI state
       render(<Dashboard />)
       expect(screen.getByText('Connection lost. Retrying...')).toBeInTheDocument()
-      
+
       // Simulate reconnection
       await act(async () => {
         mockConvexClient.simulateReconnection()
       })
-      
+
       expect(result.current.isOnline).toBe(true)
       expect(screen.queryByText('Connection lost')).not.toBeInTheDocument()
     })
 
     test('queues mutations during offline state', async () => {
       const { result } = renderHook(() => useMutation(api.journalEntries.create))
-      
+
       // Go offline
       mockConvexClient.simulateConnectionLoss()
-      
+
       // Attempt mutation while offline
       await act(async () => {
         result.current({
@@ -480,15 +508,15 @@ export const testConvexConnectionStates = () => {
           userId: 'test_user',
         })
       })
-      
+
       // Verify mutation is queued
       expect(mockConvexClient.getQueuedMutations()).toHaveLength(1)
-      
+
       // Reconnect and verify mutation executes
       await act(async () => {
         mockConvexClient.simulateReconnection()
       })
-      
+
       await waitFor(() => {
         expect(mockConvexClient.getQueuedMutations()).toHaveLength(0)
       })
@@ -504,6 +532,7 @@ export const testConvexConnectionStates = () => {
 ### AI Analysis Testing Framework
 
 #### DSPy Pipeline Testing
+
 ```typescript
 // test-utils/ai-pipeline-testing.ts
 
@@ -519,13 +548,15 @@ export class AIPipelineTestSuite {
   private generateTestEntries() {
     return [
       {
-        content: 'Had an amazing dinner with Sarah. We talked for hours about our dreams.',
+        content:
+          'Had an amazing dinner with Sarah. We talked for hours about our dreams.',
         expectedSentiment: 0.8,
         expectedKeywords: ['amazing', 'dreams', 'talked'],
         expectedPatterns: ['quality time', 'deep conversation'],
       },
       {
-        content: 'Another argument with Mike about money. This is getting frustrating.',
+        content:
+          'Another argument with Mike about money. This is getting frustrating.',
         expectedSentiment: -0.6,
         expectedKeywords: ['argument', 'frustrating', 'money'],
         expectedPatterns: ['conflict', 'financial stress'],
@@ -542,15 +573,15 @@ export class AIPipelineTestSuite {
   async testSentimentAnalysisAccuracy() {
     for (const entry of this.testEntries) {
       const analysis = await analyzeJournalEntry(entry.content)
-      
+
       // Test sentiment score accuracy (within 0.2 range)
       expect(analysis.sentimentScore).toBeCloseTo(entry.expectedSentiment, 1)
-      
+
       // Test keyword extraction
       entry.expectedKeywords.forEach(keyword => {
         expect(analysis.emotionalKeywords).toContain(keyword)
       })
-      
+
       // Test pattern recognition
       entry.expectedPatterns.forEach(pattern => {
         expect(analysis.patterns.recurring_themes).toContain(pattern)
@@ -560,17 +591,19 @@ export class AIPipelineTestSuite {
 
   async testErrorHandling() {
     // Test API timeout
-    this.mockGeminiClient.mockAnalyzeJournalEntry
-      .mockRejectedValueOnce(new Error('Request timeout'))
-    
+    this.mockGeminiClient.mockAnalyzeJournalEntry.mockRejectedValueOnce(
+      new Error('Request timeout')
+    )
+
     const result = await analyzeJournalEntry('Test content')
     expect(result).toHaveProperty('error')
     expect(result.error).toContain('timeout')
-    
+
     // Test invalid response format
-    this.mockGeminiClient.mockAnalyzeJournalEntry
-      .mockResolvedValueOnce({ invalid: 'response' })
-    
+    this.mockGeminiClient.mockAnalyzeJournalEntry.mockResolvedValueOnce({
+      invalid: 'response',
+    })
+
     const invalidResult = await analyzeJournalEntry('Test content')
     expect(invalidResult).toHaveProperty('error')
     expect(invalidResult.error).toContain('Invalid response format')
@@ -579,7 +612,7 @@ export class AIPipelineTestSuite {
   async testRateLimitHandling() {
     // Simulate rate limit
     simulateRateLimitError(this.mockGeminiClient.mockAnalyzeJournalEntry)
-    
+
     const result = await analyzeJournalEntry('Test content')
     expect(result).toHaveProperty('rateLimited', true)
     expect(result).toHaveProperty('retryAfter')
@@ -592,7 +625,7 @@ export class AIPipelineTestSuite {
     }))
 
     const results = await processBatchAnalysis(batchEntries)
-    
+
     expect(results).toHaveLength(10)
     results.forEach((result, index) => {
       expect(result.entryId).toBe(`entry_${index}`)
@@ -604,24 +637,25 @@ export class AIPipelineTestSuite {
 ```
 
 #### AI Cost and Performance Testing
+
 ```typescript
 // AI performance and cost monitoring
 export const testAIPerformanceMetrics = () => {
   describe('AI Performance Metrics', () => {
     test('tracks processing time and cost', async () => {
       const performanceMonitor = new AIPerformanceMonitor()
-      
+
       const entry = {
         content: 'Test entry for performance monitoring',
         userId: 'test_user',
       }
-      
+
       const startTime = performance.now()
       const analysis = await analyzeJournalEntry(entry.content)
       const endTime = performance.now()
-      
+
       const metrics = performanceMonitor.getMetrics()
-      
+
       expect(metrics.processingTime).toBeGreaterThan(0)
       expect(metrics.processingTime).toBeLessThan(5000) // 5 second max
       expect(metrics.tokensUsed).toBeGreaterThan(0)
@@ -631,7 +665,7 @@ export const testAIPerformanceMetrics = () => {
 
     test('monitors daily cost limits', async () => {
       const costTracker = new AICostTracker('test_user')
-      
+
       // Simulate multiple API calls throughout the day
       for (let i = 0; i < 100; i++) {
         await costTracker.trackAPICall({
@@ -639,15 +673,15 @@ export const testAIPerformanceMetrics = () => {
           estimatedCost: 0.002,
         })
       }
-      
+
       const dailyCost = await costTracker.getDailyCost()
       expect(dailyCost).toBeGreaterThan(0)
-      
+
       // Test cost limit enforcement
       if (dailyCost > DAILY_COST_LIMIT) {
-        await expect(
-          analyzeJournalEntry('Test content')
-        ).rejects.toThrow('Daily AI cost limit exceeded')
+        await expect(analyzeJournalEntry('Test content')).rejects.toThrow(
+          'Daily AI cost limit exceeded'
+        )
       }
     })
   })
@@ -661,6 +695,7 @@ export const testAIPerformanceMetrics = () => {
 ### Clerk + Convex Integration Testing
 
 #### Complete Authentication Flow Testing
+
 ```typescript
 // test-utils/auth-flow-testing.ts
 
@@ -678,41 +713,45 @@ export class AuthenticationFlowTester {
   async testCompleteSignUpFlow() {
     // Navigate to sign up
     await this.page.goto('/sign-up')
-    
+
     // Fill sign up form
     await this.page.getByRole('textbox', { name: 'Email' }).fill(this.testEmail)
-    await this.page.getByRole('textbox', { name: 'Password' }).fill(this.testPassword)
+    await this.page
+      .getByRole('textbox', { name: 'Password' })
+      .fill(this.testPassword)
     await this.page.getByRole('button', { name: 'Sign up' }).click()
-    
+
     // Handle email verification (in test environment)
     await this.handleEmailVerification()
-    
+
     // Verify redirect to onboarding
     await expect(this.page).toHaveURL(/\/onboarding/)
-    
+
     // Verify Convex user creation
     const convexUser = await this.verifyConvexUserCreated()
     expect(convexUser).toBeDefined()
     expect(convexUser.email).toBe(this.testEmail)
-    
+
     return { email: this.testEmail, convexUser }
   }
 
   async testSignInFlow() {
     // Navigate to sign in
     await this.page.goto('/sign-in')
-    
+
     // Fill sign in form
     await this.page.getByRole('textbox', { name: 'Email' }).fill(this.testEmail)
-    await this.page.getByRole('textbox', { name: 'Password' }).fill(this.testPassword)
+    await this.page
+      .getByRole('textbox', { name: 'Password' })
+      .fill(this.testPassword)
     await this.page.getByRole('button', { name: 'Sign in' }).click()
-    
+
     // Verify successful sign in
     await expect(this.page).toHaveURL(/\/dashboard/)
-    
+
     // Verify auth state
-    const authState = await this.page.evaluate(() => 
-      window.__CLERK_AUTH_STATE__
+    const authState = await this.page.evaluate(
+      () => window.__CLERK_AUTH_STATE__
     )
     expect(authState.isSignedIn).toBe(true)
     expect(authState.user.primaryEmailAddress.emailAddress).toBe(this.testEmail)
@@ -721,16 +760,16 @@ export class AuthenticationFlowTester {
   async testSignOutFlow() {
     // Click user menu
     await this.page.getByTestId('user-button').click()
-    
+
     // Click sign out
     await this.page.getByRole('button', { name: 'Sign out' }).click()
-    
+
     // Verify redirect to home page
     await expect(this.page).toHaveURL('/')
-    
+
     // Verify auth state cleared
-    const authState = await this.page.evaluate(() => 
-      window.__CLERK_AUTH_STATE__
+    const authState = await this.page.evaluate(
+      () => window.__CLERK_AUTH_STATE__
     )
     expect(authState.isSignedIn).toBe(false)
   }
@@ -738,17 +777,19 @@ export class AuthenticationFlowTester {
   async testProtectedRouteAccess() {
     // Try to access protected route while signed out
     await this.page.goto('/dashboard')
-    
+
     // Should redirect to sign in
     await expect(this.page).toHaveURL(/\/sign-in/)
-    
+
     // Sign in and try again
     await this.testSignInFlow()
     await this.page.goto('/dashboard')
-    
+
     // Should allow access
     await expect(this.page).toHaveURL(/\/dashboard/)
-    await expect(this.page.getByText('Your Relationship Dashboard')).toBeVisible()
+    await expect(
+      this.page.getByText('Your Relationship Dashboard')
+    ).toBeVisible()
   }
 
   private async handleEmailVerification() {
@@ -772,49 +813,50 @@ export class AuthenticationFlowTester {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: this.testEmail }),
     })
-    
+
     return await response.json()
   }
 }
 ```
 
 #### Session Management Testing
+
 ```typescript
 // Session and token testing
 export const testSessionManagement = () => {
   describe('Session Management', () => {
     test('maintains session across page refreshes', async ({ page }) => {
       const authTester = new AuthenticationFlowTester(page)
-      
+
       // Sign in
       await authTester.testSignInFlow()
-      
+
       // Refresh page
       await page.reload()
-      
+
       // Verify still signed in
       await expect(page.getByText('Your Relationship Dashboard')).toBeVisible()
-      
+
       // Verify Convex connection maintained
       await expect(page.getByTestId('health-score-card')).toBeVisible()
     })
 
     test('handles session expiration', async ({ page }) => {
       const authTester = new AuthenticationFlowTester(page)
-      
+
       // Sign in
       await authTester.testSignInFlow()
-      
+
       // Simulate session expiration
       await page.evaluate(() => {
         // Clear Clerk session
         localStorage.removeItem('__clerk_session')
         sessionStorage.clear()
       })
-      
+
       // Try to access protected content
       await page.goto('/journal/new')
-      
+
       // Should redirect to sign in
       await expect(page).toHaveURL(/\/sign-in/)
     })
@@ -822,32 +864,28 @@ export const testSessionManagement = () => {
     test('handles concurrent sessions', async ({ browser }) => {
       const context1 = await browser.newContext()
       const context2 = await browser.newContext()
-      
+
       const page1 = await context1.newPage()
       const page2 = await context2.newPage()
-      
+
       const authTester1 = new AuthenticationFlowTester(page1)
       const authTester2 = new AuthenticationFlowTester(page2)
-      
+
       // Sign in with different users
       await authTester1.testCompleteSignUpFlow()
       await authTester2.testCompleteSignUpFlow()
-      
+
       // Verify both sessions work independently
       await page1.goto('/dashboard')
       await page2.goto('/dashboard')
-      
+
       await expect(page1.getByText('Your Relationship Dashboard')).toBeVisible()
       await expect(page2.getByText('Your Relationship Dashboard')).toBeVisible()
-      
+
       // Verify data isolation
-      const user1Data = await page1.evaluate(() => 
-        window.__USER_DATA__
-      )
-      const user2Data = await page2.evaluate(() => 
-        window.__USER_DATA__
-      )
-      
+      const user1Data = await page1.evaluate(() => window.__USER_DATA__)
+      const user2Data = await page2.evaluate(() => window.__USER_DATA__)
+
       expect(user1Data.userId).not.toBe(user2Data.userId)
     })
   })
@@ -861,6 +899,7 @@ export const testSessionManagement = () => {
 ### Test User Personas
 
 #### Comprehensive Test User Setup
+
 ```typescript
 // test-utils/test-personas.ts
 
@@ -912,7 +951,7 @@ export const TEST_PERSONAS: Record<string, TestPersona> = {
       notifications: true,
     },
   },
-  
+
   ACTIVE_USER: {
     id: 'active_user_001',
     email: 'activeuser@test.com',
@@ -954,7 +993,7 @@ export const TEST_PERSONAS: Record<string, TestPersona> = {
       },
     },
   },
-  
+
   POWER_USER: {
     id: 'power_user_001',
     email: 'poweruser@test.com',
@@ -963,7 +1002,9 @@ export const TEST_PERSONAS: Record<string, TestPersona> = {
     onboardingCompleted: true,
     relationships: generateRelationships(10),
     journalEntries: generateJournalEntries('power_user_001', 200),
-    healthScores: generateHealthScores(generateRelationships(10).map(r => r.id)),
+    healthScores: generateHealthScores(
+      generateRelationships(10).map(r => r.id)
+    ),
     preferences: {
       theme: 'dark',
       notifications: true,
@@ -980,7 +1021,7 @@ export const TEST_PERSONAS: Record<string, TestPersona> = {
       },
     },
   },
-  
+
   EDGE_CASE_USER: {
     id: 'edge_user_001',
     email: 'edgecase@test.com',
@@ -1005,7 +1046,8 @@ export const TEST_PERSONAS: Record<string, TestPersona> = {
       {
         id: 'entry_edge_001',
         relationshipId: 'rel_edge_001',
-        content: 'Entry with special characters: áéíóú ñ ç 中文 العربية русский',
+        content:
+          'Entry with special characters: áéíóú ñ ç 中文 العربية русский',
         mood: 'confused',
         tags: ['special-chars', 'edge-case', 'unicode-test'],
         isPrivate: true,
@@ -1035,7 +1077,10 @@ export const TEST_PERSONAS: Record<string, TestPersona> = {
 }
 
 // Helper functions for generating test data
-function generateJournalEntries(userId: string, count: number): TestJournalEntry[] {
+function generateJournalEntries(
+  userId: string,
+  count: number
+): TestJournalEntry[] {
   const moods = ['happy', 'sad', 'excited', 'calm', 'frustrated', 'grateful']
   const templates = [
     'Had a great conversation with {name} about {topic}',
@@ -1044,7 +1089,7 @@ function generateJournalEntries(userId: string, count: number): TestJournalEntry
     'Enjoyed a quiet evening with {name}',
     'Celebrated {event} with {name} - it was wonderful',
   ]
-  
+
   return Array.from({ length: count }, (_, i) => ({
     id: `entry_${userId}_${i}`,
     relationshipId: `rel_00${(i % 3) + 1}`, // Rotate through relationships
@@ -1052,7 +1097,7 @@ function generateJournalEntries(userId: string, count: number): TestJournalEntry
     mood: moods[i % moods.length],
     tags: generateRandomTags(),
     isPrivate: Math.random() > 0.7,
-    createdAt: Date.now() - (i * 86400000), // Spread over time
+    createdAt: Date.now() - i * 86400000, // Spread over time
   }))
 }
 
@@ -1060,7 +1105,9 @@ function generateHealthScores(relationshipIds: string[]): TestHealthScore[] {
   return relationshipIds.map(relId => ({
     relationshipId: relId,
     score: Math.floor(Math.random() * 40) + 60, // 60-100 range
-    trendDirection: ['improving', 'stable', 'declining'][Math.floor(Math.random() * 3)],
+    trendDirection: ['improving', 'stable', 'declining'][
+      Math.floor(Math.random() * 3)
+    ],
     factorBreakdown: {
       communication: Math.floor(Math.random() * 30) + 70,
       emotional_support: Math.floor(Math.random() * 30) + 70,
@@ -1074,6 +1121,7 @@ function generateHealthScores(relationshipIds: string[]): TestHealthScore[] {
 ```
 
 #### Test Data Seeding and Cleanup
+
 ```typescript
 // test-utils/data-seeding.ts
 
@@ -1104,41 +1152,52 @@ export class TestDataManager {
     // Create relationships
     const relationships = []
     for (const rel of persona.relationships) {
-      const relationship = await this.convexClient.mutation(api.relationships.create, {
-        userId: user,
-        name: rel.name,
-        type: rel.type,
-        isActive: rel.isActive,
-        metadata: rel.metadata,
-      })
+      const relationship = await this.convexClient.mutation(
+        api.relationships.create,
+        {
+          userId: user,
+          name: rel.name,
+          type: rel.type,
+          isActive: rel.isActive,
+          metadata: rel.metadata,
+        }
+      )
       relationships.push(relationship)
     }
 
     // Create journal entries
     const journalEntries = []
     for (const entry of persona.journalEntries) {
-      const relationshipId = relationships.find(r => 
-        r.name === persona.relationships.find(pr => pr.id === entry.relationshipId)?.name
+      const relationshipId = relationships.find(
+        r =>
+          r.name ===
+          persona.relationships.find(pr => pr.id === entry.relationshipId)?.name
       )?._id
 
       if (relationshipId) {
-        const journalEntry = await this.convexClient.mutation(api.journalEntries.create, {
-          userId: user,
-          relationshipId,
-          content: entry.content,
-          mood: entry.mood,
-          tags: entry.tags,
-          isPrivate: entry.isPrivate,
-          createdAt: entry.createdAt,
-        })
+        const journalEntry = await this.convexClient.mutation(
+          api.journalEntries.create,
+          {
+            userId: user,
+            relationshipId,
+            content: entry.content,
+            mood: entry.mood,
+            tags: entry.tags,
+            isPrivate: entry.isPrivate,
+            createdAt: entry.createdAt,
+          }
+        )
         journalEntries.push(journalEntry)
       }
     }
 
     // Create health scores
     for (const healthScore of persona.healthScores) {
-      const relationshipId = relationships.find(r => 
-        r.name === persona.relationships.find(pr => pr.id === healthScore.relationshipId)?.name
+      const relationshipId = relationships.find(
+        r =>
+          r.name ===
+          persona.relationships.find(pr => pr.id === healthScore.relationshipId)
+            ?.name
       )?._id
 
       if (relationshipId) {
@@ -1166,11 +1225,11 @@ export class TestDataManager {
 
   async seedAllPersonas(): Promise<Record<string, TestPersona>> {
     const seededPersonas: Record<string, TestPersona> = {}
-    
+
     for (const [key, persona] of Object.entries(TEST_PERSONAS)) {
       seededPersonas[key] = await this.seedPersona(key)
     }
-    
+
     return seededPersonas
   }
 
@@ -1193,7 +1252,9 @@ export class TestDataManager {
 
   private async deleteConvexDocument(documentId: string) {
     try {
-      await this.convexClient.mutation(api.admin.deleteDocument, { id: documentId })
+      await this.convexClient.mutation(api.admin.deleteDocument, {
+        id: documentId,
+      })
     } catch (error) {
       console.warn(`Failed to delete document ${documentId}:`, error)
     }
@@ -1206,7 +1267,7 @@ export const withTestPersona = async (
   testFn: (persona: TestPersona) => Promise<void>
 ) => {
   const dataManager = new TestDataManager()
-  
+
   try {
     const persona = await dataManager.seedPersona(personaKey)
     await testFn(persona)
@@ -1218,12 +1279,12 @@ export const withTestPersona = async (
 // Usage in tests
 describe('Journal Entry Features', () => {
   test('active user can create and view entries', async () => {
-    await withTestPersona('ACTIVE_USER', async (persona) => {
+    await withTestPersona('ACTIVE_USER', async persona => {
       // Test implementation using seeded persona data
-      const { result } = renderHook(() => 
+      const { result } = renderHook(() =>
         useQuery(api.journalEntries.list, { userId: persona.convexUserId })
       )
-      
+
       expect(result.current).toHaveLength(15) // Active user has 15 entries
     })
   })
@@ -1237,6 +1298,7 @@ describe('Journal Entry Features', () => {
 ### Jest Configuration for Resonant
 
 #### Complete Jest Setup
+
 ```javascript
 // jest.config.js
 const nextJest = require('next/jest')
@@ -1248,23 +1310,23 @@ const createJestConfig = nextJest({
 const customJestConfig = {
   // Test environment
   testEnvironment: 'jsdom',
-  
+
   // Setup files
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
-  
+
   // Module name mapping
   moduleNameMapping: {
     '^@/convex/_generated/api$': '<rootDir>/convex/_generated/api',
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@/test-utils/(.*)$': '<rootDir>/test-utils/$1',
   },
-  
+
   // Test file patterns
   testMatch: [
     '<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}',
     '<rootDir>/src/**/*.{test,spec}.{js,jsx,ts,tsx}',
   ],
-  
+
   // Coverage configuration
   collectCoverageFrom: [
     'src/**/*.{js,jsx,ts,tsx}',
@@ -1273,7 +1335,7 @@ const customJestConfig = {
     '!src/**/types/**',
     '!src/convex/_generated/**',
   ],
-  
+
   coverageThreshold: {
     global: {
       branches: 85,
@@ -1294,43 +1356,49 @@ const customJestConfig = {
       statements: 90,
     },
   },
-  
+
   // Test timeout
   testTimeout: 10000,
-  
+
   // Transform configuration for various file types
   transform: {
     '^.+\\.(js|jsx|ts|tsx)$': ['babel-jest', { presets: ['next/babel'] }],
   },
-  
+
   // Module file extensions
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
-  
+
   // Ignore patterns
   testPathIgnorePatterns: [
     '<rootDir>/.next/',
     '<rootDir>/node_modules/',
     '<rootDir>/test-results/',
   ],
-  
+
   // Global variables
   globals: {
     'ts-jest': {
       tsconfig: 'tsconfig.json',
     },
   },
-  
+
   // Reporter configuration
   reporters: [
     'default',
-    ['jest-junit', {
-      outputDirectory: 'test-results',
-      outputName: 'junit.xml',
-    }],
-    ['jest-html-reporters', {
-      publicPath: 'test-results',
-      filename: 'report.html',
-    }],
+    [
+      'jest-junit',
+      {
+        outputDirectory: 'test-results',
+        outputName: 'junit.xml',
+      },
+    ],
+    [
+      'jest-html-reporters',
+      {
+        publicPath: 'test-results',
+        filename: 'report.html',
+      },
+    ],
   ],
 }
 
@@ -1338,6 +1406,7 @@ module.exports = createJestConfig(customJestConfig)
 ```
 
 #### Jest Setup File
+
 ```javascript
 // jest.setup.js
 import '@testing-library/jest-dom'
@@ -1399,7 +1468,9 @@ jest.mock('recharts', () => ({
   CartesianGrid: () => <div data-testid="cartesian-grid" />,
   Tooltip: () => <div data-testid="tooltip" />,
   Legend: () => <div data-testid="legend" />,
-  ResponsiveContainer: ({ children }) => <div data-testid="responsive-container">{children}</div>,
+  ResponsiveContainer: ({ children }) => (
+    <div data-testid="responsive-container">{children}</div>
+  ),
 }))
 
 // Mock Next.js modules
@@ -1421,7 +1492,7 @@ global.testUtils = {
     email: 'test@example.com',
     name: 'Test User',
   }),
-  
+
   createMockJournalEntry: (overrides = {}) => ({
     _id: 'entry_123',
     userId: 'test_user_123',
@@ -1434,7 +1505,7 @@ global.testUtils = {
     updatedAt: Date.now(),
     ...overrides,
   }),
-  
+
   createMockRelationship: (overrides = {}) => ({
     _id: 'rel_123',
     userId: 'test_user_123',
@@ -1459,6 +1530,7 @@ console.warn = (...args) => {
 ### Playwright Configuration
 
 #### Advanced Playwright Configuration
+
 ```typescript
 // playwright.config.ts
 import { defineConfig, devices } from '@playwright/test'
@@ -1469,19 +1541,19 @@ config({ path: '.env.test' })
 
 export default defineConfig({
   testDir: './tests/e2e',
-  
+
   // Parallel execution
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  
+
   // Retry configuration
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 4 : 2,
-  
+
   // Global setup/teardown
   globalSetup: require.resolve('./tests/setup/global-setup.ts'),
   globalTeardown: require.resolve('./tests/setup/global-teardown.ts'),
-  
+
   // Reporter configuration
   reporter: [
     ['list'],
@@ -1489,36 +1561,36 @@ export default defineConfig({
     ['html', { outputFolder: 'test-results/html-report', open: 'never' }],
     ['junit', { outputFile: 'test-results/junit.xml' }],
   ],
-  
+
   // Global test configuration
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
-    
+
     // Tracing and debugging
     trace: process.env.CI ? 'retain-on-failure' : 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
-    
+
     // Timeouts
     actionTimeout: 15000,
     navigationTimeout: 30000,
-    
+
     // Browser configuration
     ignoreHTTPSErrors: true,
     colorScheme: 'light',
-    
+
     // Viewport
     viewport: { width: 1280, height: 720 },
-    
+
     // Geolocation for testing location features
     geolocation: { longitude: -122.4194, latitude: 37.7749 },
     permissions: ['geolocation'],
-    
+
     // Locale
     locale: 'en-US',
     timezoneId: 'America/Los_Angeles',
   },
-  
+
   // Browser projects
   projects: [
     // Desktop browsers
@@ -1537,7 +1609,7 @@ export default defineConfig({
       use: { ...devices['Desktop Safari'] },
       testMatch: /.*\.test\.ts/,
     },
-    
+
     // Mobile browsers
     {
       name: 'Mobile Chrome',
@@ -1549,21 +1621,21 @@ export default defineConfig({
       use: { ...devices['iPhone 12'] },
       testMatch: /.*\.mobile\.test\.ts/,
     },
-    
+
     // Visual regression testing
     {
       name: 'Visual Regression',
-      use: { 
+      use: {
         ...devices['Desktop Chrome'],
         screenshot: 'only-on-failure',
       },
       testMatch: /.*\.visual\.test\.ts/,
     },
-    
+
     // Performance testing
     {
       name: 'Performance',
-      use: { 
+      use: {
         ...devices['Desktop Chrome'],
         launchOptions: {
           args: ['--enable-features=NetworkService,NetworkServiceLogging'],
@@ -1572,17 +1644,17 @@ export default defineConfig({
       testMatch: /.*\.performance\.test\.ts/,
     },
   ],
-  
+
   // Output directories
   outputDir: 'test-results/artifacts',
-  
+
   // Test timeouts
   timeout: 120000,
   expect: {
     timeout: 15000,
     toHaveScreenshot: { threshold: 0.2, maxDiffPixels: 1000 },
   },
-  
+
   // Development server
   webServer: [
     {
@@ -1607,6 +1679,7 @@ export default defineConfig({
 ### Testing Utilities and Helpers
 
 #### React Testing Library Custom Renders
+
 ```typescript
 // test-utils/custom-renders.tsx
 
@@ -1678,7 +1751,7 @@ export function renderHookWithProviders<T>(
       </ConvexProvider>
     ),
   })
-  
+
   return { result }
 }
 
@@ -1716,7 +1789,7 @@ export function renderChart(
   }
 
   HTMLCanvasElement.prototype.getContext = jest.fn(() => mockContext)
-  
+
   return renderWithProviders(<ChartComponent {...props} />)
 }
 
@@ -1726,10 +1799,10 @@ export async function fillAndSubmitForm(
   submitButtonText: string = 'Submit'
 ) {
   const user = userEvent.setup()
-  
+
   for (const [fieldName, value] of Object.entries(formData)) {
     const field = screen.getByLabelText(new RegExp(fieldName, 'i'))
-    
+
     if (typeof value === 'boolean') {
       if (value) {
         await user.click(field)
@@ -1739,7 +1812,7 @@ export async function fillAndSubmitForm(
       await user.type(field, value)
     }
   }
-  
+
   const submitButton = screen.getByRole('button', { name: new RegExp(submitButtonText, 'i') })
   await user.click(submitButton)
 }

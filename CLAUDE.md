@@ -439,3 +439,7 @@ These rules are configured to catch `any` usage:
 ## Code Quality Checklist
 
 - Run prettier to check code formatting
+
+## Memories and Reminders
+
+- Remember to not use type any

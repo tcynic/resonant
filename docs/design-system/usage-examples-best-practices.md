@@ -12,10 +12,10 @@ This document provides comprehensive real-world usage examples and best practice
 
 ```tsx
 // src/components/layout/app-shell.tsx
-import { Sidebar } from '@/components/navigation/sidebar';
-import { Header } from '@/components/navigation/header';
-import { ThemeProvider } from '@/components/providers/theme-provider';
-import { Toaster } from '@/components/ui/toaster';
+import { Sidebar } from '@/components/navigation/sidebar'
+import { Header } from '@/components/navigation/header'
+import { ThemeProvider } from '@/components/providers/theme-provider'
+import { Toaster } from '@/components/ui/toaster'
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
@@ -23,36 +23,36 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex h-screen bg-background text-foreground">
         {/* Sidebar navigation */}
         <Sidebar className="hidden w-64 border-r border-border lg:block" />
-        
+
         {/* Main content area */}
         <div className="flex flex-1 flex-col overflow-hidden">
           <Header />
-          
+
           <main className="flex-1 overflow-auto p-6">
-            <div className="mx-auto max-w-7xl">
-              {children}
-            </div>
+            <div className="mx-auto max-w-7xl">{children}</div>
           </main>
         </div>
       </div>
-      
+
       {/* Global toast notifications */}
       <Toaster />
     </ThemeProvider>
-  );
+  )
 }
 
 // Usage in app
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <AppShell>
-          {children}
-        </AppShell>
+        <AppShell>{children}</AppShell>
       </body>
     </html>
-  );
+  )
 }
 ```
 
@@ -65,7 +65,7 @@ export function ResponsiveGrid({ children }: { children: React.ReactNode }) {
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {children}
     </div>
-  );
+  )
 }
 
 // Dashboard card grid example
@@ -74,7 +74,10 @@ export function DashboardGrid() {
     <div className="space-y-8">
       {/* Key metrics */}
       <section aria-labelledby="metrics-heading">
-        <h2 id="metrics-heading" className="text-2xl font-semibold text-foreground mb-6">
+        <h2
+          id="metrics-heading"
+          className="text-2xl font-semibold text-foreground mb-6"
+        >
           Key Metrics
         </h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -84,10 +87,13 @@ export function DashboardGrid() {
           <MetricCard title="Insights" value="18" change="+3" />
         </div>
       </section>
-      
+
       {/* Charts section */}
       <section aria-labelledby="charts-heading">
-        <h2 id="charts-heading" className="text-2xl font-semibold text-foreground mb-6">
+        <h2
+          id="charts-heading"
+          className="text-2xl font-semibold text-foreground mb-6"
+        >
           Analytics
         </h2>
         <div className="grid gap-6 lg:grid-cols-2">
@@ -99,7 +105,7 @@ export function DashboardGrid() {
               <TrendChart data={moodData} />
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader>
               <CardTitle>Relationship Health</CardTitle>
@@ -111,7 +117,7 @@ export function DashboardGrid() {
         </div>
       </section>
     </div>
-  );
+  )
 }
 ```
 
@@ -121,29 +127,40 @@ export function DashboardGrid() {
 
 ```tsx
 // Journal entry form with validation and accessibility
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 
 const journalEntrySchema = z.object({
-  title: z.string().min(1, 'Title is required').max(100, 'Title must be under 100 characters'),
+  title: z
+    .string()
+    .min(1, 'Title is required')
+    .max(100, 'Title must be under 100 characters'),
   content: z.string().min(10, 'Content must be at least 10 characters'),
-  mood: z.enum(['very_positive', 'positive', 'neutral', 'negative', 'very_negative']),
+  mood: z.enum([
+    'very_positive',
+    'positive',
+    'neutral',
+    'negative',
+    'very_negative',
+  ]),
   tags: z.array(z.string()).max(10, 'Maximum 10 tags allowed'),
   relationships: z.array(z.string()).optional(),
   privacy: z.enum(['private', 'shared', 'public']).default('private'),
-});
+})
 
-type JournalEntryFormData = z.infer<typeof journalEntrySchema>;
+type JournalEntryFormData = z.infer<typeof journalEntrySchema>
 
-export function JournalEntryForm({ 
-  initialData, 
-  onSubmit, 
-  onCancel 
+export function JournalEntryForm({
+  initialData,
+  onSubmit,
+  onCancel,
 }: JournalEntryFormProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedTags, setSelectedTags] = useState<string[]>(initialData?.tags || []);
-  
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [selectedTags, setSelectedTags] = useState<string[]>(
+    initialData?.tags || []
+  )
+
   const {
     register,
     handleSubmit,
@@ -153,16 +170,16 @@ export function JournalEntryForm({
   } = useForm<JournalEntryFormData>({
     resolver: zodResolver(journalEntrySchema),
     defaultValues: initialData,
-  });
+  })
 
   const onFormSubmit = async (data: JournalEntryFormData) => {
-    setIsSubmitting(true);
+    setIsSubmitting(true)
     try {
-      await onSubmit(data);
+      await onSubmit(data)
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -171,17 +188,20 @@ export function JournalEntryForm({
           {initialData ? 'Edit Journal Entry' : 'New Journal Entry'}
         </CardTitle>
         <CardDescription>
-          Share your thoughts and feelings. Your entry will be {watch('privacy')} by default.
+          Share your thoughts and feelings. Your entry will be{' '}
+          {watch('privacy')} by default.
         </CardDescription>
       </CardHeader>
-      
+
       <CardContent>
         <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
           {/* Title field */}
           <div className="space-y-2">
             <Label htmlFor="title">
               Title
-              <span className="text-destructive ml-1" aria-label="required">*</span>
+              <span className="text-destructive ml-1" aria-label="required">
+                *
+              </span>
             </Label>
             <Input
               id="title"
@@ -191,7 +211,11 @@ export function JournalEntryForm({
               aria-describedby={errors.title ? 'title-error' : undefined}
             />
             {errors.title && (
-              <p id="title-error" role="alert" className="text-sm text-destructive">
+              <p
+                id="title-error"
+                role="alert"
+                className="text-sm text-destructive"
+              >
                 {errors.title.message}
               </p>
             )}
@@ -201,7 +225,9 @@ export function JournalEntryForm({
           <div className="space-y-2">
             <Label htmlFor="content">
               Content
-              <span className="text-destructive ml-1" aria-label="required">*</span>
+              <span className="text-destructive ml-1" aria-label="required">
+                *
+              </span>
             </Label>
             <Textarea
               id="content"
@@ -212,7 +238,11 @@ export function JournalEntryForm({
               aria-describedby={errors.content ? 'content-error' : undefined}
             />
             {errors.content && (
-              <p id="content-error" role="alert" className="text-sm text-destructive">
+              <p
+                id="content-error"
+                role="alert"
+                className="text-sm text-destructive"
+              >
                 {errors.content.message}
               </p>
             )}
@@ -222,14 +252,16 @@ export function JournalEntryForm({
           <div className="space-y-3">
             <Label>
               Mood
-              <span className="text-destructive ml-1" aria-label="required">*</span>
+              <span className="text-destructive ml-1" aria-label="required">
+                *
+              </span>
             </Label>
             <RadioGroup
               value={watch('mood')}
-              onValueChange={(value) => setValue('mood', value as any)}
+              onValueChange={value => setValue('mood', value as any)}
               className="flex flex-wrap gap-4"
             >
-              {moodOptions.map((mood) => (
+              {moodOptions.map(mood => (
                 <div key={mood.value} className="flex items-center space-x-2">
                   <RadioGroupItem
                     value={mood.value}
@@ -258,9 +290,9 @@ export function JournalEntryForm({
             <Label htmlFor="tags">Tags</Label>
             <TagInput
               value={selectedTags}
-              onChange={(tags) => {
-                setSelectedTags(tags);
-                setValue('tags', tags);
+              onChange={tags => {
+                setSelectedTags(tags)
+                setValue('tags', tags)
               }}
               placeholder="Add tags to organize your entries..."
               maxTags={10}
@@ -277,7 +309,9 @@ export function JournalEntryForm({
             <Label htmlFor="relationships">Related Relationships</Label>
             <RelationshipMultiSelect
               value={watch('relationships') || []}
-              onChange={(relationships) => setValue('relationships', relationships)}
+              onChange={relationships =>
+                setValue('relationships', relationships)
+              }
               placeholder="Select relationships this entry relates to..."
             />
           </div>
@@ -287,26 +321,36 @@ export function JournalEntryForm({
             <Label>Privacy</Label>
             <RadioGroup
               value={watch('privacy')}
-              onValueChange={(value) => setValue('privacy', value as any)}
+              onValueChange={value => setValue('privacy', value as any)}
               className="space-y-2"
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="private" id="private" />
-                <Label htmlFor="private" className="flex items-center space-x-2 cursor-pointer">
+                <Label
+                  htmlFor="private"
+                  className="flex items-center space-x-2 cursor-pointer"
+                >
                   <LockIcon className="h-4 w-4" />
                   <div>
                     <div>Private</div>
-                    <div className="text-sm text-muted-foreground">Only you can see this entry</div>
+                    <div className="text-sm text-muted-foreground">
+                      Only you can see this entry
+                    </div>
                   </div>
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="shared" id="shared" />
-                <Label htmlFor="shared" className="flex items-center space-x-2 cursor-pointer">
+                <Label
+                  htmlFor="shared"
+                  className="flex items-center space-x-2 cursor-pointer"
+                >
                   <UsersIcon className="h-4 w-4" />
                   <div>
                     <div>Shared</div>
-                    <div className="text-sm text-muted-foreground">Share with selected relationships</div>
+                    <div className="text-sm text-muted-foreground">
+                      Share with selected relationships
+                    </div>
                   </div>
                 </Label>
               </div>
@@ -323,18 +367,14 @@ export function JournalEntryForm({
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              loading={isSubmitting}
-              className="flex-1"
-            >
+            <Button type="submit" loading={isSubmitting} className="flex-1">
               {initialData ? 'Update Entry' : 'Create Entry'}
             </Button>
           </div>
         </form>
       </CardContent>
     </Card>
-  );
+  )
 }
 ```
 
@@ -349,44 +389,51 @@ export function FormField({
   required = false,
   children,
 }: FormFieldProps) {
-  const fieldId = useId();
-  const descriptionId = description ? `${fieldId}-description` : undefined;
-  const errorId = error ? `${fieldId}-error` : undefined;
+  const fieldId = useId()
+  const descriptionId = description ? `${fieldId}-description` : undefined
+  const errorId = error ? `${fieldId}-error` : undefined
 
   return (
     <div className="space-y-2">
       <Label htmlFor={fieldId} className="text-sm font-medium">
         {label}
         {required && (
-          <span className="text-destructive ml-1" aria-label="required">*</span>
+          <span className="text-destructive ml-1" aria-label="required">
+            *
+          </span>
         )}
       </Label>
-      
+
       {description && (
         <p id={descriptionId} className="text-sm text-muted-foreground">
           {description}
         </p>
       )}
-      
+
       {React.cloneElement(children, {
         id: fieldId,
-        'aria-describedby': [descriptionId, errorId].filter(Boolean).join(' ') || undefined,
+        'aria-describedby':
+          [descriptionId, errorId].filter(Boolean).join(' ') || undefined,
         'aria-invalid': error ? 'true' : undefined,
         'aria-required': required,
       })}
-      
+
       {error && (
         <p id={errorId} role="alert" className="text-sm text-destructive">
           {error}
         </p>
       )}
     </div>
-  );
+  )
 }
 
 // Usage with validation
 export function ValidatedForm() {
-  const { register, handleSubmit, formState: { errors } } = useForm();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm()
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -408,12 +455,8 @@ export function ValidatedForm() {
           })}
         />
       </FormField>
-      
-      <FormField
-        label="Password"
-        error={errors.password?.message}
-        required
-      >
+
+      <FormField label="Password" error={errors.password?.message} required>
         <Input
           type="password"
           {...register('password', {
@@ -426,7 +469,7 @@ export function ValidatedForm() {
         />
       </FormField>
     </form>
-  );
+  )
 }
 ```
 
@@ -437,37 +480,37 @@ export function ValidatedForm() {
 ```tsx
 // Feature-rich data table with sorting, filtering, and actions
 export function JournalEntriesTable({ entries, onEdit, onDelete }: TableProps) {
-  const [sortColumn, setSortColumn] = useState<string>('createdAt');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
-  const [filterMood, setFilterMood] = useState<string>('all');
-  
+  const [sortColumn, setSortColumn] = useState<string>('createdAt')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
+  const [filterMood, setFilterMood] = useState<string>('all')
+
   const sortedAndFilteredEntries = useMemo(() => {
-    let filtered = entries;
-    
+    let filtered = entries
+
     if (filterMood !== 'all') {
-      filtered = entries.filter(entry => entry.mood === filterMood);
+      filtered = entries.filter(entry => entry.mood === filterMood)
     }
-    
+
     return filtered.sort((a, b) => {
-      const aValue = a[sortColumn];
-      const bValue = b[sortColumn];
-      
+      const aValue = a[sortColumn]
+      const bValue = b[sortColumn]
+
       if (sortDirection === 'asc') {
-        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0
       } else {
-        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0
       }
-    });
-  }, [entries, sortColumn, sortDirection, filterMood]);
+    })
+  }, [entries, sortColumn, sortDirection, filterMood])
 
   const handleSort = (column: string) => {
     if (sortColumn === column) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
     } else {
-      setSortColumn(column);
-      setSortDirection('asc');
+      setSortColumn(column)
+      setSortDirection('asc')
     }
-  };
+  }
 
   return (
     <Card>
@@ -475,7 +518,9 @@ export function JournalEntriesTable({ entries, onEdit, onDelete }: TableProps) {
         <div className="flex items-center justify-between">
           <CardTitle>Journal Entries</CardTitle>
           <div className="flex items-center space-x-2">
-            <Label htmlFor="mood-filter" className="sr-only">Filter by mood</Label>
+            <Label htmlFor="mood-filter" className="sr-only">
+              Filter by mood
+            </Label>
             <Select value={filterMood} onValueChange={setFilterMood}>
               <SelectTrigger id="mood-filter" className="w-40">
                 <SelectValue placeholder="Filter by mood" />
@@ -492,15 +537,15 @@ export function JournalEntriesTable({ entries, onEdit, onDelete }: TableProps) {
           </div>
         </div>
       </CardHeader>
-      
+
       <CardContent>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <caption className="sr-only">
-              Journal entries table with {sortedAndFilteredEntries.length} entries.
-              Sorted by {sortColumn} {sortDirection}.
+              Journal entries table with {sortedAndFilteredEntries.length}{' '}
+              entries. Sorted by {sortColumn} {sortDirection}.
             </caption>
-            
+
             <thead>
               <tr className="border-b border-border">
                 <th scope="col" className="px-4 py-3 text-left">
@@ -518,7 +563,7 @@ export function JournalEntriesTable({ entries, onEdit, onDelete }: TableProps) {
                     )}
                   </Button>
                 </th>
-                
+
                 <th scope="col" className="px-4 py-3 text-left">
                   <Button
                     variant="ghost"
@@ -534,7 +579,7 @@ export function JournalEntriesTable({ entries, onEdit, onDelete }: TableProps) {
                     )}
                   </Button>
                 </th>
-                
+
                 <th scope="col" className="px-4 py-3 text-left">
                   <Button
                     variant="ghost"
@@ -550,36 +595,44 @@ export function JournalEntriesTable({ entries, onEdit, onDelete }: TableProps) {
                     )}
                   </Button>
                 </th>
-                
+
                 <th scope="col" className="px-4 py-3 text-left">
                   <span className="font-medium">Actions</span>
                 </th>
               </tr>
             </thead>
-            
+
             <tbody>
-              {sortedAndFilteredEntries.map((entry) => (
-                <tr key={entry.id} className="border-b border-border hover:bg-accent/50">
+              {sortedAndFilteredEntries.map(entry => (
+                <tr
+                  key={entry.id}
+                  className="border-b border-border hover:bg-accent/50"
+                >
                   <td className="px-4 py-3">
                     <div>
-                      <div className="font-medium text-foreground">{entry.title}</div>
+                      <div className="font-medium text-foreground">
+                        {entry.title}
+                      </div>
                       <div className="text-sm text-muted-foreground">
                         {entry.content.slice(0, 100)}...
                       </div>
                     </div>
                   </td>
-                  
+
                   <td className="px-4 py-3">
-                    <Badge variant="outline" className="flex items-center space-x-1">
+                    <Badge
+                      variant="outline"
+                      className="flex items-center space-x-1"
+                    >
                       <span>{getMoodEmoji(entry.mood)}</span>
                       <span>{getMoodLabel(entry.mood)}</span>
                     </Badge>
                   </td>
-                  
+
                   <td className="px-4 py-3 text-sm text-muted-foreground">
                     {formatDate(entry.createdAt)}
                   </td>
-                  
+
                   <td className="px-4 py-3">
                     <div className="flex items-center space-x-2">
                       <Button
@@ -590,7 +643,7 @@ export function JournalEntriesTable({ entries, onEdit, onDelete }: TableProps) {
                       >
                         <EditIcon className="h-4 w-4" />
                       </Button>
-                      
+
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
@@ -601,16 +654,16 @@ export function JournalEntriesTable({ entries, onEdit, onDelete }: TableProps) {
                             <TrashIcon className="h-4 w-4" />
                           </Button>
                         </AlertDialogTrigger>
-                        
+
                         <AlertDialogContent>
                           <AlertDialogHeader>
                             <AlertDialogTitle>Delete Entry</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Are you sure you want to delete "{entry.title}"? 
+                              Are you sure you want to delete "{entry.title}"?
                               This action cannot be undone.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
-                          
+
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction
@@ -628,21 +681,20 @@ export function JournalEntriesTable({ entries, onEdit, onDelete }: TableProps) {
               ))}
             </tbody>
           </table>
-          
+
           {sortedAndFilteredEntries.length === 0 && (
             <div className="py-12 text-center">
               <div className="text-muted-foreground">
-                {filterMood === 'all' 
-                  ? 'No journal entries found.' 
-                  : `No entries found with ${getMoodLabel(filterMood)} mood.`
-                }
+                {filterMood === 'all'
+                  ? 'No journal entries found.'
+                  : `No entries found with ${getMoodLabel(filterMood)} mood.`}
               </div>
             </div>
           )}
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }
 ```
 
@@ -671,7 +723,7 @@ export function LoadingStates() {
           ))}
         </div>
       </section>
-      
+
       {/* Table loading state */}
       <section>
         <h3 className="text-lg font-semibold mb-4">Table Loading State</h3>
@@ -694,7 +746,7 @@ export function LoadingStates() {
         </Card>
       </section>
     </div>
-  );
+  )
 }
 
 export function EmptyStates() {
@@ -712,19 +764,15 @@ export function EmptyStates() {
           </Button>
         }
       />
-      
+
       {/* Search results empty state */}
       <EmptyState
         icon={<SearchIcon className="h-12 w-12 text-muted-foreground" />}
         title="No results found"
         description="Try adjusting your search terms or filters to find what you're looking for."
-        action={
-          <Button variant="outline">
-            Clear Filters
-          </Button>
-        }
+        action={<Button variant="outline">Clear Filters</Button>}
       />
-      
+
       {/* Error state */}
       <EmptyState
         icon={<AlertTriangleIcon className="h-12 w-12 text-destructive" />}
@@ -738,7 +786,7 @@ export function EmptyStates() {
         }
       />
     </div>
-  );
+  )
 }
 
 // Reusable empty state component
@@ -755,7 +803,7 @@ export function EmptyState({
       <p className="text-muted-foreground mb-6 max-w-sm">{description}</p>
       {action && <div>{action}</div>}
     </div>
-  );
+  )
 }
 ```
 
@@ -765,18 +813,25 @@ export function EmptyState({
 
 ```tsx
 // Optimized list component with virtualization
-import { FixedSizeList as List } from 'react-window';
+import { FixedSizeList as List } from 'react-window'
 
-export function VirtualizedJournalList({ entries }: { entries: JournalEntry[] }) {
-  const Row = useCallback(({ index, style }: { index: number; style: CSSProperties }) => {
-    const entry = entries[index];
-    
-    return (
-      <div style={style} className="px-4">
-        <JournalEntryCard entry={entry} />
-      </div>
-    );
-  }, [entries]);
+export function VirtualizedJournalList({
+  entries,
+}: {
+  entries: JournalEntry[]
+}) {
+  const Row = useCallback(
+    ({ index, style }: { index: number; style: CSSProperties }) => {
+      const entry = entries[index]
+
+      return (
+        <div style={style} className="px-4">
+          <JournalEntryCard entry={entry} />
+        </div>
+      )
+    },
+    [entries]
+  )
 
   return (
     <List
@@ -787,7 +842,7 @@ export function VirtualizedJournalList({ entries }: { entries: JournalEntry[] })
     >
       {Row}
     </List>
-  );
+  )
 }
 
 // Memoized component for expensive renders
@@ -796,15 +851,12 @@ export const JournalEntryCard = memo(function JournalEntryCard({
   onEdit,
   onDelete,
 }: JournalEntryCardProps) {
-  const formattedDate = useMemo(() => 
-    formatDate(entry.createdAt), 
+  const formattedDate = useMemo(
+    () => formatDate(entry.createdAt),
     [entry.createdAt]
-  );
-  
-  const moodData = useMemo(() => 
-    getMoodData(entry.mood), 
-    [entry.mood]
-  );
+  )
+
+  const moodData = useMemo(() => getMoodData(entry.mood), [entry.mood])
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -818,12 +870,12 @@ export const JournalEntryCard = memo(function JournalEntryCard({
         </div>
         <CardDescription>{formattedDate}</CardDescription>
       </CardHeader>
-      
+
       <CardContent className="pt-0">
         <p className="text-sm text-muted-foreground line-clamp-2">
           {entry.content}
         </p>
-        
+
         {entry.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-3">
             {entry.tags.slice(0, 3).map(tag => (
@@ -839,26 +891,34 @@ export const JournalEntryCard = memo(function JournalEntryCard({
           </div>
         )}
       </CardContent>
-      
+
       <CardFooter className="pt-0">
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => onEdit(entry)}>
             <EditIcon className="h-4 w-4 mr-1" />
             Edit
           </Button>
-          <Button variant="outline" size="sm" onClick={() => onDelete(entry.id)}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onDelete(entry.id)}
+          >
             <TrashIcon className="h-4 w-4 mr-1" />
             Delete
           </Button>
         </div>
       </CardFooter>
     </Card>
-  );
-});
+  )
+})
 
 // Lazy loaded components for code splitting
-const ChartSection = lazy(() => import('@/components/features/charts/chart-section'));
-const AnalyticsPanel = lazy(() => import('@/components/features/analytics/analytics-panel'));
+const ChartSection = lazy(
+  () => import('@/components/features/charts/chart-section')
+)
+const AnalyticsPanel = lazy(
+  () => import('@/components/features/analytics/analytics-panel')
+)
 
 export function Dashboard() {
   return (
@@ -866,17 +926,17 @@ export function Dashboard() {
       {/* Critical above-the-fold content */}
       <DashboardHeader />
       <KeyMetrics />
-      
+
       {/* Lazy loaded components */}
       <Suspense fallback={<ChartSkeleton />}>
         <ChartSection />
       </Suspense>
-      
+
       <Suspense fallback={<AnalyticsSkeleton />}>
         <AnalyticsPanel />
       </Suspense>
     </div>
-  );
+  )
 }
 ```
 
@@ -906,32 +966,28 @@ export function OptimizedImage({
       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
       {...props}
     />
-  );
+  )
 }
 
 // Avatar component with fallbacks
-export function UserAvatar({
-  user,
-  size = 'md',
-  className,
-}: UserAvatarProps) {
+export function UserAvatar({ user, size = 'md', className }: UserAvatarProps) {
   const sizeClasses = {
     sm: 'h-8 w-8 text-xs',
     md: 'h-10 w-10 text-sm',
     lg: 'h-12 w-12 text-base',
     xl: 'h-16 w-16 text-lg',
-  };
+  }
 
   const initials = useMemo(() => {
-    if (!user.name) return user.email?.[0]?.toUpperCase() || '?';
-    
+    if (!user.name) return user.email?.[0]?.toUpperCase() || '?'
+
     return user.name
       .split(' ')
       .map(part => part[0])
       .join('')
       .toUpperCase()
-      .slice(0, 2);
-  }, [user.name, user.email]);
+      .slice(0, 2)
+  }, [user.name, user.email])
 
   return (
     <Avatar className={cn(sizeClasses[size], className)}>
@@ -939,11 +995,9 @@ export function UserAvatar({
         src={user.avatar}
         alt={`${user.name || user.email} avatar`}
       />
-      <AvatarFallback className="bg-muted">
-        {initials}
-      </AvatarFallback>
+      <AvatarFallback className="bg-muted">{initials}</AvatarFallback>
     </Avatar>
-  );
+  )
 }
 ```
 
@@ -1014,18 +1068,18 @@ const BadComponent = ({ items }) => {
         </div>
       ))}
     </div>
-  );
-};
+  )
+}
 
 // BAD: Missing memoization for expensive operations
 const BadChart = ({ data }) => {
   const processedData = data.map(item => ({
     ...item,
     computed: expensiveCalculation(item),
-  }));
-  
-  return <Chart data={processedData} />;
-};
+  }))
+
+  return <Chart data={processedData} />
+}
 ```
 
 ### ✅ Good Performance
@@ -1034,8 +1088,8 @@ const BadChart = ({ data }) => {
 // GOOD: CSS classes and proper memoization
 const GoodComponent = memo(({ items }) => {
   const handleClick = useCallback((id: string) => {
-    console.log(id);
-  }, []);
+    console.log(id)
+  }, [])
 
   return (
     <div>
@@ -1049,21 +1103,22 @@ const GoodComponent = memo(({ items }) => {
         </div>
       ))}
     </div>
-  );
-});
+  )
+})
 
 // GOOD: Memoized expensive calculations
 const GoodChart = ({ data }) => {
-  const processedData = useMemo(() => 
-    data.map(item => ({
-      ...item,
-      computed: expensiveCalculation(item),
-    })), 
+  const processedData = useMemo(
+    () =>
+      data.map(item => ({
+        ...item,
+        computed: expensiveCalculation(item),
+      })),
     [data]
-  );
-  
-  return <Chart data={processedData} />;
-};
+  )
+
+  return <Chart data={processedData} />
+}
 ```
 
 ### ❌ Poor Component Design
@@ -1071,15 +1126,15 @@ const GoodChart = ({ data }) => {
 ```tsx
 // BAD: Monolithic component with multiple responsibilities
 const BadUserProfile = ({ user }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState(user);
-  
+  const [isEditing, setIsEditing] = useState(false)
+  const [formData, setFormData] = useState(user)
+
   const handleSave = async () => {
     // API call logic
     // Validation logic
     // Toast notifications
     // State management
-  };
+  }
 
   return (
     <div>
@@ -1089,8 +1144,8 @@ const BadUserProfile = ({ user }) => {
       {/* Notification preferences */}
       {/* Account deletion */}
     </div>
-  );
-};
+  )
+}
 ```
 
 ### ✅ Good Component Design
@@ -1106,18 +1161,18 @@ const GoodUserProfile = ({ user }) => {
       <UserNotificationPreferences user={user} />
       <UserAccountDeletion user={user} />
     </div>
-  );
-};
+  )
+}
 
 // Each component handles its own state and logic
 const UserPersonalInfo = ({ user }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const { updateUser, isLoading } = useUpdateUser();
-  
-  const handleSave = async (data) => {
-    await updateUser(data);
-    setIsEditing(false);
-  };
+  const [isEditing, setIsEditing] = useState(false)
+  const { updateUser, isLoading } = useUpdateUser()
+
+  const handleSave = async data => {
+    await updateUser(data)
+    setIsEditing(false)
+  }
 
   return (
     <Card>
@@ -1126,14 +1181,18 @@ const UserPersonalInfo = ({ user }) => {
       </CardHeader>
       <CardContent>
         {isEditing ? (
-          <PersonalInfoForm user={user} onSave={handleSave} onCancel={() => setIsEditing(false)} />
+          <PersonalInfoForm
+            user={user}
+            onSave={handleSave}
+            onCancel={() => setIsEditing(false)}
+          />
         ) : (
           <PersonalInfoDisplay user={user} onEdit={() => setIsEditing(true)} />
         )}
       </CardContent>
     </Card>
-  );
-};
+  )
+}
 ```
 
 ## Migration Strategies
@@ -1147,28 +1206,30 @@ const LegacyButtonWrapper = ({ children, ...props }) => {
     <Button variant="outline" {...props}>
       {children}
     </Button>
-  );
-};
+  )
+}
 
 // Phase 2: Progressive enhancement
 const EnhancedButton = ({ legacy = false, ...props }) => {
   if (legacy) {
-    return <LegacyButtonWrapper {...props} />;
+    return <LegacyButtonWrapper {...props} />
   }
-  
-  return <Button {...props} />;
-};
+
+  return <Button {...props} />
+}
 
 // Phase 3: Full migration with deprecation warnings
 const MigratedButton = ({ deprecated, ...props }) => {
   useEffect(() => {
     if (deprecated) {
-      console.warn('This button usage is deprecated. Please migrate to the new API.');
+      console.warn(
+        'This button usage is deprecated. Please migrate to the new API.'
+      )
     }
-  }, [deprecated]);
-  
-  return <Button {...props} />;
-};
+  }, [deprecated])
+
+  return <Button {...props} />
+}
 ```
 
 ### CSS-in-JS to Tailwind Migration
@@ -1181,33 +1242,29 @@ const StyledCard = styled.div`
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   padding: 24px;
   margin-bottom: 16px;
-`;
+`
 
 // During: Hybrid approach
 const HybridCard = ({ useNewStyles = false, children, ...props }) => {
   if (useNewStyles) {
     return (
       <Card className="mb-4" {...props}>
-        <CardContent className="p-6">
-          {children}
-        </CardContent>
+        <CardContent className="p-6">{children}</CardContent>
       </Card>
-    );
+    )
   }
-  
-  return <StyledCard {...props}>{children}</StyledCard>;
-};
+
+  return <StyledCard {...props}>{children}</StyledCard>
+}
 
 // After: Pure design system
 const ModernCard = ({ children, ...props }) => {
   return (
     <Card className="mb-4" {...props}>
-      <CardContent className="p-6">
-        {children}
-      </CardContent>
+      <CardContent className="p-6">{children}</CardContent>
     </Card>
-  );
-};
+  )
+}
 ```
 
 ### Component API Evolution
@@ -1215,34 +1272,47 @@ const ModernCard = ({ children, ...props }) => {
 ```tsx
 // Version 1: Basic component
 interface ButtonV1Props {
-  onClick: () => void;
-  children: React.ReactNode;
-  type?: 'primary' | 'secondary';
+  onClick: () => void
+  children: React.ReactNode
+  type?: 'primary' | 'secondary'
 }
 
 // Version 2: Enhanced with new props (backward compatible)
 interface ButtonV2Props extends ButtonV1Props {
-  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
-  size?: 'sm' | 'md' | 'lg';
-  loading?: boolean;
+  variant?:
+    | 'default'
+    | 'destructive'
+    | 'outline'
+    | 'secondary'
+    | 'ghost'
+    | 'link'
+  size?: 'sm' | 'md' | 'lg'
+  loading?: boolean
   // Map old type prop to new variant
-  type?: 'primary' | 'secondary';
+  type?: 'primary' | 'secondary'
 }
 
 const ButtonV2 = ({ type, variant, ...props }: ButtonV2Props) => {
   // Handle legacy prop mapping
-  const mappedVariant = variant || (type === 'primary' ? 'default' : 'secondary');
-  
-  return <Button variant={mappedVariant} {...props} />;
-};
+  const mappedVariant =
+    variant || (type === 'primary' ? 'default' : 'secondary')
+
+  return <Button variant={mappedVariant} {...props} />
+}
 
 // Version 3: Remove deprecated props
 interface ButtonV3Props {
-  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
-  size?: 'sm' | 'md' | 'lg';
-  loading?: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
+  variant?:
+    | 'default'
+    | 'destructive'
+    | 'outline'
+    | 'secondary'
+    | 'ghost'
+    | 'link'
+  size?: 'sm' | 'md' | 'lg'
+  loading?: boolean
+  onClick: () => void
+  children: React.ReactNode
 }
 ```
 
@@ -1260,56 +1330,57 @@ describe('JournalEntryCard', () => {
     mood: 'positive',
     tags: ['test', 'example'],
     createdAt: new Date('2025-01-15'),
-  };
+  }
 
   it('renders entry information correctly', () => {
-    render(<JournalEntryCard entry={mockEntry} />);
-    
-    expect(screen.getByText('Test Entry')).toBeInTheDocument();
-    expect(screen.getByText(/This is a test journal entry/)).toBeInTheDocument();
-    expect(screen.getByText('test')).toBeInTheDocument();
-    expect(screen.getByText('example')).toBeInTheDocument();
-  });
+    render(<JournalEntryCard entry={mockEntry} />)
+
+    expect(screen.getByText('Test Entry')).toBeInTheDocument()
+    expect(screen.getByText(/This is a test journal entry/)).toBeInTheDocument()
+    expect(screen.getByText('test')).toBeInTheDocument()
+    expect(screen.getByText('example')).toBeInTheDocument()
+  })
 
   it('handles edit action', async () => {
-    const onEdit = jest.fn();
-    render(<JournalEntryCard entry={mockEntry} onEdit={onEdit} />);
-    
-    await userEvent.click(screen.getByRole('button', { name: /edit/i }));
-    expect(onEdit).toHaveBeenCalledWith(mockEntry);
-  });
+    const onEdit = jest.fn()
+    render(<JournalEntryCard entry={mockEntry} onEdit={onEdit} />)
+
+    await userEvent.click(screen.getByRole('button', { name: /edit/i }))
+    expect(onEdit).toHaveBeenCalledWith(mockEntry)
+  })
 
   it('handles delete action with confirmation', async () => {
-    const onDelete = jest.fn();
-    render(<JournalEntryCard entry={mockEntry} onDelete={onDelete} />);
-    
+    const onDelete = jest.fn()
+    render(<JournalEntryCard entry={mockEntry} onDelete={onDelete} />)
+
     // Click delete button
-    await userEvent.click(screen.getByRole('button', { name: /delete/i }));
-    
+    await userEvent.click(screen.getByRole('button', { name: /delete/i }))
+
     // Confirm deletion in dialog
-    await userEvent.click(screen.getByRole('button', { name: /delete/i }));
-    
-    expect(onDelete).toHaveBeenCalledWith(mockEntry.id);
-  });
+    await userEvent.click(screen.getByRole('button', { name: /delete/i }))
+
+    expect(onDelete).toHaveBeenCalledWith(mockEntry.id)
+  })
 
   it('truncates long content', () => {
     const longEntry = {
       ...mockEntry,
-      content: 'This is a very long journal entry that should be truncated after a certain number of characters to maintain consistent card sizing and layout.',
-    };
-    
-    render(<JournalEntryCard entry={longEntry} />);
-    
-    const contentElement = screen.getByText(/This is a very long journal entry/);
-    expect(contentElement).toHaveClass('line-clamp-2');
-  });
+      content:
+        'This is a very long journal entry that should be truncated after a certain number of characters to maintain consistent card sizing and layout.',
+    }
+
+    render(<JournalEntryCard entry={longEntry} />)
+
+    const contentElement = screen.getByText(/This is a very long journal entry/)
+    expect(contentElement).toHaveClass('line-clamp-2')
+  })
 
   it('meets accessibility requirements', async () => {
-    const { container } = render(<JournalEntryCard entry={mockEntry} />);
-    const results = await axe(container);
-    expect(results).toHaveNoViolations();
-  });
-});
+    const { container } = render(<JournalEntryCard entry={mockEntry} />)
+    const results = await axe(container)
+    expect(results).toHaveNoViolations()
+  })
+})
 ```
 
 ### Integration Testing
@@ -1318,18 +1389,21 @@ describe('JournalEntryCard', () => {
 // Integration test for form submission flow
 describe('Journal Entry Creation Flow', () => {
   it('creates a new journal entry successfully', async () => {
-    const mockSubmit = jest.fn().mockResolvedValue({ success: true });
-    
-    render(<JournalEntryForm onSubmit={mockSubmit} />);
-    
+    const mockSubmit = jest.fn().mockResolvedValue({ success: true })
+
+    render(<JournalEntryForm onSubmit={mockSubmit} />)
+
     // Fill out form
-    await userEvent.type(screen.getByLabelText(/title/i), 'My Test Entry');
-    await userEvent.type(screen.getByLabelText(/content/i), 'This is my test content');
-    await userEvent.click(screen.getByLabelText(/positive/i));
-    
+    await userEvent.type(screen.getByLabelText(/title/i), 'My Test Entry')
+    await userEvent.type(
+      screen.getByLabelText(/content/i),
+      'This is my test content'
+    )
+    await userEvent.click(screen.getByLabelText(/positive/i))
+
     // Submit form
-    await userEvent.click(screen.getByRole('button', { name: /create entry/i }));
-    
+    await userEvent.click(screen.getByRole('button', { name: /create entry/i }))
+
     // Verify submission
     expect(mockSubmit).toHaveBeenCalledWith({
       title: 'My Test Entry',
@@ -1338,20 +1412,22 @@ describe('Journal Entry Creation Flow', () => {
       tags: [],
       relationships: [],
       privacy: 'private',
-    });
-  });
+    })
+  })
 
   it('shows validation errors for invalid input', async () => {
-    render(<JournalEntryForm onSubmit={jest.fn()} />);
-    
+    render(<JournalEntryForm onSubmit={jest.fn()} />)
+
     // Try to submit without required fields
-    await userEvent.click(screen.getByRole('button', { name: /create entry/i }));
-    
+    await userEvent.click(screen.getByRole('button', { name: /create entry/i }))
+
     // Check for validation errors
-    expect(screen.getByText('Title is required')).toBeInTheDocument();
-    expect(screen.getByText('Content must be at least 10 characters')).toBeInTheDocument();
-  });
-});
+    expect(screen.getByText('Title is required')).toBeInTheDocument()
+    expect(
+      screen.getByText('Content must be at least 10 characters')
+    ).toBeInTheDocument()
+  })
+})
 ```
 
 ## Maintenance and Evolution
@@ -1376,7 +1452,7 @@ export const DeprecatedButton = (props: ButtonV1Props) => {
   useEffect(() => {
     console.warn('DeprecatedButton is deprecated. Please use Button from the latest version.');
   }, []);
-  
+
   return <ButtonV1 {...props} />;
 };
 ```

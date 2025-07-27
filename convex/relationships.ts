@@ -37,13 +37,43 @@ export const createRelationship = mutation({
       throw new ConvexError('User not found')
     }
 
+    // Check free tier limits (3 relationships max)
+    if (user.tier === 'free') {
+      const relationshipCount = await ctx.db
+        .query('relationships')
+        .withIndex('by_user_active', (q: any) =>
+          q.eq('userId', args.userId).eq('isActive', true)
+        )
+        .collect()
+
+      if (relationshipCount.length >= 3) {
+        throw new ConvexError(
+          'Free tier limited to 3 relationships. Upgrade to premium for unlimited relationships.'
+        )
+      }
+    }
+
     try {
       const now = Date.now()
+
+      // Generate initials for privacy
+      const initials = args.name
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase())
+        .join('')
+        .slice(0, 3)
+
       const relationshipId = await ctx.db.insert('relationships', {
         userId: args.userId,
         name: args.name.trim(),
         type: args.type,
         photo: args.photo,
+        initials,
+        isActive: true,
+        metadata: {
+          importance: 'medium',
+          tags: [],
+        },
         createdAt: now,
         updatedAt: now,
       })

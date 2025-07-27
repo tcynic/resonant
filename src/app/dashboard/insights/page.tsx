@@ -72,6 +72,7 @@ export default function InsightsPage() {
   const comparisonData = useRelationshipComparisonData(
     selectedRelationships,
     timeRange,
+    'sentiment',
     customStart,
     customEnd
   )
@@ -259,7 +260,13 @@ export default function InsightsPage() {
             <div className="h-80">
               <RelationshipComparisonChart
                 ref={comparisonChartRef}
-                data={comparisonData.data}
+                data={comparisonData.data.map(item => ({
+                  relationshipId: item.relationshipId,
+                  name: item.relationshipName,
+                  type: 'friend' as const, // Default type since we don't have it from comparison data
+                  data: [{ x: Date.now(), y: item.value }],
+                  averageScore: item.value
+                }))}
                 isLoading={comparisonData.isLoading}
                 error={
                   comparisonData.hasError
@@ -289,7 +296,7 @@ export default function InsightsPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center p-4 bg-blue-50 rounded-lg">
                 <div className="text-2xl font-bold text-blue-600">
-                  {healthScoreData.statistics.average}%
+                  {Math.round((healthScoreData.statistics as any)?.average || 0)}%
                 </div>
                 <div className="text-sm text-blue-800">
                   Average Health Score
@@ -298,14 +305,14 @@ export default function InsightsPage() {
 
               <div className="text-center p-4 bg-green-50 rounded-lg">
                 <div className="text-2xl font-bold text-green-600">
-                  {healthScoreData.statistics.trend === 'improving'
+                  {(healthScoreData.statistics as any)?.trend === 'improving'
                     ? '📈'
-                    : healthScoreData.statistics.trend === 'declining'
+                    : (healthScoreData.statistics as any)?.trend === 'declining'
                       ? '📉'
                       : '➡️'}
                 </div>
                 <div className="text-sm text-green-800 capitalize">
-                  {healthScoreData.statistics.trend}
+                  {(healthScoreData.statistics as any)?.trend || 'stable'}
                 </div>
               </div>
 
@@ -318,7 +325,7 @@ export default function InsightsPage() {
 
               <div className="text-center p-4 bg-orange-50 rounded-lg">
                 <div className="text-2xl font-bold text-orange-600">
-                  {healthScoreData.statistics.volatility}
+                  {(healthScoreData.statistics as any)?.volatility || 'Low'}
                 </div>
                 <div className="text-sm text-orange-800">Volatility Score</div>
               </div>

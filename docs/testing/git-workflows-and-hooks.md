@@ -32,9 +32,7 @@ npx husky init
       "prettier --write",
       "bash -c 'npm run typecheck'"
     ],
-    "**/*.{js,json,css,md,yml,yaml}": [
-      "prettier --write"
-    ],
+    "**/*.{js,json,css,md,yml,yaml}": ["prettier --write"],
     "**/*.{ts,tsx,js,jsx}": [
       "jest --bail --findRelatedTests --passWithNoTests --silent"
     ]
@@ -48,6 +46,7 @@ npx husky init
 ### Git Hooks Configuration
 
 #### Pre-commit Hook
+
 ```bash
 # .husky/pre-commit
 #!/usr/bin/env sh
@@ -55,6 +54,7 @@ npx lint-staged
 ```
 
 #### Commit Message Hook
+
 ```bash
 # .husky/commit-msg
 #!/usr/bin/env sh
@@ -62,6 +62,7 @@ npx commitlint --edit $1
 ```
 
 #### Pre-push Hook
+
 ```bash
 # .husky/pre-push
 #!/usr/bin/env sh
@@ -82,17 +83,17 @@ module.exports = {
       2,
       'always',
       [
-        'feat',     // New feature
-        'fix',      // Bug fix
-        'docs',     // Documentation
-        'style',    // Formatting
+        'feat', // New feature
+        'fix', // Bug fix
+        'docs', // Documentation
+        'style', // Formatting
         'refactor', // Code refactoring
-        'perf',     // Performance improvement
-        'test',     // Tests
-        'chore',    // Maintenance
-        'ci',       // CI/CD changes
-        'build',    // Build system changes
-        'revert',   // Revert changes
+        'perf', // Performance improvement
+        'test', // Tests
+        'chore', // Maintenance
+        'ci', // CI/CD changes
+        'build', // Build system changes
+        'revert', // Revert changes
       ],
     ],
     'subject-max-length': [2, 'always', 72],
@@ -160,11 +161,13 @@ For `**/*.{ts,tsx}` files, lint-staged runs:
 ### General File Processing
 
 For `**/*.{js,json,css,md,yml,yaml}` files:
+
 - **Prettier Formatting**: Consistent formatting across all file types
 
 ### Test Execution
 
 For `**/*.{ts,tsx,js,jsx}` files:
+
 - **Related Tests**: Runs only tests related to changed files
 - **Fast Execution**: Uses `--bail` and `--silent` for speed
 - **No Test Requirement**: Uses `--passWithNoTests` for new files
@@ -194,18 +197,21 @@ hotfix/data-corruption-fix
 ### Merge Strategies
 
 #### Feature Development
+
 1. **Create Feature Branch**: From `develop` branch
 2. **Regular Commits**: Following conventional commit format
 3. **Rebase Before PR**: Keep history clean
 4. **Squash Merge**: Into `develop` branch
 
 #### Release Process
+
 1. **Release Branch**: From `develop` when ready
 2. **Bug Fixes**: Only critical fixes in release branch
 3. **Merge to Main**: Fast-forward merge for releases
 4. **Tag Release**: Semantic versioning tags
 
 #### Hotfix Process
+
 1. **Branch from Main**: For critical production fixes
 2. **Merge to Main**: After thorough testing
 3. **Cherry-pick to Develop**: Sync with development branch
@@ -213,16 +219,19 @@ hotfix/data-corruption-fix
 ### Pre-commit Validation Stages
 
 #### Stage 1: Code Formatting and Linting
+
 - **Duration**: ~10-30 seconds
 - **Actions**: ESLint auto-fix, Prettier formatting
 - **Failure Handling**: Automatically stages fixed files
 
 #### Stage 2: Type Checking
+
 - **Duration**: ~15-45 seconds
 - **Actions**: TypeScript compilation validation
 - **Failure Handling**: Blocks commit, shows type errors
 
 #### Stage 3: Related Tests
+
 - **Duration**: ~30-120 seconds
 - **Actions**: Runs tests for modified files
 - **Failure Handling**: Blocks commit, shows test failures
@@ -230,11 +239,13 @@ hotfix/data-corruption-fix
 ### Pre-push Validation
 
 #### Full Test Suite
+
 - **Duration**: ~2-5 minutes
 - **Actions**: Complete test suite execution
 - **Coverage**: Validates overall code coverage
 
 #### Build Validation
+
 - **Duration**: ~1-3 minutes
 - **Actions**: Production build compilation
 - **Validation**: Ensures deployable code
@@ -254,6 +265,7 @@ git push --no-verify
 ```
 
 #### Requirements for Bypass
+
 1. **Senior Developer Approval**: Required for hook bypass
 2. **Documentation**: Reason for bypass must be documented
 3. **Follow-up**: Quality debt must be addressed in next commit
@@ -262,6 +274,7 @@ git push --no-verify
 ### Troubleshooting Common Issues
 
 #### Hook Installation Problems
+
 ```bash
 # Reinstall hooks
 rm -rf .husky
@@ -270,6 +283,7 @@ npm run prepare
 ```
 
 #### Lint-staged Hanging
+
 ```bash
 # Clear lint-staged cache
 npx lint-staged --debug
@@ -277,6 +291,7 @@ rm -rf .lintstagedrc*
 ```
 
 #### TypeScript Compilation Errors
+
 ```bash
 # Incremental type checking
 npm run typecheck -- --incremental
@@ -286,16 +301,19 @@ npx tsc --showConfig
 ## Monitoring and Metrics
 
 ### Git Hook Performance
+
 - **Pre-commit Duration**: Target < 2 minutes
 - **Pre-push Duration**: Target < 5 minutes
 - **Failure Rate**: Monitor and optimize for < 10%
 
 ### Commit Quality Metrics
+
 - **Conventional Commit Compliance**: Target > 95%
 - **Commit Message Quality**: Automated scoring
 - **Commit Size**: Encourage smaller, focused commits
 
 ### Developer Experience
+
 - **Hook Bypass Rate**: Monitor emergency bypasses
 - **Developer Feedback**: Regular surveys on hook effectiveness
 - **Performance Optimization**: Continuous improvement of hook speed
@@ -303,6 +321,7 @@ npx tsc --showConfig
 ---
 
 **Related Documentation:**
+
 - [QA Philosophy & Strategy](qa-philosophy-and-strategy.md) - Overall quality approach
 - [Automated Code Review](automated-code-review.md) - CI/CD integration
 - [Static Analysis and Security](static-analysis-and-security.md) - Advanced code analysis

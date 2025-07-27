@@ -40,6 +40,7 @@ export const createTestUser = mutation({
       clerkId: args.clerkId,
       name: args.name,
       email: args.email,
+      tier: 'free', // Default tier for test users
       createdAt: Date.now(),
     })
 

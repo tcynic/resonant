@@ -20,6 +20,7 @@ This document outlines the comprehensive testing strategy for the Resonant relat
 ### Core Testing Philosophy
 
 Our testing strategy follows these principles:
+
 - **User-Centric Testing**: Focus on user behavior and experiences rather than implementation details
 - **Real-Time Data Testing**: Comprehensive testing of Convex real-time features
 - **AI Pipeline Testing**: Robust testing of AI analysis components with DSPy integration
@@ -28,23 +29,25 @@ Our testing strategy follows these principles:
 
 ### Technology Stack Testing Requirements
 
-| Technology | Testing Approach | Key Challenges |
-|------------|------------------|----------------|
-| **Next.js 15 (App Router)** | Component testing, routing, SSR/CSR | Server components, streaming |
-| **Convex Backend** | Real-time data sync, function testing | Live data, subscription testing |
-| **Clerk Authentication** | Auth flow testing, session management | Multi-provider auth, webhooks |
-| **TypeScript** | Type safety, validation testing | Strict typing, schema validation |
-| **AI Analysis (Gemini Flash)** | API testing, response validation | Rate limiting, error handling |
-| **Chart.js/Recharts** | Data visualization testing | Canvas rendering, interactions |
+| Technology                     | Testing Approach                      | Key Challenges                   |
+| ------------------------------ | ------------------------------------- | -------------------------------- |
+| **Next.js 15 (App Router)**    | Component testing, routing, SSR/CSR   | Server components, streaming     |
+| **Convex Backend**             | Real-time data sync, function testing | Live data, subscription testing  |
+| **Clerk Authentication**       | Auth flow testing, session management | Multi-provider auth, webhooks    |
+| **TypeScript**                 | Type safety, validation testing       | Strict typing, schema validation |
+| **AI Analysis (Gemini Flash)** | API testing, response validation      | Rate limiting, error handling    |
+| **Chart.js/Recharts**          | Data visualization testing            | Canvas rendering, interactions   |
 
 ---
 
 ## Testing Pyramid Implementation
 
 ### Level 1: Unit Tests (70% of tests)
+
 **Tools**: Jest, React Testing Library, @testing-library/jest-dom
 
 **Scope**:
+
 - Individual component logic
 - Utility functions and helpers
 - Validation schemas (Zod)
@@ -53,11 +56,13 @@ Our testing strategy follows these principles:
 - Form validation logic
 
 **Coverage Targets**:
+
 - Functions: 90%+
 - Branches: 85%+
 - Lines: 90%+
 
 **Example Structure**:
+
 ```
 src/
 ├── components/features/journal/__tests__/
@@ -75,9 +80,11 @@ src/
 ```
 
 ### Level 2: Integration Tests (20% of tests)
+
 **Tools**: React Testing Library, Convex test utilities, Jest
 
 **Scope**:
+
 - Component integration with Convex hooks
 - Form submission workflows
 - Real-time data synchronization
@@ -87,6 +94,7 @@ src/
 - AI analysis pipeline
 
 **Key Test Areas**:
+
 ```typescript
 // Dashboard Integration
 describe('Dashboard Integration', () => {
@@ -104,9 +112,11 @@ describe('Authentication Flow', () => {
 ```
 
 ### Level 3: End-to-End Tests (10% of tests)
+
 **Tools**: Playwright, Playwright MCP (for Claude Code)
 
 **Scope**:
+
 - Complete user journeys
 - Cross-browser compatibility
 - Mobile responsiveness
@@ -120,6 +130,7 @@ describe('Authentication Flow', () => {
 ### Environment Configuration
 
 #### Development Environment
+
 ```bash
 # .env.test
 NEXT_PUBLIC_CONVEX_URL=https://test-deployment.convex.cloud
@@ -131,12 +142,14 @@ NODE_ENV=test
 ```
 
 #### Test Data Management
+
 - **4 Test User Personas**: New, Active, Power, Edge Case users
 - **Isolated Test Database**: Separate Convex deployment for testing
 - **Deterministic Test Data**: Consistent, reproducible test scenarios
 - **Data Cleanup**: Automated cleanup after test runs
 
 #### Mock Strategy
+
 ```typescript
 // Convex Mocking Pattern
 jest.mock('convex/react', () => ({
@@ -155,45 +168,49 @@ jest.mock('@/lib/ai/gemini-client', () => ({
 ### Test User Personas
 
 #### 1. New User (Empty State)
+
 ```typescript
 const newUser = {
   id: 'test_new_user',
   relationships: [],
   journalEntries: [],
   healthScores: [],
-  onboardingCompleted: false
+  onboardingCompleted: false,
 }
 ```
 
 #### 2. Active User (Moderate Data)
+
 ```typescript
 const activeUser = {
   id: 'test_active_user',
   relationships: 3,
   journalEntries: 15,
   healthScores: 'current',
-  lastActiveAt: Date.now() - 86400000 // 1 day ago
+  lastActiveAt: Date.now() - 86400000, // 1 day ago
 }
 ```
 
 #### 3. Power User (Extensive Data)
+
 ```typescript
 const powerUser = {
   id: 'test_power_user',
   relationships: 10,
   journalEntries: 200,
   healthScores: 'comprehensive',
-  features: ['voice-journaling', 'advanced-analytics']
+  features: ['voice-journaling', 'advanced-analytics'],
 }
 ```
 
 #### 4. Edge Case User (Boundary Conditions)
+
 ```typescript
 const edgeCaseUser = {
   id: 'test_edge_user',
   specialCharacters: true,
   extremeDataVolumes: true,
-  borderlineScenarios: true
+  borderlineScenarios: true,
 }
 ```
 
@@ -202,6 +219,7 @@ const edgeCaseUser = {
 ## Quality Gates & CI/CD Integration
 
 ### Pre-Commit Hooks
+
 ```bash
 # .husky/pre-commit
 #!/usr/bin/env sh
@@ -214,6 +232,7 @@ npm run test:ci
 ### CI Pipeline Stages
 
 #### Stage 1: Code Quality
+
 ```yaml
 quality_checks:
   - ESLint validation
@@ -223,6 +242,7 @@ quality_checks:
 ```
 
 #### Stage 2: Unit & Integration Tests
+
 ```yaml
 test_suite:
   - Jest unit tests (parallel execution)
@@ -232,6 +252,7 @@ test_suite:
 ```
 
 #### Stage 3: E2E Testing
+
 ```yaml
 e2e_tests:
   parallel:
@@ -243,6 +264,7 @@ e2e_tests:
 ```
 
 #### Stage 4: Performance & Security
+
 ```yaml
 advanced_testing:
   - Performance benchmarks
@@ -269,6 +291,7 @@ advanced_testing:
 ## Test Configuration & Setup
 
 ### Jest Configuration
+
 ```javascript
 // jest.config.js
 const nextJest = require('next/jest')
@@ -304,6 +327,7 @@ module.exports = createJestConfig(customJestConfig)
 ```
 
 ### Playwright Configuration
+
 ```typescript
 // playwright.config.ts
 export default defineConfig({
@@ -312,7 +336,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? undefined : 1,
-  
+
   use: {
     baseURL: 'http://localhost:3000',
     trace: 'on-first-retry',
@@ -320,13 +344,13 @@ export default defineConfig({
     actionTimeout: 15000,
     navigationTimeout: 30000,
   },
-  
+
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
     { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
     { name: 'webkit', use: { ...devices['Desktop Safari'] } },
   ],
-  
+
   webServer: {
     command: 'npm run dev',
     url: 'http://localhost:3000',
@@ -337,6 +361,7 @@ export default defineConfig({
 ```
 
 ### Test Setup Files
+
 ```typescript
 // jest.setup.js
 import '@testing-library/jest-dom'
@@ -378,6 +403,7 @@ jest.mock('next/navigation', () => ({
 ### Component Testing Patterns
 
 #### 1. Test User Behavior, Not Implementation
+
 ```typescript
 // ❌ Bad - Testing implementation details
 expect(component.state.isLoading).toBe(true)
@@ -388,6 +414,7 @@ expect(screen.getByRole('button', { name: /save/i })).toBeDisabled()
 ```
 
 #### 2. Use Meaningful Test Data
+
 ```typescript
 const mockJournalEntry = {
   _id: 'entry_123',
@@ -400,6 +427,7 @@ const mockJournalEntry = {
 ```
 
 #### 3. Mock External Dependencies Appropriately
+
 ```typescript
 // Mock Convex queries with realistic responses
 const mockUseQuery = useQuery as jest.MockedFunction<typeof useQuery>
@@ -412,18 +440,19 @@ mockUseQuery.mockReturnValue([
 ### Real-Time Testing Patterns
 
 #### Testing Convex Subscriptions
+
 ```typescript
 describe('Real-time Updates', () => {
   it('should update UI when new journal entry is added', async () => {
     const { rerender } = render(<JournalEntriesList />)
-    
+
     // Initial state
     expect(screen.getByText('No entries yet')).toBeInTheDocument()
-    
+
     // Simulate real-time update
     mockUseQuery.mockReturnValue([newEntry])
     rerender(<JournalEntriesList />)
-    
+
     expect(screen.getByText(newEntry.content)).toBeInTheDocument()
   })
 })
@@ -432,14 +461,15 @@ describe('Real-time Updates', () => {
 ### AI Testing Patterns
 
 #### Testing AI Analysis Components
+
 ```typescript
 describe('AI Analysis', () => {
   it('should handle API rate limits gracefully', async () => {
     const mockAnalyzeEntry = analyzeJournalEntry as jest.Mock
     mockAnalyzeEntry.mockRejectedValue(new Error('Rate limit exceeded'))
-    
+
     render(<SentimentAnalysis entry={mockEntry} />)
-    
+
     await waitFor(() => {
       expect(screen.getByText(/analysis temporarily unavailable/i)).toBeInTheDocument()
     })
@@ -448,23 +478,25 @@ describe('AI Analysis', () => {
 ```
 
 ### Error Handling Testing
+
 ```typescript
 describe('Error Boundaries', () => {
   it('should catch and display component errors', () => {
     const ThrowError = () => { throw new Error('Test error') }
-    
+
     render(
       <ErrorBoundary>
         <ThrowError />
       </ErrorBoundary>
     )
-    
+
     expect(screen.getByText(/something went wrong/i)).toBeInTheDocument()
   })
 })
 ```
 
 ### Accessibility Testing Integration
+
 ```typescript
 import { axe, toHaveNoViolations } from 'jest-axe'
 
@@ -484,11 +516,13 @@ describe('Accessibility', () => {
 ## Test Reporting & Monitoring
 
 ### Coverage Reporting
+
 - **Jest Coverage**: Built-in coverage reporting with HTML output
 - **SonarQube Integration**: Code quality and test coverage monitoring
 - **Coverage Trends**: Track coverage changes over time
 
 ### Test Result Aggregation
+
 ```typescript
 // scripts/generate-test-report.js
 const testResults = {
@@ -502,6 +536,7 @@ generateReport(testResults)
 ```
 
 ### Performance Metrics
+
 - **Test Execution Time**: Monitor test suite performance
 - **Coverage Generation**: Track coverage report generation time
 - **E2E Test Duration**: Monitor end-to-end test execution

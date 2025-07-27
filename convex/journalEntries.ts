@@ -382,3 +382,30 @@ export const getEntriesCount = query({
     return entries.length
   },
 })
+
+// Get recent entries
+export const getRecent = query({
+  args: {
+    userId: v.id('users'),
+    limit: v.optional(v.number()),
+  },
+  handler: async (
+    ctx: QueryCtx,
+    args: { userId: Id<'users'>; limit?: number }
+  ) => {
+    const limit = args.limit || 10
+    return await ctx.db
+      .query('journalEntries')
+      .withIndex('by_user', (q: any) => q.eq('userId', args.userId))
+      .order('desc')
+      .take(limit)
+  },
+})
+
+// Aliases for hooks compatibility
+export const getByUser = getEntriesByUser
+export const getById = getEntryById
+export const search = searchEntries
+export const create = createEntry
+export const update = updateEntry
+export { deleteEntry as delete }

@@ -49,30 +49,35 @@ graph TD
 This documentation is organized into five detailed implementation guides:
 
 ### 1. [Design Tokens & Theming System](./design-system/design-tokens-theming.md)
+
 - Tailwind CSS 4 `@theme` directive implementation
 - Semantic token naming conventions
 - Dark mode and theme switching
 - Token validation and maintenance
 
 ### 2. [Component Documentation Standards](./design-system/component-documentation-standards.md)
+
 - Storybook 9.0+ configuration and best practices
 - Automated prop table generation
 - Interactive examples and playground
 - Accessibility documentation requirements
 
 ### 3. [Component Architecture Guidelines](./design-system/component-architecture-guidelines.md)
+
 - Modern React component patterns
 - TypeScript integration and strict typing
 - Composition vs inheritance strategies
 - Custom hooks and shared logic
 
 ### 4. [Accessibility Guidelines](./design-system/accessibility-guidelines.md)
+
 - WCAG 2.1 AA compliance requirements
 - Headless UI integration patterns
 - Keyboard navigation and screen reader support
 - Testing and validation procedures
 
 ### 5. [Usage Examples & Best Practices](./design-system/usage-examples-best-practices.md)
+
 - Real-world implementation examples
 - Common patterns and anti-patterns
 - Performance optimization techniques
@@ -83,12 +88,14 @@ This documentation is organized into five detailed implementation guides:
 ### Setting Up the Development Environment
 
 1. **Install Dependencies**
+
    ```bash
    npm install
    npm run storybook:install  # Install Storybook dependencies
    ```
 
 2. **Start Development Servers**
+
    ```bash
    # Terminal 1: Next.js development server
    npm run dev
@@ -117,22 +124,22 @@ export interface ExampleButtonProps {
    * The visual style variant of the button
    */
   variant?: 'primary' | 'secondary' | 'ghost';
-  
+
   /**
    * The size of the button
    */
   size?: 'sm' | 'md' | 'lg';
-  
+
   /**
    * Whether the button is disabled
    */
   disabled?: boolean;
-  
+
   /**
    * Button content
    */
   children: React.ReactNode;
-  
+
   /**
    * Click handler
    */
@@ -148,13 +155,13 @@ export const ExampleButton: React.FC<ExampleButtonProps> = ({
   ...props
 }) => {
   const baseClasses = 'inline-flex items-center justify-center font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2';
-  
+
   const variantClasses = {
     primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
     secondary: 'bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500',
     ghost: 'text-gray-600 hover:bg-gray-100 focus:ring-gray-500',
   };
-  
+
   const sizeClasses = {
     sm: 'px-3 py-1.5 text-sm',
     md: 'px-4 py-2 text-base',
@@ -240,6 +247,7 @@ export const AllSizes: Story = {
 ## Component Categories
 
 ### Base Components (`src/components/ui/`)
+
 - **Button**: Primary action triggers with variants
 - **Input**: Form input with validation states
 - **Card**: Content containers with consistent styling
@@ -247,12 +255,14 @@ export const AllSizes: Story = {
 - **Avatar**: User profile images with fallbacks
 
 ### Layout Components (`src/components/layout/`)
+
 - **Container**: Responsive content wrappers
 - **Grid**: Flexible grid system
 - **Stack**: Vertical and horizontal stacking
 - **Sidebar**: Navigation and menu layouts
 
 ### Feature Components (`src/components/features/`)
+
 - **Journal Components**: Entry creation, editing, display
 - **Relationship Components**: Management and visualization
 - **Dashboard Components**: Analytics and insights
@@ -260,6 +270,7 @@ export const AllSizes: Story = {
 - **Notification Components**: Alerts and messaging
 
 ### Composite Components
+
 - **Forms**: Complete form implementations
 - **Data Tables**: Sortable, filterable data display
 - **Navigation**: Menu systems and breadcrumbs
@@ -279,26 +290,26 @@ export const AllSizes: Story = {
   --color-secondary-foreground: #ffffff;
   --color-muted: #f1f5f9;
   --color-muted-foreground: #64748b;
-  
+
   /* Spacing */
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
   --spacing-md: 1rem;
   --spacing-lg: 1.5rem;
   --spacing-xl: 2rem;
-  
+
   /* Typography */
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
   --font-size-base: 1rem;
   --font-size-lg: 1.125rem;
   --font-size-xl: 1.25rem;
-  
+
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-  
+
   /* Border Radius */
   --radius-sm: 0.125rem;
   --radius-md: 0.375rem;
@@ -310,8 +321,9 @@ export const AllSizes: Story = {
 
 ```typescript
 // Using tokens in components
-const cardClasses = 'bg-background text-foreground rounded-md shadow-md p-md';
-const buttonClasses = 'bg-primary text-primary-foreground px-lg py-sm rounded-sm';
+const cardClasses = 'bg-background text-foreground rounded-md shadow-md p-md'
+const buttonClasses =
+  'bg-primary text-primary-foreground px-lg py-sm rounded-sm'
 ```
 
 ## Quality Assurance

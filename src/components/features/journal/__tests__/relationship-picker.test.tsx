@@ -19,12 +19,12 @@ const mockUseRelationships = useRelationships as jest.MockedFunction<
 describe('RelationshipPicker', () => {
   const mockOnChange = jest.fn()
 
-  const mockRelationships: Relationship[] = [
+  const mockRelationships = [
     {
       _id: 'rel_1',
       userId: 'user_123',
       name: 'Alice Johnson',
-      type: 'friend',
+      type: 'friend' as const,
       photo: 'https://example.com/alice.jpg',
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -33,7 +33,7 @@ describe('RelationshipPicker', () => {
       _id: 'rel_2',
       userId: 'user_123',
       name: 'Bob Smith',
-      type: 'partner',
+      type: 'partner' as const,
       photo: undefined,
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -42,12 +42,12 @@ describe('RelationshipPicker', () => {
       _id: 'rel_3',
       userId: 'user_123',
       name: 'Carol Davis',
-      type: 'family',
+      type: 'family' as const,
       photo: 'https://example.com/carol.jpg',
       createdAt: Date.now(),
       updatedAt: Date.now(),
     },
-  ]
+  ] as Relationship[]
 
   const defaultProps = {
     value: [],
@@ -61,7 +61,13 @@ describe('RelationshipPicker', () => {
       relationships: mockRelationships,
       relationshipsCount: mockRelationships.length,
       isLoading: false,
-      currentUser: { _id: 'user_123' },
+      currentUser: {
+        _id: 'user_123',
+        clerkId: 'clerk_123',
+        name: 'Test User',
+        email: 'test@example.com',
+        createdAt: Date.now(),
+      },
     })
   })
 
@@ -113,7 +119,13 @@ describe('RelationshipPicker', () => {
         relationships: [],
         relationshipsCount: 0,
         isLoading: true,
-        currentUser: { _id: 'user_123' },
+        currentUser: {
+          _id: 'user_123',
+          clerkId: 'clerk_123',
+          name: 'Test User',
+          email: 'test@example.com',
+          createdAt: Date.now(),
+        },
       })
 
       render(<RelationshipPicker {...defaultProps} />)
@@ -400,7 +412,13 @@ describe('RelationshipPicker', () => {
         relationships: [],
         relationshipsCount: 0,
         isLoading: false,
-        currentUser: { _id: 'user_123' },
+        currentUser: {
+          _id: 'user_123',
+          clerkId: 'clerk_123',
+          name: 'Test User',
+          email: 'test@example.com',
+          createdAt: Date.now(),
+        },
       })
 
       render(<RelationshipPicker {...defaultProps} />)

@@ -9,6 +9,7 @@ This document covers the production monitoring, error tracking, and performance 
 ### Web Vitals Integration
 
 #### Core Web Vitals Tracking
+
 ```typescript
 // src/lib/monitoring/performance.ts
 import { getCLS, getFID, getFCP, getLCP, getTTFB } from 'web-vitals'
@@ -46,8 +47,12 @@ export function initPerformanceMonitoring() {
 export function markFeatureUsage(feature: string, duration: number) {
   if (typeof window !== 'undefined' && 'performance' in window) {
     performance.mark(`feature-${feature}-end`)
-    performance.measure(`feature-${feature}`, `feature-${feature}-start`, `feature-${feature}-end`)
-    
+    performance.measure(
+      `feature-${feature}`,
+      `feature-${feature}-start`,
+      `feature-${feature}-end`
+    )
+
     sendToAnalytics({
       name: `feature-${feature}`,
       value: duration,
@@ -59,6 +64,7 @@ export function markFeatureUsage(feature: string, duration: number) {
 ```
 
 #### Performance Budget Monitoring
+
 - **First Contentful Paint**: < 1.5 seconds
 - **Largest Contentful Paint**: < 2.5 seconds
 - **First Input Delay**: < 100ms
@@ -68,6 +74,7 @@ export function markFeatureUsage(feature: string, duration: number) {
 ### Real-time Performance Analytics
 
 #### Custom Metrics Dashboard
+
 ```typescript
 // src/lib/monitoring/custom-metrics.ts
 export class PerformanceMetrics {
@@ -86,7 +93,7 @@ export class PerformanceMetrics {
       this.metrics.set(name, [])
     }
     this.metrics.get(name)!.push(value)
-    
+
     // Send to monitoring service
     this.sendMetric(name, value)
   }
@@ -96,7 +103,7 @@ export class PerformanceMetrics {
       fetch('/api/metrics', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, value, timestamp: Date.now() })
+        body: JSON.stringify({ name, value, timestamp: Date.now() }),
       }).catch(console.error)
     }
   }
@@ -113,22 +120,33 @@ export class PerformanceMetrics {
 }
 
 // Usage tracking
-export function trackUserAction(action: string, metadata?: Record<string, any>) {
+export function trackUserAction(
+  action: string,
+  metadata?: Record<string, any>
+) {
   const startTime = performance.now()
-  
+
   return {
     complete: () => {
       const duration = performance.now() - startTime
-      PerformanceMetrics.getInstance().recordMetric(`action-${action}`, duration)
-      
+      PerformanceMetrics.getInstance().recordMetric(
+        `action-${action}`,
+        duration
+      )
+
       if (metadata) {
         fetch('/api/analytics/actions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action, duration, metadata, timestamp: Date.now() })
+          body: JSON.stringify({
+            action,
+            duration,
+            metadata,
+            timestamp: Date.now(),
+          }),
         }).catch(console.error)
       }
-    }
+    },
   }
 }
 ```
@@ -138,17 +156,18 @@ export function trackUserAction(action: string, metadata?: Record<string, any>) 
 ### Comprehensive Error Tracking
 
 #### Sentry Integration
+
 ```typescript
 // src/lib/monitoring/errors.ts
 import * as Sentry from '@sentry/nextjs'
 
 // Enhanced error reporting
 export function reportError(error: Error, context?: Record<string, any>) {
-  Sentry.withScope((scope) => {
+  Sentry.withScope(scope => {
     if (context) {
       scope.setContext('error_context', context)
     }
-    
+
     scope.setTag('error_boundary', true)
     Sentry.captureException(error)
   })
@@ -161,7 +180,7 @@ export function captureUserFeedback(feedback: {
   comments: string
 }) {
   const user = Sentry.getCurrentHub().getScope()?.getUser()
-  
+
   Sentry.captureUserFeedback({
     user: {
       id: user?.id || 'anonymous',
@@ -175,7 +194,7 @@ export function captureUserFeedback(feedback: {
 // Performance issue detection
 export function detectPerformanceIssue(timing: PerformanceTiming) {
   const loadTime = timing.loadEventEnd - timing.navigationStart
-  
+
   if (loadTime > 3000) {
     Sentry.addBreadcrumb({
       message: 'Slow page load detected',
@@ -190,8 +209,8 @@ export function detectPerformanceIssue(timing: PerformanceTiming) {
 
 // Network error tracking
 export function trackNetworkError(
-  url: string, 
-  status: number, 
+  url: string,
+  status: number,
   method: string,
   duration: number
 ) {
@@ -200,21 +219,25 @@ export function trackNetworkError(
     level: 'error',
     data: { url, status, method, duration },
   })
-  
+
   if (status >= 500) {
-    Sentry.captureMessage(`Server Error: ${status} on ${method} ${url}`, 'error')
+    Sentry.captureMessage(
+      `Server Error: ${status} on ${method} ${url}`,
+      'error'
+    )
   }
 }
 ```
 
 #### Error Classification and Routing
+
 ```typescript
 // src/lib/monitoring/error-classification.ts
 export enum ErrorSeverity {
   LOW = 'low',
   MEDIUM = 'medium',
   HIGH = 'high',
-  CRITICAL = 'critical'
+  CRITICAL = 'critical',
 }
 
 export enum ErrorCategory {
@@ -223,7 +246,7 @@ export enum ErrorCategory {
   VALIDATION = 'validation',
   PERFORMANCE = 'performance',
   SECURITY = 'security',
-  DATA_INTEGRITY = 'data_integrity'
+  DATA_INTEGRITY = 'data_integrity',
 }
 
 export function classifyError(error: Error): {
@@ -232,39 +255,39 @@ export function classifyError(error: Error): {
   shouldAlert: boolean
 } {
   const message = error.message.toLowerCase()
-  
+
   // Critical errors requiring immediate attention
   if (message.includes('security') || message.includes('unauthorized')) {
     return {
       severity: ErrorSeverity.CRITICAL,
       category: ErrorCategory.SECURITY,
-      shouldAlert: true
+      shouldAlert: true,
     }
   }
-  
+
   // Authentication errors
   if (message.includes('auth') || message.includes('login')) {
     return {
       severity: ErrorSeverity.HIGH,
       category: ErrorCategory.AUTHENTICATION,
-      shouldAlert: true
+      shouldAlert: true,
     }
   }
-  
+
   // Network errors
   if (message.includes('network') || message.includes('fetch')) {
     return {
       severity: ErrorSeverity.MEDIUM,
       category: ErrorCategory.NETWORK,
-      shouldAlert: false
+      shouldAlert: false,
     }
   }
-  
+
   // Default classification
   return {
     severity: ErrorSeverity.LOW,
     category: ErrorCategory.VALIDATION,
-    shouldAlert: false
+    shouldAlert: false,
   }
 }
 ```
@@ -272,6 +295,7 @@ export function classifyError(error: Error): {
 ### Health Check Implementation
 
 #### Comprehensive Health Monitoring
+
 ```typescript
 // src/pages/api/health.ts
 import { NextApiRequest, NextApiResponse } from 'next'
@@ -297,26 +321,26 @@ export default async function handler(
   res: NextApiResponse<HealthCheckResult>
 ) {
   const startTime = Date.now()
-  
+
   try {
     // Check database connectivity
     const dbHealthy = await checkDatabase()
-    
+
     // Check authentication service
     const authHealthy = await checkAuthService()
-    
+
     // Check external APIs
     const externalApisHealthy = await checkExternalAPIs()
-    
+
     const checks = {
       database: dbHealthy,
       auth: authHealthy,
       external_apis: externalApisHealthy,
     }
-    
+
     const allHealthy = Object.values(checks).every(Boolean)
     const responseTime = Date.now() - startTime
-    
+
     const result: HealthCheckResult = {
       status: allHealthy ? 'healthy' : 'degraded',
       timestamp: new Date().toISOString(),
@@ -328,7 +352,7 @@ export default async function handler(
         response_time: responseTime,
       },
     }
-    
+
     res.status(allHealthy ? 200 : 503).json(result)
   } catch (error) {
     res.status(500).json({
@@ -383,6 +407,7 @@ async function checkExternalAPIs(): Promise<boolean> {
 ### Uptime and Availability Monitoring
 
 #### Synthetic Monitoring
+
 ```javascript
 // monitoring/synthetic-tests.js
 const { chromium } = require('playwright')
@@ -390,28 +415,30 @@ const { chromium } = require('playwright')
 async function runSyntheticTests() {
   const browser = await chromium.launch()
   const page = await browser.newPage()
-  
+
   try {
     // Test critical user journey
     await page.goto(process.env.PRODUCTION_URL)
-    
+
     // Check page load
     await page.waitForSelector('[data-testid="dashboard"]', { timeout: 5000 })
-    
+
     // Test authentication
     await page.click('[data-testid="sign-in-button"]')
     await page.waitForSelector('[data-testid="auth-form"]', { timeout: 3000 })
-    
+
     // Test journal creation
     await page.goto(`${process.env.PRODUCTION_URL}/journal/new`)
-    await page.waitForSelector('[data-testid="journal-editor"]', { timeout: 3000 })
-    
+    await page.waitForSelector('[data-testid="journal-editor"]', {
+      timeout: 3000,
+    })
+
     return { success: true, timestamp: new Date().toISOString() }
   } catch (error) {
-    return { 
-      success: false, 
-      error: error.message, 
-      timestamp: new Date().toISOString() 
+    return {
+      success: false,
+      error: error.message,
+      timestamp: new Date().toISOString(),
     }
   } finally {
     await browser.close()
@@ -419,21 +446,25 @@ async function runSyntheticTests() {
 }
 
 // Run every 5 minutes
-setInterval(async () => {
-  const result = await runSyntheticTests()
-  
-  // Send results to monitoring service
-  await fetch(process.env.MONITORING_WEBHOOK, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(result)
-  })
-}, 5 * 60 * 1000)
+setInterval(
+  async () => {
+    const result = await runSyntheticTests()
+
+    // Send results to monitoring service
+    await fetch(process.env.MONITORING_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(result),
+    })
+  },
+  5 * 60 * 1000
+)
 ```
 
 ### Security Monitoring
 
 #### Runtime Security Detection
+
 ```typescript
 // src/lib/monitoring/security.ts
 export class SecurityMonitor {
@@ -455,25 +486,26 @@ export class SecurityMonitor {
   }) {
     const key = `${request.ip}-${request.endpoint}`
     const count = this.suspiciousActivityCount.get(key) || 0
-    
+
     // Rate limiting detection
-    if (count > 100) { // 100 requests per minute threshold
+    if (count > 100) {
+      // 100 requests per minute threshold
       this.reportSecurityEvent('Rate Limit Exceeded', {
         ip: request.ip,
         endpoint: request.endpoint,
         count,
-        userAgent: request.userAgent
+        userAgent: request.userAgent,
       })
       return true
     }
-    
+
     this.suspiciousActivityCount.set(key, count + 1)
-    
+
     // Clear counts every minute
     setTimeout(() => {
       this.suspiciousActivityCount.delete(key)
     }, 60000)
-    
+
     return false
   }
 
@@ -481,16 +513,16 @@ export class SecurityMonitor {
     const sqlPatterns = [
       /(\b(union|select|insert|update|delete|drop|create|alter)\b)/i,
       /(--|;|\/\*|\*\/)/,
-      /(\b(or|and)\s+\d+\s*=\s*\d+)/i
+      /(\b(or|and)\s+\d+\s*=\s*\d+)/i,
     ]
-    
+
     for (const pattern of sqlPatterns) {
       if (pattern.test(input)) {
         this.reportSecurityEvent('SQL Injection Attempt', { input })
         return true
       }
     }
-    
+
     return false
   }
 
@@ -499,16 +531,16 @@ export class SecurityMonitor {
       /<script[^>]*>.*?<\/script>/gi,
       /javascript:/gi,
       /on\w+\s*=/gi,
-      /<iframe[^>]*>.*?<\/iframe>/gi
+      /<iframe[^>]*>.*?<\/iframe>/gi,
     ]
-    
+
     for (const pattern of xssPatterns) {
       if (pattern.test(input)) {
         this.reportSecurityEvent('XSS Attempt', { input })
         return true
       }
     }
-    
+
     return false
   }
 
@@ -521,14 +553,14 @@ export class SecurityMonitor {
         event,
         data,
         timestamp: new Date().toISOString(),
-        severity: 'high'
-      })
+        severity: 'high',
+      }),
     }).catch(console.error)
-    
+
     // Also log to Sentry
     Sentry.captureMessage(`Security Event: ${event}`, {
       level: 'warning',
-      extra: data
+      extra: data,
     })
   }
 }
@@ -537,6 +569,7 @@ export class SecurityMonitor {
 ### Performance Alerting
 
 #### Alert Configuration
+
 ```typescript
 // src/lib/monitoring/alerts.ts
 export interface AlertRule {
@@ -555,7 +588,7 @@ export const alertRules: AlertRule[] = [
     operator: 'gt',
     duration: 5,
     severity: 'high',
-    channels: ['#alerts', '#dev-team']
+    channels: ['#alerts', '#dev-team'],
   },
   {
     metric: 'response_time_p95',
@@ -563,7 +596,7 @@ export const alertRules: AlertRule[] = [
     operator: 'gt',
     duration: 10,
     severity: 'medium',
-    channels: ['#performance']
+    channels: ['#performance'],
   },
   {
     metric: 'memory_usage',
@@ -571,7 +604,7 @@ export const alertRules: AlertRule[] = [
     operator: 'gt',
     duration: 15,
     severity: 'medium',
-    channels: ['#infrastructure']
+    channels: ['#infrastructure'],
   },
   {
     metric: 'database_connections',
@@ -579,20 +612,20 @@ export const alertRules: AlertRule[] = [
     operator: 'gt',
     duration: 5,
     severity: 'critical',
-    channels: ['#alerts', '#database-team']
-  }
+    channels: ['#alerts', '#database-team'],
+  },
 ]
 
 export async function evaluateAlerts(metrics: Record<string, number>) {
   for (const rule of alertRules) {
     const value = metrics[rule.metric]
     if (value === undefined) continue
-    
-    const shouldAlert = 
+
+    const shouldAlert =
       (rule.operator === 'gt' && value > rule.threshold) ||
       (rule.operator === 'lt' && value < rule.threshold) ||
       (rule.operator === 'eq' && value === rule.threshold)
-    
+
     if (shouldAlert) {
       await sendAlert(rule, value)
     }
@@ -606,14 +639,14 @@ async function sendAlert(rule: AlertRule, value: number) {
     threshold: rule.threshold,
     severity: rule.severity,
     timestamp: new Date().toISOString(),
-    message: `${rule.metric} is ${value} (threshold: ${rule.threshold})`
+    message: `${rule.metric} is ${value} (threshold: ${rule.threshold})`,
   }
-  
+
   for (const channel of rule.channels) {
     await fetch('/api/alerts/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...alert, channel })
+      body: JSON.stringify({ ...alert, channel }),
     })
   }
 }
@@ -622,6 +655,7 @@ async function sendAlert(rule: AlertRule, value: number) {
 ---
 
 **Related Documentation:**
+
 - [Quality Metrics and Reporting](quality-metrics-and-reporting.md) - Performance metrics
 - [Static Analysis and Security](static-analysis-and-security.md) - Security monitoring
 - [Dependency and Build Validation](dependency-and-build-validation.md) - Build monitoring

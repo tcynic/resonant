@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useUser } from '@clerk/nextjs'
 import { useQuery, useMutation } from 'convex/react'
-import { NotificationProvider } from '../../notification-provider'
+import { NotificationProvider } from '../../../providers/notification-provider'
 import { ReminderSettings } from '../../reminder-settings'
 import { useBrowserNotifications } from '../../../../hooks/notifications/use-browser-notifications'
 

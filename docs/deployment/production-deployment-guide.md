@@ -175,59 +175,59 @@ export default defineSchema({
     email: v.string(),
     createdAt: v.number(),
   })
-  .index("by_clerk_id", ["clerkId"])
-  .index("by_created", ["createdAt"]),
+    .index('by_clerk_id', ['clerkId'])
+    .index('by_created', ['createdAt']),
 
   journalEntries: defineTable({
-    userId: v.id("users"),
+    userId: v.id('users'),
     content: v.string(),
     mood: v.number(),
     createdAt: v.number(),
-    relationshipIds: v.array(v.id("relationships")),
+    relationshipIds: v.array(v.id('relationships')),
   })
-  .index("by_user_created", ["userId", "createdAt"])
-  .index("by_mood_created", ["mood", "createdAt"])
-  .index("by_created", ["createdAt"]),
+    .index('by_user_created', ['userId', 'createdAt'])
+    .index('by_mood_created', ['mood', 'createdAt'])
+    .index('by_created', ['createdAt']),
 
   relationships: defineTable({
-    userId: v.id("users"),
+    userId: v.id('users'),
     name: v.string(),
     type: v.string(),
     createdAt: v.number(),
   })
-  .index("by_user", ["userId"])
-  .index("by_user_type", ["userId", "type"]),
-});
+    .index('by_user', ['userId'])
+    .index('by_user_type', ['userId', 'type']),
+})
 ```
 
 #### Rate Limiting Configuration
 
 ```typescript
 // convex/rateLimit.ts
-import { defineRateLimits } from "convex/server";
+import { defineRateLimits } from 'convex/server'
 
 export default defineRateLimits({
   // AI analysis - limit expensive operations
   aiAnalysis: {
-    kind: "fixed window",
-    period: "1h",
+    kind: 'fixed window',
+    period: '1h',
     max: 100, // 100 requests per hour per user
   },
-  
+
   // Journal creation - prevent spam
   journalCreation: {
-    kind: "fixed window", 
-    period: "1m",
+    kind: 'fixed window',
+    period: '1m',
     max: 10, // 10 entries per minute
   },
-  
+
   // Search queries
   search: {
-    kind: "sliding window",
-    period: "1m", 
+    kind: 'sliding window',
+    period: '1m',
     max: 60, // 1 search per second
   },
-});
+})
 ```
 
 ## Vercel Frontend Deployment
@@ -281,7 +281,7 @@ const nextConfig: NextConfig = {
   // Production optimizations
   compress: true,
   generateEtags: true,
-  
+
   // Security headers
   async headers() {
     return [
@@ -546,28 +546,28 @@ const AdvancedAnalytics = dynamic(
 ```typescript
 // Optimized query patterns
 export const getRecentEntriesOptimized = query({
-  args: { 
-    userId: v.id("users"), 
+  args: {
+    userId: v.id('users'),
     limit: v.optional(v.number()),
     cursor: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const limit = Math.min(args.limit ?? 10, 50); // Cap at 50
-    
+    const limit = Math.min(args.limit ?? 10, 50) // Cap at 50
+
     let query = ctx.db
-      .query("journalEntries")
-      .withIndex("by_user_created", q => 
-        q.eq("userId", args.userId)
-      )
-      .order("desc");
-      
+      .query('journalEntries')
+      .withIndex('by_user_created', q => q.eq('userId', args.userId))
+      .order('desc')
+
     if (args.cursor) {
-      query = query.filter(q => q.lt(q.field("_creationTime"), parseInt(args.cursor)));
+      query = query.filter(q =>
+        q.lt(q.field('_creationTime'), parseInt(args.cursor))
+      )
     }
-    
-    return await query.take(limit);
+
+    return await query.take(limit)
   },
-});
+})
 ```
 
 #### Caching Strategy
@@ -575,32 +575,32 @@ export const getRecentEntriesOptimized = query({
 ```typescript
 // Implement caching for expensive operations
 export const getCachedAnalytics = query({
-  args: { userId: v.id("users"), timeRange: v.string() },
+  args: { userId: v.id('users'), timeRange: v.string() },
   handler: async (ctx, args) => {
     // Check cache first
-    const cacheKey = `analytics_${args.userId}_${args.timeRange}`;
+    const cacheKey = `analytics_${args.userId}_${args.timeRange}`
     const cached = await ctx.db
-      .query("cache")
-      .withIndex("by_key", q => q.eq("key", cacheKey))
-      .first();
-      
+      .query('cache')
+      .withIndex('by_key', q => q.eq('key', cacheKey))
+      .first()
+
     if (cached && cached.expiresAt > Date.now()) {
-      return cached.data;
+      return cached.data
     }
-    
+
     // Compute analytics
-    const analytics = await computeAnalytics(ctx, args);
-    
+    const analytics = await computeAnalytics(ctx, args)
+
     // Cache result
-    await ctx.db.insert("cache", {
+    await ctx.db.insert('cache', {
       key: cacheKey,
       data: analytics,
-      expiresAt: Date.now() + (60 * 60 * 1000), // 1 hour
-    });
-    
-    return analytics;
+      expiresAt: Date.now() + 60 * 60 * 1000, // 1 hour
+    })
+
+    return analytics
   },
-});
+})
 ```
 
 ### CDN and Edge Optimization
@@ -629,10 +629,10 @@ import type { NextRequest } from 'next/server'
 export function middleware(request: NextRequest) {
   // Add security headers at the edge
   const response = NextResponse.next()
-  
+
   response.headers.set('x-frame-options', 'DENY')
   response.headers.set('x-content-type-options', 'nosniff')
-  
+
   return response
 }
 
@@ -667,7 +667,8 @@ const securityHeaders = [
   },
   {
     key: 'Content-Security-Policy',
-    value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' *.clerk.dev *.convex.cloud; style-src 'self' 'unsafe-inline'; img-src 'self' data: *.clerk.dev; connect-src 'self' *.clerk.dev *.convex.cloud *.google.com;",
+    value:
+      "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' *.clerk.dev *.convex.cloud; style-src 'self' 'unsafe-inline'; img-src 'self' data: *.clerk.dev; connect-src 'self' *.clerk.dev *.convex.cloud *.google.com;",
   },
 ]
 ```
@@ -701,26 +702,28 @@ const securityHeaders = [
 import { logger } from '@/lib/logger'
 
 export const createJournalEntry = mutation({
-  args: { /* ... */ },
+  args: {
+    /* ... */
+  },
   handler: async (ctx, args) => {
     const startTime = Date.now()
-    
+
     try {
       logger.info('Creating journal entry', {
         userId: args.userId,
         entryLength: args.content.length,
       })
-      
-      const entry = await ctx.db.insert("journalEntries", {
+
+      const entry = await ctx.db.insert('journalEntries', {
         ...args,
         createdAt: Date.now(),
       })
-      
+
       logger.info('Journal entry created successfully', {
         entryId: entry,
         duration: Date.now() - startTime,
       })
-      
+
       return entry
     } catch (error) {
       logger.error('Failed to create journal entry', {

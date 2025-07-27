@@ -1,0 +1,926 @@
+# Resonant Data Flow Architecture Documentation
+
+This document provides comprehensive data flow documentation for the Resonant relationship health journal application, showing how data moves through the system from user input to AI insights and back to the UI.
+
+## Table of Contents
+
+1. [System Architecture Overview](#system-architecture-overview)
+2. [User Onboarding Flow](#user-onboarding-flow)
+3. [Journal Entry Creation Flow](#journal-entry-creation-flow)
+4. [AI Analysis Pipeline](#ai-analysis-pipeline)
+5. [Real-time Data Synchronization](#real-time-data-synchronization)
+6. [Authentication Flow](#authentication-flow)
+7. [Dashboard Data Flow](#dashboard-data-flow)
+8. [Performance Considerations](#performance-considerations)
+9. [Security Checkpoints](#security-checkpoints)
+10. [Cache Invalidation Patterns](#cache-invalidation-patterns)
+
+---
+
+## System Architecture Overview
+
+The Resonant application follows a modern full-stack architecture with real-time capabilities:
+
+```mermaid
+graph TB
+    subgraph "Client Layer"
+        UI[Next.js 15 App Router]
+        RC[React 19 Components]
+        CH[Custom Hooks]
+    end
+
+    subgraph "Authentication Layer"
+        CM[Clerk Middleware]
+        CA[Clerk Auth]
+        WH[Webhook Handler]
+    end
+
+    subgraph "Backend Layer"
+        CV[Convex Real-time DB]
+        CF[Convex Functions]
+        AI[AI Analysis Engine]
+    end
+
+    subgraph "Data Layer"
+        US[Users Schema]
+        RS[Relationships Schema]
+        JE[Journal Entries Schema]
+        AN[AI Analysis Schema]
+        HS[Health Scores Schema]
+        IN[Insights Schema]
+    end
+
+    UI --> CM
+    CM --> CA
+    CA --> WH
+    WH --> CF
+    RC --> CH
+    CH --> CF
+    CF --> CV
+    CF --> AI
+    CV --> US
+    CV --> RS
+    CV --> JE
+    CV --> AN
+    CV --> HS
+    CV --> IN
+
+    classDef client fill:#e1f5fe
+    classDef auth fill:#fff3e0
+    classDef backend fill:#f3e5f5
+    classDef data fill:#e8f5e8
+
+    class UI,RC,CH client
+    class CM,CA,WH auth
+    class CV,CF,AI backend
+    class US,RS,JE,AN,HS,IN data
+```
+
+### Key Technology Components
+
+- **Frontend**: Next.js 15 with React 19, TypeScript, Tailwind CSS 4
+- **Backend**: Convex (real-time database + serverless functions)
+- **Authentication**: Clerk with Next.js integration
+- **AI Analysis**: Google Gemini API integration (future)
+- **Charts**: Chart.js and Recharts for data visualization
+- **Development**: Turbopack for fast builds
+
+---
+
+## User Onboarding Flow
+
+The onboarding process takes users from initial signup to their first journal entry:
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant CL as Clerk Auth
+    participant MW as Next.js Middleware
+    participant WH as Webhook Handler
+    participant CF as Convex Functions
+    participant DB as Convex Database
+    participant UI as Dashboard UI
+
+    Note over U, UI: User Signup Process
+    U->>CL: Sign up with email
+    CL->>U: Send verification email
+    U->>CL: Verify email address
+    CL->>WH: User created webhook
+    WH->>CF: createUser mutation
+    CF->>DB: Insert user record
+    CF->>DB: Initialize feature flags
+    CF->>WH: Return user ID
+    WH->>CL: Acknowledge webhook
+
+    Note over U, UI: First Login & Onboarding
+    U->>CL: Sign in
+    CL->>MW: Authenticate request
+    MW->>UI: Allow access to dashboard
+    UI->>CF: getCurrentUser query
+    CF->>DB: Query user by clerkId
+    CF->>UI: Return user data
+
+    alt User not found (webhook failure fallback)
+        UI->>CF: createUser mutation (client fallback)
+        CF->>DB: Insert user record
+        CF->>UI: Return new user
+    end
+
+    Note over U, UI: Onboarding Completion
+    UI->>U: Show onboarding wizard
+    U->>UI: Complete preferences
+    UI->>CF: completeOnboarding mutation
+    CF->>DB: Update user preferences
+    CF->>UI: Onboarding completed
+    UI->>U: Redirect to journal creation
+```
+
+### Data Transformations
+
+1. **Clerk User Data → Convex User Schema**:
+
+   ```typescript
+   // Clerk user object
+   {
+     id: "user_xxx",
+     firstName: "John",
+     lastName: "Doe",
+     emailAddresses: [{ emailAddress: "john@example.com" }]
+   }
+
+   // Transforms to Convex user
+   {
+     clerkId: "user_xxx",
+     name: "John Doe",
+     email: "john@example.com",
+     tier: "free",
+     createdAt: Date.now(),
+     onboardingCompleted: false,
+     preferences: { /* default preferences */ }
+   }
+   ```
+
+2. **Feature Flag Initialization**:
+   ```typescript
+   {
+     userId: Id<"users">,
+     flags: {
+       advancedAnalytics: false,
+       voiceJournaling: false,
+       smartReminders: true,
+       conversationStarters: false,
+       relationshipGoals: false,
+       betaFeatures: false
+     }
+   }
+   ```
+
+### Error Handling
+
+- **Webhook Failures**: Client-side fallback using `useConvexUser` hook
+- **Duplicate Users**: Check existing user before creation
+- **Network Errors**: Retry mechanism with exponential backoff
+- **Validation Errors**: Input sanitization and Zod schema validation
+
+---
+
+## Journal Entry Creation Flow
+
+Real-time journal entry creation with AI analysis and health score updates:
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant JE as Journal Editor
+    participant CF as Convex Functions
+    participant DB as Convex Database
+    participant AI as AI Analysis Engine
+    participant RT as Real-time Updates
+    participant DS as Dashboard
+
+    Note over U, DS: Journal Entry Creation
+    U->>JE: Start writing entry
+    JE->>JE: Auto-save draft (every 2s)
+    JE->>CF: updateEntry mutation
+    CF->>DB: Update journal entry
+    CF->>RT: Trigger real-time update
+
+    Note over U, DS: Entry Completion
+    U->>JE: Submit final entry
+    JE->>CF: createEntry mutation
+    CF->>DB: Validate relationship ownership
+    CF->>DB: Insert journal entry
+    CF->>AI: Trigger AI analysis
+    CF->>JE: Return entry ID
+
+    Note over AI, DS: AI Analysis Pipeline
+    AI->>CF: analyzeEntry mutation
+    CF->>DB: Create AI analysis record
+    CF->>AI: Process sentiment & patterns
+    AI->>CF: Return analysis results
+    CF->>DB: Update analysis status
+    CF->>CF: Calculate health scores
+    CF->>DB: Update health scores
+    CF->>RT: Broadcast updates
+
+    Note over RT, DS: Real-time Updates
+    RT->>DS: Update entry list
+    RT->>DS: Update health scores
+    RT->>DS: Update trend charts
+    DS->>U: Show updated dashboard
+```
+
+### Data Transformations
+
+1. **User Input → Journal Entry Schema**:
+
+   ```typescript
+   // User form input
+   {
+     content: "Had a great conversation about...",
+     mood: "happy",
+     relationshipId: "rel_123",
+     tags: ["communication", "quality-time"],
+     isPrivate: false
+   }
+
+   // Transforms to database record
+   {
+     userId: Id<"users">,
+     relationshipId: Id<"relationships">,
+     content: "Had a great conversation about...",
+     mood: "happy",
+     tags: ["communication", "quality-time"],
+     isPrivate: false,
+     wordCount: 156,
+     status: "published",
+     createdAt: Date.now(),
+     updatedAt: Date.now()
+   }
+   ```
+
+2. **AI Analysis Results**:
+   ```typescript
+   {
+     entryId: Id<"journalEntries">,
+     userId: Id<"users">,
+     sentimentScore: 0.8, // -1 to 1 scale
+     emotionalKeywords: ["happy", "connected", "appreciated"],
+     confidenceLevel: 0.92,
+     patterns: {
+       recurring_themes: ["open_communication", "quality_time"],
+       emotional_triggers: [],
+       communication_style: "collaborative",
+       relationship_dynamics: ["mutual_support"]
+     },
+     status: "completed"
+   }
+   ```
+
+### Performance Optimizations
+
+- **Auto-save**: Debounced saves every 2 seconds during editing
+- **Batch Updates**: Group multiple operations in single transaction
+- **Optimistic Updates**: UI updates immediately before server confirmation
+- **Background Processing**: AI analysis runs asynchronously
+
+---
+
+## AI Analysis Pipeline
+
+The AI analysis system processes journal entries to generate insights and health scores:
+
+```mermaid
+flowchart TD
+    JE[Journal Entry Created] --> AQ[Analysis Queue]
+    AQ --> VP[Validate & Preprocess]
+    VP --> SE[Sentiment Analysis]
+    VP --> PD[Pattern Detection]
+    VP --> CS[Communication Style]
+
+    SE --> AR[Analysis Results]
+    PD --> AR
+    CS --> AR
+
+    AR --> HS[Health Score Calculation]
+    AR --> IG[Insight Generation]
+    AR --> TR[Trend Analysis]
+
+    HS --> DB[(Database Update)]
+    IG --> DB
+    TR --> DB
+
+    DB --> RT[Real-time Broadcast]
+    RT --> UI[UI Updates]
+
+    style JE fill:#e3f2fd
+    style AR fill:#f3e5f5
+    style DB fill:#e8f5e8
+    style UI fill:#fff3e0
+```
+
+### Analysis Components
+
+1. **Sentiment Analysis**:
+
+   ```typescript
+   interface SentimentAnalysis {
+     sentimentScore: number // -1 (negative) to 1 (positive)
+     emotionalKeywords: string[]
+     confidenceLevel: number // 0 to 1
+     reasoning: string // AI explanation
+   }
+   ```
+
+2. **Pattern Detection**:
+
+   ```typescript
+   interface PatternAnalysis {
+     recurring_themes: string[] // ["communication", "trust"]
+     emotional_triggers: string[] // ["stress", "misunderstanding"]
+     communication_style: string // "direct" | "collaborative" | "neutral"
+     relationship_dynamics: string[] // ["mutual_support", "conflict"]
+   }
+   ```
+
+3. **Health Score Calculation**:
+   ```typescript
+   interface HealthScore {
+     score: number // 0-100 overall score
+     factorBreakdown: {
+       communication: number
+       emotional_support: number
+       conflict_resolution: number
+       trust_intimacy: number
+       shared_growth: number
+     }
+     trendDirection: 'improving' | 'stable' | 'declining'
+     confidence: number
+   }
+   ```
+
+### Error Handling & Retry Logic
+
+- **API Rate Limits**: Exponential backoff with jitter
+- **Analysis Failures**: Mark as failed, schedule retry
+- **Partial Results**: Save intermediate results, continue processing
+- **Timeout Handling**: 30-second timeout with graceful degradation
+
+---
+
+## Real-time Data Synchronization
+
+Convex provides real-time updates across all connected clients:
+
+```mermaid
+sequenceDiagram
+    participant C1 as Client 1
+    participant C2 as Client 2
+    participant CV as Convex Server
+    participant DB as Database
+    participant WS as WebSocket
+
+    Note over C1, WS: Real-time Subscription Setup
+    C1->>CV: useQuery(api.journalEntries.list)
+    CV->>C1: Initial data + subscription
+    C2->>CV: useQuery(api.journalEntries.list)
+    CV->>C2: Initial data + subscription
+
+    Note over C1, WS: Data Mutation from Client 1
+    C1->>CV: useMutation(api.journalEntries.create)
+    CV->>DB: Insert new entry
+    CV->>CV: Trigger query invalidation
+    CV->>WS: Broadcast update
+    WS->>C1: Updated data
+    WS->>C2: Updated data (real-time sync)
+
+    Note over C1, WS: Optimistic Updates
+    C1->>C1: Show optimistic update
+    C1->>CV: Mutation request
+    alt Mutation succeeds
+        CV->>C1: Confirm update
+    else Mutation fails
+        CV->>C1: Revert optimistic update
+        C1->>C1: Show error state
+    end
+```
+
+### Subscription Management
+
+1. **Query Subscriptions**:
+
+   ```typescript
+   // Auto-subscribes to real-time updates
+   const entries = useQuery(api.journalEntries.getEntriesByUser, {
+     userId: user?.id,
+   })
+
+   const healthScores = useQuery(api.healthScores.getByUser, {
+     userId: user?.id,
+   })
+   ```
+
+2. **Mutation Handling**:
+
+   ```typescript
+   const createEntry = useMutation(api.journalEntries.createEntry)
+
+   // Optimistic update with error handling
+   const handleSubmit = async data => {
+     try {
+       await createEntry(data)
+       // Real-time update automatically received
+     } catch (error) {
+       // Handle error, revert optimistic changes
+     }
+   }
+   ```
+
+### Connection Management
+
+- **Automatic Reconnection**: Built-in reconnection with exponential backoff
+- **Offline Support**: Queue mutations when offline, sync when reconnected
+- **Connection Status**: UI indicators for connection state
+- **Bandwidth Optimization**: Delta updates only send changed data
+
+---
+
+## Authentication Flow
+
+Clerk authentication integrated with Convex user synchronization:
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant CL as Clerk
+    participant MW as Middleware
+    participant CF as Convex Functions
+    participant DB as Database
+    participant WH as Webhook
+
+    Note over U, WH: Authentication Process
+    U->>CL: Sign in request
+    CL->>MW: Authenticate & set session
+    MW->>U: Redirect to dashboard
+
+    Note over U, WH: User Sync Process
+    U->>CF: Request protected resource
+    CF->>CL: Verify JWT token
+    CL->>CF: Token valid + user info
+    CF->>DB: Query user by clerkId
+
+    alt User exists in Convex
+        CF->>U: Return user data
+    else User not in Convex (webhook failed)
+        CF->>DB: Create user record
+        CF->>CF: Initialize preferences
+        CF->>U: Return new user data
+    end
+
+    Note over U, WH: Webhook Sync (Parallel)
+    CL->>WH: User update webhook
+    WH->>CF: updateUserFromClerk
+    CF->>DB: Update user record
+    CF->>WH: Acknowledge update
+```
+
+### Security Checkpoints
+
+1. **Route Protection**:
+
+   ```typescript
+   // middleware.ts - Route-level protection
+   const isPublicRoute = createRouteMatcher([
+     '/sign-in(.*)',
+     '/sign-up(.*)',
+     '/',
+   ])
+
+   export default clerkMiddleware(async (auth, req) => {
+     if (!isPublicRoute(req)) {
+       await auth.protect() // Requires authentication
+     }
+   })
+   ```
+
+2. **Database Access Control**:
+
+   ```typescript
+   // Every Convex function validates user ownership
+   export const getEntryById = query({
+     handler: async (ctx, args) => {
+       const entry = await ctx.db.get(args.entryId)
+
+       // Verify ownership
+       if (entry.userId !== args.userId) {
+         throw new ConvexError('Unauthorized access')
+       }
+
+       return entry
+     },
+   })
+   ```
+
+3. **Input Validation**:
+   ```typescript
+   // Zod schemas for all inputs
+   const createEntrySchema = z.object({
+     content: z.string().min(1).max(10000),
+     mood: z.string().optional(),
+     tags: z.array(z.string().max(50)).max(10),
+   })
+   ```
+
+---
+
+## Dashboard Data Flow
+
+The dashboard aggregates data from multiple sources for real-time insights:
+
+```mermaid
+flowchart TD
+    subgraph "Data Sources"
+        JE[Journal Entries]
+        HS[Health Scores]
+        AI[AI Analysis]
+        TR[Trend Analytics]
+        IN[Insights]
+    end
+
+    subgraph "Dashboard Queries"
+        DQ[Dashboard Query]
+        TQ[Trend Query]
+        IQ[Insights Query]
+        SQ[Summary Query]
+    end
+
+    subgraph "UI Components"
+        ES[Entry Summary]
+        HC[Health Cards]
+        TC[Trend Charts]
+        IL[Insights List]
+        RA[Recent Activity]
+    end
+
+    subgraph "Caching Layer"
+        CC[Computed Cache]
+        AC[Analytics Cache]
+    end
+
+    JE --> DQ
+    HS --> DQ
+    AI --> TQ
+    TR --> TQ
+    IN --> IQ
+
+    DQ --> CC
+    TQ --> AC
+    IQ --> AC
+    SQ --> CC
+
+    CC --> ES
+    CC --> HC
+    AC --> TC
+    AC --> IL
+    DQ --> RA
+
+    style JE fill:#e3f2fd
+    style HS fill:#e8f5e8
+    style AI fill:#fff3e0
+    style CC fill:#f3e5f5
+    style AC fill:#f3e5f5
+```
+
+### Dashboard Data Aggregation
+
+1. **Main Dashboard Query**:
+
+   ```typescript
+   export const getDashboardData = query({
+     handler: async (ctx, args) => {
+       const [recentEntries, healthScores, insights, trendData] =
+         await Promise.all([
+           ctx.db
+             .query('journalEntries')
+             .withIndex('by_user_created', q => q.eq('userId', args.userId))
+             .order('desc')
+             .take(5),
+
+           ctx.db
+             .query('healthScores')
+             .withIndex('by_user', q => q.eq('userId', args.userId))
+             .order('desc')
+             .take(10),
+
+           ctx.db
+             .query('insights')
+             .withIndex('by_user_and_active', q =>
+               q.eq('userId', args.userId).eq('status', 'active')
+             )
+             .take(3),
+
+           getTrendAnalytics(ctx, args.userId),
+         ])
+
+       return {
+         recentEntries,
+         healthScores,
+         insights,
+         trendData,
+         summary: {
+           totalEntries: recentEntries.length,
+           averageHealthScore: calculateAverage(healthScores),
+           activeInsights: insights.length,
+         },
+       }
+     },
+   })
+   ```
+
+2. **Trend Analytics Computation**:
+
+   ```typescript
+   export const getTrendData = query({
+     handler: async (ctx, args) => {
+       // Check cache first
+       const cached = await ctx.db
+         .query('trendAnalytics')
+         .withIndex('by_user_and_type', q =>
+           q.eq('userId', args.userId).eq('analyticsType', 'sentiment_trend')
+         )
+         .first()
+
+       if (cached && cached.cacheExpiresAt > Date.now()) {
+         return cached.computedData
+       }
+
+       // Recompute trends
+       const trendData = await computeTrendAnalytics(ctx, args)
+
+       // Update cache
+       await ctx.db.insert('trendAnalytics', {
+         userId: args.userId,
+         analyticsType: 'sentiment_trend',
+         computedData: trendData,
+         cacheExpiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
+       })
+
+       return trendData
+     },
+   })
+   ```
+
+### Chart Data Processing
+
+1. **Health Score Trends**:
+
+   ```typescript
+   interface TrendDataPoint {
+     date: string
+     [relationshipName: string]: number | string
+   }
+
+   // Transform health scores to chart data
+   const processHealthScoreData = (scores: HealthScore[]): TrendDataPoint[] => {
+     return scores.map(score => ({
+       date: formatDate(score.lastCalculated),
+       [score.relationshipName]: score.score,
+       confidence: score.confidence,
+     }))
+   }
+   ```
+
+2. **Sentiment Analysis Trends**:
+   ```typescript
+   const processSentimentData = (analyses: AIAnalysis[]): ChartData => {
+     return analyses.map(analysis => ({
+       date: formatDate(analysis.createdAt),
+       sentiment: (analysis.sentimentScore + 1) * 50, // Convert -1,1 to 0,100
+       confidence: analysis.confidenceLevel * 100,
+     }))
+   }
+   ```
+
+---
+
+## Performance Considerations
+
+### Database Optimization
+
+1. **Indexing Strategy**:
+
+   ```typescript
+   // Strategic indexes for common queries
+   users: defineTable(...)
+     .index('by_clerk_id', ['clerkId'])
+     .index('by_tier', ['tier'])
+     .index('by_last_active', ['lastActiveAt']),
+
+   journalEntries: defineTable(...)
+     .index('by_user_created', ['userId', 'createdAt'])
+     .index('by_user_and_private', ['userId', 'isPrivate'])
+     .searchIndex('search_content', {
+       searchField: 'content',
+       filterFields: ['userId', 'relationshipId']
+     })
+   ```
+
+2. **Query Optimization**:
+
+   ```typescript
+   // Efficient pagination
+   export const getEntriesPaginated = query({
+     handler: async (ctx, args) => {
+       return await ctx.db
+         .query('journalEntries')
+         .withIndex('by_user_created', q => q.eq('userId', args.userId))
+         .order('desc')
+         .take(args.limit || 20)
+     },
+   })
+
+   // Batch operations
+   export const createMultipleEntries = mutation({
+     handler: async (ctx, entries) => {
+       const promises = entries.map(entry =>
+         ctx.db.insert('journalEntries', entry)
+       )
+       return await Promise.all(promises)
+     },
+   })
+   ```
+
+### Caching Strategies
+
+1. **Computed Analytics Cache**:
+   - Pre-computed trend data with 24-hour expiration
+   - Background refresh using cron jobs
+   - Cache invalidation on relevant data changes
+
+2. **Client-Side Caching**:
+   - React Query for component-level caching
+   - Optimistic updates for immediate feedback
+   - Background refresh for stale data
+
+### Bundle Optimization
+
+1. **Code Splitting**:
+
+   ```typescript
+   // Lazy load heavy components
+   const TrendChart = lazy(
+     () => import('@/components/features/dashboard/trend-chart')
+   )
+   const AIInsights = lazy(
+     () => import('@/components/features/insights/ai-insights')
+   )
+   ```
+
+2. **Asset Optimization**:
+   - Turbopack for fast development builds
+   - Image optimization with Next.js Image component
+   - CSS optimization with Tailwind CSS purging
+
+---
+
+## Security Checkpoints
+
+### Data Protection
+
+1. **Encryption at Rest**:
+   - All sensitive data encrypted in Convex database
+   - Personal information hashed where possible
+   - PII tokenization for analytics
+
+2. **Transport Security**:
+   - HTTPS enforced for all connections
+   - WebSocket connections over TLS
+   - API endpoints secured with JWT tokens
+
+3. **Access Control**:
+
+   ```typescript
+   // Row-level security in every query
+   export const secureQuery = query({
+     handler: async (ctx, args) => {
+       // Verify user authentication
+       const identity = await ctx.auth.getUserIdentity()
+       if (!identity) {
+         throw new ConvexError('Unauthorized')
+       }
+
+       // Verify data ownership
+       const data = await ctx.db.get(args.id)
+       if (data.userId !== args.userId) {
+         throw new ConvexError('Access denied')
+       }
+
+       return data
+     },
+   })
+   ```
+
+### Input Validation
+
+1. **Schema Validation**:
+
+   ```typescript
+   // Zod schemas for all inputs
+   const JournalEntrySchema = z.object({
+     content: z.string().min(1).max(10000),
+     mood: z.string().max(50).optional(),
+     tags: z.array(z.string().max(50)).max(10),
+     isPrivate: z.boolean().default(false),
+   })
+   ```
+
+2. **Sanitization**:
+   ```typescript
+   // Clean and validate all text inputs
+   const sanitizeInput = (input: string): string => {
+     return input.trim().replace(/[<>]/g, '')
+   }
+   ```
+
+### Privacy Controls
+
+1. **Data Minimization**:
+   - Only collect necessary data
+   - Regular cleanup of expired data
+   - User-controlled data retention settings
+
+2. **User Consent**:
+   - Explicit consent for AI analysis
+   - Granular privacy controls
+   - Data export and deletion capabilities
+
+---
+
+## Cache Invalidation Patterns
+
+### Real-time Cache Updates
+
+1. **Automatic Invalidation**:
+
+   ```typescript
+   // Convex automatically invalidates caches on mutations
+   const createEntry = useMutation(api.journalEntries.create)
+
+   // This automatically updates all subscribed queries
+   await createEntry(entryData)
+   ```
+
+2. **Manual Cache Management**:
+   ```typescript
+   // Force refresh specific queries
+   const refreshDashboard = () => {
+     invalidateQuery(api.dashboard.getData)
+     invalidateQuery(api.insights.getActive)
+   }
+   ```
+
+### Background Cache Refresh
+
+1. **Cron-based Updates**:
+
+   ```typescript
+   // Daily trend analytics refresh
+   export const refreshTrendAnalytics = internalMutation({
+     handler: async ctx => {
+       const expiredAnalytics = await ctx.db
+         .query('trendAnalytics')
+         .withIndex('by_expiry', q => q.lt('cacheExpiresAt', Date.now()))
+         .collect()
+
+       for (const analytics of expiredAnalytics) {
+         await recomputeTrendData(ctx, analytics.userId)
+       }
+     },
+   })
+   ```
+
+2. **Smart Invalidation**:
+   ```typescript
+   // Invalidate related caches on significant changes
+   export const onHealthScoreUpdate = async (ctx, userId) => {
+     await Promise.all([
+       invalidateTrendCache(ctx, userId),
+       invalidateInsightsCache(ctx, userId),
+       invalidateDashboardCache(ctx, userId),
+     ])
+   }
+   ```
+
+---
+
+## Conclusion
+
+The Resonant application architecture provides:
+
+- **Real-time Data Flow**: Instant updates across all connected clients
+- **Scalable AI Pipeline**: Asynchronous processing with retry mechanisms
+- **Robust Security**: Multi-layer authentication and authorization
+- **Performance Optimization**: Strategic caching and efficient queries
+- **User Privacy**: Granular controls and data protection
+
+This architecture supports the application's core mission of providing meaningful relationship insights while maintaining user privacy and system performance.

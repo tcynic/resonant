@@ -21,7 +21,7 @@ graph LR
     A[User Action] --> B[Component Behavior]
     B --> C[Observable Output]
     C --> D[Test Assertion]
-    
+
     style A fill:#E3F2FD,stroke:#1976D2
     style B fill:#F3E5F5,stroke:#7B1FA2
     style C fill:#E8F5E8,stroke:#388E3C
@@ -43,7 +43,7 @@ const createJestConfig = nextJest({
 const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testEnvironment: 'jsdom',
-  
+
   // Coverage configuration
   collectCoverage: true,
   collectCoverageFrom: [
@@ -54,7 +54,7 @@ const customJestConfig = {
     'convex/**/*.ts',
     '!convex/_generated/**',
   ],
-  
+
   coverageThreshold: {
     global: {
       branches: 80,
@@ -75,30 +75,30 @@ const customJestConfig = {
       statements: 90,
     },
   },
-  
+
   // Module name mapping for absolute imports
   moduleNameMapping: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@/convex/_generated/api$': '<rootDir>/convex/_generated/api',
   },
-  
+
   // Test path configuration
   testMatch: [
     '<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}',
     '<rootDir>/src/**/*.{test,spec}.{js,jsx,ts,tsx}',
   ],
-  
+
   testPathIgnorePatterns: [
     '<rootDir>/.next/',
     '<rootDir>/node_modules/',
     '<rootDir>/tests/e2e/',
   ],
-  
+
   // Transform configuration
   transform: {
     '^.+\\.(js|jsx|ts|tsx)$': ['babel-jest', { presets: ['next/babel'] }],
   },
-  
+
   // Environment variables for testing
   testEnvironmentOptions: {
     url: 'http://localhost:3000',
@@ -188,12 +188,12 @@ jest.mock('@clerk/nextjs', () => ({
 }))
 
 // Global test utilities
-global.mockConvexQuery = (mockImplementation) => {
+global.mockConvexQuery = mockImplementation => {
   const { useQuery } = require('convex/react')
   useQuery.mockImplementation(mockImplementation)
 }
 
-global.mockConvexMutation = (mockImplementation) => {
+global.mockConvexMutation = mockImplementation => {
   const { useMutation } = require('convex/react')
   useMutation.mockImplementation(mockImplementation)
 }
@@ -237,7 +237,7 @@ describe('Button Component', () => {
 
     it('renders all variants correctly', () => {
       const variants = ['default', 'destructive', 'outline', 'secondary', 'ghost', 'link'] as const
-      
+
       variants.forEach(variant => {
         const { rerender } = render(<Button variant={variant}>Test</Button>)
         const button = screen.getByRole('button')
@@ -248,7 +248,7 @@ describe('Button Component', () => {
 
     it('renders all sizes correctly', () => {
       const sizes = ['sm', 'default', 'lg', 'icon'] as const
-      
+
       sizes.forEach(size => {
         const { rerender } = render(<Button size={size}>Test</Button>)
         const button = screen.getByRole('button')
@@ -262,9 +262,9 @@ describe('Button Component', () => {
     it('calls onClick when clicked', async () => {
       const handleClick = jest.fn()
       const user = userEvent.setup()
-      
+
       render(<Button onClick={handleClick}>Click me</Button>)
-      
+
       await user.click(screen.getByRole('button'))
       expect(handleClick).toHaveBeenCalledTimes(1)
     })
@@ -272,9 +272,9 @@ describe('Button Component', () => {
     it('calls onClick when Enter key is pressed', async () => {
       const handleClick = jest.fn()
       const user = userEvent.setup()
-      
+
       render(<Button onClick={handleClick}>Click me</Button>)
-      
+
       const button = screen.getByRole('button')
       button.focus()
       await user.keyboard('{Enter}')
@@ -284,9 +284,9 @@ describe('Button Component', () => {
     it('calls onClick when Space key is pressed', async () => {
       const handleClick = jest.fn()
       const user = userEvent.setup()
-      
+
       render(<Button onClick={handleClick}>Click me</Button>)
-      
+
       const button = screen.getByRole('button')
       button.focus()
       await user.keyboard(' ')
@@ -296,9 +296,9 @@ describe('Button Component', () => {
     it('does not call onClick when disabled', async () => {
       const handleClick = jest.fn()
       const user = userEvent.setup()
-      
+
       render(<Button disabled onClick={handleClick}>Click me</Button>)
-      
+
       await user.click(screen.getByRole('button'))
       expect(handleClick).not.toHaveBeenCalled()
     })
@@ -390,7 +390,7 @@ describe('JournalEntryEditor', () => {
   describe('New Entry Mode', () => {
     it('renders empty form for new entry', () => {
       render(<JournalEntryEditor {...defaultProps} />)
-      
+
       expect(screen.getByRole('textbox', { name: /content/i })).toHaveValue('')
       expect(screen.getByRole('combobox', { name: /mood/i })).toHaveValue('')
       expect(screen.getByRole('button', { name: /save entry/i })).toBeInTheDocument()
@@ -399,16 +399,16 @@ describe('JournalEntryEditor', () => {
     it('creates new entry when form is submitted', async () => {
       const user = userEvent.setup()
       mockCreateEntry.mockResolvedValue({ id: 'new-entry-id' })
-      
+
       render(<JournalEntryEditor {...defaultProps} />)
-      
+
       // Fill out the form
       await user.type(screen.getByRole('textbox', { name: /content/i }), 'Today was great!')
       await user.selectOptions(screen.getByRole('combobox', { name: /mood/i }), 'happy')
-      
+
       // Submit the form
       await user.click(screen.getByRole('button', { name: /save entry/i }))
-      
+
       await waitFor(() => {
         expect(mockCreateEntry).toHaveBeenCalledWith({
           content: 'Today was great!',
@@ -417,7 +417,7 @@ describe('JournalEntryEditor', () => {
           relationships: [],
         })
       })
-      
+
       expect(defaultProps.onSave).toHaveBeenCalledWith({ id: 'new-entry-id' })
     })
   })
@@ -433,7 +433,7 @@ describe('JournalEntryEditor', () => {
 
     it('populates form with existing entry data', () => {
       render(<JournalEntryEditor {...defaultProps} entry={existingEntry} />)
-      
+
       expect(screen.getByRole('textbox', { name: /content/i })).toHaveValue('Existing content')
       expect(screen.getByRole('combobox', { name: /mood/i })).toHaveValue('neutral')
       expect(screen.getByText('reflection')).toBeInTheDocument()
@@ -442,17 +442,17 @@ describe('JournalEntryEditor', () => {
     it('updates existing entry when form is submitted', async () => {
       const user = userEvent.setup()
       mockUpdateEntry.mockResolvedValue(existingEntry)
-      
+
       render(<JournalEntryEditor {...defaultProps} entry={existingEntry} />)
-      
+
       // Modify the content
       const contentField = screen.getByRole('textbox', { name: /content/i })
       await user.clear(contentField)
       await user.type(contentField, 'Updated content')
-      
+
       // Submit the form
       await user.click(screen.getByRole('button', { name: /save entry/i }))
-      
+
       await waitFor(() => {
         expect(mockUpdateEntry).toHaveBeenCalledWith({
           id: 'entry-123',
@@ -468,12 +468,12 @@ describe('JournalEntryEditor', () => {
   describe('Validation', () => {
     it('shows error when content is empty', async () => {
       const user = userEvent.setup()
-      
+
       render(<JournalEntryEditor {...defaultProps} />)
-      
+
       // Try to submit empty form
       await user.click(screen.getByRole('button', { name: /save entry/i }))
-      
+
       expect(screen.getByText(/content is required/i)).toBeInTheDocument()
       expect(mockCreateEntry).not.toHaveBeenCalled()
     })
@@ -481,12 +481,12 @@ describe('JournalEntryEditor', () => {
     it('shows error when content is too long', async () => {
       const user = userEvent.setup()
       const longContent = 'a'.repeat(5001) // Assuming 5000 char limit
-      
+
       render(<JournalEntryEditor {...defaultProps} />)
-      
+
       await user.type(screen.getByRole('textbox', { name: /content/i }), longContent)
       await user.click(screen.getByRole('button', { name: /save entry/i }))
-      
+
       expect(screen.getByText(/content is too long/i)).toBeInTheDocument()
     })
   })
@@ -494,12 +494,12 @@ describe('JournalEntryEditor', () => {
   describe('Auto-save functionality', () => {
     it('auto-saves draft after typing stops', async () => {
       const user = userEvent.setup()
-      
+
       render(<JournalEntryEditor {...defaultProps} />)
-      
+
       // Type content
       await user.type(screen.getByRole('textbox', { name: /content/i }), 'Draft content')
-      
+
       // Wait for auto-save delay
       await waitFor(() => {
         expect(screen.getByText(/draft saved/i)).toBeInTheDocument()
@@ -624,9 +624,9 @@ describe('useJournalEntries', () => {
       { id: '1', content: 'Entry 1', mood: 'happy' },
       { id: '2', content: 'Entry 2', mood: 'sad' },
     ]
-    
+
     mockConvexQuery(() => mockEntries)
-    
+
     const { result } = renderHook(() => useJournalEntries('user-123'), {
       wrapper: Wrapper,
     })
@@ -642,9 +642,9 @@ describe('useJournalEntries', () => {
       { id: '2', content: 'Entry 2', mood: 'sad' },
       { id: '3', content: 'Entry 3', mood: 'happy' },
     ]
-    
+
     mockConvexQuery(() => mockEntries)
-    
+
     const { result } = renderHook(
       () => useJournalEntries('user-123', { mood: 'happy' }),
       { wrapper: Wrapper }
@@ -660,9 +660,9 @@ describe('useJournalEntries', () => {
       { id: '2', content: 'New entry', createdAt: '2025-01-03' },
       { id: '3', content: 'Middle entry', createdAt: '2025-01-02' },
     ]
-    
+
     mockConvexQuery(() => mockEntries)
-    
+
     const { result } = renderHook(() => useJournalEntries('user-123'), {
       wrapper: Wrapper,
     })
@@ -688,7 +688,9 @@ describe('cn utility', () => {
   })
 
   it('handles conditional classes', () => {
-    expect(cn('base', true && 'conditional', false && 'hidden')).toBe('base conditional')
+    expect(cn('base', true && 'conditional', false && 'hidden')).toBe(
+      'base conditional'
+    )
   })
 
   it('handles undefined and null values', () => {
@@ -767,7 +769,11 @@ describe('calculateHealthScore', () => {
     const entries = [
       { mood: 'sad', relationships: ['partner'], createdAt: '2025-01-01' },
       { mood: 'angry', relationships: ['partner'], createdAt: '2025-01-02' },
-      { mood: 'frustrated', relationships: ['partner'], createdAt: '2025-01-03' },
+      {
+        mood: 'frustrated',
+        relationships: ['partner'],
+        createdAt: '2025-01-03',
+      },
     ]
 
     const score = calculateHealthScore(entries, 'partner')
@@ -789,23 +795,31 @@ describe('generateInsights', () => {
     ]
 
     const insights = generateInsights(entries)
-    
+
     expect(insights).toHaveLength(2)
-    expect(insights.some(insight => insight.category === 'mood_patterns')).toBe(true)
-    expect(insights.some(insight => insight.category === 'tag_analysis')).toBe(true)
+    expect(insights.some(insight => insight.category === 'mood_patterns')).toBe(
+      true
+    )
+    expect(insights.some(insight => insight.category === 'tag_analysis')).toBe(
+      true
+    )
   })
 
   it('prioritizes insights by relevance', () => {
-    const entries = Array(20).fill(null).map((_, i) => ({
-      mood: i % 2 === 0 ? 'happy' : 'sad',
-      tags: ['work'],
-      createdAt: `2025-01-${i + 1}`,
-    }))
+    const entries = Array(20)
+      .fill(null)
+      .map((_, i) => ({
+        mood: i % 2 === 0 ? 'happy' : 'sad',
+        tags: ['work'],
+        createdAt: `2025-01-${i + 1}`,
+      }))
 
     const insights = generateInsights(entries)
-    
+
     // Most relevant insights should come first
-    expect(insights[0].confidence).toBeGreaterThan(insights[insights.length - 1].confidence)
+    expect(insights[0].confidence).toBeGreaterThan(
+      insights[insights.length - 1].confidence
+    )
   })
 })
 ```
@@ -864,7 +878,9 @@ export const createMockUser = (overrides: Partial<User> = {}): User => ({
   ...overrides,
 })
 
-export const createMockJournalEntry = (overrides: Partial<JournalEntry> = {}): JournalEntry => ({
+export const createMockJournalEntry = (
+  overrides: Partial<JournalEntry> = {}
+): JournalEntry => ({
   id: 'entry-123',
   userId: 'user-123',
   content: 'Test journal entry content',
@@ -876,7 +892,9 @@ export const createMockJournalEntry = (overrides: Partial<JournalEntry> = {}): J
   ...overrides,
 })
 
-export const createMockRelationship = (overrides: Partial<Relationship> = {}): Relationship => ({
+export const createMockRelationship = (
+  overrides: Partial<Relationship> = {}
+): Relationship => ({
   id: 'rel-123',
   userId: 'user-123',
   name: 'Test Relationship',
@@ -925,24 +943,28 @@ export const createMockJournalEntries = (count: number): JournalEntry[] => {
 ### Common Anti-patterns
 
 ❌ **Testing Implementation Details**
+
 ```typescript
 // Don't test internal state or methods
 expect(wrapper.state('isOpen')).toBe(true)
 ```
 
 ✅ **Testing User-Observable Behavior**
+
 ```typescript
 // Test what users can see and interact with
 expect(screen.getByRole('dialog')).toBeVisible()
 ```
 
 ❌ **Over-mocking**
+
 ```typescript
 // Don't mock everything
 jest.mock('./utils') // Mocks the entire utils module
 ```
 
 ✅ **Targeted Mocking**
+
 ```typescript
 // Mock only what's necessary
 jest.mock('./api', () => ({

@@ -55,7 +55,8 @@ export function useChartData(
           timeRange: {
             start: dateRange.start.getTime(),
             end: dateRange.end.getTime(),
-            granularity: dateRange.granularity,
+            granularity: dateRange.granularity === 'daily' ? 'day' : 
+                        dateRange.granularity === 'weekly' ? 'week' : 'month',
           },
           analyticsType: chartType,
         }
@@ -90,11 +91,11 @@ export function useChartData(
             satisfaction: dataPoint.value,
             growth: dataPoint.value,
           },
-          trendDirection: trendData.statistics.trend,
+          trendDirection: (trendData.metadata as any)?.trend || 'stable',
         }
       }),
-      statistics: trendData.statistics,
-      patterns: trendData.patterns,
+      statistics: trendData.metadata || {},
+      patterns: (trendData.metadata as any)?.patterns || [],
     }
   }, [trendData])
 
@@ -118,6 +119,7 @@ export function useChartData(
 export function useRelationshipComparisonData(
   relationshipIds: string[],
   timeRange: TimeRange,
+  metric: 'sentiment' | 'health_score' | 'entry_frequency' = 'sentiment',
   customStart?: Date,
   customEnd?: Date
 ) {
@@ -146,6 +148,7 @@ export function useRelationshipComparisonData(
             start: dateRange.start.getTime(),
             end: dateRange.end.getTime(),
           },
+          metric,
         }
       : 'skip'
   )

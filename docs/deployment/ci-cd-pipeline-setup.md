@@ -20,7 +20,7 @@ graph TB
         A[Local Development] --> B[Feature Branch]
         B --> C[Pull Request]
     end
-    
+
     subgraph "CI Pipeline"
         C --> D[Quality Checks]
         D --> E[Unit Tests]
@@ -28,7 +28,7 @@ graph TB
         F --> G[E2E Tests]
         G --> H[Security Scan]
     end
-    
+
     subgraph "CD Pipeline"
         H --> I{PR Approved?}
         I -->|Yes| J[Deploy to Staging]
@@ -38,7 +38,7 @@ graph TB
         M --> N[Production Smoke Tests]
         N --> O[Post-Deploy Monitoring]
     end
-    
+
     subgraph "Rollback"
         O --> P{Health Check OK?}
         P -->|No| Q[Automatic Rollback]
@@ -146,7 +146,7 @@ jobs:
     name: Quality Checks
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -197,7 +197,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: quality-checks
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -236,10 +236,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: unit-tests
-    
+
     services:
       # Add any required services here
-      
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -265,7 +265,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: integration-tests
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -302,7 +302,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: quality-checks
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -334,7 +334,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: quality-checks
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -386,7 +386,7 @@ jobs:
     environment:
       name: staging
       url: ${{ steps.deploy.outputs.url }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -447,7 +447,7 @@ jobs:
         with:
           status: failure
           webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
-          text: "Staging deployment failed for PR #${{ github.event.number }}"
+          text: 'Staging deployment failed for PR #${{ github.event.number }}'
 ```
 
 ### 3. Production Deployment Workflow
@@ -477,7 +477,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     if: ${{ !inputs.skip_tests }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -518,7 +518,7 @@ jobs:
     environment:
       name: production
       url: https://yourdomain.com
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -581,7 +581,7 @@ jobs:
           webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
           text: |
             🚀 **Production Deployment Successful**
-            
+
             **URL**: https://yourdomain.com
             **Commit**: ${{ github.sha }}
             **Author**: ${{ github.actor }}
@@ -597,7 +597,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [deploy-production]
     if: failure()
-    
+
     steps:
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
@@ -618,7 +618,7 @@ jobs:
           webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
           text: |
             🚨 **Production Deployment Failed - Rollback Initiated**
-            
+
             **Failed Commit**: ${{ github.sha }}
             **Author**: ${{ github.actor }}
             **Action**: Automatic rollback completed
@@ -632,7 +632,7 @@ name: Performance Testing
 
 on:
   schedule:
-    - cron: '0 2 * * *'  # Daily at 2 AM
+    - cron: '0 2 * * *' # Daily at 2 AM
   workflow_dispatch:
 
 jobs:
@@ -640,7 +640,7 @@ jobs:
     name: Lighthouse CI
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -662,7 +662,7 @@ jobs:
     name: Bundle Analysis
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -691,7 +691,7 @@ jobs:
     name: API Performance Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -722,15 +722,15 @@ environments:
     branches: [develop, feature/*]
     auto_deploy: true
     convex_deployment: dev
-    
+
   staging:
     branches: [main]
     auto_deploy: pull_request
     convex_deployment: staging
-    
+
   production:
     branches: [main]
-    auto_deploy: false  # Manual approval required
+    auto_deploy: false # Manual approval required
     convex_deployment: production
 ```
 
@@ -782,19 +782,19 @@ quality_gates:
   - name: Code Coverage
     threshold: 80%
     action: fail
-    
+
   - name: ESLint Errors
     threshold: 0
     action: fail
-    
+
   - name: TypeScript Errors
     threshold: 0
     action: fail
-    
+
   - name: Bundle Size
     threshold: 1MB
     action: warn
-    
+
   - name: Performance Score
     threshold: 90
     action: warn
@@ -874,18 +874,18 @@ jobs:
         run: |
           # Deploy new version to green environment
           vercel deploy --token=${{ secrets.VERCEL_TOKEN }}
-      
+
       - name: Run health checks on green
         run: |
           # Comprehensive health checks
           npm run test:smoke
           npm run test:performance
-      
+
       - name: Switch traffic to green
         run: |
           # Promote green to production
           vercel alias set green.yourdomain.com yourdomain.com
-      
+
       - name: Monitor production metrics
         run: |
           # Monitor for 5 minutes
@@ -908,12 +908,12 @@ jobs:
         run: |
           # Deploy to canary environment
           vercel deploy --token=${{ secrets.VERCEL_TOKEN }}
-      
+
       - name: Route 10% traffic to canary
         run: |
           # Configure traffic splitting
           # This would integrate with your load balancer/CDN
-          
+
       - name: Monitor canary metrics
         run: |
           # Monitor error rates, performance
@@ -931,7 +931,7 @@ name: Notification Workflow
 
 on:
   workflow_run:
-    workflows: ["Deploy to Production"]
+    workflows: ['Deploy to Production']
     types: [completed]
 
 jobs:
@@ -978,7 +978,7 @@ runs:
       run: |
         start_time=$(date +%s)
         end_time=$((start_time + ${{ inputs.duration }}))
-        
+
         while [ $(date +%s) -lt $end_time ]; do
           response=$(curl -s -o /dev/null -w "%{http_code}" ${{ inputs.url }})
           
@@ -990,7 +990,7 @@ runs:
           echo "✅ Health check passed: HTTP $response"
           sleep 30
         done
-        
+
         echo "✅ Monitoring completed successfully"
 ```
 
@@ -1002,13 +1002,13 @@ performance-monitoring:
   name: Performance Monitoring
   runs-on: ubuntu-latest
   if: github.ref == 'refs/heads/main'
-  
+
   steps:
     - name: Monitor Core Web Vitals
       run: |
         # Use Lighthouse CI or similar tool
         npx lhci autorun --collect.url=https://yourdomain.com
-    
+
     - name: Check API performance
       run: |
         # Monitor API response times

@@ -46,25 +46,25 @@ graph TB
         A[Next.js 15 App] --> B[Static Assets]
         A --> C[Serverless Functions]
     end
-    
+
     subgraph "Backend - Convex"
         D[Real-time Database] --> E[Serverless Functions]
         E --> F[File Storage]
     end
-    
+
     subgraph "Authentication - Clerk"
         G[Auth Management] --> H[User Sync Webhooks]
     end
-    
+
     subgraph "AI Services - Google Cloud"
         I[Gemini Flash] --> J[Sentiment Analysis]
     end
-    
+
     subgraph "Monitoring"
         K[Vercel Analytics] --> L[Performance Metrics]
         M[Convex Dashboard] --> N[Real-time Logs]
     end
-    
+
     A --> D
     A --> G
     E --> I
@@ -307,12 +307,12 @@ alerts:
     condition: error_rate > 5%
     duration: 5m
     channels: [slack, email]
-  
+
   - name: Slow API Response
     condition: p95_response_time > 2000ms
     duration: 2m
     channels: [slack]
-  
+
   - name: Low User Activity
     condition: daily_active_users < 50
     duration: 1h
@@ -329,18 +329,20 @@ alerts:
 // convex/schema.ts - Adding new fields
 export default defineSchema({
   journalEntries: defineTable({
-    userId: v.id("users"),
+    userId: v.id('users'),
     content: v.string(),
     mood: v.number(),
     tags: v.array(v.string()),
-    relationshipIds: v.array(v.id("relationships")),
+    relationshipIds: v.array(v.id('relationships')),
     // New field - nullable for backward compatibility
-    sentiment: v.optional(v.object({
-      score: v.number(),
-      confidence: v.number(),
-    })),
+    sentiment: v.optional(
+      v.object({
+        score: v.number(),
+        confidence: v.number(),
+      })
+    ),
   }),
-});
+})
 ```
 
 #### Migration Process
@@ -420,7 +422,7 @@ export async function POST(req: Request) {
   }
 
   const wh = new Webhook(process.env.CLERK_WEBHOOK_SECRET!)
-  
+
   try {
     const evt = wh.verify(payload, headers)
     // Process webhook...
@@ -480,13 +482,13 @@ curl -H "Authorization: Bearer $CLERK_SECRET_KEY" \
 // Use indexes for common queries
 export default defineSchema({
   journalEntries: defineTable({
-    userId: v.id("users"),
+    userId: v.id('users'),
     createdAt: v.number(),
     // ... other fields
   })
-  .index("by_user_created", ["userId", "createdAt"])
-  .index("by_created", ["createdAt"]),
-});
+    .index('by_user_created', ['userId', 'createdAt'])
+    .index('by_created', ['createdAt']),
+})
 ```
 
 #### Frontend Performance
@@ -530,18 +532,16 @@ export default {
 ```typescript
 // Optimized query patterns
 export const getRecentEntries = query({
-  args: { userId: v.id("users"), limit: v.optional(v.number()) },
+  args: { userId: v.id('users'), limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
-    const limit = args.limit ?? 10;
+    const limit = args.limit ?? 10
     return await ctx.db
-      .query("journalEntries")
-      .withIndex("by_user_created", q => 
-        q.eq("userId", args.userId)
-      )
-      .order("desc")
-      .take(limit);
+      .query('journalEntries')
+      .withIndex('by_user_created', q => q.eq('userId', args.userId))
+      .order('desc')
+      .take(limit)
   },
-});
+})
 ```
 
 ### CDN and Asset Optimization

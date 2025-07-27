@@ -6,7 +6,10 @@ export default defineSchema({
     name: v.string(),
     email: v.string(),
     clerkId: v.string(),
+    tier: v.optional(v.union(v.literal('free'), v.literal('premium'))), // Subscription tier
     createdAt: v.number(),
+    lastActiveAt: v.optional(v.number()), // For usage analytics
+    onboardingCompleted: v.optional(v.boolean()), // Track onboarding progress
     preferences: v.optional(
       v.object({
         theme: v.optional(v.union(v.literal('light'), v.literal('dark'))),
@@ -35,6 +38,7 @@ export default defineSchema({
         analyticsOptIn: v.optional(v.boolean()),
         marketingOptIn: v.optional(v.boolean()),
         searchIndexing: v.optional(v.boolean()),
+        aiAnalysisEnabled: v.optional(v.boolean()), // Global AI analysis toggle
         dataRetention: v.optional(
           v.union(
             v.literal('1year'),
@@ -44,7 +48,10 @@ export default defineSchema({
         ),
       })
     ),
-  }).index('by_clerk_id', ['clerkId']),
+  })
+    .index('by_clerk_id', ['clerkId'])
+    .index('by_tier', ['tier'])
+    .index('by_last_active', ['lastActiveAt']),
 
   relationships: defineTable({
     userId: v.id('users'),
@@ -57,19 +64,38 @@ export default defineSchema({
       v.literal('other')
     ),
     photo: v.optional(v.string()),
+    initials: v.optional(v.string()), // For privacy in AI analysis
+    isActive: v.optional(v.boolean()), // Allow soft deletion
+    metadata: v.optional(
+      v.object({
+        notes: v.optional(v.string()),
+        anniversary: v.optional(v.number()),
+        importance: v.optional(
+          v.union(v.literal('high'), v.literal('medium'), v.literal('low'))
+        ),
+        tags: v.optional(v.array(v.string())),
+      })
+    ),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index('by_user', ['userId'])
-    .index('by_type', ['type']),
+    .index('by_type', ['type'])
+    .index('by_user_active', ['userId', 'isActive']),
 
   journalEntries: defineTable({
     userId: v.id('users'),
-    relationshipId: v.id('relationships'),
+    relationshipId: v.optional(v.id('relationships')), // Allow general entries
     content: v.string(),
     mood: v.optional(v.string()),
     isPrivate: v.optional(v.boolean()),
+    allowAIAnalysis: v.optional(v.boolean()), // Per-entry AI control
     tags: v.optional(v.array(v.string())),
+    wordCount: v.optional(v.number()), // For analytics
+    status: v.optional(v.union(v.literal('draft'), v.literal('published'))),
+    entryType: v.optional(
+      v.union(v.literal('text'), v.literal('voice'), v.literal('mixed'))
+    ),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -77,83 +103,82 @@ export default defineSchema({
     .index('by_relationship', ['relationshipId'])
     .index('by_user_and_private', ['userId', 'isPrivate'])
     .index('by_user_created', ['userId', 'createdAt'])
+    .index('by_user_and_ai_analysis', ['userId', 'allowAIAnalysis'])
+    .index('by_status', ['status'])
     .searchIndex('search_content', {
       searchField: 'content',
       filterFields: ['userId', 'relationshipId', 'isPrivate'],
     }),
 
-  // AI Analysis Results
+  // AI Analysis Results - Enhanced for DSPy pipeline
   aiAnalysis: defineTable({
-    journalEntryId: v.id('journalEntries'),
-    relationshipId: v.id('relationships'),
+    entryId: v.id('journalEntries'),
     userId: v.id('users'),
-    analysisType: v.union(
-      v.literal('sentiment'),
-      v.literal('emotional_stability'),
-      v.literal('energy_impact'),
-      v.literal('conflict_resolution'),
-      v.literal('gratitude')
-    ),
-    analysisResults: v.object({
-      sentimentScore: v.optional(v.number()), // 1-10 scale
-      emotions: v.optional(v.array(v.string())),
-      confidence: v.number(), // 0-1 scale
-      rawResponse: v.string(),
-      // Type-specific results
-      stabilityScore: v.optional(v.number()), // 0-100 for emotional stability
-      energyScore: v.optional(v.number()), // 1-10 for energy impact
-      resolutionScore: v.optional(v.number()), // 1-10 for conflict resolution
-      gratitudeScore: v.optional(v.number()), // 1-10 for gratitude
-      additionalData: v.optional(
-        v.record(v.string(), v.union(v.string(), v.number(), v.boolean()))
-      ), // Flexible field for analysis-specific data
-    }),
-    metadata: v.object({
-      modelVersion: v.string(),
-      processingTime: v.number(),
-      tokenCount: v.optional(v.number()),
-      apiCosts: v.optional(v.number()),
-    }),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index('by_journal_entry', ['journalEntryId'])
-    .index('by_relationship', ['relationshipId'])
-    .index('by_user', ['userId'])
-    .index('by_analysis_type', ['analysisType'])
-    .index('by_user_and_type', ['userId', 'analysisType']),
-
-  // Relationship Health Scores (updated for AI-based scoring)
-  healthScores: defineTable({
-    relationshipId: v.id('relationships'),
-    userId: v.id('users'),
-    overallScore: v.number(), // 0-100 scale
-    componentScores: v.object({
-      sentiment: v.number(), // 0-100
-      emotionalStability: v.number(), // 0-100
-      energyImpact: v.number(), // 0-100
-      conflictResolution: v.number(), // 0-100
-      gratitude: v.number(), // 0-100
-      communicationFrequency: v.number(), // 0-100
-    }),
-    lastUpdated: v.number(),
-    dataPoints: v.number(), // Number of entries used in calculation
-    confidenceLevel: v.number(), // 0-1 overall confidence in the score
-    trendsData: v.optional(
+    relationshipId: v.optional(v.id('relationships')),
+    // Sentiment Analysis Results
+    sentimentScore: v.number(), // -1 to 1 scale (DSPy standard)
+    emotionalKeywords: v.array(v.string()),
+    confidenceLevel: v.number(), // 0-1 scale
+    reasoning: v.string(), // AI explanation
+    // Pattern Detection Results
+    patterns: v.optional(
       v.object({
-        improving: v.boolean(),
-        trendDirection: v.union(
-          v.literal('up'),
-          v.literal('down'),
-          v.literal('stable')
-        ),
-        changeRate: v.number(), // Percentage change over time
+        recurring_themes: v.array(v.string()),
+        emotional_triggers: v.array(v.string()),
+        communication_style: v.string(),
+        relationship_dynamics: v.array(v.string()),
       })
     ),
+    // Processing Metadata
+    analysisVersion: v.string(), // Track DSPy model versions
+    processingTime: v.number(), // milliseconds
+    tokensUsed: v.optional(v.number()),
+    apiCost: v.optional(v.number()),
+    status: v.union(
+      v.literal('processing'),
+      v.literal('completed'),
+      v.literal('failed')
+    ),
+    createdAt: v.number(),
   })
-    .index('by_relationship', ['relationshipId'])
+    .index('by_entry', ['entryId'])
     .index('by_user', ['userId'])
-    .index('by_score', ['overallScore']),
+    .index('by_relationship', ['relationshipId'])
+    .index('by_user_created', ['userId', 'createdAt'])
+    .index('by_status', ['status']),
+
+  // Relationship Health Scores - Enhanced for comprehensive tracking
+  healthScores: defineTable({
+    userId: v.id('users'),
+    relationshipId: v.id('relationships'),
+    score: v.number(), // 0-100 scale
+    contributingFactors: v.array(v.string()), // What influenced the score
+    trendDirection: v.union(
+      v.literal('improving'),
+      v.literal('stable'),
+      v.literal('declining')
+    ),
+    confidence: v.number(), // 0-1 confidence in accuracy
+    recommendations: v.array(v.string()), // Actionable suggestions
+    // Detailed factor breakdown
+    factorBreakdown: v.object({
+      communication: v.number(), // 0-100
+      emotional_support: v.number(), // 0-100
+      conflict_resolution: v.number(), // 0-100
+      trust_intimacy: v.number(), // 0-100
+      shared_growth: v.number(), // 0-100
+    }),
+    // Metadata for score calculation
+    entriesAnalyzed: v.number(), // Data points used
+    timeframeStart: v.number(), // Period start
+    timeframeEnd: v.number(), // Period end
+    lastCalculated: v.number(),
+    version: v.string(), // Algorithm version for consistency
+  })
+    .index('by_user', ['userId'])
+    .index('by_relationship', ['relationshipId'])
+    .index('by_score', ['score'])
+    .index('by_user_calculated', ['userId', 'lastCalculated']),
 
   // Reminder delivery tracking
   reminderLogs: defineTable({
@@ -312,4 +337,253 @@ export default defineSchema({
     .index('by_user_and_relationship', ['userId', 'relationshipId'])
     .index('by_expiry', ['cacheExpiresAt'])
     .index('by_user_and_type', ['userId', 'analyticsType']),
+
+  // Voice Journaling Support (Epic 4 - Premium Feature)
+  voiceEntries: defineTable({
+    userId: v.id('users'),
+    entryId: v.id('journalEntries'), // Links to main journal entry
+    audioFileUrl: v.string(), // Storage URL for audio file
+    transcription: v.string(), // Voice-to-text result
+    transcriptionConfidence: v.number(), // 0-1 accuracy score
+    duration: v.number(), // seconds
+    status: v.union(
+      v.literal('recording'),
+      v.literal('processing'),
+      v.literal('completed'),
+      v.literal('failed')
+    ),
+    metadata: v.object({
+      fileSize: v.number(), // bytes
+      audioFormat: v.string(), // mp3, wav, etc.
+      transcriptionService: v.string(), // Which service used
+      processingTime: v.number(), // ms for transcription
+    }),
+    createdAt: v.number(),
+  })
+    .index('by_user', ['userId'])
+    .index('by_entry', ['entryId'])
+    .index('by_status', ['status']),
+
+  // Smart Reminders (Epic 4)
+  reminders: defineTable({
+    userId: v.id('users'),
+    relationshipId: v.optional(v.id('relationships')), // Can be general or relationship-specific
+    type: v.union(
+      v.literal('gentle_nudge'),
+      v.literal('relationship_focus'),
+      v.literal('health_alert'),
+      v.literal('appreciation_prompt'),
+      v.literal('pattern_insight')
+    ),
+    prompt: v.string(), // The actual reminder message
+    scheduledTime: v.number(), // When to deliver
+    status: v.union(
+      v.literal('scheduled'),
+      v.literal('delivered'),
+      v.literal('clicked'),
+      v.literal('dismissed'),
+      v.literal('snoozed'),
+      v.literal('cancelled')
+    ),
+    settings: v.object({
+      priority: v.union(
+        v.literal('low'),
+        v.literal('medium'),
+        v.literal('high')
+      ),
+      canSnooze: v.boolean(),
+      snoozeOptions: v.array(v.string()), // ["1 hour", "tomorrow", "next week"]
+      expiresAt: v.optional(v.number()), // Auto-cancel if not delivered
+    }),
+    deliveryMetadata: v.optional(
+      v.object({
+        deliveredAt: v.number(),
+        clickedAt: v.optional(v.number()),
+        dismissedAt: v.optional(v.number()),
+        snoozedUntil: v.optional(v.number()),
+        responseAction: v.optional(v.string()), // What user did after reminder
+      })
+    ),
+    createdAt: v.number(),
+  })
+    .index('by_user', ['userId'])
+    .index('by_scheduled_time', ['scheduledTime'])
+    .index('by_status', ['status'])
+    .index('by_user_and_status', ['userId', 'status']),
+
+  // Actionable Insights & Suggestions (Epic 4)
+  insights: defineTable({
+    userId: v.id('users'),
+    relationshipId: v.optional(v.id('relationships')), // Can be general or relationship-specific
+    type: v.union(
+      v.literal('pattern_recognition'),
+      v.literal('improvement_suggestion'),
+      v.literal('conversation_starter'),
+      v.literal('warning_signal'),
+      v.literal('celebration_prompt'),
+      v.literal('trend_alert')
+    ),
+    title: v.string(), // Insight headline
+    description: v.string(), // Detailed explanation
+    actionableSteps: v.array(v.string()), // Specific things user can do
+    supportingData: v.object({
+      confidence: v.number(), // 0-1 how confident AI is
+      dataPoints: v.number(), // Number of entries analyzed
+      timeframe: v.string(), // "last 30 days", etc.
+      triggerEvents: v.array(v.string()), // What caused this insight
+    }),
+    priority: v.union(
+      v.literal('low'),
+      v.literal('medium'),
+      v.literal('high'),
+      v.literal('urgent')
+    ),
+    status: v.union(
+      v.literal('active'),
+      v.literal('dismissed'),
+      v.literal('acted_on'),
+      v.literal('expired')
+    ),
+    userInteraction: v.optional(
+      v.object({
+        viewedAt: v.optional(v.number()),
+        dismissedAt: v.optional(v.number()),
+        actedOnAt: v.optional(v.number()),
+        rating: v.optional(v.number()), // 1-5 user rating of insight quality
+        feedback: v.optional(v.string()), // User's text feedback
+      })
+    ),
+    expiresAt: v.number(), // When insight becomes stale
+    createdAt: v.number(),
+  })
+    .index('by_user', ['userId'])
+    .index('by_relationship', ['relationshipId'])
+    .index('by_type', ['type'])
+    .index('by_priority', ['priority'])
+    .index('by_status', ['status'])
+    .index('by_user_and_active', ['userId', 'status'])
+    .index('by_expires', ['expiresAt']),
+
+  // Conversation Starters & Scripts (Epic 4 - Actionable Guidance)
+  conversationStarters: defineTable({
+    userId: v.id('users'),
+    relationshipId: v.id('relationships'),
+    category: v.union(
+      v.literal('check_in'),
+      v.literal('appreciation'),
+      v.literal('difficult_topic'),
+      v.literal('deepening_connection'),
+      v.literal('conflict_resolution'),
+      v.literal('boundary_setting')
+    ),
+    prompt: v.string(), // The conversation starter
+    context: v.string(), // Why this was suggested
+    difficulty: v.union(
+      v.literal('easy'),
+      v.literal('medium'),
+      v.literal('challenging')
+    ),
+    suggestedTiming: v.string(), // "during a quiet moment", "over dinner", etc.
+    relatedInsights: v.array(v.id('insights')), // Connected to specific insights
+    userFeedback: v.optional(
+      v.object({
+        used: v.boolean(),
+        helpful: v.optional(v.boolean()),
+        outcome: v.optional(v.string()), // How the conversation went
+        rating: v.optional(v.number()), // 1-5 stars
+      })
+    ),
+    createdAt: v.number(),
+    expiresAt: v.number(), // Context-sensitive suggestions expire
+  })
+    .index('by_user', ['userId'])
+    .index('by_relationship', ['relationshipId'])
+    .index('by_category', ['category'])
+    .index('by_user_and_relationship', ['userId', 'relationshipId']),
+
+  // Progress Tracking for Relationship Goals (Epic 4)
+  relationshipGoals: defineTable({
+    userId: v.id('users'),
+    relationshipId: v.id('relationships'),
+    title: v.string(), // "Improve communication", "Show more appreciation"
+    description: v.string(),
+    category: v.union(
+      v.literal('communication'),
+      v.literal('appreciation'),
+      v.literal('conflict_resolution'),
+      v.literal('quality_time'),
+      v.literal('trust_building'),
+      v.literal('personal_growth')
+    ),
+    targetMetric: v.object({
+      type: v.string(), // "health_score_increase", "entry_frequency", "positive_sentiment"
+      target: v.number(), // Target value
+      current: v.number(), // Current value
+      unit: v.string(), // "points", "entries per week", "percentage"
+    }),
+    milestones: v.array(
+      v.object({
+        title: v.string(),
+        target: v.number(),
+        achieved: v.boolean(),
+        achievedAt: v.optional(v.number()),
+      })
+    ),
+    status: v.union(
+      v.literal('active'),
+      v.literal('completed'),
+      v.literal('paused'),
+      v.literal('cancelled')
+    ),
+    targetDate: v.optional(v.number()),
+    createdAt: v.number(),
+    completedAt: v.optional(v.number()),
+  })
+    .index('by_user', ['userId'])
+    .index('by_relationship', ['relationshipId'])
+    .index('by_status', ['status'])
+    .index('by_user_and_status', ['userId', 'status']),
+
+  // User Usage Analytics (for Premium insights and product optimization)
+  usageAnalytics: defineTable({
+    userId: v.id('users'),
+    date: v.string(), // YYYY-MM-DD for daily aggregation
+    metrics: v.object({
+      journalEntries: v.number(),
+      voiceEntries: v.number(),
+      dashboardViews: v.number(),
+      insightsViewed: v.number(),
+      remindersReceived: v.number(),
+      remindersActedOn: v.number(),
+      relationshipsViewed: v.array(v.id('relationships')),
+      timeSpentMinutes: v.number(),
+      featuresUsed: v.array(v.string()), // Track feature adoption
+    }),
+    sessionCount: v.number(),
+    lastUpdated: v.number(),
+  })
+    .index('by_user', ['userId'])
+    .index('by_date', ['date'])
+    .index('by_user_and_date', ['userId', 'date']),
+
+  // Feature Flags & A/B Testing (for Epic 4 advanced features)
+  userFeatureFlags: defineTable({
+    userId: v.id('users'),
+    flags: v.object({
+      advancedAnalytics: v.boolean(),
+      voiceJournaling: v.boolean(),
+      smartReminders: v.boolean(),
+      conversationStarters: v.boolean(),
+      relationshipGoals: v.boolean(),
+      betaFeatures: v.boolean(),
+    }),
+    abTestGroups: v.optional(
+      v.object({
+        reminderAlgorithm: v.optional(v.string()), // "v1", "v2", "control"
+        insightGeneration: v.optional(v.string()),
+        dashboardLayout: v.optional(v.string()),
+      })
+    ),
+    lastUpdated: v.number(),
+  }).index('by_user', ['userId']),
 })

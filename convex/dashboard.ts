@@ -258,16 +258,16 @@ export const getDashboardTrends = query({
         if (!acc[timeGroup]) {
           acc[timeGroup] = {}
         }
-        if (!acc[timeGroup][relationshipId]) {
-          acc[timeGroup][relationshipId] = {
+        if (!acc[timeGroup][relationshipId as string]) {
+          acc[timeGroup][relationshipId as string] = {
             scores: [],
             relationshipName: relationshipMap.get(relationshipId) || 'Unknown',
           }
         }
 
-        if (analysis.analysisResults.sentimentScore) {
-          acc[timeGroup][relationshipId].scores.push(
-            analysis.analysisResults.sentimentScore * 10 // Convert 1-10 to 10-100
+        if (analysis.sentimentScore) {
+          acc[timeGroup][relationshipId as string].scores.push(
+            analysis.sentimentScore * 10 // Convert -1 to 1 range to 0-10, then to 0-100
           )
         }
 
@@ -343,9 +343,7 @@ export const getRecentActivity = query({
     const analysisPromises = recentEntries.map((entry: any) =>
       ctx.db
         .query('aiAnalysis')
-        .withIndex('by_journal_entry', (q: any) =>
-          q.eq('journalEntryId', entry._id)
-        )
+        .withIndex('by_entry', (q: any) => q.eq('entryId', entry._id))
         .collect()
     )
 
@@ -371,7 +369,7 @@ export const getRecentActivity = query({
       const sentimentAnalysis = analyses.find(
         (a: any) => a.analysisType === 'sentiment'
       )
-      const sentimentScore = sentimentAnalysis?.analysisResults.sentimentScore
+      const sentimentScore = sentimentAnalysis?.sentimentScore
 
       return {
         ...entry,
@@ -382,8 +380,8 @@ export const getRecentActivity = query({
           sentimentScore: sentimentScore
             ? Math.round(sentimentScore * 10)
             : null, // Convert to 0-100
-          emotions: sentimentAnalysis?.analysisResults.emotions || [],
-          confidence: sentimentAnalysis?.analysisResults.confidence || null,
+          emotions: sentimentAnalysis?.emotionalKeywords || [],
+          confidence: sentimentAnalysis?.confidenceLevel || null,
         },
         preview:
           entry.content.substring(0, 150) +

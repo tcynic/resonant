@@ -50,12 +50,17 @@ export type MoodType =
 // Journal Entry types
 export interface JournalEntry {
   _id: string
+  _creationTime: number
   userId: string
-  relationshipId: string
+  relationshipId?: string
   content: string
   mood?: string
   isPrivate?: boolean
   tags?: string[]
+  allowAIAnalysis?: boolean
+  wordCount?: number
+  status?: 'draft' | 'published'
+  entryType?: 'text' | 'voice' | 'mixed'
   createdAt: number
   updatedAt: number
 }
@@ -282,4 +287,151 @@ export interface DashboardStats {
     stableRelationships: number
   }
   lastUpdated: number
+}
+
+// User onboarding types
+export interface CompleteOnboardingArgs {
+  userId: string
+  preferences?: {
+    reminderFrequency: string
+    preferredTime: string
+    timezone: string
+  }
+}
+
+// User feature flags
+export interface UserFeatureFlags {
+  conversationStarters: boolean
+  relationshipGoals: boolean
+  advancedAnalytics: boolean
+  voiceJournaling: boolean
+  smartReminders: boolean
+  betaFeatures: boolean
+}
+
+// Convex user type (matches database schema)
+export interface ConvexUser {
+  _id: string
+  clerkId: string
+  name: string
+  email: string
+  createdAt: number
+}
+
+// Additional argument types for Convex functions
+export interface CreateUserArgs {
+  clerkId: string
+  name: string
+  email: string
+}
+
+export interface UpdateUserPreferencesArgs {
+  userId: string
+  preferences: Partial<{
+    theme: 'light' | 'dark'
+    notifications: boolean
+    language: string
+    dataSharing: boolean
+    analyticsOptIn: boolean
+    marketingOptIn: boolean
+    searchIndexing: boolean
+    dataRetention: '1year' | '3years' | 'indefinite'
+  }>
+}
+
+// Relationship arguments
+export interface CreateRelationshipArgs {
+  userId: string
+  name: string
+  type: RelationshipType
+  photo?: string
+}
+
+export interface UpdateRelationshipArgs {
+  relationshipId: string
+  userId: string
+  name?: string
+  type?: RelationshipType
+  photo?: string
+}
+
+export interface GetRelationshipsByUserArgs {
+  userId: string
+  type?: RelationshipType
+  limit?: number
+  offset?: number
+}
+
+// Journal entry arguments
+export interface CreateJournalEntryArgs {
+  userId: string
+  relationshipId: string
+  content: string
+  mood?: string
+  isPrivate?: boolean
+  tags?: string[]
+}
+
+export interface UpdateJournalEntryArgs {
+  entryId: string
+  userId: string
+  content?: string
+  mood?: string
+  isPrivate?: boolean
+  tags?: string[]
+}
+
+// Search filters
+export interface SearchFilters {
+  relationshipId?: string
+  mood?: string
+  tags?: string[]
+  startDate?: number
+  endDate?: number
+  isPrivate?: boolean
+}
+
+// Insight types
+export interface Insight {
+  _id: string
+  userId: string
+  relationshipId?: string
+  type: 'pattern_recognition' | 'improvement_suggestion' | 'conversation_starter' | 'warning_signal' | 'celebration_prompt' | 'trend_alert'
+  priority: 'urgent' | 'high' | 'medium' | 'low'
+  title: string
+  description: string
+  actionableSteps: string[]
+  supportingData: {
+    confidence: number
+    dataPoints: number
+    timeframe: string
+    triggerEvents: string[]
+  }
+  status: 'active' | 'dismissed' | 'acted_on' | 'expired'
+  userInteraction?: {
+    viewedAt?: number
+    dismissedAt?: number
+    actedOnAt?: number
+    rating?: number
+    feedback?: string
+  }
+  createdAt: number
+  expiresAt: number
+}
+
+export interface GetActiveInsightsArgs {
+  userId: string
+  relationshipId?: string
+  type?: Insight['type']
+}
+
+export interface RateInsightArgs {
+  insightId: string
+  rating: number
+  feedback?: string
+}
+
+export interface MarkInsightActedOnArgs {
+  insightId: string
+  feedback?: string
 }

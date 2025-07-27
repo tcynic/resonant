@@ -37,7 +37,69 @@ describe('DataExport', () => {
   const mockUser = {
     id: 'user_123',
     primaryEmailAddress: { emailAddress: 'test@example.com' },
-  }
+    externalId: null,
+    primaryEmailAddressId: 'email_123',
+    primaryPhoneNumberId: null,
+    primaryPhoneNumber: null,
+    primaryWeb3WalletId: null,
+    primaryWeb3Wallet: null,
+    username: null,
+    firstName: 'Test',
+    lastName: 'User',
+    fullName: 'Test User',
+    imageUrl: '',
+    hasImage: false,
+    profileImageUrl: '',
+    publicMetadata: {},
+    privateMetadata: {},
+    unsafeMetadata: {},
+    emailAddresses: [{ emailAddress: 'test@example.com' }],
+    phoneNumbers: [],
+    web3Wallets: [],
+    externalAccounts: [],
+    samlAccounts: [],
+    enterpriseAccounts: [],
+    passkeys: [],
+    organizationMemberships: [],
+    passwordEnabled: true,
+    twoFactorEnabled: false,
+    totpEnabled: false,
+    backupCodeEnabled: false,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    lastSignInAt: new Date(),
+    lastActiveAt: new Date(),
+    banned: false,
+    locked: false,
+    deleteSelfEnabled: true,
+    createOrganizationEnabled: true,
+    verification: null,
+    createOrganization: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    getSessions: jest.fn(),
+    getOrganizationMemberships: jest.fn(),
+    createExternalAccount: jest.fn(),
+    getOrCreateOrganization: jest.fn(),
+    reload: jest.fn(),
+    setProfileImage: jest.fn(),
+    destroy: jest.fn(),
+    updatePassword: jest.fn(),
+    removePassword: jest.fn(),
+    createEmailAddress: jest.fn(),
+    createPhoneNumber: jest.fn(),
+    createWeb3Wallet: jest.fn(),
+    createTOTP: jest.fn(),
+    disableTOTP: jest.fn(),
+    createBackupCode: jest.fn(),
+    createPasskey: jest.fn(),
+    getFirstName: jest.fn(),
+    getLastName: jest.fn(),
+    getFullName: jest.fn(),
+    getInitials: jest.fn(),
+    hasVerifiedEmailAddress: jest.fn(),
+    hasVerifiedPhoneNumber: jest.fn()
+  } as any
 
   const mockUserData = {
     _id: 'convex_user_123',
@@ -76,14 +138,17 @@ describe('DataExport', () => {
   beforeEach(() => {
     jest.clearAllMocks()
 
-    mockUseUser.mockReturnValue({ user: mockUser, isLoaded: true })
-    mockUseQuery.mockImplementation((api, args) => {
-      if (args === 'skip') return null
-      if (api.toString().includes('getUserByClerkId')) return mockUserData
-      if (api.toString().includes('getExportStatistics')) return mockExportStats
+    mockUseUser.mockReturnValue({ user: mockUser, isLoaded: true, isSignedIn: true })
+    mockUseQuery.mockImplementation((api: any, ...args: any[]) => {
+      if (args[0] === 'skip') return null
+      if (api && typeof api === 'object' && 'toString' in api && api.toString().includes('getUserByClerkId')) return mockUserData
+      if (api && typeof api === 'object' && 'toString' in api && api.toString().includes('getExportStatistics')) return mockExportStats
       return null
     })
-    mockUseMutation.mockReturnValue(mockCreateExport)
+    mockUseMutation.mockReturnValue({
+      ...mockCreateExport,
+      withOptimisticUpdate: jest.fn().mockReturnValue(mockCreateExport),
+    } as any)
     mockCreateExport.mockResolvedValue(mockExportResult)
   })
 
@@ -285,7 +350,7 @@ describe('DataExport', () => {
   })
 
   it('should handle missing user data gracefully', () => {
-    mockUseUser.mockReturnValue({ user: null, isLoaded: true })
+    mockUseUser.mockReturnValue({ user: null, isLoaded: true, isSignedIn: false })
     mockUseQuery.mockReturnValue(null)
 
     render(<DataExport />)
@@ -343,10 +408,18 @@ describe('DataExport', () => {
 
     // Mock user without email
     const userWithoutEmail = {
-      id: 'user_123',
+      ...mockUser,
+      id: 'user_456',
       primaryEmailAddress: null,
-    }
-    mockUseUser.mockReturnValue({ user: userWithoutEmail, isLoaded: true })
+      primaryEmailAddressId: null,
+      firstName: null,
+      lastName: null,
+      fullName: null,
+      emailAddresses: [],
+      passwordEnabled: false,
+      lastSignInAt: null,
+    } as any
+    mockUseUser.mockReturnValue({ user: userWithoutEmail, isLoaded: true, isSignedIn: true })
 
     render(<DataExport />)
 

@@ -17,24 +17,24 @@ graph TD
     A --> D[Spacing]
     A --> E[Layout]
     A --> F[Effects]
-    
+
     B --> B1[Semantic Colors]
     B --> B2[Brand Colors]
     B --> B3[Functional Colors]
-    
+
     C --> C1[Font Families]
     C --> C2[Font Sizes]
     C --> C3[Font Weights]
     C --> C4[Line Heights]
-    
+
     D --> D1[Component Spacing]
     D --> D2[Layout Spacing]
     D --> D3[Responsive Spacing]
-    
+
     E --> E1[Breakpoints]
     E --> E2[Container Sizes]
     E --> E3[Grid Systems]
-    
+
     F --> F1[Shadows]
     F --> F2[Border Radius]
     F --> F3[Transitions]
@@ -48,16 +48,16 @@ Create the main theme configuration using the `@theme` directive:
 
 ```css
 /* src/styles/theme.css */
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
   /* === COLOR TOKENS === */
-  
+
   /* Brand Colors */
   --color-brand-primary: #3b82f6;
   --color-brand-secondary: #8b5cf6;
   --color-brand-accent: #10b981;
-  
+
   /* Semantic Colors */
   --color-primary: var(--color-brand-primary);
   --color-primary-foreground: #ffffff;
@@ -67,7 +67,7 @@ Create the main theme configuration using the `@theme` directive:
   --color-muted-foreground: #64748b;
   --color-accent: #f1f5f9;
   --color-accent-foreground: #0f172a;
-  
+
   /* Background Colors */
   --color-background: #ffffff;
   --color-foreground: #0f172a;
@@ -75,12 +75,12 @@ Create the main theme configuration using the `@theme` directive:
   --color-card-foreground: #0f172a;
   --color-popover: #ffffff;
   --color-popover-foreground: #0f172a;
-  
+
   /* Border Colors */
   --color-border: #e2e8f0;
   --color-input: #e2e8f0;
   --color-ring: #3b82f6;
-  
+
   /* Status Colors */
   --color-destructive: #ef4444;
   --color-destructive-foreground: #ffffff;
@@ -90,29 +90,29 @@ Create the main theme configuration using the `@theme` directive:
   --color-success-foreground: #ffffff;
   --color-info: #3b82f6;
   --color-info-foreground: #ffffff;
-  
+
   /* === TYPOGRAPHY TOKENS === */
-  
+
   /* Font Families */
   --font-sans: ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, 'SF Mono', 'Consolas', monospace;
-  
+
   /* Font Sizes */
-  --font-size-xs: 0.75rem;      /* 12px */
-  --font-size-sm: 0.875rem;     /* 14px */
-  --font-size-base: 1rem;       /* 16px */
-  --font-size-lg: 1.125rem;     /* 18px */
-  --font-size-xl: 1.25rem;      /* 20px */
-  --font-size-2xl: 1.5rem;      /* 24px */
-  --font-size-3xl: 1.875rem;    /* 30px */
-  --font-size-4xl: 2.25rem;     /* 36px */
-  
+  --font-size-xs: 0.75rem; /* 12px */
+  --font-size-sm: 0.875rem; /* 14px */
+  --font-size-base: 1rem; /* 16px */
+  --font-size-lg: 1.125rem; /* 18px */
+  --font-size-xl: 1.25rem; /* 20px */
+  --font-size-2xl: 1.5rem; /* 24px */
+  --font-size-3xl: 1.875rem; /* 30px */
+  --font-size-4xl: 2.25rem; /* 36px */
+
   /* Font Weights */
   --font-weight-normal: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
-  
+
   /* Line Heights */
   --line-height-none: 1;
   --line-height-tight: 1.25;
@@ -120,32 +120,32 @@ Create the main theme configuration using the `@theme` directive:
   --line-height-normal: 1.5;
   --line-height-relaxed: 1.625;
   --line-height-loose: 2;
-  
+
   /* === SPACING TOKENS === */
-  
+
   /* Base Spacing Scale */
   --spacing-0: 0;
   --spacing-px: 1px;
-  --spacing-0_5: 0.125rem;      /* 2px */
-  --spacing-1: 0.25rem;         /* 4px */
-  --spacing-1_5: 0.375rem;      /* 6px */
-  --spacing-2: 0.5rem;          /* 8px */
-  --spacing-2_5: 0.625rem;      /* 10px */
-  --spacing-3: 0.75rem;         /* 12px */
-  --spacing-3_5: 0.875rem;      /* 14px */
-  --spacing-4: 1rem;            /* 16px */
-  --spacing-5: 1.25rem;         /* 20px */
-  --spacing-6: 1.5rem;          /* 24px */
-  --spacing-7: 1.75rem;         /* 28px */
-  --spacing-8: 2rem;            /* 32px */
-  --spacing-9: 2.25rem;         /* 36px */
-  --spacing-10: 2.5rem;         /* 40px */
-  --spacing-12: 3rem;           /* 48px */
-  --spacing-16: 4rem;           /* 64px */
-  --spacing-20: 5rem;           /* 80px */
-  --spacing-24: 6rem;           /* 96px */
-  --spacing-32: 8rem;           /* 128px */
-  
+  --spacing-0_5: 0.125rem; /* 2px */
+  --spacing-1: 0.25rem; /* 4px */
+  --spacing-1_5: 0.375rem; /* 6px */
+  --spacing-2: 0.5rem; /* 8px */
+  --spacing-2_5: 0.625rem; /* 10px */
+  --spacing-3: 0.75rem; /* 12px */
+  --spacing-3_5: 0.875rem; /* 14px */
+  --spacing-4: 1rem; /* 16px */
+  --spacing-5: 1.25rem; /* 20px */
+  --spacing-6: 1.5rem; /* 24px */
+  --spacing-7: 1.75rem; /* 28px */
+  --spacing-8: 2rem; /* 32px */
+  --spacing-9: 2.25rem; /* 36px */
+  --spacing-10: 2.5rem; /* 40px */
+  --spacing-12: 3rem; /* 48px */
+  --spacing-16: 4rem; /* 64px */
+  --spacing-20: 5rem; /* 80px */
+  --spacing-24: 6rem; /* 96px */
+  --spacing-32: 8rem; /* 128px */
+
   /* Semantic Spacing */
   --spacing-xs: var(--spacing-1);
   --spacing-sm: var(--spacing-2);
@@ -153,53 +153,57 @@ Create the main theme configuration using the `@theme` directive:
   --spacing-lg: var(--spacing-6);
   --spacing-xl: var(--spacing-8);
   --spacing-2xl: var(--spacing-12);
-  
+
   /* === LAYOUT TOKENS === */
-  
+
   /* Breakpoints */
   --breakpoint-sm: 640px;
   --breakpoint-md: 768px;
   --breakpoint-lg: 1024px;
   --breakpoint-xl: 1280px;
   --breakpoint-2xl: 1536px;
-  
+
   /* Container Sizes */
   --container-sm: 640px;
   --container-md: 768px;
   --container-lg: 1024px;
   --container-xl: 1280px;
   --container-2xl: 1536px;
-  
+
   /* === EFFECTS TOKENS === */
-  
+
   /* Shadows */
   --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-lg:
+    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl:
+    0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
   --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
-  
+
   /* Border Radius */
   --radius-none: 0;
-  --radius-sm: 0.125rem;         /* 2px */
-  --radius-base: 0.25rem;        /* 4px */
-  --radius-md: 0.375rem;         /* 6px */
-  --radius-lg: 0.5rem;           /* 8px */
-  --radius-xl: 0.75rem;          /* 12px */
-  --radius-2xl: 1rem;            /* 16px */
-  --radius-3xl: 1.5rem;          /* 24px */
+  --radius-sm: 0.125rem; /* 2px */
+  --radius-base: 0.25rem; /* 4px */
+  --radius-md: 0.375rem; /* 6px */
+  --radius-lg: 0.5rem; /* 8px */
+  --radius-xl: 0.75rem; /* 12px */
+  --radius-2xl: 1rem; /* 16px */
+  --radius-3xl: 1.5rem; /* 24px */
   --radius-full: 9999px;
-  
+
   /* Transitions */
   --transition-none: none;
   --transition-all: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-colors: color, background-color, border-color, text-decoration-color, fill, stroke 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-colors:
+    color, background-color, border-color, text-decoration-color, fill,
+    stroke 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-opacity: opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-shadow: box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-transform: transform 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  
+
   /* Animation Durations */
   --duration-75: 75ms;
   --duration-100: 100ms;
@@ -235,7 +239,7 @@ Implement dark mode using CSS custom properties and data attributes:
 }
 
 /* Alternative approach using data attributes */
-[data-theme="dark"] {
+[data-theme='dark'] {
   --color-background: #0f172a;
   --color-foreground: #f8fafc;
   --color-card: #1e293b;
@@ -266,7 +270,7 @@ export const designTokens = {
       secondary: '#8b5cf6',
       accent: '#10b981',
     },
-    
+
     // Semantic colors
     primary: '#3b82f6',
     secondary: '#64748b',
@@ -276,25 +280,25 @@ export const designTokens = {
     warning: '#f59e0b',
     success: '#10b981',
     info: '#3b82f6',
-    
+
     // Background colors
     background: '#ffffff',
     foreground: '#0f172a',
     card: '#ffffff',
     popover: '#ffffff',
-    
+
     // Border colors
     border: '#e2e8f0',
     input: '#e2e8f0',
     ring: '#3b82f6',
   },
-  
+
   typography: {
     fontFamily: {
       sans: 'ui-sans-serif, system-ui, sans-serif',
       mono: "ui-monospace, 'SF Mono', 'Consolas', monospace",
     },
-    
+
     fontSize: {
       xs: '0.75rem',
       sm: '0.875rem',
@@ -305,14 +309,14 @@ export const designTokens = {
       '3xl': '1.875rem',
       '4xl': '2.25rem',
     },
-    
+
     fontWeight: {
       normal: 400,
       medium: 500,
       semibold: 600,
       bold: 700,
     },
-    
+
     lineHeight: {
       none: 1,
       tight: 1.25,
@@ -322,7 +326,7 @@ export const designTokens = {
       loose: 2,
     },
   },
-  
+
   spacing: {
     0: '0',
     px: '1px',
@@ -345,7 +349,7 @@ export const designTokens = {
     20: '5rem',
     24: '6rem',
     32: '8rem',
-    
+
     // Semantic spacing
     xs: '0.25rem',
     sm: '0.5rem',
@@ -354,7 +358,7 @@ export const designTokens = {
     xl: '2rem',
     '2xl': '3rem',
   },
-  
+
   effects: {
     boxShadow: {
       xs: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
@@ -365,7 +369,7 @@ export const designTokens = {
       '2xl': '0 25px 50px -12px rgb(0 0 0 / 0.25)',
       inner: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.05)',
     },
-    
+
     borderRadius: {
       none: '0',
       sm: '0.125rem',
@@ -377,7 +381,7 @@ export const designTokens = {
       '3xl': '1.5rem',
       full: '9999px',
     },
-    
+
     transitionDuration: {
       75: '75ms',
       100: '100ms',
@@ -389,14 +393,14 @@ export const designTokens = {
       1000: '1000ms',
     },
   },
-} as const;
+} as const
 
 // Type definitions for token usage
-export type ColorToken = keyof typeof designTokens.colors;
-export type SpacingToken = keyof typeof designTokens.spacing;
-export type FontSizeToken = keyof typeof designTokens.typography.fontSize;
-export type ShadowToken = keyof typeof designTokens.effects.boxShadow;
-export type RadiusToken = keyof typeof designTokens.effects.borderRadius;
+export type ColorToken = keyof typeof designTokens.colors
+export type SpacingToken = keyof typeof designTokens.spacing
+export type FontSizeToken = keyof typeof designTokens.typography.fontSize
+export type ShadowToken = keyof typeof designTokens.effects.boxShadow
+export type RadiusToken = keyof typeof designTokens.effects.borderRadius
 ```
 
 ## Usage Guidelines
@@ -480,13 +484,14 @@ Use tokens with responsive breakpoints:
 
 ```typescript
 // Responsive spacing using tokens
-const responsiveSpacing = 'p-4 md:p-6 lg:p-8';
+const responsiveSpacing = 'p-4 md:p-6 lg:p-8'
 
 // Responsive typography using tokens
-const responsiveText = 'text-sm md:text-base lg:text-lg';
+const responsiveText = 'text-sm md:text-base lg:text-lg'
 
 // Responsive layout using tokens
-const responsiveGrid = 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6';
+const responsiveGrid =
+  'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6'
 ```
 
 ## Theme Switching Implementation
@@ -527,12 +532,12 @@ export function ThemeProvider({
 
   useEffect(() => {
     const root = window.document.documentElement;
-    
+
     const updateTheme = () => {
       root.classList.remove('light', 'dark');
-      
+
       let resolvedTheme: 'light' | 'dark';
-      
+
       if (theme === 'system') {
         resolvedTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
           ? 'dark'
@@ -540,7 +545,7 @@ export function ThemeProvider({
       } else {
         resolvedTheme = theme;
       }
-      
+
       root.classList.add(resolvedTheme);
       root.setAttribute('data-theme', resolvedTheme);
       setActualTheme(resolvedTheme);
@@ -613,23 +618,27 @@ export function ThemeToggle() {
 
 ```typescript
 // scripts/validate-tokens.ts
-import { designTokens } from '../src/lib/design-tokens';
+import { designTokens } from '../src/lib/design-tokens'
 
 interface TokenValidationRule {
-  category: string;
-  rule: (value: any) => boolean;
-  message: string;
+  category: string
+  rule: (value: any) => boolean
+  message: string
 }
 
 const validationRules: TokenValidationRule[] = [
   {
     category: 'colors',
-    rule: (value: string) => /^#[0-9A-F]{6}$/i.test(value) || value.startsWith('rgb') || value.startsWith('hsl'),
+    rule: (value: string) =>
+      /^#[0-9A-F]{6}$/i.test(value) ||
+      value.startsWith('rgb') ||
+      value.startsWith('hsl'),
     message: 'Color values must be valid hex, rgb, or hsl values',
   },
   {
     category: 'spacing',
-    rule: (value: string) => /^\d+(\.\d+)?(rem|px|em)$/.test(value) || value === '0',
+    rule: (value: string) =>
+      /^\d+(\.\d+)?(rem|px|em)$/.test(value) || value === '0',
     message: 'Spacing values must be valid CSS units (rem, px, em) or 0',
   },
   {
@@ -637,40 +646,42 @@ const validationRules: TokenValidationRule[] = [
     rule: (value: string) => /^\d+(\.\d+)?(rem|px|em)$/.test(value),
     message: 'Font size values must be valid CSS units (rem, px, em)',
   },
-];
+]
 
 export function validateTokens() {
-  const errors: string[] = [];
+  const errors: string[] = []
 
   validationRules.forEach(rule => {
-    const categoryTokens = (designTokens as any)[rule.category];
-    
+    const categoryTokens = (designTokens as any)[rule.category]
+
     if (categoryTokens) {
       Object.entries(categoryTokens).forEach(([key, value]) => {
         if (typeof value === 'string' && !rule.rule(value)) {
-          errors.push(`${rule.category}.${key}: ${rule.message}`);
+          errors.push(`${rule.category}.${key}: ${rule.message}`)
         } else if (typeof value === 'object') {
           Object.entries(value).forEach(([nestedKey, nestedValue]) => {
             if (typeof nestedValue === 'string' && !rule.rule(nestedValue)) {
-              errors.push(`${rule.category}.${key}.${nestedKey}: ${rule.message}`);
+              errors.push(
+                `${rule.category}.${key}.${nestedKey}: ${rule.message}`
+              )
             }
-          });
+          })
         }
-      });
+      })
     }
-  });
+  })
 
-  return errors;
+  return errors
 }
 
 // Run validation
-const errors = validateTokens();
+const errors = validateTokens()
 if (errors.length > 0) {
-  console.error('Token validation errors:');
-  errors.forEach(error => console.error(`  - ${error}`));
-  process.exit(1);
+  console.error('Token validation errors:')
+  errors.forEach(error => console.error(`  - ${error}`))
+  process.exit(1)
 } else {
-  console.log('✅ All tokens are valid');
+  console.log('✅ All tokens are valid')
 }
 ```
 
@@ -678,61 +689,62 @@ if (errors.length > 0) {
 
 ```typescript
 // scripts/analyze-token-usage.ts
-import { glob } from 'glob';
-import { readFileSync } from 'fs';
+import { glob } from 'glob'
+import { readFileSync } from 'fs'
 
 interface TokenUsage {
-  token: string;
-  files: string[];
-  count: number;
+  token: string
+  files: string[]
+  count: number
 }
 
 export async function analyzeTokenUsage(): Promise<TokenUsage[]> {
-  const files = await glob(['src/**/*.{ts,tsx,js,jsx}', '!src/**/*.test.*']);
-  const tokenPattern = /(?:bg-|text-|border-|shadow-|p-|m-|px-|py-|pt-|pb-|pl-|pr-|mt-|mb-|ml-|mr-|space-|gap-|w-|h-|min-w-|min-h-|max-w-|max-h-|rounded-)([a-zA-Z0-9-]+)/g;
-  const tokenUsage = new Map<string, TokenUsage>();
+  const files = await glob(['src/**/*.{ts,tsx,js,jsx}', '!src/**/*.test.*'])
+  const tokenPattern =
+    /(?:bg-|text-|border-|shadow-|p-|m-|px-|py-|pt-|pb-|pl-|pr-|mt-|mb-|ml-|mr-|space-|gap-|w-|h-|min-w-|min-h-|max-w-|max-h-|rounded-)([a-zA-Z0-9-]+)/g
+  const tokenUsage = new Map<string, TokenUsage>()
 
   files.forEach(file => {
-    const content = readFileSync(file, 'utf-8');
-    const matches = content.matchAll(tokenPattern);
+    const content = readFileSync(file, 'utf-8')
+    const matches = content.matchAll(tokenPattern)
 
     for (const match of matches) {
-      const fullToken = match[0];
-      
+      const fullToken = match[0]
+
       if (!tokenUsage.has(fullToken)) {
         tokenUsage.set(fullToken, {
           token: fullToken,
           files: [],
           count: 0,
-        });
+        })
       }
 
-      const usage = tokenUsage.get(fullToken)!;
+      const usage = tokenUsage.get(fullToken)!
       if (!usage.files.includes(file)) {
-        usage.files.push(file);
+        usage.files.push(file)
       }
-      usage.count++;
+      usage.count++
     }
-  });
+  })
 
-  return Array.from(tokenUsage.values()).sort((a, b) => b.count - a.count);
+  return Array.from(tokenUsage.values()).sort((a, b) => b.count - a.count)
 }
 
 // Generate usage report
 analyzeTokenUsage().then(usage => {
-  console.log('Token Usage Report:');
-  console.log('==================');
-  
+  console.log('Token Usage Report:')
+  console.log('==================')
+
   usage.slice(0, 20).forEach(({ token, count, files }) => {
-    console.log(`${token}: ${count} uses across ${files.length} files`);
-  });
-  
-  const unusedTokens = usage.filter(u => u.count === 0);
+    console.log(`${token}: ${count} uses across ${files.length} files`)
+  })
+
+  const unusedTokens = usage.filter(u => u.count === 0)
   if (unusedTokens.length > 0) {
-    console.log('\nUnused tokens:');
-    unusedTokens.forEach(({ token }) => console.log(`  - ${token}`));
+    console.log('\nUnused tokens:')
+    unusedTokens.forEach(({ token }) => console.log(`  - ${token}`))
   }
-});
+})
 ```
 
 ## Best Practices
@@ -805,25 +817,25 @@ analyzeTokenUsage().then(usage => {
 ```typescript
 // Token debugging utility
 export function debugTokens() {
-  const root = document.documentElement;
-  const computedStyle = getComputedStyle(root);
-  
+  const root = document.documentElement
+  const computedStyle = getComputedStyle(root)
+
   const tokens = [
     '--color-primary',
     '--color-background',
     '--spacing-md',
     '--font-size-base',
-  ];
-  
+  ]
+
   tokens.forEach(token => {
-    const value = computedStyle.getPropertyValue(token);
-    console.log(`${token}: ${value}`);
-  });
+    const value = computedStyle.getPropertyValue(token)
+    console.log(`${token}: ${value}`)
+  })
 }
 
 // Usage in development
 if (process.env.NODE_ENV === 'development') {
-  (window as any).debugTokens = debugTokens;
+  ;(window as any).debugTokens = debugTokens
 }
 ```
 

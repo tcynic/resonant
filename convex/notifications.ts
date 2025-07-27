@@ -55,11 +55,36 @@ export const analyzeUserRelationshipsAttention = query({
       .withIndex('by_user', q => q.eq('userId', args.userId))
       .collect()
 
+    // Transform health scores to match expected interface
+    const transformedHealthScores = healthScores.map(hs => ({
+      relationshipId: hs.relationshipId,
+      overallScore: hs.score,
+      trendsData: {
+        improving: hs.trendDirection === 'improving',
+        trendDirection:
+          hs.trendDirection === 'improving'
+            ? ('up' as const)
+            : hs.trendDirection === 'declining'
+              ? ('down' as const)
+              : ('stable' as const),
+        changeRate: 0, // Would need to calculate from historical data
+      },
+      lastUpdated: hs.lastCalculated,
+    }))
+
+    // Transform entries to match expected interface
+    const transformedEntries = recentEntries
+      .filter(entry => entry.relationshipId !== undefined)
+      .map(entry => ({
+        relationshipId: entry.relationshipId!,
+        createdAt: entry.createdAt,
+      }))
+
     // Analyze which relationships need attention
     const analyses = analyzeRelationshipsNeedingAttention(
       relationships,
-      healthScores,
-      recentEntries
+      transformedHealthScores,
+      transformedEntries
     )
 
     return analyses.slice(0, 5) // Return top 5 relationships needing attention
@@ -391,11 +416,36 @@ export const generateSmartReminders = internalMutation({
         .withIndex('by_user', q => q.eq('userId', args.userId))
         .collect()
 
+      // Transform health scores to match expected interface
+      const transformedHealthScores = healthScores.map(hs => ({
+        relationshipId: hs.relationshipId,
+        overallScore: hs.score,
+        trendsData: {
+          improving: hs.trendDirection === 'improving',
+          trendDirection:
+            hs.trendDirection === 'improving'
+              ? ('up' as const)
+              : hs.trendDirection === 'declining'
+                ? ('down' as const)
+                : ('stable' as const),
+          changeRate: 0, // Would need to calculate from historical data
+        },
+        lastUpdated: hs.lastCalculated,
+      }))
+
+      // Transform entries to match expected interface
+      const transformedEntries = recentEntries
+        .filter(entry => entry.relationshipId !== undefined)
+        .map(entry => ({
+          relationshipId: entry.relationshipId!,
+          createdAt: entry.createdAt,
+        }))
+
       // Analyze which relationships need attention
       relationshipsAnalysis = analyzeRelationshipsNeedingAttention(
         relationships,
-        healthScores,
-        recentEntries
+        transformedHealthScores,
+        transformedEntries
       ).slice(0, 5) // Return top 5 relationships needing attention
     }
 

@@ -1,635 +1,416 @@
-/**
- * AI Analysis Functions for Convex Backend
- * Handles queue-based processing of journal entries for sentiment analysis
- */
-
+import { mutation, query, internalMutation } from './_generated/server'
 import { v } from 'convex/values'
-import {
-  mutation,
-  query,
-  action,
-  MutationCtx,
-  QueryCtx,
-  ActionCtx,
-} from './_generated/server'
 import { Id } from './_generated/dataModel'
-import {
-  AnalysisType,
-  AIAnalysisResults,
-  AIAnalysisMetadata,
-} from '../src/lib/types'
+import { internal } from './_generated/api'
 
-// Rate limiting configuration
-const RATE_LIMIT_CONFIG = {
-  maxRequestsPerMinute: parseInt(process.env.AI_ANALYSIS_RATE_LIMIT || '60'),
-  batchSize: parseInt(process.env.AI_ANALYSIS_BATCH_SIZE || '10'),
-  retryAttempts: 3,
-  retryDelayMs: 1000,
-}
-
-// Analysis queue status
-export type AnalysisQueueStatus =
-  | 'pending'
-  | 'processing'
-  | 'completed'
-  | 'failed'
-  | 'retrying'
-
-// Create AI analysis record
-export const createAnalysis = mutation({
+// Queue journal entry for AI analysis (Epic 2)
+export const queueAnalysis = mutation({
   args: {
-    journalEntryId: v.id('journalEntries'),
-    relationshipId: v.id('relationships'),
-    userId: v.id('users'),
-    analysisType: v.union(
-      v.literal('sentiment'),
-      v.literal('emotional_stability'),
-      v.literal('energy_impact'),
-      v.literal('conflict_resolution'),
-      v.literal('gratitude')
-    ),
-    analysisResults: v.object({
-      sentimentScore: v.optional(v.number()),
-      emotions: v.optional(v.array(v.string())),
-      confidence: v.number(),
-      rawResponse: v.string(),
-      stabilityScore: v.optional(v.number()),
-      energyScore: v.optional(v.number()),
-      resolutionScore: v.optional(v.number()),
-      gratitudeScore: v.optional(v.number()),
-      additionalData: v.optional(v.record(v.string(), v.string())),
-    }),
-    metadata: v.object({
-      modelVersion: v.string(),
-      processingTime: v.number(),
-      tokenCount: v.optional(v.number()),
-      apiCosts: v.optional(v.number()),
-    }),
-  },
-  handler: async (
-    ctx: MutationCtx,
-    args: {
-      journalEntryId: Id<'journalEntries'>
-      relationshipId: Id<'relationships'>
-      userId: Id<'users'>
-      analysisType:
-        | 'sentiment'
-        | 'emotional_stability'
-        | 'energy_impact'
-        | 'conflict_resolution'
-        | 'gratitude'
-      analysisResults: {
-        sentimentScore?: number
-        emotions?: string[]
-        confidence: number
-        rawResponse: string
-        stabilityScore?: number
-        energyScore?: number
-        resolutionScore?: number
-        gratitudeScore?: number
-        additionalData?: Record<string, any>
-      }
-      metadata: {
-        modelVersion: string
-        processingTime: number
-        tokenCount?: number
-        apiCosts?: number
-      }
-    }
-  ) => {
-    const now = Date.now()
-
-    return await ctx.db.insert('aiAnalysis', {
-      ...args,
-      createdAt: now,
-      updatedAt: now,
-    })
-  },
-})
-
-// Get analysis by journal entry
-export const getAnalysisByJournalEntry = query({
-  args: {
-    journalEntryId: v.id('journalEntries'),
-    analysisType: v.optional(
-      v.union(
-        v.literal('sentiment'),
-        v.literal('emotional_stability'),
-        v.literal('energy_impact'),
-        v.literal('conflict_resolution'),
-        v.literal('gratitude')
-      )
-    ),
-  },
-  handler: async (
-    ctx: QueryCtx,
-    args: {
-      journalEntryId: Id<'journalEntries'>
-      analysisType?:
-        | 'sentiment'
-        | 'emotional_stability'
-        | 'energy_impact'
-        | 'conflict_resolution'
-        | 'gratitude'
-    }
-  ) => {
-    if (args.analysisType) {
-      return await ctx.db
-        .query('aiAnalysis')
-        .withIndex('by_journal_entry', (q: any) =>
-          q.eq('journalEntryId', args.journalEntryId)
-        )
-        .filter((q: any) => q.eq(q.field('analysisType'), args.analysisType))
-        .first()
-    }
-
-    return await ctx.db
-      .query('aiAnalysis')
-      .withIndex('by_journal_entry', (q: any) =>
-        q.eq('journalEntryId', args.journalEntryId)
-      )
-      .collect()
-  },
-})
-
-// Get analyses by user and type
-export const getAnalysesByUser = query({
-  args: {
-    userId: v.id('users'),
-    analysisType: v.optional(
-      v.union(
-        v.literal('sentiment'),
-        v.literal('emotional_stability'),
-        v.literal('energy_impact'),
-        v.literal('conflict_resolution'),
-        v.literal('gratitude')
-      )
-    ),
-    limit: v.optional(v.number()),
-  },
-  handler: async (
-    ctx: QueryCtx,
-    args: {
-      userId: Id<'users'>
-      analysisType?:
-        | 'sentiment'
-        | 'emotional_stability'
-        | 'energy_impact'
-        | 'conflict_resolution'
-        | 'gratitude'
-      limit?: number
-    }
-  ) => {
-    let query = ctx.db
-      .query('aiAnalysis')
-      .withIndex('by_user', (q: any) => q.eq('userId', args.userId))
-
-    if (args.analysisType) {
-      query = query.filter((q: any) =>
-        q.eq(q.field('analysisType'), args.analysisType)
-      )
-    }
-
-    const results = await query.order('desc').take(args.limit || 50)
-
-    return results
-  },
-})
-
-// Get recent sentiment trends for relationship
-export const getSentimentTrends = query({
-  args: {
-    relationshipId: v.id('relationships'),
-    days: v.optional(v.number()),
-  },
-  handler: async (
-    ctx: QueryCtx,
-    args: { relationshipId: Id<'relationships'>; days?: number }
-  ) => {
-    const daysBack = args.days || 30
-    const cutoffTime = Date.now() - daysBack * 24 * 60 * 60 * 1000
-
-    const analyses = await ctx.db
-      .query('aiAnalysis')
-      .withIndex('by_relationship', (q: any) =>
-        q.eq('relationshipId', args.relationshipId)
-      )
-      .filter((q: any) =>
-        q.and(
-          q.eq(q.field('analysisType'), 'sentiment'),
-          q.gte(q.field('createdAt'), cutoffTime)
-        )
-      )
-      .order('desc')
-      .collect()
-
-    return analyses.map((analysis: any) => ({
-      sentimentScore: analysis.analysisResults.sentimentScore || 0,
-      confidence: analysis.analysisResults.confidence,
-      timestamp: analysis.createdAt,
-      emotions: analysis.analysisResults.emotions || [],
-    }))
-  },
-})
-
-// Analysis queue management
-export const queueAnalysisForJournalEntry = mutation({
-  args: {
-    journalEntryId: v.id('journalEntries'),
-    analysisTypes: v.array(
-      v.union(
-        v.literal('sentiment'),
-        v.literal('emotional_stability'),
-        v.literal('energy_impact'),
-        v.literal('conflict_resolution'),
-        v.literal('gratitude')
-      )
-    ),
+    entryId: v.id('journalEntries'),
     priority: v.optional(
       v.union(v.literal('high'), v.literal('normal'), v.literal('low'))
     ),
   },
-  handler: async (
-    ctx: MutationCtx,
-    args: {
-      journalEntryId: Id<'journalEntries'>
-      analysisTypes: (
-        | 'sentiment'
-        | 'emotional_stability'
-        | 'energy_impact'
-        | 'conflict_resolution'
-        | 'gratitude'
-      )[]
-      priority?: 'high' | 'normal' | 'low'
-    }
-  ) => {
-    // Get journal entry details
-    const journalEntry = await ctx.db.get(args.journalEntryId)
-    if (!journalEntry) {
+  handler: async (ctx, args) => {
+    const entry = await ctx.db.get(args.entryId)
+    if (!entry) {
       throw new Error('Journal entry not found')
     }
 
-    // Check if analyses already exist
-    const existingAnalyses = await ctx.db
+    // Check if user has AI analysis enabled
+    const user = await ctx.db.get(entry.userId)
+    if (!user?.preferences?.aiAnalysisEnabled) {
+      return { status: 'skipped', reason: 'AI analysis disabled' }
+    }
+
+    // Check if entry allows AI analysis
+    if (entry.allowAIAnalysis === false) {
+      return { status: 'skipped', reason: 'Entry marked private from AI' }
+    }
+
+    // Check if already analyzed
+    const existingAnalysis = await ctx.db
       .query('aiAnalysis')
-      .withIndex('by_journal_entry', (q: any) =>
-        q.eq('journalEntryId', args.journalEntryId)
-      )
-      .collect()
+      .withIndex('by_entry', q => q.eq('entryId', args.entryId))
+      .unique()
 
-    const existingTypes = new Set(
-      existingAnalyses.map((a: any) => a.analysisType)
-    )
-    const newAnalysisTypes = args.analysisTypes.filter(
-      type => !existingTypes.has(type)
-    )
-
-    if (newAnalysisTypes.length === 0) {
-      return { message: 'All requested analyses already exist', queuedCount: 0 }
+    if (existingAnalysis) {
+      return { status: 'skipped', reason: 'Already analyzed' }
     }
 
-    // Schedule analysis action for new types
-    const scheduledId = await ctx.scheduler.runAfter(
-      0,
-      'aiAnalysis:processAnalysisQueue' as any,
-      {
-        journalEntryId: args.journalEntryId,
-        relationshipId: journalEntry.relationshipId,
-        userId: journalEntry.userId,
-        analysisTypes: newAnalysisTypes,
-        priority: args.priority || 'normal',
-      }
-    )
+    // Create processing record
+    const analysisId = await ctx.db.insert('aiAnalysis', {
+      entryId: args.entryId,
+      userId: entry.userId,
+      relationshipId: entry.relationshipId,
+      sentimentScore: 0, // Placeholder
+      emotionalKeywords: [],
+      confidenceLevel: 0,
+      reasoning: '',
+      analysisVersion: 'dspy-v1.0',
+      processingTime: 0,
+      status: 'processing',
+      createdAt: Date.now(),
+    })
 
-    return {
-      message: `Queued ${newAnalysisTypes.length} analysis types`,
-      queuedCount: newAnalysisTypes.length,
-      scheduledId,
-      analysisTypes: newAnalysisTypes,
-    }
+    // Schedule the actual AI processing
+    const priority =
+      args.priority || (user.tier === 'premium' ? 'high' : 'normal')
+    await ctx.scheduler.runAfter(0, internal.aiAnalysis.processEntry, {
+      analysisId,
+      entryId: args.entryId,
+      priority,
+    })
+
+    return { status: 'queued', analysisId }
   },
 })
 
-// Process analysis queue (Convex action for external API calls)
-export const processAnalysisQueue = action({
-  args: {
-    journalEntryId: v.id('journalEntries'),
-    relationshipId: v.id('relationships'),
-    userId: v.id('users'),
-    analysisTypes: v.array(
-      v.union(
-        v.literal('sentiment'),
-        v.literal('emotional_stability'),
-        v.literal('energy_impact'),
-        v.literal('conflict_resolution'),
-        v.literal('gratitude')
-      )
-    ),
-    priority: v.optional(v.string()),
-    retryAttempt: v.optional(v.number()),
+// Get AI analysis for a journal entry
+export const getByEntry = query({
+  args: { entryId: v.id('journalEntries') },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query('aiAnalysis')
+      .withIndex('by_entry', q => q.eq('entryId', args.entryId))
+      .unique()
   },
-  handler: async (
-    ctx: ActionCtx,
-    args: {
-      journalEntryId: Id<'journalEntries'>
-      relationshipId: Id<'relationships'>
-      userId: Id<'users'>
-      analysisTypes: (
-        | 'sentiment'
-        | 'emotional_stability'
-        | 'energy_impact'
-        | 'conflict_resolution'
-        | 'gratitude'
-      )[]
-      priority?: string
-      retryAttempt?: number
-    }
-  ) => {
-    const { GeminiClient } = await import('../src/lib/ai/gemini-client')
-    const { RelationshipAnalyzer } = await import('../src/lib/ai/analysis')
+})
+
+// Get recent analyses for a user
+export const getRecentByUser = query({
+  args: {
+    userId: v.id('users'),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit || 20
+
+    return await ctx.db
+      .query('aiAnalysis')
+      .withIndex('by_user_created', q => q.eq('userId', args.userId))
+      .order('desc')
+      .filter(q => q.eq(q.field('status'), 'completed'))
+      .take(limit)
+  },
+})
+
+// Get analyses for a specific relationship
+export const getByRelationship = query({
+  args: {
+    relationshipId: v.id('relationships'),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit || 50
+
+    return await ctx.db
+      .query('aiAnalysis')
+      .withIndex('by_relationship', q =>
+        q.eq('relationshipId', args.relationshipId)
+      )
+      .order('desc')
+      .filter(q => q.eq(q.field('status'), 'completed'))
+      .take(limit)
+  },
+})
+
+// Internal function to process AI analysis (called by scheduler)
+export const processEntry = internalMutation({
+  args: {
+    analysisId: v.id('aiAnalysis'),
+    entryId: v.id('journalEntries'),
+    priority: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const startTime = Date.now()
 
     try {
-      // Get journal entry content
-      const journalEntry = await ctx.runQuery('journalEntries:getById' as any, {
-        id: args.journalEntryId,
-      })
+      const entry = await ctx.db.get(args.entryId)
+      const analysis = await ctx.db.get(args.analysisId)
 
-      if (!journalEntry) {
-        throw new Error('Journal entry not found')
+      if (!entry || !analysis) {
+        throw new Error('Entry or analysis record not found')
       }
 
-      // Initialize AI analyzer
-      const geminiClient = new GeminiClient()
-      const analyzer = new RelationshipAnalyzer(geminiClient)
-
-      // Process each analysis type
-      const results = []
-
-      for (const analysisType of args.analysisTypes) {
-        try {
-          let analysisResult: unknown
-          const startTime = Date.now()
-
-          switch (analysisType) {
-            case 'sentiment':
-              analysisResult = await analyzer.analyzeSentiment(
-                journalEntry.content
-              )
-              break
-            case 'emotional_stability':
-              // Get recent sentiment history for stability analysis
-              const sentimentHistory = await ctx.runQuery(
-                'aiAnalysis:getSentimentTrends' as any,
-                {
-                  relationshipId: args.relationshipId,
-                  days: 30,
-                }
-              )
-              analysisResult =
-                await analyzer.analyzeEmotionalStability(sentimentHistory)
-              break
-            case 'energy_impact':
-              analysisResult = await analyzer.analyzeEnergyImpact(
-                journalEntry.content
-              )
-              break
-            default:
-              // For conflict_resolution and gratitude, use sentiment analysis as base
-              analysisResult = await analyzer.analyzeSentiment(
-                journalEntry.content
-              )
-              break
-          }
-
-          const processingTime = Date.now() - startTime
-
-          // Create analysis record
-          const analysisId = await ctx.runMutation(
-            'aiAnalysis:createAnalysis' as any,
-            {
-              journalEntryId: args.journalEntryId,
-              relationshipId: args.relationshipId,
-              userId: args.userId,
-              analysisType,
-              analysisResults: {
-                sentimentScore:
-                  (analysisResult as any).sentiment_score ||
-                  (analysisResult as any).sentimentScore,
-                emotions:
-                  (analysisResult as any).emotions_detected ||
-                  (analysisResult as any).emotions ||
-                  [],
-                confidence: (analysisResult as any).confidence,
-                rawResponse: JSON.stringify(analysisResult),
-                stabilityScore: (analysisResult as any).stability_score,
-                energyScore: (analysisResult as any).energy_impact_score,
-                resolutionScore: (analysisResult as any).resolution_score,
-                gratitudeScore: (analysisResult as any).gratitude_score,
-              },
-              metadata: {
-                modelVersion: 'gemini-1.5-flash',
-                processingTime,
-                tokenCount: (analysisResult as any).usage?.totalTokenCount,
-                apiCosts: (analysisResult as any).usage?.estimatedCost,
-              },
-            }
-          )
-
-          results.push({
-            analysisType,
-            analysisId,
-            success: true,
-            processingTime,
-          })
-
-          // Rate limiting delay between requests
-          if (
-            args.analysisTypes.indexOf(analysisType) <
-            args.analysisTypes.length - 1
-          ) {
-            await new Promise(resolve => setTimeout(resolve, 1000))
-          }
-        } catch (error) {
-          console.error(`Analysis failed for type ${analysisType}:`, error)
-
-          results.push({
-            analysisType,
-            success: false,
-            error: error instanceof Error ? error.message : 'Unknown error',
-            retryAttempt: args.retryAttempt || 0,
-          })
-
-          // Schedule retry for failed analysis if under retry limit
-          const retryAttempt = (args.retryAttempt || 0) + 1
-          if (retryAttempt <= RATE_LIMIT_CONFIG.retryAttempts) {
-            const retryDelay =
-              RATE_LIMIT_CONFIG.retryDelayMs * Math.pow(2, retryAttempt - 1)
-
-            await ctx.scheduler.runAfter(
-              retryDelay,
-              'aiAnalysis:processAnalysisQueue' as any,
-              {
-                ...args,
-                analysisTypes: [analysisType],
-                retryAttempt,
-              }
-            )
-          }
+      // Get relationship context for better analysis
+      let relationshipContext = ''
+      if (entry.relationshipId) {
+        const relationship = await ctx.db.get(entry.relationshipId)
+        if (relationship) {
+          relationshipContext = `${relationship.initials || relationship.name} (${relationship.type})`
         }
       }
 
-      return {
-        success: true,
-        processedCount: results.filter(r => r.success).length,
-        failedCount: results.filter(r => !r.success).length,
-        results,
+      // Get previous analyses for pattern detection
+      const previousAnalyses = await ctx.db
+        .query('aiAnalysis')
+        .withIndex('by_user_created', q => q.eq('userId', entry.userId))
+        .order('desc')
+        .filter(q => q.eq(q.field('status'), 'completed'))
+        .take(5)
+
+      // Simulate DSPy analysis (replace with actual DSPy integration)
+      const analysisResult = await simulateDSPyAnalysis(
+        entry.content,
+        relationshipContext,
+        entry.mood,
+        previousAnalyses
+      )
+
+      // Update analysis record with results
+      await ctx.db.patch(args.analysisId, {
+        sentimentScore: analysisResult.sentimentScore,
+        emotionalKeywords: analysisResult.emotionalKeywords,
+        confidenceLevel: analysisResult.confidenceLevel,
+        reasoning: analysisResult.reasoning,
+        patterns: analysisResult.patterns,
+        processingTime: Date.now() - startTime,
+        tokensUsed: analysisResult.tokensUsed,
+        apiCost: analysisResult.apiCost,
+        status: 'completed',
+      })
+
+      // Trigger health score recalculation if this is for a relationship
+      if (entry.relationshipId) {
+        await ctx.scheduler.runAfter(5000, internal.healthScores.recalculate, {
+          userId: entry.userId,
+          relationshipId: entry.relationshipId,
+        })
       }
+
+      return { success: true }
     } catch (error) {
-      console.error('Analysis queue processing failed:', error)
+      // Mark analysis as failed
+      await ctx.db.patch(args.analysisId, {
+        status: 'failed',
+        reasoning: `Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        processingTime: Date.now() - startTime,
+      })
 
-      // Schedule retry for entire batch if under retry limit
-      const retryAttempt = (args.retryAttempt || 0) + 1
-      if (retryAttempt <= RATE_LIMIT_CONFIG.retryAttempts) {
-        const retryDelay =
-          RATE_LIMIT_CONFIG.retryDelayMs * Math.pow(2, retryAttempt - 1)
-
-        await ctx.scheduler.runAfter(
-          retryDelay,
-          'aiAnalysis:processAnalysisQueue' as any,
-          {
-            ...args,
-            retryAttempt,
-          }
-        )
-      }
-
-      throw new Error(
-        `Analysis processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-      )
+      throw error
     }
   },
 })
 
-// Batch analysis for multiple journal entries
-export const queueBatchAnalysis = mutation({
-  args: {
-    journalEntryIds: v.array(v.id('journalEntries')),
-    analysisTypes: v.array(
-      v.union(
-        v.literal('sentiment'),
-        v.literal('emotional_stability'),
-        v.literal('energy_impact'),
-        v.literal('conflict_resolution'),
-        v.literal('gratitude')
-      )
-    ),
-    batchSize: v.optional(v.number()),
-  },
-  handler: async (
-    ctx: MutationCtx,
-    args: {
-      journalEntryIds: Id<'journalEntries'>[]
-      analysisTypes: (
-        | 'sentiment'
-        | 'emotional_stability'
-        | 'energy_impact'
-        | 'conflict_resolution'
-        | 'gratitude'
-      )[]
-      batchSize?: number
-    }
-  ) => {
-    const batchSize = args.batchSize || RATE_LIMIT_CONFIG.batchSize
-    const batches = []
-
-    // Split into batches
-    for (let i = 0; i < args.journalEntryIds.length; i += batchSize) {
-      const batch = args.journalEntryIds.slice(i, i + batchSize)
-      batches.push(batch)
-    }
-
-    // Schedule each batch with staggered timing to respect rate limits
-    const scheduledIds = []
-    for (let i = 0; i < batches.length; i++) {
-      const batch = batches[i]
-      const delay = i * 60000 // 1 minute delay between batches
-
-      for (const journalEntryId of batch) {
-        const scheduledId = await ctx.scheduler.runAfter(
-          delay,
-          'aiAnalysis:queueAnalysisForJournalEntry' as any,
-          {
-            journalEntryId,
-            analysisTypes: args.analysisTypes,
-            priority: 'normal',
-          }
-        )
-        scheduledIds.push(scheduledId)
-      }
-    }
-
-    return {
-      message: `Queued ${args.journalEntryIds.length} entries in ${batches.length} batches`,
-      batchCount: batches.length,
-      totalEntries: args.journalEntryIds.length,
-      scheduledIds,
-    }
-  },
-})
-
-// Get analysis statistics
-export const getAnalysisStats = query({
-  args: {
-    userId: v.id('users'),
-    timeRange: v.optional(
-      v.union(v.literal('7d'), v.literal('30d'), v.literal('90d'))
-    ),
-  },
-  handler: async (
-    ctx: QueryCtx,
-    args: { userId: Id<'users'>; timeRange?: '7d' | '30d' | '90d' }
-  ) => {
-    const timeRange = args.timeRange || '30d'
-    const days = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90
-    const cutoffTime = Date.now() - days * 24 * 60 * 60 * 1000
-
+// Get analysis statistics for dashboard
+export const getStats = query({
+  args: { userId: v.id('users') },
+  handler: async (ctx, args) => {
     const analyses = await ctx.db
       .query('aiAnalysis')
-      .withIndex('by_user', (q: any) => q.eq('userId', args.userId))
-      .filter((q: any) => q.gte(q.field('createdAt'), cutoffTime))
+      .withIndex('by_user', q => q.eq('userId', args.userId))
       .collect()
 
     const stats = {
-      totalAnalyses: analyses.length,
-      byType: {} as Record<string, number>,
+      total: analyses.length,
+      completed: analyses.filter(a => a.status === 'completed').length,
+      processing: analyses.filter(a => a.status === 'processing').length,
+      failed: analyses.filter(a => a.status === 'failed').length,
       averageConfidence: 0,
-      totalProcessingTime: 0,
-      totalTokens: 0,
-      totalCosts: 0,
+      averageSentiment: 0,
+      totalTokensUsed: 0,
+      totalApiCost: 0,
     }
 
-    let confidenceSum = 0
-    let confidenceCount = 0
-
-    for (const analysis of analyses) {
-      // Count by type
-      stats.byType[analysis.analysisType] =
-        (stats.byType[analysis.analysisType] || 0) + 1
-
-      // Aggregate metrics
-      if (analysis.analysisResults.confidence) {
-        confidenceSum += analysis.analysisResults.confidence
-        confidenceCount++
-      }
-
-      stats.totalProcessingTime += analysis.metadata.processingTime
-      stats.totalTokens += analysis.metadata.tokenCount || 0
-      stats.totalCosts += analysis.metadata.apiCosts || 0
+    const completedAnalyses = analyses.filter(a => a.status === 'completed')
+    if (completedAnalyses.length > 0) {
+      stats.averageConfidence =
+        completedAnalyses.reduce((sum, a) => sum + a.confidenceLevel, 0) /
+        completedAnalyses.length
+      stats.averageSentiment =
+        completedAnalyses.reduce((sum, a) => sum + a.sentimentScore, 0) /
+        completedAnalyses.length
+      stats.totalTokensUsed = completedAnalyses.reduce(
+        (sum, a) => sum + (a.tokensUsed || 0),
+        0
+      )
+      stats.totalApiCost = completedAnalyses.reduce(
+        (sum, a) => sum + (a.apiCost || 0),
+        0
+      )
     }
-
-    stats.averageConfidence =
-      confidenceCount > 0 ? confidenceSum / confidenceCount : 0
 
     return stats
   },
 })
+
+// Mock DSPy analysis function (replace with real DSPy + Gemini implementation)
+async function simulateDSPyAnalysis(
+  content: string,
+  relationshipContext: string,
+  mood?: string,
+  previousAnalyses?: any[]
+) {
+  // Simulate processing delay (remove in production)
+  await new Promise(resolve => setTimeout(resolve, Math.random() * 2000 + 1000))
+
+  // Enhanced sentiment analysis simulation
+  const positiveWords = [
+    'love',
+    'happy',
+    'joy',
+    'great',
+    'wonderful',
+    'amazing',
+    'grateful',
+    'excited',
+    'proud',
+  ]
+  const negativeWords = [
+    'sad',
+    'angry',
+    'frustrated',
+    'disappointed',
+    'hurt',
+    'upset',
+    'worried',
+    'stressed',
+  ]
+  const conflictWords = [
+    'argue',
+    'fight',
+    'disagree',
+    'conflict',
+    'tension',
+    'misunderstanding',
+  ]
+
+  const words = content.toLowerCase().split(/\s+/)
+  let sentimentScore = 0
+  const emotionalKeywords: string[] = []
+  let hasConflict = false
+
+  words.forEach(word => {
+    if (positiveWords.some(pw => word.includes(pw))) {
+      sentimentScore += 0.2
+      emotionalKeywords.push(word)
+    } else if (negativeWords.some(nw => word.includes(nw))) {
+      sentimentScore -= 0.2
+      emotionalKeywords.push(word)
+    } else if (conflictWords.some(cw => word.includes(cw))) {
+      hasConflict = true
+      sentimentScore -= 0.1
+      emotionalKeywords.push(word)
+    }
+  })
+
+  // Mood influence
+  if (mood) {
+    const moodScore = getMoodSentiment(mood)
+    sentimentScore = (sentimentScore + moodScore) / 2 // Average with mood
+  }
+
+  // Normalize sentiment score to -1 to 1 range
+  sentimentScore = Math.max(-1, Math.min(1, sentimentScore))
+
+  // Pattern detection based on content and previous analyses
+  const patterns = detectPatterns(
+    content,
+    relationshipContext,
+    previousAnalyses || []
+  )
+
+  return {
+    sentimentScore: Number(sentimentScore.toFixed(3)),
+    emotionalKeywords: [...new Set(emotionalKeywords)].slice(0, 5), // Top 5 unique keywords
+    confidenceLevel: Number((0.7 + Math.random() * 0.25).toFixed(3)), // 70-95% confidence
+    reasoning: generateReasoning(
+      words.length,
+      emotionalKeywords.length,
+      sentimentScore,
+      hasConflict
+    ),
+    patterns,
+    tokensUsed: Math.floor(words.length * 1.3), // Estimate tokens
+    apiCost: Number((Math.floor(words.length * 1.3) * 0.00015).toFixed(6)), // Cost estimate
+  }
+}
+
+function getMoodSentiment(mood: string): number {
+  const moodMap: { [key: string]: number } = {
+    ecstatic: 1.0,
+    joyful: 0.8,
+    happy: 0.6,
+    content: 0.4,
+    calm: 0.2,
+    neutral: 0.0,
+    concerned: -0.2,
+    sad: -0.4,
+    frustrated: -0.6,
+    angry: -0.8,
+    devastated: -1.0,
+  }
+
+  return moodMap[mood.toLowerCase()] || 0
+}
+
+function detectPatterns(
+  content: string,
+  relationshipContext: string,
+  previousAnalyses: any[]
+) {
+  const themes: string[] = []
+  const triggers: string[] = []
+
+  // Communication style detection
+  let communicationStyle = 'neutral'
+  if (content.includes('we talked') || content.includes('we discussed')) {
+    communicationStyle = 'collaborative'
+    themes.push('open_communication')
+  } else if (content.includes('I told') || content.includes('I said')) {
+    communicationStyle = 'direct'
+  }
+
+  // Common themes detection
+  if (content.includes('support') || content.includes('help')) {
+    themes.push('mutual_support')
+  }
+  if (content.includes('time together') || content.includes('spent time')) {
+    themes.push('quality_time')
+  }
+  if (content.includes('understand') || content.includes('listen')) {
+    themes.push('empathy')
+  }
+
+  // Emotional triggers
+  if (content.includes('work') || content.includes('job')) {
+    triggers.push('work_stress')
+  }
+  if (content.includes('family') || content.includes('parents')) {
+    triggers.push('family_dynamics')
+  }
+
+  return {
+    recurring_themes: themes,
+    emotional_triggers: triggers,
+    communication_style: communicationStyle,
+    relationship_dynamics: ['building_connection', 'navigating_challenges'],
+  }
+}
+
+function generateReasoning(
+  wordCount: number,
+  emotionalWordCount: number,
+  sentiment: number,
+  hasConflict: boolean
+): string {
+  let reasoning = `Analyzed ${wordCount} words with ${emotionalWordCount} emotional indicators. `
+
+  if (sentiment > 0.3) {
+    reasoning += 'Strong positive sentiment detected. '
+  } else if (sentiment < -0.3) {
+    reasoning += 'Concerning negative sentiment identified. '
+  } else {
+    reasoning += 'Balanced emotional tone observed. '
+  }
+
+  if (hasConflict) {
+    reasoning +=
+      'Conflict indicators present, suggesting areas for relationship attention.'
+  } else {
+    reasoning += 'Communication appears constructive and healthy.'
+  }
+
+  return reasoning
+}

@@ -14,19 +14,19 @@ graph TD
     A --> C[Operable]
     A --> D[Understandable]
     A --> E[Robust]
-    
+
     B --> B1[Color Contrast 4.5:1]
     B --> B2[Text Alternatives]
     B --> B3[Adaptable Content]
-    
+
     C --> C1[Keyboard Navigation]
     C --> C2[Focus Management]
     C --> C3[Touch Targets 44px]
-    
+
     D --> D1[Clear Language]
     D --> D2[Predictable Navigation]
     D --> D3[Input Assistance]
-    
+
     E --> E1[Valid HTML]
     E --> E2[ARIA Standards]
     E --> E3[Screen Reader Support]
@@ -58,9 +58,7 @@ Always start with semantic HTML elements:
 </ul>
 
 <!-- ❌ BAD: Generic elements -->
-<div onclick="toggleMenu()" class="menu-trigger">
-  Open Menu
-</div>
+<div onclick="toggleMenu()" class="menu-trigger">Open Menu</div>
 <div id="menu-items" style="display: none;">
   <div><a href="/profile">Profile</a></div>
   <div><a href="/settings">Settings</a></div>
@@ -91,7 +89,7 @@ export function MenuButton() {
           firstItem?.focus();
         }, 0);
         break;
-      
+
       case 'Escape':
         if (isOpen) {
           setIsOpen(false);
@@ -116,7 +114,7 @@ export function MenuButton() {
         Menu
         <ChevronDownIcon className={`ml-2 h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
-      
+
       {isOpen && (
         <ul
           ref={menuRef}
@@ -155,20 +153,20 @@ export function AccessibleDialog({ isOpen, onClose, title, description, children
     >
       {/* Backdrop */}
       <div className="fixed inset-0 bg-background/80 backdrop-blur-sm" aria-hidden="true" />
-      
+
       {/* Dialog panel */}
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <DialogPanel className="mx-auto max-w-sm rounded-lg bg-card p-6 shadow-lg">
           <DialogTitle className="text-lg font-medium text-card-foreground">
             {title}
           </DialogTitle>
-          
+
           {description && (
             <DialogDescription className="mt-2 text-sm text-muted-foreground">
               {description}
             </DialogDescription>
           )}
-          
+
           <div className="mt-4">
             {children}
           </div>
@@ -183,10 +181,10 @@ import { Combobox, ComboboxInput, ComboboxOptions, ComboboxOption } from '@headl
 
 export function AccessibleCombobox({ items, value, onChange, placeholder }) {
   const [query, setQuery] = useState('');
-  
+
   const filteredItems = query === ''
     ? items
-    : items.filter(item => 
+    : items.filter(item =>
         item.name.toLowerCase().includes(query.toLowerCase())
       );
 
@@ -199,7 +197,7 @@ export function AccessibleCombobox({ items, value, onChange, placeholder }) {
           onChange={(event) => setQuery(event.target.value)}
           placeholder={placeholder}
         />
-        
+
         <ComboboxOptions className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-popover py-1 shadow-lg ring-1 ring-border">
           {filteredItems.length === 0 && query !== '' ? (
             <div className="relative cursor-default select-none px-4 py-2 text-muted-foreground">
@@ -256,7 +254,7 @@ export function AccessibleInput({
   const inputId = useId();
   const descriptionId = description ? `${inputId}-description` : undefined;
   const errorId = error ? `${inputId}-error` : undefined;
-  
+
   return (
     <div className="space-y-2">
       <label
@@ -266,13 +264,13 @@ export function AccessibleInput({
         {label}
         {required && <span aria-label="required" className="text-destructive">*</span>}
       </label>
-      
+
       {description && (
         <p id={descriptionId} className="text-sm text-muted-foreground">
           {description}
         </p>
       )}
-      
+
       <input
         id={inputId}
         aria-describedby={[descriptionId, errorId].filter(Boolean).join(' ') || undefined}
@@ -285,7 +283,7 @@ export function AccessibleInput({
         `}
         {...props}
       />
-      
+
       {error && (
         <p id={errorId} role="alert" className="text-sm text-destructive">
           {error}
@@ -311,7 +309,7 @@ export function AccessibleSelect({
   const selectId = useId();
   const descriptionId = description ? `${selectId}-description` : undefined;
   const errorId = error ? `${selectId}-error` : undefined;
-  
+
   return (
     <div className="space-y-2">
       <label
@@ -321,13 +319,13 @@ export function AccessibleSelect({
         {label}
         {required && <span aria-label="required" className="text-destructive">*</span>}
       </label>
-      
+
       {description && (
         <p id={descriptionId} className="text-sm text-muted-foreground">
           {description}
         </p>
       )}
-      
+
       <select
         id={selectId}
         aria-describedby={[descriptionId, errorId].filter(Boolean).join(' ') || undefined}
@@ -346,7 +344,7 @@ export function AccessibleSelect({
           </option>
         ))}
       </select>
-      
+
       {error && (
         <p id={errorId} role="alert" className="text-sm text-destructive">
           {error}
@@ -369,7 +367,7 @@ export function Breadcrumb({ items }: BreadcrumbProps) {
       <ol className="flex items-center space-x-1">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
-          
+
           return (
             <li key={item.href || item.label} className="flex items-center">
               {index > 0 && (
@@ -378,7 +376,7 @@ export function Breadcrumb({ items }: BreadcrumbProps) {
                   aria-hidden="true"
                 />
               )}
-              
+
               {isLast ? (
                 <span
                   className="text-sm font-medium text-foreground"
@@ -411,12 +409,12 @@ export function Pagination({ currentPage, totalPages, onPageChange }: Pagination
   const generatePageNumbers = () => {
     const pages = [];
     const maxVisible = 5;
-    
+
     // Logic to generate visible page numbers
     for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
       pages.push(i);
     }
-    
+
     return pages;
   };
 
@@ -434,7 +432,7 @@ export function Pagination({ currentPage, totalPages, onPageChange }: Pagination
             Previous
           </button>
         </li>
-        
+
         {/* Page numbers */}
         {generatePageNumbers().map(pageNumber => (
           <li key={pageNumber}>
@@ -454,7 +452,7 @@ export function Pagination({ currentPage, totalPages, onPageChange }: Pagination
             </button>
           </li>
         ))}
-        
+
         {/* Next button */}
         <li>
           <button
@@ -481,7 +479,7 @@ export function Pagination({ currentPage, totalPages, onPageChange }: Pagination
 export function AccessibleTable({ data, columns }: TableProps) {
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-  
+
   const handleSort = (columnKey: string) => {
     if (sortColumn === columnKey) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -497,7 +495,7 @@ export function AccessibleTable({ data, columns }: TableProps) {
         <caption className="sr-only">
           {data.length} items in table. Use arrow keys to navigate.
         </caption>
-        
+
         <thead>
           <tr>
             {columns.map(column => (
@@ -530,7 +528,7 @@ export function AccessibleTable({ data, columns }: TableProps) {
             ))}
           </tr>
         </thead>
-        
+
         <tbody>
           {data.map((row, rowIndex) => (
             <tr
@@ -577,37 +575,37 @@ export function useKeyboardNavigation({
         event.preventDefault();
         onEscape?.();
         break;
-        
+
       case 'Enter':
         event.preventDefault();
         onEnter?.();
         break;
-        
+
       case 'ArrowUp':
         event.preventDefault();
         onArrowUp?.();
         break;
-        
+
       case 'ArrowDown':
         event.preventDefault();
         onArrowDown?.();
         break;
-        
+
       case 'ArrowLeft':
         event.preventDefault();
         onArrowLeft?.();
         break;
-        
+
       case 'ArrowRight':
         event.preventDefault();
         onArrowRight?.();
         break;
-        
+
       case 'Tab':
         // Don't prevent default for Tab unless specifically needed
         onTab?.(event.shiftKey);
         break;
-        
+
       case ' ':
         event.preventDefault();
         onSpace?.();
@@ -622,7 +620,7 @@ export function useKeyboardNavigation({
 export function KeyboardNavigableList({ items, onSelect }: ListProps) {
   const [focusedIndex, setFocusedIndex] = useState(0);
   const listRef = useRef<HTMLUListElement>(null);
-  
+
   const { handleKeyDown } = useKeyboardNavigation({
     onArrowDown: () => {
       setFocusedIndex(prev => Math.min(prev + 1, items.length - 1));
@@ -744,9 +742,9 @@ export function AccessibleModal({ isOpen, onClose, children }: ModalProps) {
   useEffect(() => {
     if (isOpen) {
       previouslyFocused.current = document.activeElement as HTMLElement;
-      
+
       const cleanup = modalRef.current ? trapFocus(modalRef.current) : undefined;
-      
+
       return () => {
         cleanup?.();
         restoreFocus(previouslyFocused.current);
@@ -804,17 +802,17 @@ describe('Button Accessibility', () => {
   it('should be keyboard accessible', async () => {
     const handleClick = jest.fn();
     const { getByRole } = render(<Button onClick={handleClick}>Test</Button>);
-    
+
     const button = getByRole('button');
-    
+
     // Test focus
     button.focus();
     expect(button).toHaveFocus();
-    
+
     // Test keyboard activation
     fireEvent.keyDown(button, { key: 'Enter' });
     expect(handleClick).toHaveBeenCalled();
-    
+
     fireEvent.keyDown(button, { key: ' ' });
     expect(handleClick).toHaveBeenCalledTimes(2);
   });
@@ -825,7 +823,7 @@ describe('Button Accessibility', () => {
         ×
       </Button>
     );
-    
+
     const button = getByRole('button');
     expect(button).toHaveAttribute('aria-label', 'Close dialog');
     expect(button).toHaveAttribute('aria-expanded', 'false');
@@ -894,12 +892,12 @@ npm install --save-dev @storybook/addon-a11y
 
 ```typescript
 // React development mode accessibility checking
-import React from 'react';
+import React from 'react'
 
 if (process.env.NODE_ENV === 'development') {
   import('@axe-core/react').then(axe => {
-    axe.default(React, ReactDOM, 1000);
-  });
+    axe.default(React, ReactDOM, 1000)
+  })
 }
 ```
 
@@ -909,12 +907,12 @@ if (process.env.NODE_ENV === 'development') {
 
 ```typescript
 // Live region for status updates
-export function LiveRegion({ 
-  message, 
-  priority = 'polite' 
-}: { 
-  message: string; 
-  priority?: 'polite' | 'assertive' 
+export function LiveRegion({
+  message,
+  priority = 'polite'
+}: {
+  message: string;
+  priority?: 'polite' | 'assertive'
 }) {
   return (
     <div
@@ -935,7 +933,7 @@ export function FormWithLiveRegion() {
   const handleSubmit = async (data: FormData) => {
     setStatus('Saving...');
     setErrors([]);
-    
+
     try {
       await saveData(data);
       setStatus('Saved successfully');
@@ -948,9 +946,9 @@ export function FormWithLiveRegion() {
   return (
     <form onSubmit={handleSubmit}>
       {/* Form fields */}
-      
+
       <LiveRegion message={status} />
-      
+
       {errors.length > 0 && (
         <div role="alert" className="text-destructive">
           <ul>
@@ -1000,15 +998,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 ```typescript
 // Icon component with accessibility options
-export function Icon({ 
-  icon: IconComponent, 
-  label, 
+export function Icon({
+  icon: IconComponent,
+  label,
   decorative = false,
-  className 
+  className
 }: IconProps) {
   if (decorative) {
     return (
-      <IconComponent 
+      <IconComponent
         className={className}
         aria-hidden="true"
       />
@@ -1016,7 +1014,7 @@ export function Icon({
   }
 
   return (
-    <IconComponent 
+    <IconComponent
       className={className}
       aria-label={label}
       role="img"
@@ -1033,12 +1031,12 @@ export function IconExamples() {
         <Icon icon={PlusIcon} decorative />
         Add Item
       </Button>
-      
+
       {/* Meaningful icon */}
       <Button>
         <Icon icon={TrashIcon} label="Delete item" />
       </Button>
-      
+
       {/* Icon-only button */}
       <Button aria-label="Close dialog">
         <Icon icon={XIcon} decorative />
@@ -1089,7 +1087,7 @@ export function useReducedMotion() {
 // Usage in components
 export function AnimatedComponent() {
   const prefersReducedMotion = useReducedMotion();
-  
+
   return (
     <div
       className={`transition-transform duration-300 ${
@@ -1112,12 +1110,12 @@ export function AnimatedComponent() {
     background: ButtonFace;
     color: ButtonText;
   }
-  
+
   .button:hover {
     background: Highlight;
     color: HighlightText;
   }
-  
+
   .button:focus {
     outline: 2px solid ButtonText;
     outline-offset: 2px;

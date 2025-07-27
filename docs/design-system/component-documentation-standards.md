@@ -14,7 +14,7 @@ graph TD
     A --> C[Storybook Stories]
     A --> D[Usage Examples]
     A --> E[Accessibility Notes]
-    
+
     B --> F[Auto-generated Prop Tables]
     C --> G[Interactive Playground]
     C --> H[Visual Variants]
@@ -22,7 +22,7 @@ graph TD
     D --> J[Best Practices]
     E --> K[ARIA Patterns]
     E --> L[Keyboard Navigation]
-    
+
     F --> M[Documentation Site]
     G --> M
     H --> M
@@ -49,14 +49,14 @@ Each component must include:
 
 ```typescript
 // .storybook/main.ts
-import type { StorybookConfig } from '@storybook/nextjs';
+import type { StorybookConfig } from '@storybook/nextjs'
 
 const config: StorybookConfig = {
   stories: [
     '../src/**/*.stories.@(js|jsx|ts|tsx|mdx)',
     '../docs/**/*.stories.@(js|jsx|ts|tsx|mdx)',
   ],
-  
+
   addons: [
     '@storybook/addon-essentials',
     '@storybook/addon-a11y',
@@ -67,36 +67,36 @@ const config: StorybookConfig = {
     '@storybook/addon-viewport',
     '@storybook/addon-backgrounds',
   ],
-  
+
   framework: {
     name: '@storybook/nextjs',
     options: {},
   },
-  
+
   typescript: {
     reactDocgen: 'react-docgen-typescript',
     reactDocgenTypescriptOptions: {
       shouldExtractLiteralValuesFromEnum: true,
       shouldRemoveUndefinedFromOptional: true,
-      propFilter: (prop) => {
+      propFilter: prop => {
         // Filter out props from node_modules
         if (prop.parent) {
-          return !/node_modules/.test(prop.parent.fileName);
+          return !/node_modules/.test(prop.parent.fileName)
         }
-        return true;
+        return true
       },
     },
   },
-  
+
   docs: {
     autodocs: 'tag',
     defaultName: 'Documentation',
   },
-  
-  staticDirs: ['../public'],
-};
 
-export default config;
+  staticDirs: ['../public'],
+}
+
+export default config
 ```
 
 ### Preview Configuration
@@ -115,7 +115,7 @@ const preview: Preview = {
         date: /Date$/,
       },
     },
-    
+
     docs: {
       theme: {
         base: 'light',
@@ -124,7 +124,7 @@ const preview: Preview = {
         brandImage: '/logo.svg',
       },
     },
-    
+
     backgrounds: {
       default: 'light',
       values: [
@@ -133,7 +133,7 @@ const preview: Preview = {
         { name: 'gray', value: '#f8fafc' },
       ],
     },
-    
+
     viewport: {
       viewports: {
         mobile: {
@@ -151,7 +151,7 @@ const preview: Preview = {
       },
     },
   },
-  
+
   decorators: [
     (Story) => (
       <ThemeProvider defaultTheme="light" storageKey="storybook-theme">
@@ -161,7 +161,7 @@ const preview: Preview = {
       </ThemeProvider>
     ),
   ],
-  
+
   globalTypes: {
     theme: {
       description: 'Global theme for components',
@@ -188,7 +188,7 @@ export default preview;
 
 Use comprehensive JSDoc comments for all component props:
 
-```typescript
+````typescript
 // src/components/ui/button.tsx
 import React from 'react';
 import { Slot } from '@radix-ui/react-slot';
@@ -234,34 +234,34 @@ export interface ButtonProps
    * </Button>
    */
   asChild?: boolean;
-  
+
   /**
    * The visual style variant of the button.
    * @default "default"
    * @example "primary" | "secondary" | "destructive" | "outline" | "ghost" | "link"
    */
   variant?: VariantProps<typeof buttonVariants>['variant'];
-  
+
   /**
    * The size of the button.
    * @default "default"
    * @example "sm" | "default" | "lg" | "icon"
    */
   size?: VariantProps<typeof buttonVariants>['size'];
-  
+
   /**
    * Whether the button is in a loading state.
    * When true, shows a loading indicator and disables the button.
    * @default false
    */
   loading?: boolean;
-  
+
   /**
    * Icon to display before the button text.
    * @example <IconUser />
    */
   leftIcon?: React.ReactNode;
-  
+
   /**
    * Icon to display after the button text.
    * @example <IconChevronRight />
@@ -271,36 +271,36 @@ export interface ButtonProps
 
 /**
  * Button component that provides a clickable element for user interactions.
- * 
+ *
  * Built on top of HTML button element with enhanced styling and functionality.
  * Supports multiple variants, sizes, and states including loading and disabled.
- * 
+ *
  * @example
  * ```tsx
  * // Basic usage
  * <Button>Click me</Button>
- * 
+ *
  * // With variant and size
  * <Button variant="outline" size="lg">Large Outline Button</Button>
- * 
+ *
  * // With icons
  * <Button leftIcon={<IconUser />}>Profile</Button>
- * 
+ *
  * // Loading state
  * <Button loading onClick={handleSubmit}>Submit</Button>
- * 
+ *
  * // As child component
  * <Button asChild>
  *   <Link href="/dashboard">Dashboard</Link>
  * </Button>
  * ```
- * 
+ *
  * @accessibility
  * - Supports keyboard navigation (Enter and Space keys)
  * - Provides proper focus indication
  * - Maintains semantic button role
  * - Supports aria-* attributes for enhanced accessibility
- * 
+ *
  * @design-tokens
  * - Uses `--color-primary` for default variant
  * - Uses `--spacing-*` tokens for padding
@@ -310,7 +310,7 @@ export interface ButtonProps
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, loading, leftIcon, rightIcon, disabled, children, ...props }, ref) => {
     const Comp = asChild ? Slot : 'button';
-    
+
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
@@ -328,7 +328,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 );
 
 Button.displayName = 'Button';
-```
+````
 
 ### Storybook Stories Documentation
 
@@ -590,17 +590,17 @@ export const AccessibilityTest: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const button = canvas.getByRole('button');
-    
+
     // Test keyboard interaction
     await userEvent.tab();
     await expect(button).toHaveFocus();
-    
+
     // Test click interaction
     await userEvent.click(button);
-    
+
     // Test space key activation
     await userEvent.keyboard(' ');
-    
+
     // Test enter key activation
     await userEvent.keyboard('{Enter}');
   },
@@ -625,7 +625,7 @@ export const RealWorldExamples: Story = {
           <Button>Save Changes</Button>
         </div>
       </div>
-      
+
       {/* Navigation */}
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Navigation</h3>
@@ -638,7 +638,7 @@ export const RealWorldExamples: Story = {
           </Button>
         </div>
       </div>
-      
+
       {/* Actions */}
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Actions</h3>
@@ -666,10 +666,18 @@ export const RealWorldExamples: Story = {
 
 Create MDX documentation files for complex components:
 
-```mdx
+````mdx
 <!-- src/components/ui/button.stories.mdx -->
-import { Canvas, Meta, ArgTypes, Primary, Controls, Story } from '@storybook/blocks';
-import * as ButtonStories from './button.stories';
+
+import {
+  Canvas,
+  Meta,
+  ArgTypes,
+  Primary,
+  Controls,
+  Story,
+} from '@storybook/blocks'
+import * as ButtonStories from './button.stories'
 
 <Meta of={ButtonStories} />
 
@@ -716,21 +724,27 @@ and follows WCAG 2.1 AA guidelines.
 <Canvas of={ButtonStories.Variants} />
 
 ### Default
+
 The primary button style for the most important actions on a page.
 
 ### Destructive
+
 Use for dangerous or destructive actions like deleting data.
 
 ### Outline
+
 Secondary button style that works well alongside primary buttons.
 
 ### Secondary
+
 Alternative secondary style with filled background.
 
 ### Ghost
+
 Minimal button style for subtle actions.
 
 ### Link
+
 Button that looks like a text link for navigation actions.
 
 ## Sizes
@@ -738,15 +752,19 @@ Button that looks like a text link for navigation actions.
 <Canvas of={ButtonStories.Sizes} />
 
 ### Small
+
 Compact size for dense interfaces or secondary actions.
 
 ### Default
+
 Standard size for most use cases.
 
 ### Large
+
 Prominent size for important actions or hero sections.
 
 ### Icon
+
 Square button optimized for icon-only content.
 
 ## States
@@ -798,19 +816,20 @@ The Button component follows WCAG 2.1 AA accessibility guidelines:
   Save
 </Button>
 ```
+````
 
 ## Design Tokens
 
 The Button component uses these design tokens:
 
-| Token | Usage | Value |
-|-------|-------|-------|
-| `--color-primary` | Default button background | `#3b82f6` |
-| `--color-primary-foreground` | Default button text | `#ffffff` |
-| `--spacing-4` | Default padding horizontal | `1rem` |
-| `--spacing-2` | Default padding vertical | `0.5rem` |
-| `--radius-md` | Border radius | `0.375rem` |
-| `--transition-colors` | Hover/focus transitions | `150ms` |
+| Token                        | Usage                      | Value      |
+| ---------------------------- | -------------------------- | ---------- |
+| `--color-primary`            | Default button background  | `#3b82f6`  |
+| `--color-primary-foreground` | Default button text        | `#ffffff`  |
+| `--spacing-4`                | Default padding horizontal | `1rem`     |
+| `--spacing-2`                | Default padding vertical   | `0.5rem`   |
+| `--radius-md`                | Border radius              | `0.375rem` |
+| `--transition-colors`        | Hover/focus transitions    | `150ms`    |
 
 ## Examples
 
@@ -818,7 +837,7 @@ The Button component uses these design tokens:
 
 ```tsx
 function ContactForm() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   return (
     <form onSubmit={handleSubmit}>
@@ -832,7 +851,7 @@ function ContactForm() {
         </Button>
       </div>
     </form>
-  );
+  )
 }
 ```
 
@@ -845,11 +864,9 @@ function NavigationButtons() {
       <Button variant="ghost" leftIcon={<IconArrowLeft />}>
         Back to Dashboard
       </Button>
-      <Button rightIcon={<IconArrowRight />}>
-        Continue to Next Step
-      </Button>
+      <Button rightIcon={<IconArrowRight />}>Continue to Next Step</Button>
     </div>
-  );
+  )
 }
 ```
 
@@ -859,9 +876,7 @@ function NavigationButtons() {
 function ActionButtons() {
   return (
     <div className="flex gap-2">
-      <Button variant="destructive">
-        Delete
-      </Button>
+      <Button variant="destructive">Delete</Button>
       <Button variant="outline" leftIcon={<IconEdit />}>
         Edit
       </Button>
@@ -869,7 +884,7 @@ function ActionButtons() {
         Share
       </Button>
     </div>
-  );
+  )
 }
 ```
 
@@ -880,11 +895,12 @@ function ActionButtons() {
 ## Related Components
 
 - **Link**: For navigation between pages
-- **Toggle**: For boolean state changes  
+- **Toggle**: For boolean state changes
 - **Switch**: For settings and preferences
 - **Checkbox**: For multiple selection
 - **RadioGroup**: For single selection from multiple options
-```
+
+````
 
 ## Testing Documentation
 
@@ -906,7 +922,7 @@ describe('Button', () => {
 
     it('renders all variants correctly', () => {
       const variants = ['default', 'destructive', 'outline', 'secondary', 'ghost', 'link'] as const;
-      
+
       variants.forEach(variant => {
         const { rerender } = render(<Button variant={variant}>Test</Button>);
         expect(screen.getByRole('button')).toHaveClass(expect.stringContaining(variant));
@@ -916,7 +932,7 @@ describe('Button', () => {
 
     it('renders all sizes correctly', () => {
       const sizes = ['sm', 'default', 'lg', 'icon'] as const;
-      
+
       sizes.forEach(size => {
         const { rerender } = render(<Button size={size}>Test</Button>);
         expect(screen.getByRole('button')).toHaveClass(expect.stringContaining(size));
@@ -930,7 +946,7 @@ describe('Button', () => {
     it('calls onClick when clicked', async () => {
       const handleClick = jest.fn();
       render(<Button onClick={handleClick}>Click me</Button>);
-      
+
       await userEvent.click(screen.getByRole('button'));
       expect(handleClick).toHaveBeenCalledTimes(1);
     });
@@ -938,7 +954,7 @@ describe('Button', () => {
     it('calls onClick when Enter key is pressed', async () => {
       const handleClick = jest.fn();
       render(<Button onClick={handleClick}>Click me</Button>);
-      
+
       const button = screen.getByRole('button');
       button.focus();
       await userEvent.keyboard('{Enter}');
@@ -948,7 +964,7 @@ describe('Button', () => {
     it('calls onClick when Space key is pressed', async () => {
       const handleClick = jest.fn();
       render(<Button onClick={handleClick}>Click me</Button>);
-      
+
       const button = screen.getByRole('button');
       button.focus();
       await userEvent.keyboard(' ');
@@ -958,7 +974,7 @@ describe('Button', () => {
     it('does not call onClick when disabled', async () => {
       const handleClick = jest.fn();
       render(<Button disabled onClick={handleClick}>Click me</Button>);
-      
+
       await userEvent.click(screen.getByRole('button'));
       expect(handleClick).not.toHaveBeenCalled();
     });
@@ -966,7 +982,7 @@ describe('Button', () => {
     it('does not call onClick when loading', async () => {
       const handleClick = jest.fn();
       render(<Button loading onClick={handleClick}>Click me</Button>);
-      
+
       await userEvent.click(screen.getByRole('button'));
       expect(handleClick).not.toHaveBeenCalled();
     });
@@ -1028,7 +1044,7 @@ describe('Button', () => {
 
     it('renders icons correctly', () => {
       render(
-        <Button 
+        <Button
           leftIcon={<span data-testid="left-icon">Left</span>}
           rightIcon={<span data-testid="right-icon">Right</span>}
         >
@@ -1056,7 +1072,7 @@ describe('Button', () => {
     });
   });
 });
-```
+````
 
 ## Documentation Automation
 
@@ -1064,69 +1080,72 @@ describe('Button', () => {
 
 ```typescript
 // scripts/generate-component-docs.ts
-import { promises as fs } from 'fs';
-import { glob } from 'glob';
-import * as parser from '@typescript-eslint/typescript-estree';
+import { promises as fs } from 'fs'
+import { glob } from 'glob'
+import * as parser from '@typescript-eslint/typescript-estree'
 
 interface ComponentInfo {
-  name: string;
-  path: string;
-  props: PropInfo[];
-  description: string;
-  examples: string[];
+  name: string
+  path: string
+  props: PropInfo[]
+  description: string
+  examples: string[]
 }
 
 interface PropInfo {
-  name: string;
-  type: string;
-  required: boolean;
-  defaultValue?: string;
-  description: string;
+  name: string
+  type: string
+  required: boolean
+  defaultValue?: string
+  description: string
 }
 
 export async function generateComponentDocs() {
   const componentFiles = await glob('src/components/**/*.tsx', {
     ignore: ['**/*.test.tsx', '**/*.stories.tsx'],
-  });
+  })
 
-  const components: ComponentInfo[] = [];
+  const components: ComponentInfo[] = []
 
   for (const file of componentFiles) {
-    const content = await fs.readFile(file, 'utf-8');
-    const componentInfo = parseComponent(content, file);
-    
+    const content = await fs.readFile(file, 'utf-8')
+    const componentInfo = parseComponent(content, file)
+
     if (componentInfo) {
-      components.push(componentInfo);
+      components.push(componentInfo)
     }
   }
 
   // Generate markdown documentation
-  const docsContent = generateMarkdownDocs(components);
-  await fs.writeFile('docs/generated/component-api.md', docsContent);
+  const docsContent = generateMarkdownDocs(components)
+  await fs.writeFile('docs/generated/component-api.md', docsContent)
 
   // Generate JSON for programmatic access
   await fs.writeFile(
-    'docs/generated/component-api.json', 
+    'docs/generated/component-api.json',
     JSON.stringify(components, null, 2)
-  );
+  )
 
-  console.log(`Generated documentation for ${components.length} components`);
+  console.log(`Generated documentation for ${components.length} components`)
 }
 
-function parseComponent(content: string, filePath: string): ComponentInfo | null {
+function parseComponent(
+  content: string,
+  filePath: string
+): ComponentInfo | null {
   try {
     const ast = parser.parse(content, {
       loc: true,
       range: true,
       jsx: true,
-    });
+    })
 
     // Extract component information from AST
     // This is a simplified example - real implementation would be more complex
-    const componentName = extractComponentName(ast);
-    const props = extractProps(ast);
-    const description = extractDescription(ast);
-    const examples = extractExamples(content);
+    const componentName = extractComponentName(ast)
+    const props = extractProps(ast)
+    const description = extractDescription(ast)
+    const examples = extractExamples(content)
 
     if (componentName) {
       return {
@@ -1135,18 +1154,19 @@ function parseComponent(content: string, filePath: string): ComponentInfo | null
         props,
         description,
         examples,
-      };
+      }
     }
 
-    return null;
+    return null
   } catch (error) {
-    console.warn(`Failed to parse ${filePath}:`, error);
-    return null;
+    console.warn(`Failed to parse ${filePath}:`, error)
+    return null
   }
 }
 
 function generateMarkdownDocs(components: ComponentInfo[]): string {
-  const sections = components.map(component => `
+  const sections = components.map(
+    component => `
 # ${component.name}
 
 ${component.description}
@@ -1155,27 +1175,31 @@ ${component.description}
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
-${component.props.map(prop => 
-  `| ${prop.name} | \`${prop.type}\` | ${prop.required ? 'Yes' : 'No'} | ${prop.defaultValue || '-'} | ${prop.description} |`
-).join('\n')}
+${component.props
+  .map(
+    prop =>
+      `| ${prop.name} | \`${prop.type}\` | ${prop.required ? 'Yes' : 'No'} | ${prop.defaultValue || '-'} | ${prop.description} |`
+  )
+  .join('\n')}
 
 ## Examples
 
 ${component.examples.map(example => `\`\`\`tsx\n${example}\n\`\`\``).join('\n\n')}
 
 ---
-`);
+`
+  )
 
   return `# Component API Reference
 
 Generated automatically from TypeScript definitions.
 
-${sections.join('\n')}`;
+${sections.join('\n')}`
 }
 
 // Run the generator
 if (require.main === module) {
-  generateComponentDocs().catch(console.error);
+  generateComponentDocs().catch(console.error)
 }
 ```
 
@@ -1225,16 +1249,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Check for missing stories
         run: |
           # Check that every component has a corresponding story file
@@ -1247,13 +1271,13 @@ jobs:
               fi
             fi
           done
-      
+
       - name: Validate prop documentation
         run: npm run docs:validate
-      
+
       - name: Build Storybook
         run: npm run docs:build
-      
+
       - name: Run accessibility tests
         run: npm run docs:test
 ```
