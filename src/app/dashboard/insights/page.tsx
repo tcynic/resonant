@@ -265,7 +265,7 @@ export default function InsightsPage() {
                   name: item.relationshipName,
                   type: 'friend' as const, // Default type since we don't have it from comparison data
                   data: [{ x: Date.now(), y: item.value }],
-                  averageScore: item.value
+                  averageScore: item.value,
                 }))}
                 isLoading={comparisonData.isLoading}
                 error={
@@ -296,7 +296,11 @@ export default function InsightsPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center p-4 bg-blue-50 rounded-lg">
                 <div className="text-2xl font-bold text-blue-600">
-                  {Math.round((healthScoreData.statistics as any)?.average || 0)}%
+                  {Math.round(
+                    (healthScoreData.statistics as { average?: number })
+                      ?.average || 0
+                  )}
+                  %
                 </div>
                 <div className="text-sm text-blue-800">
                   Average Health Score
@@ -305,14 +309,17 @@ export default function InsightsPage() {
 
               <div className="text-center p-4 bg-green-50 rounded-lg">
                 <div className="text-2xl font-bold text-green-600">
-                  {(healthScoreData.statistics as any)?.trend === 'improving'
+                  {(healthScoreData.statistics as { trend?: string })?.trend ===
+                  'improving'
                     ? '📈'
-                    : (healthScoreData.statistics as any)?.trend === 'declining'
+                    : (healthScoreData.statistics as { trend?: string })
+                          ?.trend === 'declining'
                       ? '📉'
                       : '➡️'}
                 </div>
                 <div className="text-sm text-green-800 capitalize">
-                  {(healthScoreData.statistics as any)?.trend || 'stable'}
+                  {(healthScoreData.statistics as { trend?: string })?.trend ||
+                    'stable'}
                 </div>
               </div>
 
@@ -325,7 +332,8 @@ export default function InsightsPage() {
 
               <div className="text-center p-4 bg-orange-50 rounded-lg">
                 <div className="text-2xl font-bold text-orange-600">
-                  {(healthScoreData.statistics as any)?.volatility || 'Low'}
+                  {(healthScoreData.statistics as { volatility?: string })
+                    ?.volatility || 'Low'}
                 </div>
                 <div className="text-sm text-orange-800">Volatility Score</div>
               </div>

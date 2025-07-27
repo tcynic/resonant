@@ -346,7 +346,12 @@ export const useInsightsFiltering = (insights: Insight[]) => {
   return {
     // Sorting functions
     sortByPriority: useCallback(() => {
-      const priorityOrder: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 }
+      const priorityOrder: Record<string, number> = {
+        urgent: 0,
+        high: 1,
+        medium: 2,
+        low: 3,
+      }
       return [...insights].sort(
         (a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]
       )

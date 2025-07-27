@@ -98,8 +98,8 @@ describe('DataExport', () => {
     getFullName: jest.fn(),
     getInitials: jest.fn(),
     hasVerifiedEmailAddress: jest.fn(),
-    hasVerifiedPhoneNumber: jest.fn()
-  } as any
+    hasVerifiedPhoneNumber: jest.fn(),
+  } as unknown
 
   const mockUserData = {
     _id: 'convex_user_123',
@@ -138,17 +138,33 @@ describe('DataExport', () => {
   beforeEach(() => {
     jest.clearAllMocks()
 
-    mockUseUser.mockReturnValue({ user: mockUser, isLoaded: true, isSignedIn: true })
-    mockUseQuery.mockImplementation((api: any, ...args: any[]) => {
+    mockUseUser.mockReturnValue({
+      user: mockUser,
+      isLoaded: true,
+      isSignedIn: true,
+    })
+    mockUseQuery.mockImplementation((api: unknown, ...args: unknown[]) => {
       if (args[0] === 'skip') return null
-      if (api && typeof api === 'object' && 'toString' in api && api.toString().includes('getUserByClerkId')) return mockUserData
-      if (api && typeof api === 'object' && 'toString' in api && api.toString().includes('getExportStatistics')) return mockExportStats
+      if (
+        api &&
+        typeof api === 'object' &&
+        'toString' in api &&
+        api.toString().includes('getUserByClerkId')
+      )
+        return mockUserData
+      if (
+        api &&
+        typeof api === 'object' &&
+        'toString' in api &&
+        api.toString().includes('getExportStatistics')
+      )
+        return mockExportStats
       return null
     })
     mockUseMutation.mockReturnValue({
       ...mockCreateExport,
       withOptimisticUpdate: jest.fn().mockReturnValue(mockCreateExport),
-    } as any)
+    } as unknown)
     mockCreateExport.mockResolvedValue(mockExportResult)
   })
 
@@ -350,7 +366,11 @@ describe('DataExport', () => {
   })
 
   it('should handle missing user data gracefully', () => {
-    mockUseUser.mockReturnValue({ user: null, isLoaded: true, isSignedIn: false })
+    mockUseUser.mockReturnValue({
+      user: null,
+      isLoaded: true,
+      isSignedIn: false,
+    })
     mockUseQuery.mockReturnValue(null)
 
     render(<DataExport />)
@@ -418,8 +438,12 @@ describe('DataExport', () => {
       emailAddresses: [],
       passwordEnabled: false,
       lastSignInAt: null,
-    } as any
-    mockUseUser.mockReturnValue({ user: userWithoutEmail, isLoaded: true, isSignedIn: true })
+    } as unknown
+    mockUseUser.mockReturnValue({
+      user: userWithoutEmail,
+      isLoaded: true,
+      isSignedIn: true,
+    })
 
     render(<DataExport />)
 

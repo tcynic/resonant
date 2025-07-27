@@ -39,10 +39,14 @@ export const useJournalEntriesByUser = (
     // Filter helpers
     withMood: entries?.filter((e: JournalEntry) => e.mood) || [],
     withoutMood: entries?.filter((e: JournalEntry) => !e.mood) || [],
-    withAIAnalysis: entries?.filter((e: JournalEntry) => e.allowAIAnalysis) || [],
+    withAIAnalysis:
+      entries?.filter((e: JournalEntry) => e.allowAIAnalysis) || [],
 
     // Sort helpers
-    byDate: entries?.sort((a: JournalEntry, b: JournalEntry) => b.createdAt - a.createdAt) || [],
+    byDate:
+      entries?.sort(
+        (a: JournalEntry, b: JournalEntry) => b.createdAt - a.createdAt
+      ) || [],
     recent: entries?.slice(0, 5) || [],
   }
 }
@@ -223,12 +227,21 @@ export const useJournalEntryStats = (userId?: string) => {
     const weekAgo = now - 7 * 24 * 60 * 60 * 1000
     const monthAgo = now - 30 * 24 * 60 * 60 * 1000
 
-    stats.thisWeek = entries.filter((e: JournalEntry) => e.createdAt >= weekAgo).length
-    stats.thisMonth = entries.filter((e: JournalEntry) => e.createdAt >= monthAgo).length
+    stats.thisWeek = entries.filter(
+      (e: JournalEntry) => e.createdAt >= weekAgo
+    ).length
+    stats.thisMonth = entries.filter(
+      (e: JournalEntry) => e.createdAt >= monthAgo
+    ).length
     stats.withMood = entries.filter((e: JournalEntry) => e.mood).length
-    stats.withAIAnalysis = entries.filter((e: JournalEntry) => e.allowAIAnalysis).length
+    stats.withAIAnalysis = entries.filter(
+      (e: JournalEntry) => e.allowAIAnalysis
+    ).length
     stats.averageLength = Math.round(
-      entries.reduce((sum: number, e: JournalEntry) => sum + e.content.length, 0) / entries.length
+      entries.reduce(
+        (sum: number, e: JournalEntry) => sum + e.content.length,
+        0
+      ) / entries.length
     )
 
     // Calculate streaks (consecutive days with entries)
@@ -312,7 +325,9 @@ export const useJournal = (userId?: string) => {
 
     getEntriesForRelationship: useCallback(
       (relationshipId: string) => {
-        return entries.filter((e: JournalEntry) => e.relationshipId === relationshipId)
+        return entries.filter(
+          (e: JournalEntry) => e.relationshipId === relationshipId
+        )
       },
       [entries]
     ),
@@ -326,7 +341,9 @@ export const useJournal = (userId?: string) => {
 
     getEntriesWithTag: useCallback(
       (tag: string) => {
-        return entries.filter((e: JournalEntry) => e.tags && e.tags.includes(tag))
+        return entries.filter(
+          (e: JournalEntry) => e.tags && e.tags.includes(tag)
+        )
       },
       [entries]
     ),
@@ -338,6 +355,8 @@ export const useJournal = (userId?: string) => {
       (e: JournalEntry) => Date.now() - e.createdAt < 24 * 60 * 60 * 1000
     ),
     allTags: [...new Set(entries.flatMap((e: JournalEntry) => e.tags || []))],
-    allMoods: [...new Set(entries.map((e: JournalEntry) => e.mood).filter(Boolean))],
+    allMoods: [
+      ...new Set(entries.map((e: JournalEntry) => e.mood).filter(Boolean)),
+    ],
   }
 }

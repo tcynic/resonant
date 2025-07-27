@@ -259,7 +259,11 @@ export const getTrendData = query({
     timeRange: v.object({
       start: v.number(),
       end: v.number(),
-      granularity: v.union(v.literal('day'), v.literal('week'), v.literal('month')),
+      granularity: v.union(
+        v.literal('day'),
+        v.literal('week'),
+        v.literal('month')
+      ),
     }),
     analyticsType: v.union(
       v.literal('sentiment_trend'),
@@ -271,17 +275,20 @@ export const getTrendData = query({
     // Get journal entries in time range
     const entries = await ctx.db
       .query('journalEntries')
-      .withIndex('by_user_created', q => 
-        q.eq('userId', args.userId)
-         .gte('createdAt', args.timeRange.start)
-         .lte('createdAt', args.timeRange.end)
+      .withIndex('by_user_created', q =>
+        q
+          .eq('userId', args.userId)
+          .gte('createdAt', args.timeRange.start)
+          .lte('createdAt', args.timeRange.end)
       )
       .collect()
 
     // Filter by relationships if specified
     const filteredEntries = args.relationshipIds
-      ? entries.filter(entry => 
-          entry.relationshipId && args.relationshipIds!.includes(entry.relationshipId)
+      ? entries.filter(
+          entry =>
+            entry.relationshipId &&
+            args.relationshipIds!.includes(entry.relationshipId)
         )
       : entries
 
@@ -296,14 +303,21 @@ export const getTrendData = query({
       })
     )
 
-    const validAnalyses = analyses.filter((item): item is { entry: any; analysis: any } => item !== null)
+    const validAnalyses = analyses.filter(
+      (item): item is { entry: any; analysis: any } => item !== null
+    )
 
     // Process data based on analytics type
     switch (args.analyticsType) {
       case 'sentiment_trend':
         return processSentimentTrend(validAnalyses, args.timeRange.granularity)
       case 'health_score_trend':
-        return processHealthScoreTrend(ctx, args.userId, args.relationshipIds, args.timeRange)
+        return processHealthScoreTrend(
+          ctx,
+          args.userId,
+          args.relationshipIds,
+          args.timeRange
+        )
       case 'pattern_analysis':
         return processPatternAnalysis(validAnalyses)
       default:
@@ -336,13 +350,12 @@ export const getRelationshipComparison = query({
 
       const entries = await ctx.db
         .query('journalEntries')
-        .withIndex('by_user_created', q =>
-          q.eq('userId', args.userId)
-        )
-        .filter(q => 
-          q.eq(q.field('relationshipId'), relationshipId) &&
-          q.gte(q.field('createdAt'), args.timeRange.start) &&
-          q.lte(q.field('createdAt'), args.timeRange.end)
+        .withIndex('by_user_created', q => q.eq('userId', args.userId))
+        .filter(
+          q =>
+            q.eq(q.field('relationshipId'), relationshipId) &&
+            q.gte(q.field('createdAt'), args.timeRange.start) &&
+            q.lte(q.field('createdAt'), args.timeRange.end)
         )
         .collect()
 
@@ -358,15 +371,21 @@ export const getRelationshipComparison = query({
               .first()
           )
         )
-        
+
         const validAnalyses = analyses.filter(Boolean)
         if (validAnalyses.length > 0) {
           if (args.metric === 'sentiment') {
-            value = validAnalyses.reduce((sum, analysis) => sum + analysis!.sentimentScore, 0) / validAnalyses.length
+            value =
+              validAnalyses.reduce(
+                (sum, analysis) => sum + analysis!.sentimentScore,
+                0
+              ) / validAnalyses.length
           } else if (args.metric === 'health_score') {
             const healthScore = await ctx.db
               .query('healthScores')
-              .withIndex('by_relationship', q => q.eq('relationshipId', relationshipId))
+              .withIndex('by_relationship', q =>
+                q.eq('relationshipId', relationshipId)
+              )
               .order('desc')
               .first()
             value = healthScore?.score || 0
@@ -682,17 +701,20 @@ function generateConversationStarter(analyses: any[]) {
 }
 
 // Helper functions for trend data processing
-function processSentimentTrend(analyses: Array<{ entry: any; analysis: any }>, granularity: 'day' | 'week' | 'month') {
+function processSentimentTrend(
+  analyses: Array<{ entry: any; analysis: any }>,
+  granularity: 'day' | 'week' | 'month'
+) {
   if (!analyses || analyses.length === 0) {
     return { dataPoints: [], metadata: { total: 0, average: 0 } }
   }
 
   const groupedData = new Map()
-  
+
   analyses.forEach(({ entry, analysis }) => {
     const date = new Date(entry.createdAt)
     let key: string
-    
+
     switch (granularity) {
       case 'day':
         key = date.toISOString().split('T')[0]
@@ -706,11 +728,11 @@ function processSentimentTrend(analyses: Array<{ entry: any; analysis: any }>, g
         key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
         break
     }
-    
+
     if (!groupedData.has(key)) {
       groupedData.set(key, { scores: [], count: 0 })
     }
-    
+
     groupedData.get(key).scores.push(analysis.sentimentScore)
     groupedData.get(key).count++
   })
@@ -719,12 +741,15 @@ function processSentimentTrend(analyses: Array<{ entry: any; analysis: any }>, g
     .map(([date, data]) => ({
       timestamp: new Date(date).getTime(),
       date,
-      value: data.scores.reduce((sum: number, score: number) => sum + score, 0) / data.scores.length,
+      value:
+        data.scores.reduce((sum: number, score: number) => sum + score, 0) /
+        data.scores.length,
       count: data.count,
     }))
     .sort((a, b) => a.timestamp - b.timestamp)
 
-  const average = dataPoints.reduce((sum, point) => sum + point.value, 0) / dataPoints.length
+  const average =
+    dataPoints.reduce((sum, point) => sum + point.value, 0) / dataPoints.length
 
   return {
     dataPoints,
@@ -736,18 +761,26 @@ function processSentimentTrend(analyses: Array<{ entry: any; analysis: any }>, g
   }
 }
 
-async function processHealthScoreTrend(ctx: any, userId: Id<'users'>, relationshipIds: Id<'relationships'>[] | undefined, timeRange: { start: number; end: number }) {
+async function processHealthScoreTrend(
+  ctx: any,
+  userId: Id<'users'>,
+  relationshipIds: Id<'relationships'>[] | undefined,
+  timeRange: { start: number; end: number }
+) {
   const healthScores = await ctx.db
     .query('healthScores')
     .withIndex('by_user', (q: any) => q.eq('userId', userId))
-    .filter((q: any) => 
-      q.gte(q.field('lastCalculated'), timeRange.start) &&
-      q.lte(q.field('lastCalculated'), timeRange.end)
+    .filter(
+      (q: any) =>
+        q.gte(q.field('lastCalculated'), timeRange.start) &&
+        q.lte(q.field('lastCalculated'), timeRange.end)
     )
     .collect()
 
   const filteredScores = relationshipIds
-    ? healthScores.filter((score: any) => relationshipIds.includes(score.relationshipId))
+    ? healthScores.filter((score: any) =>
+        relationshipIds.includes(score.relationshipId)
+      )
     : healthScores
 
   const dataPoints = filteredScores
@@ -764,19 +797,25 @@ async function processHealthScoreTrend(ctx: any, userId: Id<'users'>, relationsh
     dataPoints,
     metadata: {
       total: filteredScores.length,
-      average: dataPoints.reduce((sum: number, point: any) => sum + point.value, 0) / dataPoints.length || 0,
+      average:
+        dataPoints.reduce((sum: number, point: any) => sum + point.value, 0) /
+          dataPoints.length || 0,
     },
   }
 }
 
-function processPatternAnalysis(analyses: Array<{ entry: any; analysis: any }>) {
+function processPatternAnalysis(
+  analyses: Array<{ entry: any; analysis: any }>
+) {
   if (!analyses || analyses.length === 0) {
     return { dataPoints: [], metadata: { patterns: [], total: 0 } }
   }
 
   const patternCount = new Map()
-  const themes = analyses.flatMap(({ analysis }) => analysis.patterns?.recurring_themes || [])
-  
+  const themes = analyses.flatMap(
+    ({ analysis }) => analysis.patterns?.recurring_themes || []
+  )
+
   themes.forEach(theme => {
     patternCount.set(theme, (patternCount.get(theme) || 0) + 1)
   })

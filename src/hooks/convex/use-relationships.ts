@@ -55,7 +55,12 @@ export const useRelationshipById = (
 ) => {
   const relationship = useQuery(
     api.relationships.getRelationshipById,
-    relationshipId && userId ? { relationshipId: relationshipId as Id<'relationships'>, userId: userId as Id<'users'> } : 'skip'
+    relationshipId && userId
+      ? {
+          relationshipId: relationshipId as Id<'relationships'>,
+          userId: userId as Id<'users'>,
+        }
+      : 'skip'
   )
 
   return {
@@ -98,7 +103,7 @@ export const useCreateRelationship = () => {
         try {
           const relationshipId = await createRelationship({
             ...args,
-            userId: args.userId as Id<'users'>
+            userId: args.userId as Id<'users'>,
           })
           return { success: true, relationshipId }
         } catch (error) {
@@ -130,7 +135,7 @@ export const useUpdateRelationship = () => {
           await updateRelationship({
             ...args,
             relationshipId: args.relationshipId as Id<'relationships'>,
-            userId: args.userId as Id<'users'>
+            userId: args.userId as Id<'users'>,
           })
           return { success: true }
         } catch (error) {
@@ -159,7 +164,10 @@ export const useDeleteRelationship = () => {
     deleteRelationship: useCallback(
       async (relationshipId: string, userId: string) => {
         try {
-          await deleteRelationship({ relationshipId: relationshipId as Id<'relationships'>, userId: userId as Id<'users'> })
+          await deleteRelationship({
+            relationshipId: relationshipId as Id<'relationships'>,
+            userId: userId as Id<'users'>,
+          })
           return { success: true }
         } catch (error) {
           console.error('Failed to delete relationship:', error)

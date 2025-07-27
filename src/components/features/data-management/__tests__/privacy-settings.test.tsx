@@ -79,8 +79,8 @@ describe('PrivacySettings', () => {
     getFullName: jest.fn(),
     getInitials: jest.fn(),
     hasVerifiedEmailAddress: jest.fn(),
-    hasVerifiedPhoneNumber: jest.fn()
-  } as any
+    hasVerifiedPhoneNumber: jest.fn(),
+  } as unknown
 
   const mockUserData = {
     _id: 'convex_user_123',
@@ -97,12 +97,18 @@ describe('PrivacySettings', () => {
   beforeEach(() => {
     jest.clearAllMocks()
 
-    mockUseUser.mockReturnValue({ user: mockUser, isLoaded: true, isSignedIn: true })
+    mockUseUser.mockReturnValue({
+      user: mockUser,
+      isLoaded: true,
+      isSignedIn: true,
+    })
     mockUseQuery.mockReturnValue(mockUserData)
     mockUseMutation.mockReturnValue({
       ...mockUpdatePrivacySettings,
-      withOptimisticUpdate: jest.fn().mockReturnValue(mockUpdatePrivacySettings),
-    } as any)
+      withOptimisticUpdate: jest
+        .fn()
+        .mockReturnValue(mockUpdatePrivacySettings),
+    } as unknown)
     mockUpdatePrivacySettings.mockResolvedValue(undefined)
   })
 

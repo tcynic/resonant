@@ -55,8 +55,12 @@ export function useChartData(
           timeRange: {
             start: dateRange.start.getTime(),
             end: dateRange.end.getTime(),
-            granularity: dateRange.granularity === 'daily' ? 'day' : 
-                        dateRange.granularity === 'weekly' ? 'week' : 'month',
+            granularity:
+              dateRange.granularity === 'daily'
+                ? 'day'
+                : dateRange.granularity === 'weekly'
+                  ? 'week'
+                  : 'month',
           },
           analyticsType: chartType,
         }
@@ -91,11 +95,13 @@ export function useChartData(
             satisfaction: dataPoint.value,
             growth: dataPoint.value,
           },
-          trendDirection: (trendData.metadata as any)?.trend || 'stable',
+          trendDirection:
+            (trendData.metadata as { trend?: string })?.trend || 'stable',
         }
       }),
       statistics: trendData.metadata || {},
-      patterns: (trendData.metadata as any)?.patterns || [],
+      patterns:
+        (trendData.metadata as { patterns?: unknown[] })?.patterns || [],
     }
   }, [trendData])
 

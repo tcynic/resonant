@@ -59,7 +59,10 @@ export const useUserByClerkId = (clerkId?: string) => {
  * Get user by internal ID
  */
 export const useUserById = (userId?: string) => {
-  const user = useQuery(api.users.getUserById, userId ? { userId: userId as Id<'users'> } : 'skip')
+  const user = useQuery(
+    api.users.getUserById,
+    userId ? { userId: userId as Id<'users'> } : 'skip'
+  )
 
   return {
     user,
@@ -222,7 +225,9 @@ export const useUpgradeToPremium = () => {
     upgradeToPremium: useCallback(
       async (userId: string) => {
         try {
-          const result = await upgradeToPremium({ userId: userId as Id<'users'> })
+          const result = await upgradeToPremium({
+            userId: userId as Id<'users'>,
+          })
           return { success: true, data: result }
         } catch (error) {
           console.error('Failed to upgrade to premium:', error)

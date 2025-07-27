@@ -396,7 +396,13 @@ export interface Insight {
   _id: string
   userId: string
   relationshipId?: string
-  type: 'pattern_recognition' | 'improvement_suggestion' | 'conversation_starter' | 'warning_signal' | 'celebration_prompt' | 'trend_alert'
+  type:
+    | 'pattern_recognition'
+    | 'improvement_suggestion'
+    | 'conversation_starter'
+    | 'warning_signal'
+    | 'celebration_prompt'
+    | 'trend_alert'
   priority: 'urgent' | 'high' | 'medium' | 'low'
   title: string
   description: string
