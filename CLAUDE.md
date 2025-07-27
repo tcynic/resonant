@@ -35,11 +35,13 @@ npm run test:e2e:debug # Playwright debug mode
 npm run test:e2e:headed # Playwright headed mode
 npm run test:e2e:report # View test reports
 
-# MCP Browser Automation Testing
-npm run test:e2e:mcp        # Run E2E tests with MCP config
-npm run test:e2e:mcp:setup  # Validate MCP test setup
-npm run test:mcp            # Run MCP tests via Node script
-npm run test:mcp:guide      # Show MCP testing instructions
+# Advanced E2E Testing Pipeline
+npm run test:setup:validate    # Validate test environment setup
+npm run test:ci:auth          # Run authentication tests for CI
+npm run test:ci:journeys      # Run user journey tests for CI
+npm run test:ci:advanced      # Run advanced feature tests for CI
+npm run ci:test-pipeline      # Complete CI test pipeline
+npm run test:report:generate  # Generate comprehensive test reports
 
 # Code Quality
 npm run lint           # ESLint checking
@@ -80,6 +82,7 @@ The system includes 4 comprehensive test user personas for thorough testing:
 - **Development**: Turbopack for fast development builds
 - **Testing**: Jest + React Testing Library + Playwright + Playwright MCP
 - **Validation**: Zod schemas for type-safe form and API validation
+- **Charts & Analytics**: Chart.js, Recharts, and date-fns for data visualization
 
 ### Project Structure
 
@@ -89,11 +92,17 @@ src/
 │   ├── (auth)/            # Authentication routes (sign-in, sign-up)
 │   ├── journal/           # Journal entry pages and [id] routes
 │   ├── relationships/     # Relationship management
-│   └── dashboard/         # Main dashboard
+│   ├── dashboard/         # Main dashboard with insights
+│   └── search/            # Global search functionality
 ├── components/
 │   ├── features/          # Feature-specific components
 │   │   ├── journal/       # Journal entry components + tests
-│   │   └── relationships/ # Relationship components + tests
+│   │   ├── relationships/ # Relationship components + tests
+│   │   ├── dashboard/     # Dashboard and analytics components
+│   │   ├── insights/      # Chart and analytics components
+│   │   ├── search/        # Search functionality components
+│   │   ├── notifications/ # Reminder and notification system
+│   │   └── data-management/ # Privacy, export, and data controls
 │   ├── ui/               # Reusable UI components
 │   └── providers/        # React context providers
 ├── hooks/                # Custom React hooks
@@ -104,7 +113,8 @@ convex/                   # Backend functions and schema
 ├── schema.ts            # Database schema definitions
 ├── journalEntries.ts    # Journal CRUD operations
 ├── relationships.ts     # Relationship CRUD operations
-└── users.ts            # User management functions
+├── users.ts            # User management functions
+└── insights.ts         # Chart data and analytics functions
 ```
 
 ### Database Schema (Convex)
@@ -113,6 +123,7 @@ convex/                   # Backend functions and schema
 - **relationships**: User's relationship definitions
 - **journalEntries**: Journal content with mood/tags/relationships
 - **healthScores**: AI-calculated relationship health metrics
+- **insights**: Chart data and analytics with caching for performance
 
 ### Key Components Architecture
 
@@ -123,6 +134,15 @@ convex/                   # Backend functions and schema
 - **tag-input**: Dynamic tag system with suggestions and autocomplete
 - **relationship-picker**: Multi-select component with photo/initial display
 - **journal-entry-card**: Display component for entry lists
+
+#### Insights & Analytics System
+
+- **sentiment-trend-chart**: Visualizes mood trends over time using Chart.js
+- **health-score-chart**: Displays relationship health metrics with Recharts
+- **relationship-comparison-chart**: Comparative analytics across relationships
+- **time-range-selector**: Interactive date range picker for analytics
+- **chart-export-button**: Export charts as images or data files
+- **base-chart**: Shared chart configuration and theming
 
 #### Authentication Flow
 
@@ -186,6 +206,13 @@ const journalEntries = useQuery(api.journalEntries.list, { userId: user?.id })
 
 // Mutation pattern
 const createEntry = useMutation(api.journalEntries.create)
+
+// Analytics data fetching
+const trendData = useQuery(api.insights.getTrendData, {
+  userId: user?.id,
+  timeRange,
+  analyticsType: 'sentiment_trend',
+})
 ```
 
 #### Form Handling

@@ -2,7 +2,7 @@
 
 import React from 'react'
 import Image from 'next/image'
-import Card, { CardHeader, CardContent } from '@/components/ui/card'
+import { Card, CardHeader, CardContent } from '@/components/ui/card'
 import { AnalysisErrorFallback } from '@/components/ui/error-boundary'
 import { HealthScore, Relationship } from '@/lib/types'
 

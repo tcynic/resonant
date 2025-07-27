@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Clock, Calendar, Moon, Sun, Info } from 'lucide-react'
-import Card from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 
 interface TimingControlsProps {
   frequency: 'daily' | 'every2days' | 'weekly'

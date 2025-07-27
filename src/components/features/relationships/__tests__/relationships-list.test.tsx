@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import '@testing-library/jest-dom'
 import RelationshipsList from '../relationships-list'
 import { useRelationships } from '@/hooks/use-relationships'
+import type { Id } from '@/convex/_generated/dataModel'
 
 // Mock the hooks
 jest.mock('@/hooks/use-relationships')
@@ -41,7 +42,13 @@ describe('RelationshipsList', () => {
       relationships: [],
       relationshipsCount: 0,
       isLoading: false,
-      currentUser: { _id: 'user_123' },
+      currentUser: {
+        _id: 'user_123' as Id<'users'>,
+        clerkId: 'clerk_123',
+        name: 'Test User',
+        email: 'test@example.com',
+        createdAt: Date.now(),
+      },
     })
 
     render(<RelationshipsList />)
@@ -57,7 +64,13 @@ describe('RelationshipsList', () => {
       relationships: [],
       relationshipsCount: 0,
       isLoading: true,
-      currentUser: { _id: 'mock_user_id' },
+      currentUser: {
+        _id: 'mock_user_id' as Id<'users'>,
+        clerkId: 'clerk_mock',
+        name: 'Mock User',
+        email: 'mock@example.com',
+        createdAt: Date.now(),
+      },
     })
 
     render(<RelationshipsList />)
@@ -69,8 +82,9 @@ describe('RelationshipsList', () => {
   it('renders relationships when they exist', () => {
     const mockRelationships = [
       {
-        _id: 'rel_1',
-        userId: 'user_123',
+        _id: 'rel_1' as Id<'relationships'>,
+        _creationTime: Date.now(),
+        userId: 'user_123' as Id<'users'>,
         name: 'John Doe',
         type: 'friend' as const,
         photo: '',
@@ -78,8 +92,9 @@ describe('RelationshipsList', () => {
         updatedAt: Date.now(),
       },
       {
-        _id: 'rel_2',
-        userId: 'user_123',
+        _id: 'rel_2' as Id<'relationships'>,
+        _creationTime: Date.now(),
+        userId: 'user_123' as Id<'users'>,
         name: 'Jane Smith',
         type: 'family' as const,
         photo: '',
@@ -92,7 +107,13 @@ describe('RelationshipsList', () => {
       relationships: mockRelationships,
       relationshipsCount: 2,
       isLoading: false,
-      currentUser: { _id: 'user_123' },
+      currentUser: {
+        _id: 'user_123' as Id<'users'>,
+        clerkId: 'clerk_123',
+        name: 'Test User',
+        email: 'test@example.com',
+        createdAt: Date.now(),
+      },
     })
 
     render(<RelationshipsList />)
@@ -109,8 +130,9 @@ describe('RelationshipsList', () => {
     const user = userEvent.setup()
     const mockRelationships = [
       {
-        _id: 'rel_1',
-        userId: 'user_123',
+        _id: 'rel_1' as Id<'relationships'>,
+        _creationTime: Date.now(),
+        userId: 'user_123' as Id<'users'>,
         name: 'John Doe',
         type: 'friend' as const,
         photo: '',
@@ -118,8 +140,9 @@ describe('RelationshipsList', () => {
         updatedAt: Date.now(),
       },
       {
-        _id: 'rel_2',
-        userId: 'user_123',
+        _id: 'rel_2' as Id<'relationships'>,
+        _creationTime: Date.now(),
+        userId: 'user_123' as Id<'users'>,
         name: 'Jane Smith',
         type: 'family' as const,
         photo: '',
@@ -132,7 +155,13 @@ describe('RelationshipsList', () => {
       relationships: mockRelationships,
       relationshipsCount: 2,
       isLoading: false,
-      currentUser: { _id: 'user_123' },
+      currentUser: {
+        _id: 'user_123' as Id<'users'>,
+        clerkId: 'clerk_123',
+        name: 'Test User',
+        email: 'test@example.com',
+        createdAt: Date.now(),
+      },
     })
 
     render(<RelationshipsList />)
@@ -155,7 +184,13 @@ describe('RelationshipsList', () => {
       relationships: [],
       relationshipsCount: 0,
       isLoading: false,
-      currentUser: { _id: 'user_123' },
+      currentUser: {
+        _id: 'user_123' as Id<'users'>,
+        clerkId: 'clerk_123',
+        name: 'Test User',
+        email: 'test@example.com',
+        createdAt: Date.now(),
+      },
     })
 
     render(<RelationshipsList onCreateNew={mockOnCreateNew} />)
@@ -170,8 +205,9 @@ describe('RelationshipsList', () => {
     const user = userEvent.setup()
     const mockRelationships = [
       {
-        _id: 'rel_1',
-        userId: 'user_123',
+        _id: 'rel_1' as Id<'relationships'>,
+        _creationTime: Date.now(),
+        userId: 'user_123' as Id<'users'>,
         name: 'John Doe',
         type: 'friend' as const,
         photo: '',
@@ -179,8 +215,9 @@ describe('RelationshipsList', () => {
         updatedAt: Date.now(),
       },
       {
-        _id: 'rel_2',
-        userId: 'user_123',
+        _id: 'rel_2' as Id<'relationships'>,
+        _creationTime: Date.now(),
+        userId: 'user_123' as Id<'users'>,
         name: 'Jane Smith',
         type: 'family' as const,
         photo: '',
@@ -193,7 +230,13 @@ describe('RelationshipsList', () => {
       relationships: mockRelationships,
       relationshipsCount: 2,
       isLoading: false,
-      currentUser: { _id: 'user_123' },
+      currentUser: {
+        _id: 'user_123' as Id<'users'>,
+        clerkId: 'clerk_123',
+        name: 'Test User',
+        email: 'test@example.com',
+        createdAt: Date.now(),
+      },
     })
 
     render(<RelationshipsList />)

@@ -4,7 +4,7 @@ import React from 'react'
 import Image from 'next/image'
 import { Relationship } from '@/lib/types'
 import Button from '@/components/ui/button'
-import Card, { CardContent } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 
 interface RelationshipCardProps {
   relationship: Relationship

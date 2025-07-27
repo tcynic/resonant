@@ -20,7 +20,7 @@ import RecentActivity from '@/components/features/dashboard/recent-activity'
 import EntryHistory from '@/components/features/dashboard/entry-history'
 import ConnectionStatus from '@/components/features/dashboard/connection-status'
 import RealTimeIndicator from '@/components/features/dashboard/real-time-indicator'
-import Card, { CardHeader, CardContent } from '@/components/ui/card'
+import { Card, CardHeader, CardContent } from '@/components/ui/card'
 import ErrorBoundary, {
   DashboardErrorFallback,
   NetworkErrorFallback,

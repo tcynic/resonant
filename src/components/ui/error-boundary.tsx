@@ -1,7 +1,7 @@
 'use client'
 
 import React, { Component, ErrorInfo, ReactNode } from 'react'
-import Card, { CardHeader, CardContent } from './card'
+import { Card, CardHeader, CardContent } from './card'
 
 interface Props {
   children: ReactNode

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { Clock, User, Tag, EyeOff, ChevronDown, ChevronUp } from 'lucide-react'
 import Button from '@/components/ui/button'
-import Card from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { HighlightedText } from './highlighted-text'
 
 export interface SearchResult {

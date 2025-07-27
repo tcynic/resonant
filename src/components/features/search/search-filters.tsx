@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { Filter, X, Calendar, User, Eye, EyeOff, Tag } from 'lucide-react'
 import Button from '@/components/ui/button'
-import Card from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 // Select component not needed for current implementation
 import Input from '@/components/ui/input'
 import Checkbox from '@/components/ui/checkbox'

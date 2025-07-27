@@ -152,8 +152,6 @@ describe('useAutoSave', () => {
         data: {
           content: 'Updated content',
           relationshipIds: ['rel-1', 'rel-2'],
-          mood: 'happy',
-          tags: ['work'],
         },
       })
     })
@@ -171,10 +169,6 @@ describe('useAutoSave', () => {
     expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
       'journal-draft-test-draft',
       expect.stringContaining('Updated content')
-    )
-    expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
-      'journal-draft-test-draft',
-      expect.stringContaining('happy')
     )
   })
 

@@ -22,6 +22,7 @@ import type * as dashboard from "../dashboard.js";
 import type * as dataExport from "../dataExport.js";
 import type * as healthScores from "../healthScores.js";
 import type * as http from "../http.js";
+import type * as insights from "../insights.js";
 import type * as journalEntries from "../journalEntries.js";
 import type * as notifications from "../notifications.js";
 import type * as relationships from "../relationships.js";
@@ -55,6 +56,7 @@ declare const fullApi: ApiFromModules<{
   dataExport: typeof dataExport;
   healthScores: typeof healthScores;
   http: typeof http;
+  insights: typeof insights;
   journalEntries: typeof journalEntries;
   notifications: typeof notifications;
   relationships: typeof relationships;

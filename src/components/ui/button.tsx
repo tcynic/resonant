@@ -1,12 +1,12 @@
 import React from 'react'
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost'
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'outline'
   size?: 'sm' | 'md' | 'lg'
   isLoading?: boolean
 }
 
-export default function Button({
+function Button({
   children,
   variant = 'primary',
   size = 'md',
@@ -24,6 +24,8 @@ export default function Button({
       'bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500',
     danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
     ghost: 'text-gray-700 hover:bg-gray-100 focus:ring-gray-500',
+    outline:
+      'border border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-gray-500',
   }
 
   const sizeClasses = {
@@ -62,3 +64,6 @@ export default function Button({
     </button>
   )
 }
+
+export { Button }
+export default Button

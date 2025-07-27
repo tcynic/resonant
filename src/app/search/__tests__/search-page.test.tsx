@@ -3,6 +3,9 @@ import userEvent from '@testing-library/user-event'
 import { useUser } from '@clerk/nextjs'
 import { useQuery } from 'convex/react'
 import { useRouter } from 'next/navigation'
+import type { UserResource } from '@clerk/types'
+import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime'
+import type { FunctionReference } from 'convex/server'
 import SearchPage from '../page'
 
 // Mock dependencies
@@ -138,10 +141,21 @@ const mockUseRouter = useRouter as jest.MockedFunction<typeof useRouter>
 describe('SearchPage Integration', () => {
   const mockPush = jest.fn()
   const mockBack = jest.fn()
+  const mockForward = jest.fn()
+  const mockRefresh = jest.fn()
+  const mockReplace = jest.fn()
+  const mockPrefetch = jest.fn()
 
   const mockUser = {
     id: 'user_123',
-  }
+    firstName: 'Test',
+    lastName: 'User',
+    fullName: 'Test User',
+    imageUrl: 'https://example.com/avatar.jpg',
+    primaryEmailAddress: {
+      emailAddress: 'test@example.com',
+    },
+  } as unknown as UserResource
 
   const mockUserData = {
     _id: 'convex_user_123',
@@ -204,20 +218,32 @@ describe('SearchPage Integration', () => {
   beforeEach(() => {
     jest.clearAllMocks()
 
-    mockUseUser.mockReturnValue({ user: mockUser, isLoaded: true })
-    mockUseRouter.mockReturnValue({ push: mockPush, back: mockBack })
-
-    mockUseQuery.mockImplementation((api, args) => {
-      if (args === 'skip') return null
-      if (api.toString().includes('getUserByClerkId')) return mockUserData
-      if (api.toString().includes('getRelationshipsByUser'))
-        return mockRelationships
-      if (api.toString().includes('searchJournalEntries'))
-        return mockSearchResults
-      if (api.toString().includes('getSearchSuggestions'))
-        return mockSuggestions
-      return null
+    mockUseUser.mockReturnValue({
+      user: mockUser,
+      isLoaded: true,
+      isSignedIn: true,
     })
+    mockUseRouter.mockReturnValue({
+      push: mockPush,
+      back: mockBack,
+      forward: mockForward,
+      refresh: mockRefresh,
+      replace: mockReplace,
+      prefetch: mockPrefetch,
+    } as AppRouterInstance)
+
+    mockUseQuery.mockImplementation(
+      (query: FunctionReference<'query'>, args?: unknown) => {
+        if (args === 'skip') return null
+        const queryStr = query.toString()
+        if (queryStr.includes('getUserByClerkId')) return mockUserData
+        if (queryStr.includes('getRelationshipsByUser'))
+          return mockRelationships
+        if (queryStr.includes('searchJournalEntries')) return mockSearchResults
+        if (queryStr.includes('getSearchSuggestions')) return mockSuggestions
+        return null
+      }
+    )
   })
 
   it('should render the search page with all components', () => {
@@ -354,16 +380,18 @@ describe('SearchPage Integration', () => {
 
   it('should show loading state during search', async () => {
     // Mock loading state
-    mockUseQuery.mockImplementation((api, args) => {
-      if (args === 'skip') return null
-      if (api.toString().includes('getUserByClerkId')) return mockUserData
-      if (api.toString().includes('getRelationshipsByUser'))
-        return mockRelationships
-      if (api.toString().includes('searchJournalEntries')) return undefined // Loading
-      if (api.toString().includes('getSearchSuggestions'))
-        return mockSuggestions
-      return null
-    })
+    mockUseQuery.mockImplementation(
+      (query: FunctionReference<'query'>, args?: unknown) => {
+        if (args === 'skip') return null
+        const queryStr = query.toString()
+        if (queryStr.includes('getUserByClerkId')) return mockUserData
+        if (queryStr.includes('getRelationshipsByUser'))
+          return mockRelationships
+        if (queryStr.includes('searchJournalEntries')) return undefined // Loading
+        if (queryStr.includes('getSearchSuggestions')) return mockSuggestions
+        return null
+      }
+    )
 
     const user = userEvent.setup()
     render(<SearchPage />)
@@ -376,22 +404,25 @@ describe('SearchPage Integration', () => {
 
   it('should show no results when search returns empty', async () => {
     // Mock empty results
-    mockUseQuery.mockImplementation((api, args) => {
-      if (args === 'skip') return null
-      if (api.toString().includes('getUserByClerkId')) return mockUserData
-      if (api.toString().includes('getRelationshipsByUser'))
-        return mockRelationships
-      if (api.toString().includes('searchJournalEntries'))
-        return {
-          results: [],
-          hasMore: false,
-          nextCursor: undefined,
-          totalResults: 0,
-          searchQuery: 'nonexistent',
-        }
-      if (api.toString().includes('getSearchSuggestions')) return []
-      return null
-    })
+    mockUseQuery.mockImplementation(
+      (query: FunctionReference<'query'>, args?: unknown) => {
+        if (args === 'skip') return null
+        const queryStr = query.toString()
+        if (queryStr.includes('getUserByClerkId')) return mockUserData
+        if (queryStr.includes('getRelationshipsByUser'))
+          return mockRelationships
+        if (queryStr.includes('searchJournalEntries'))
+          return {
+            results: [],
+            hasMore: false,
+            nextCursor: undefined,
+            totalResults: 0,
+            searchQuery: 'nonexistent',
+          }
+        if (queryStr.includes('getSearchSuggestions')) return []
+        return null
+      }
+    )
 
     const user = userEvent.setup()
     render(<SearchPage />)
@@ -406,20 +437,22 @@ describe('SearchPage Integration', () => {
 
   it('should handle load more functionality', async () => {
     // Mock results with more available
-    mockUseQuery.mockImplementation((api, args) => {
-      if (args === 'skip') return null
-      if (api.toString().includes('getUserByClerkId')) return mockUserData
-      if (api.toString().includes('getRelationshipsByUser'))
-        return mockRelationships
-      if (api.toString().includes('searchJournalEntries'))
-        return {
-          ...mockSearchResults,
-          hasMore: true,
-        }
-      if (api.toString().includes('getSearchSuggestions'))
-        return mockSuggestions
-      return null
-    })
+    mockUseQuery.mockImplementation(
+      (query: FunctionReference<'query'>, args?: unknown) => {
+        if (args === 'skip') return null
+        const queryStr = query.toString()
+        if (queryStr.includes('getUserByClerkId')) return mockUserData
+        if (queryStr.includes('getRelationshipsByUser'))
+          return mockRelationships
+        if (queryStr.includes('searchJournalEntries'))
+          return {
+            ...mockSearchResults,
+            hasMore: true,
+          }
+        if (queryStr.includes('getSearchSuggestions')) return mockSuggestions
+        return null
+      }
+    )
 
     const user = userEvent.setup()
     render(<SearchPage />)
@@ -441,7 +474,11 @@ describe('SearchPage Integration', () => {
 
   it('should handle user authentication states', () => {
     // Test with no user
-    mockUseUser.mockReturnValue({ user: null, isLoaded: true })
+    mockUseUser.mockReturnValue({
+      user: null,
+      isLoaded: true,
+      isSignedIn: false,
+    })
     mockUseQuery.mockReturnValue(null)
 
     render(<SearchPage />)

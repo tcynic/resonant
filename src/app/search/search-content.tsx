@@ -14,7 +14,7 @@ import {
   SearchFiltersComponent,
   SearchFilters,
 } from '@/components/features/search/search-filters'
-import Card from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { BookOpen } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 

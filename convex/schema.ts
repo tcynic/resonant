@@ -208,4 +208,108 @@ export default defineSchema({
     .index('by_user', ['userId'])
     .index('by_pattern_type', ['patternType'])
     .index('by_user_and_type', ['userId', 'patternType']),
+
+  // Chart preferences and configurations
+  chartPreferences: defineTable({
+    userId: v.id('users'),
+    dashboardCharts: v.array(
+      v.object({
+        chartType: v.union(
+          v.literal('sentiment_trend'),
+          v.literal('health_score_trend'),
+          v.literal('relationship_comparison'),
+          v.literal('correlation_analysis')
+        ),
+        position: v.object({ row: v.number(), col: v.number() }),
+        size: v.object({ width: v.number(), height: v.number() }),
+        config: v.object({
+          timeRange: v.union(
+            v.literal('week'),
+            v.literal('month'),
+            v.literal('quarter'),
+            v.literal('year'),
+            v.literal('custom')
+          ),
+          selectedRelationships: v.array(v.id('relationships')),
+          showTrendLines: v.boolean(),
+          showAnnotations: v.boolean(),
+          showMovingAverage: v.optional(v.boolean()),
+          movingAverageWindow: v.optional(v.number()),
+        }),
+      })
+    ),
+    exportPreferences: v.object({
+      defaultFormat: v.union(v.literal('png'), v.literal('pdf')),
+      includeData: v.boolean(),
+      highResolution: v.boolean(),
+    }),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index('by_user', ['userId']),
+
+  // Computed trend analytics for performance
+  trendAnalytics: defineTable({
+    userId: v.id('users'),
+    relationshipId: v.optional(v.id('relationships')), // null for user-level trends
+    analyticsType: v.union(
+      v.literal('sentiment_trend'),
+      v.literal('health_score_trend'),
+      v.literal('pattern_analysis')
+    ),
+    timeframe: v.object({
+      startDate: v.number(),
+      endDate: v.number(),
+      granularity: v.union(
+        v.literal('daily'),
+        v.literal('weekly'),
+        v.literal('monthly')
+      ),
+    }),
+    computedData: v.object({
+      dataPoints: v.array(
+        v.object({
+          timestamp: v.number(),
+          value: v.number(),
+          metadata: v.optional(
+            v.object({
+              entryCount: v.number(),
+              significantEvents: v.array(v.string()),
+              factors: v.optional(
+                v.object({
+                  communication: v.number(),
+                  trust: v.number(),
+                  satisfaction: v.number(),
+                  growth: v.number(),
+                })
+              ),
+            })
+          ),
+        })
+      ),
+      statistics: v.object({
+        average: v.number(),
+        trend: v.union(
+          v.literal('improving'),
+          v.literal('stable'),
+          v.literal('declining')
+        ),
+        volatility: v.number(), // Standard deviation
+        bestPeriod: v.object({ start: v.number(), end: v.number() }),
+        worstPeriod: v.object({ start: v.number(), end: v.number() }),
+      }),
+      patterns: v.array(
+        v.object({
+          type: v.string(), // 'seasonal', 'weekly_cycle', 'improvement_streak'
+          confidence: v.number(), // 0-1
+          description: v.string(),
+        })
+      ),
+    }),
+    lastCalculated: v.number(),
+    cacheExpiresAt: v.number(),
+  })
+    .index('by_user', ['userId'])
+    .index('by_user_and_relationship', ['userId', 'relationshipId'])
+    .index('by_expiry', ['cacheExpiresAt'])
+    .index('by_user_and_type', ['userId', 'analyticsType']),
 })

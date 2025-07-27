@@ -8,7 +8,7 @@ import {
   TrendingUp,
   Clock,
 } from 'lucide-react'
-import Card from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import Checkbox from '@/components/ui/checkbox'
 
 interface ReminderTypes {

@@ -3,6 +3,9 @@ import { useRouter } from 'next/navigation'
 import { useMutation } from 'convex/react'
 import { Id } from '@/convex/_generated/dataModel'
 import { useBrowserNotifications } from '../use-browser-notifications'
+import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime'
+import type { ReactMutation } from 'convex/react'
+import type { FunctionReference } from 'convex/server'
 
 // Mock dependencies
 jest.mock('next/navigation')
@@ -10,13 +13,26 @@ jest.mock('convex/react')
 
 const mockPush = jest.fn()
 const mockUseMutation = useMutation as jest.MockedFunction<typeof useMutation>
-const mockMarkReminderClicked = jest.fn()
+const mockMarkReminderClicked = jest
+  .fn()
+  .mockImplementation(() => Promise.resolve())
 
 const mockUseRouter = useRouter as jest.MockedFunction<typeof useRouter>
 
+// Create a proper ReactMutation mock
+const mockMutationWithMethods = Object.assign(mockMarkReminderClicked, {
+  withOptimisticUpdate: jest.fn(),
+}) as ReactMutation<FunctionReference<'mutation'>>
+
 // Mock Notification API
-const mockNotificationConstructor = jest.fn()
-const mockRequestPermission = jest.fn()
+const mockNotificationConstructor = jest.fn() as unknown as {
+  new (title: string, options?: NotificationOptions): Notification
+  permission: NotificationPermission
+  requestPermission: jest.MockedFunction<typeof Notification.requestPermission>
+}
+const mockRequestPermission = jest.fn() as jest.MockedFunction<
+  typeof Notification.requestPermission
+>
 
 // Mock Service Worker API
 const mockServiceWorkerRegister = jest.fn()
@@ -35,9 +51,9 @@ describe('useBrowserNotifications', () => {
       refresh: jest.fn(),
       replace: jest.fn(),
       prefetch: jest.fn(),
-    })
+    } as AppRouterInstance)
 
-    mockUseMutation.mockReturnValue(mockMarkReminderClicked)
+    mockUseMutation.mockReturnValue(mockMutationWithMethods)
 
     // Mock Notification API
     Object.defineProperty(window, 'Notification', {
@@ -45,7 +61,10 @@ describe('useBrowserNotifications', () => {
       writable: true,
     })
 
-    mockNotificationConstructor.permission = 'default'
+    Object.defineProperty(mockNotificationConstructor, 'permission', {
+      value: 'default',
+      writable: true,
+    })
     mockNotificationConstructor.requestPermission = mockRequestPermission
 
     // Mock Service Worker API
@@ -66,7 +85,10 @@ describe('useBrowserNotifications', () => {
   })
 
   it('initializes with correct default state when notifications are supported', () => {
-    mockNotificationConstructor.permission = 'granted'
+    Object.defineProperty(mockNotificationConstructor, 'permission', {
+      value: 'granted',
+      writable: true,
+    })
 
     const { result } = renderHook(() => useBrowserNotifications())
 
@@ -119,10 +141,13 @@ describe('useBrowserNotifications', () => {
   })
 
   it('shows notification when permissions are granted', async () => {
-    mockNotificationConstructor.permission = 'granted'
+    Object.defineProperty(mockNotificationConstructor, 'permission', {
+      value: 'granted',
+      writable: true,
+    })
     const mockNotificationInstance = {
       close: jest.fn(),
-      onclick: null,
+      onclick: jest.fn(),
     }
     mockNotificationConstructor.mockReturnValue(mockNotificationInstance)
 
@@ -156,7 +181,10 @@ describe('useBrowserNotifications', () => {
   })
 
   it('does not show notification when permissions are denied', async () => {
-    mockNotificationConstructor.permission = 'denied'
+    Object.defineProperty(mockNotificationConstructor, 'permission', {
+      value: 'denied',
+      writable: true,
+    })
 
     const { result } = renderHook(() => useBrowserNotifications())
 
@@ -175,10 +203,13 @@ describe('useBrowserNotifications', () => {
   })
 
   it('handles notification click events correctly', async () => {
-    mockNotificationConstructor.permission = 'granted'
+    Object.defineProperty(mockNotificationConstructor, 'permission', {
+      value: 'granted',
+      writable: true,
+    })
     const mockNotificationInstance = {
       close: jest.fn(),
-      onclick: null,
+      onclick: jest.fn(),
     }
     mockNotificationConstructor.mockReturnValue(mockNotificationInstance)
     mockMarkReminderClicked.mockResolvedValue(undefined)
@@ -210,10 +241,13 @@ describe('useBrowserNotifications', () => {
   })
 
   it('navigates to default route when no specific route is provided', async () => {
-    mockNotificationConstructor.permission = 'granted'
+    Object.defineProperty(mockNotificationConstructor, 'permission', {
+      value: 'granted',
+      writable: true,
+    })
     const mockNotificationInstance = {
       close: jest.fn(),
-      onclick: null,
+      onclick: jest.fn(),
     }
     mockNotificationConstructor.mockReturnValue(mockNotificationInstance)
 
@@ -241,10 +275,13 @@ describe('useBrowserNotifications', () => {
   it('auto-closes notifications when requireInteraction is false', async () => {
     jest.useFakeTimers()
 
-    mockNotificationConstructor.permission = 'granted'
+    Object.defineProperty(mockNotificationConstructor, 'permission', {
+      value: 'granted',
+      writable: true,
+    })
     const mockNotificationInstance = {
       close: jest.fn(),
-      onclick: null,
+      onclick: jest.fn(),
     }
     mockNotificationConstructor.mockReturnValue(mockNotificationInstance)
 
@@ -357,10 +394,13 @@ describe('useBrowserNotifications', () => {
   })
 
   it('uses custom icon and badge when provided', async () => {
-    mockNotificationConstructor.permission = 'granted'
+    Object.defineProperty(mockNotificationConstructor, 'permission', {
+      value: 'granted',
+      writable: true,
+    })
     const mockNotificationInstance = {
       close: jest.fn(),
-      onclick: null,
+      onclick: jest.fn(),
     }
     mockNotificationConstructor.mockReturnValue(mockNotificationInstance)
 

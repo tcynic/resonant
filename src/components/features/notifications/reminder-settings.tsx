@@ -20,7 +20,7 @@ import {
   MessageSquare,
 } from 'lucide-react'
 import Button from '@/components/ui/button'
-import Card from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import Checkbox from '@/components/ui/checkbox'
 
 interface ReminderSettings {

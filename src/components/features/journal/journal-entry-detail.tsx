@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import Image from 'next/image'
 import { JournalEntry, Relationship, MoodType } from '@/lib/types'
 import Button from '@/components/ui/button'
-import Card from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { ConfirmationDialog } from '@/components/ui/dialog'
 import { useJournalEntryMutations } from '@/hooks/journal/use-journal-entries'
 
