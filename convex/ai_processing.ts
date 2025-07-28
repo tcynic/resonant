@@ -14,6 +14,7 @@ import {
   validateUserAuth,
   generateRequestLogData,
 } from './utils/ai_validation'
+import { isRecoverableError } from './utils/circuit-breaker'
 
 // TypeScript interfaces for input/output validation
 export interface AIProcessingRequest {
@@ -113,7 +114,7 @@ interface ExtendedStoreResultArgs {
 
 /**
  * Main HTTP Action for analyzing journal entries via Gemini 2.5 Flash-Lite API
- * Implements retry logic and comprehensive error handling
+ * Implements queue-based processing with priority handling and comprehensive error handling
  */
 export const analyzeJournalEntry = httpAction(async (ctx, request) => {
   const startTime = Date.now()
@@ -124,6 +125,20 @@ export const analyzeJournalEntry = httpAction(async (ctx, request) => {
     const rawData = await request.json()
     requestData = validateAIRequest(rawData)
     const { entryId, userId, retryCount = 0, priority = 'normal' } = requestData
+
+    // Check if this is a queue-based processing request (includes analysisId)
+    const analysisId = (rawData as any).analysisId
+    const isQueuedRequest = !!analysisId
+
+    if (isQueuedRequest) {
+      // Update processing status for queued request
+      await ctx.runMutation(internal.aiAnalysis.updateProcessingStatus, {
+        analysisId,
+        status: 'processing',
+        processingStartedAt: Date.now(),
+        currentAttempt: retryCount + 1,
+      })
+    }
 
     // Validate authentication
     const authHeader = request.headers.get('Authorization')
@@ -272,12 +287,14 @@ export const analyzeJournalEntry = httpAction(async (ctx, request) => {
       tier: userTier,
     })
 
-    // Update processing status to "processing"
-    await ctx.runMutation(internal.aiAnalysis.updateStatus, {
-      entryId,
-      status: 'processing',
-      processingAttempts: retryCount + 1,
-    })
+    // Update processing status to "processing" (only if not already done for queue)
+    if (!isQueuedRequest) {
+      await ctx.runMutation(internal.aiAnalysis.updateStatus, {
+        entryId,
+        status: 'processing',
+        processingAttempts: retryCount + 1,
+      })
+    }
 
     // Get previous analyses for pattern detection
     const previousAnalyses = await getPreviousAnalyses(ctx, userId, 5)
@@ -318,15 +335,28 @@ export const analyzeJournalEntry = httpAction(async (ctx, request) => {
       apiCost: geminiResponse.metadata.apiCost,
       status: 'completed',
     }
-    const analysisId = await ctx.runMutation(
-      internal.aiAnalysis.storeResult,
-      storeArgs as any
-    )
+
+    let finalAnalysisId: string
+    if (isQueuedRequest) {
+      // Update existing analysis record for queued request
+      await ctx.runMutation(internal.aiAnalysis.completeAnalysis, {
+        analysisId,
+        results: storeArgs,
+        totalProcessingTime: Date.now() - startTime,
+      })
+      finalAnalysisId = analysisId
+    } else {
+      // Create new analysis record for direct request
+      finalAnalysisId = await ctx.runMutation(
+        internal.aiAnalysis.storeResult,
+        storeArgs as any
+      )
+    }
 
     return new Response(
       JSON.stringify({
         success: true,
-        analysisId,
+        analysisId: finalAnalysisId,
       }),
       {
         status: 200,
@@ -351,17 +381,56 @@ export const analyzeJournalEntry = httpAction(async (ctx, request) => {
       )
     }
 
-    const { entryId, userId, retryCount = 0 } = requestData
+    const { entryId, userId, retryCount = 0, priority = 'normal' } = requestData
+    const analysisId = (rawData as any).analysisId
+    const isQueuedRequest = !!analysisId
 
-    // Implement retry logic with exponential backoff
-    if (retryCount < 3) {
+    // Determine if error is recoverable for automatic requeuing
+    const errorIsRecoverable = isRecoverableError(errorMessage)
+    const shouldAutoRetry = errorIsRecoverable && retryCount < 3
+
+    // Implement intelligent retry logic with automatic requeuing for transient failures
+    if (shouldAutoRetry) {
       const nextRetryAt = Date.now() + Math.pow(2, retryCount) * 1000 // Exponential backoff
 
-      await ctx.scheduler.runAfter(
-        Math.pow(2, retryCount) * 1000,
-        internal.aiAnalysis.retryAnalysisInternal,
-        { entryId, userId, retryCount: retryCount + 1 }
-      )
+      if (isQueuedRequest) {
+        // For queued requests, use intelligent queue-aware retry logic
+        await ctx.runMutation(internal.scheduler.requeueAnalysis, {
+          analysisId,
+          retryCount: retryCount + 1,
+          priority, // Will be upgraded by retry strategy if needed
+          error: errorMessage,
+          isTransientError: errorIsRecoverable,
+        })
+      } else {
+        // For direct requests, use legacy retry logic with transient error detection
+        if (errorIsRecoverable) {
+          await ctx.scheduler.runAfter(
+            Math.pow(2, retryCount) * 1000,
+            internal.aiAnalysis.retryAnalysisInternal,
+            { entryId, userId, retryCount: retryCount + 1 }
+          )
+        } else {
+          // Non-recoverable error - mark as permanently failed immediately
+          await ctx.runMutation(internal.aiAnalysis.markFailed, {
+            entryId,
+            error: `Non-recoverable error: ${errorMessage}`,
+            processingAttempts: retryCount + 1,
+          })
+
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: `Non-recoverable error: ${errorMessage}`,
+              retryScheduled: false,
+            }),
+            {
+              status: 500,
+              headers: { 'Content-Type': 'application/json' },
+            }
+          )
+        }
+      }
 
       return new Response(
         JSON.stringify({
@@ -369,6 +438,11 @@ export const analyzeJournalEntry = httpAction(async (ctx, request) => {
           error: errorMessage,
           retryScheduled: true,
           nextRetryAt,
+          errorClassification: {
+            isRecoverable: errorIsRecoverable,
+            automaticRequeue: true,
+            retryCount: retryCount + 1,
+          },
         }),
         {
           status: 500,
@@ -377,11 +451,26 @@ export const analyzeJournalEntry = httpAction(async (ctx, request) => {
       )
     } else {
       // Final failure - mark as failed
-      await ctx.runMutation(internal.aiAnalysis.markFailed, {
-        entryId,
-        error: errorMessage,
-        processingAttempts: retryCount + 1,
-      })
+      if (isQueuedRequest) {
+        // For queued requests, move to dead letter queue
+        await ctx.runMutation(internal.scheduler.moveToDeadLetterQueue, {
+          analysisId,
+          reason: `Processing failed after ${retryCount + 1} attempts`,
+          metadata: {
+            originalPriority: priority,
+            retryCount: retryCount + 1,
+            lastError: errorMessage,
+            totalProcessingTime: Date.now() - startTime,
+          },
+        })
+      } else {
+        // For direct requests, use legacy failure handling
+        await ctx.runMutation(internal.aiAnalysis.markFailed, {
+          entryId,
+          error: errorMessage,
+          processingAttempts: retryCount + 1,
+        })
+      }
 
       return new Response(
         JSON.stringify({
@@ -438,8 +527,7 @@ async function callGeminiAPI(
     throw new Error('GOOGLE_GEMINI_API_KEY environment variable not set')
   }
 
-  const API_ENDPOINT =
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${GEMINI_API_KEY}`
+  const API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${GEMINI_API_KEY}`
 
   const prompt = createAnalysisPrompt(requestData)
 
@@ -484,7 +572,9 @@ async function callGeminiAPI(
 
   if (!response.ok) {
     const errorText = await response.text()
-    throw new Error(`Gemini 2.5 Flash-Lite API Error (${response.status}): ${errorText}`)
+    throw new Error(
+      `Gemini 2.5 Flash-Lite API Error (${response.status}): ${errorText}`
+    )
   }
 
   const result = await response.json()

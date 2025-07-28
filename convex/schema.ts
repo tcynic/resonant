@@ -167,6 +167,21 @@ export default defineSchema({
     processingAttempts: v.optional(v.number()), // For HTTP Actions retry tracking
     lastErrorMessage: v.optional(v.string()), // For debugging HTTP Action failures
     httpActionId: v.optional(v.string()), // For request tracking
+    // Queue Management Fields
+    priority: v.optional(
+      v.union(v.literal('normal'), v.literal('high'), v.literal('urgent'))
+    ),
+    queuedAt: v.optional(v.number()), // When item was added to queue
+    processingStartedAt: v.optional(v.number()), // When processing began
+    estimatedCompletionTime: v.optional(v.number()), // ETA for user display
+    queuePosition: v.optional(v.number()), // Position in queue for user feedback
+    // Queue Performance Tracking
+    queueWaitTime: v.optional(v.number()), // Time spent waiting in queue
+    totalProcessingTime: v.optional(v.number()), // End-to-end processing time
+    // Dead Letter Queue Management
+    deadLetterQueue: v.optional(v.boolean()), // Mark items in dead letter queue
+    deadLetterReason: v.optional(v.string()), // Why item was moved to dead letter queue
+    deadLetterTimestamp: v.optional(v.number()), // When moved to dead letter queue
     status: v.union(
       v.literal('processing'),
       v.literal('completed'),
@@ -179,7 +194,11 @@ export default defineSchema({
     .index('by_relationship', ['relationshipId'])
     .index('by_user_created', ['userId', 'createdAt'])
     .index('by_status', ['status'])
-    .index('by_status_created', ['status', 'createdAt']),
+    .index('by_status_created', ['status', 'createdAt'])
+    .index('by_priority_queued', ['priority', 'queuedAt'])
+    .index('by_status_priority', ['status', 'priority'])
+    .index('by_queue_position', ['queuePosition'])
+    .index('by_processing_started', ['processingStartedAt']),
 
   // Relationship Health Scores - Enhanced for comprehensive tracking
   healthScores: defineTable({

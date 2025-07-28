@@ -85,15 +85,14 @@ export const createEntry = mutation({
       // Queue AI analysis if entry allows it and user has it enabled
       if (args.allowAIAnalysis !== false) {
         try {
-          // Schedule HTTP Action-based AI analysis to run after a short delay
-          // Using fetch to call our own HTTP Action endpoint
+          // Use queue-based processing with priority assessment
           await ctx.scheduler.runAfter(
-            2000,
-            internal.aiAnalysis.scheduleHttpAnalysis,
+            1000, // Small delay to allow entry to be fully committed
+            internal.scheduler.enqueueAnalysis,
             {
-              entryId: entryId as string,
-              userId: args.userId as string,
-              priority: 'normal',
+              entryId,
+              userId: args.userId,
+              priority: undefined, // Let queue system assess priority automatically
             }
           )
         } catch (analysisError) {

@@ -61,13 +61,14 @@ export const queueAnalysis = mutation({
       createdAt: Date.now(),
     })
 
-    // Schedule HTTP Action-based AI processing
+    // Use new queue-based processing with priority assessment
     const priority =
-      args.priority || (user?.tier === 'premium' ? 'high' : 'normal')
-    await ctx.scheduler.runAfter(0, internal.aiAnalysis.scheduleHttpAnalysis, {
-      entryId: args.entryId as string,
-      userId: entry.userId as string,
-      priority,
+      args.priority === 'low' ? 'normal' : args.priority || 'normal' // Convert legacy 'low' to 'normal'
+
+    await ctx.scheduler.runAfter(100, internal.scheduler.enqueueAnalysis, {
+      entryId: args.entryId,
+      userId: entry.userId,
+      priority: priority as 'normal' | 'high' | 'urgent',
     })
 
     return { status: 'queued', analysisId }
@@ -226,17 +227,13 @@ export const reprocessStuckEntries = mutation({
         }
 
         if (stuck.reason === 'no_analysis') {
-          // Trigger new analysis via HTTP Actions
-          await ctx.scheduler.runAfter(
-            0,
-            internal.aiAnalysis.scheduleHttpAnalysis,
-            {
-              entryId: stuck.entryId as string,
-              userId: entry.userId as string,
-              priority: 'normal',
-            }
-          )
-          reprocessed.push({ ...stuck, action: 'triggered_http_analysis' })
+          // Use new queue-based processing
+          await ctx.scheduler.runAfter(0, internal.scheduler.enqueueAnalysis, {
+            entryId: stuck.entryId,
+            userId: entry.userId,
+            priority: 'normal',
+          })
+          reprocessed.push({ ...stuck, action: 'queued_for_analysis' })
         } else if (
           stuck.reason === 'stuck_processing' ||
           stuck.reason === 'failed_analysis'
@@ -249,17 +246,13 @@ export const reprocessStuckEntries = mutation({
               processingTime: 0,
             })
           }
-          // Reset to allow HTTP Actions to retry
-          await ctx.scheduler.runAfter(
-            0,
-            internal.aiAnalysis.scheduleHttpAnalysis,
-            {
-              entryId: stuck.entryId as string,
-              userId: entry.userId as string,
-              priority: 'normal',
-            }
-          )
-          reprocessed.push({ ...stuck, action: 'reprocessed_via_http_actions' })
+          // Use queue-based reprocessing
+          await ctx.scheduler.runAfter(0, internal.scheduler.enqueueAnalysis, {
+            entryId: stuck.entryId,
+            userId: entry.userId,
+            priority: 'high', // Give reprocessing higher priority
+          })
+          reprocessed.push({ ...stuck, action: 'requeued_for_analysis' })
         }
       } catch (error) {
         reprocessed.push({
@@ -569,6 +562,97 @@ export const scheduleHttpAnalysis = internalAction({
         error: error instanceof Error ? error.message : 'Unknown error',
       })
       throw error
+    }
+  },
+})
+
+// Queue-aware mutations for HTTP Actions integration
+
+export const updateProcessingStatus = internalMutation({
+  args: {
+    analysisId: v.id('aiAnalysis'),
+    status: v.union(
+      v.literal('processing'),
+      v.literal('completed'),
+      v.literal('failed')
+    ),
+    processingStartedAt: v.optional(v.number()),
+    currentAttempt: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.analysisId, {
+      status: args.status,
+      ...(args.processingStartedAt && {
+        processingStartedAt: args.processingStartedAt,
+      }),
+      ...(args.currentAttempt && {
+        processingAttempts: args.currentAttempt,
+      }),
+    })
+  },
+})
+
+export const completeAnalysis = internalMutation({
+  args: {
+    analysisId: v.id('aiAnalysis'),
+    results: v.any(), // ExtendedStoreResultArgs type
+    totalProcessingTime: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const results = args.results
+    await ctx.db.patch(args.analysisId, {
+      sentimentScore: results.sentimentScore,
+      emotionalKeywords: results.emotionalKeywords,
+      confidenceLevel: results.confidenceLevel,
+      reasoning: results.reasoning,
+      patterns: results.patterns,
+      emotionalStability: results.emotionalStability,
+      energyImpact: results.energyImpact,
+      analysisVersion: results.analysisVersion,
+      processingTime: results.processingTime,
+      tokensUsed: results.tokensUsed,
+      apiCost: results.apiCost,
+      status: results.status as 'processing' | 'completed' | 'failed',
+      totalProcessingTime: args.totalProcessingTime,
+    })
+  },
+})
+
+/**
+ * Backward compatibility wrapper for direct analysis requests
+ * Automatically routes to queue-based processing for better reliability
+ */
+export const analyzeDirectly = mutation({
+  args: {
+    entryId: v.id('journalEntries'),
+    priority: v.optional(
+      v.union(v.literal('normal'), v.literal('high'), v.literal('urgent'))
+    ),
+  },
+  handler: async (ctx, args) => {
+    console.warn(
+      'analyzeDirectly is deprecated. Use queueAnalysis instead for better reliability.'
+    )
+
+    // Route to queue-based processing for better reliability
+    return await queueAnalysis(ctx, {
+      entryId: args.entryId,
+      priority: args.priority || 'normal',
+    })
+  },
+})
+
+/**
+ * Migration helper: checks if system supports queue-based processing
+ */
+export const isQueueBasedProcessingAvailable = query({
+  handler: async ctx => {
+    return {
+      queueBasedProcessing: true,
+      httpActionsProcessing: true,
+      directProcessing: false, // Deprecated
+      migrationComplete: true,
+      recommendedMethod: 'queueAnalysis',
     }
   },
 })
