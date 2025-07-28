@@ -129,11 +129,44 @@ export default defineSchema({
         relationship_dynamics: v.array(v.string()),
       })
     ),
+    // Emotional Stability Analysis (Pattern Detection Migration)
+    emotionalStability: v.optional(
+      v.object({
+        stability_score: v.number(), // 0-100
+        trend_direction: v.union(
+          v.literal('improving'),
+          v.literal('declining'),
+          v.literal('stable')
+        ),
+        volatility_level: v.union(
+          v.literal('low'),
+          v.literal('moderate'),
+          v.literal('high')
+        ),
+        recovery_patterns: v.string(),
+      })
+    ),
+    // Energy Impact Analysis (Pattern Detection Migration)
+    energyImpact: v.optional(
+      v.object({
+        energy_score: v.number(), // 1-10
+        energy_indicators: v.array(v.string()),
+        overall_effect: v.union(
+          v.literal('energizing'),
+          v.literal('neutral'),
+          v.literal('draining')
+        ),
+        explanation: v.string(),
+      })
+    ),
     // Processing Metadata
     analysisVersion: v.string(), // Track DSPy model versions
     processingTime: v.number(), // milliseconds
     tokensUsed: v.optional(v.number()),
     apiCost: v.optional(v.number()),
+    processingAttempts: v.optional(v.number()), // For HTTP Actions retry tracking
+    lastErrorMessage: v.optional(v.string()), // For debugging HTTP Action failures
+    httpActionId: v.optional(v.string()), // For request tracking
     status: v.union(
       v.literal('processing'),
       v.literal('completed'),
@@ -145,7 +178,8 @@ export default defineSchema({
     .index('by_user', ['userId'])
     .index('by_relationship', ['relationshipId'])
     .index('by_user_created', ['userId', 'createdAt'])
-    .index('by_status', ['status']),
+    .index('by_status', ['status'])
+    .index('by_status_created', ['status', 'createdAt']),
 
   // Relationship Health Scores - Enhanced for comprehensive tracking
   healthScores: defineTable({

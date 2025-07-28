@@ -1,8 +1,15 @@
-import { mutation, query, internalMutation } from './_generated/server'
+import {
+  mutation,
+  query,
+  internalQuery,
+  internalMutation,
+  internalAction,
+  QueryCtx,
+} from './_generated/server'
 import { v } from 'convex/values'
 import { Id } from './_generated/dataModel'
 import { internal } from './_generated/api'
-import { analyzeJournalEntry, fallbackAnalysis } from './utils/ai_bridge'
+// NOTE: AI analysis now uses HTTP Actions instead of client-side bridge
 
 // Queue journal entry for AI analysis (Epic 2)
 export const queueAnalysis = mutation({
@@ -54,12 +61,12 @@ export const queueAnalysis = mutation({
       createdAt: Date.now(),
     })
 
-    // Schedule the actual AI processing
+    // Schedule HTTP Action-based AI processing
     const priority =
       args.priority || (user?.tier === 'premium' ? 'high' : 'normal')
-    await ctx.scheduler.runAfter(0, internal.aiAnalysis.processEntry, {
-      analysisId,
-      entryId: args.entryId,
+    await ctx.scheduler.runAfter(0, internal.aiAnalysis.scheduleHttpAnalysis, {
+      entryId: args.entryId as string,
+      userId: entry.userId as string,
       priority,
     })
 
@@ -96,6 +103,26 @@ export const getRecentByUser = query({
   },
 })
 
+// Internal query to get recent analyses for pattern detection
+export const getRecentForPatterns = internalQuery({
+  args: {
+    userId: v.string(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx: QueryCtx, args: { userId: string; limit?: number }) => {
+    const limit = args.limit || 5
+
+    return await ctx.db
+      .query('aiAnalysis')
+      .withIndex('by_user_created', (q: any) =>
+        q.eq('userId', args.userId as Id<'users'>)
+      )
+      .order('desc')
+      .filter((q: any) => q.eq(q.field('status'), 'completed'))
+      .take(limit)
+  },
+})
+
 // Get analyses for a specific relationship
 export const getByRelationship = query({
   args: {
@@ -116,142 +143,9 @@ export const getByRelationship = query({
   },
 })
 
-// Internal function to trigger AI analysis (called by scheduler from journal creation)
-export const triggerAnalysis = internalMutation({
-  args: {
-    entryId: v.id('journalEntries'),
-    priority: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const entry = await ctx.db.get(args.entryId)
-    if (!entry) {
-      throw new Error('Journal entry not found')
-    }
+// DEPRECATED: triggerAnalysis function removed - AI analysis now uses HTTP Actions directly via scheduleHttpAnalysis
 
-    // Check if user has AI analysis enabled (default to true if not set)
-    const user = await ctx.db.get(entry.userId)
-    if (user?.preferences?.aiAnalysisEnabled === false) {
-      return { status: 'skipped', reason: 'AI analysis disabled' }
-    }
-
-    // Check if entry allows AI analysis
-    if (entry.allowAIAnalysis === false) {
-      return { status: 'skipped', reason: 'Entry marked private from AI' }
-    }
-
-    // Check if already analyzed
-    const existingAnalysis = await ctx.db
-      .query('aiAnalysis')
-      .withIndex('by_entry', q => q.eq('entryId', args.entryId))
-      .unique()
-
-    if (existingAnalysis) {
-      return { status: 'skipped', reason: 'Already analyzed' }
-    }
-
-    // Create processing record and start analysis
-    const analysisId = await ctx.db.insert('aiAnalysis', {
-      entryId: args.entryId,
-      userId: entry.userId,
-      relationshipId: entry.relationshipId,
-      sentimentScore: 0, // Placeholder
-      emotionalKeywords: [],
-      confidenceLevel: 0,
-      reasoning: '',
-      analysisVersion: 'dspy-v1.0',
-      processingTime: 0,
-      status: 'processing',
-      createdAt: Date.now(),
-    })
-
-    // Schedule the actual AI processing
-    await ctx.scheduler.runAfter(0, internal.aiAnalysis.processEntry, {
-      analysisId,
-      entryId: args.entryId,
-      priority: args.priority,
-    })
-
-    return { status: 'queued', analysisId }
-  },
-})
-
-// Internal function to process AI analysis (called by scheduler)
-export const processEntry = internalMutation({
-  args: {
-    analysisId: v.id('aiAnalysis'),
-    entryId: v.id('journalEntries'),
-    priority: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const startTime = Date.now()
-
-    try {
-      const entry = await ctx.db.get(args.entryId)
-      const analysis = await ctx.db.get(args.analysisId)
-
-      if (!entry || !analysis) {
-        throw new Error('Entry or analysis record not found')
-      }
-
-      // Get relationship context for better analysis
-      let relationshipContext = ''
-      if (entry.relationshipId) {
-        const relationship = await ctx.db.get(entry.relationshipId)
-        if (relationship) {
-          relationshipContext = `${relationship.initials || relationship.name} (${relationship.type})`
-        }
-      }
-
-      // Get previous analyses for pattern detection
-      const previousAnalyses = await ctx.db
-        .query('aiAnalysis')
-        .withIndex('by_user_created', q => q.eq('userId', entry.userId))
-        .order('desc')
-        .filter(q => q.eq(q.field('status'), 'completed'))
-        .take(5)
-
-      // Real AI analysis using DSPy integration
-      const analysisResult = await performRealAIAnalysis(
-        entry.content,
-        relationshipContext,
-        entry.mood,
-        previousAnalyses
-      )
-
-      // Update analysis record with results
-      await ctx.db.patch(args.analysisId, {
-        sentimentScore: analysisResult.sentimentScore,
-        emotionalKeywords: analysisResult.emotionalKeywords,
-        confidenceLevel: analysisResult.confidenceLevel,
-        reasoning: analysisResult.reasoning,
-        patterns: analysisResult.patterns,
-        processingTime: Date.now() - startTime,
-        tokensUsed: analysisResult.tokensUsed,
-        apiCost: analysisResult.apiCost,
-        status: 'completed',
-      })
-
-      // Trigger health score recalculation if this is for a relationship
-      if (entry.relationshipId) {
-        await ctx.scheduler.runAfter(5000, internal.healthScores.recalculate, {
-          userId: entry.userId,
-          relationshipId: entry.relationshipId,
-        })
-      }
-
-      return { success: true }
-    } catch (error) {
-      // Mark analysis as failed
-      await ctx.db.patch(args.analysisId, {
-        status: 'failed',
-        reasoning: `Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        processingTime: Date.now() - startTime,
-      })
-
-      throw error
-    }
-  },
-})
+// DEPRECATED: processEntry function removed - AI analysis now uses HTTP Actions directly
 
 // Reprocess stuck journal entries (entries without analysis or stuck in processing state)
 export const reprocessStuckEntries = mutation({
@@ -261,34 +155,34 @@ export const reprocessStuckEntries = mutation({
   },
   handler: async (ctx, args) => {
     const dryRun = args.dryRun ?? false
-    
+
     // Get all journal entries for the user (or all if no userId provided)
-    const entries = args.userId 
+    const entries = args.userId
       ? await ctx.db
           .query('journalEntries')
           .withIndex('by_user', q => q.eq('userId', args.userId!))
           .collect()
       : await ctx.db.query('journalEntries').collect()
-    
+
     // Find entries that don't have completed analysis
     const stuckEntries = []
-    
+
     for (const entry of entries) {
       // Skip private entries that shouldn't be analyzed
       if (entry.allowAIAnalysis === false) continue
-      
+
       // Check if this entry has any analysis
       const existingAnalysis = await ctx.db
         .query('aiAnalysis')
         .withIndex('by_entry', q => q.eq('entryId', entry._id))
         .unique()
-      
+
       if (!existingAnalysis) {
         // No analysis at all - needs processing
         stuckEntries.push({
           entryId: entry._id,
           reason: 'no_analysis',
-          createdAt: entry.createdAt
+          createdAt: entry.createdAt,
         })
       } else if (existingAnalysis.status === 'processing') {
         // Check if it's been processing for too long (more than 5 minutes)
@@ -298,7 +192,7 @@ export const reprocessStuckEntries = mutation({
             entryId: entry._id,
             reason: 'stuck_processing',
             createdAt: entry.createdAt,
-            analysisId: existingAnalysis._id
+            analysisId: existingAnalysis._id,
           })
         }
       } else if (existingAnalysis.status === 'failed') {
@@ -307,31 +201,46 @@ export const reprocessStuckEntries = mutation({
           entryId: entry._id,
           reason: 'failed_analysis',
           createdAt: entry.createdAt,
-          analysisId: existingAnalysis._id
+          analysisId: existingAnalysis._id,
         })
       }
     }
-    
+
     if (dryRun) {
       return {
         found: stuckEntries.length,
         entries: stuckEntries,
-        action: 'dry_run_only'
+        action: 'dry_run_only',
       }
     }
-    
+
     // Actually reprocess the stuck entries
     const reprocessed = []
     for (const stuck of stuckEntries) {
       try {
+        // Get the journal entry to access userId
+        const entry = await ctx.db.get(stuck.entryId)
+        if (!entry) {
+          reprocessed.push({ ...stuck, action: 'failed_entry_not_found' })
+          continue
+        }
+
         if (stuck.reason === 'no_analysis') {
-          // Trigger new analysis
-          await ctx.scheduler.runAfter(0, internal.aiAnalysis.triggerAnalysis, {
-            entryId: stuck.entryId,
-            priority: 'normal',
-          })
-          reprocessed.push({ ...stuck, action: 'triggered_new_analysis' })
-        } else if (stuck.reason === 'stuck_processing' || stuck.reason === 'failed_analysis') {
+          // Trigger new analysis via HTTP Actions
+          await ctx.scheduler.runAfter(
+            0,
+            internal.aiAnalysis.scheduleHttpAnalysis,
+            {
+              entryId: stuck.entryId as string,
+              userId: entry.userId as string,
+              priority: 'normal',
+            }
+          )
+          reprocessed.push({ ...stuck, action: 'triggered_http_analysis' })
+        } else if (
+          stuck.reason === 'stuck_processing' ||
+          stuck.reason === 'failed_analysis'
+        ) {
           // Reset existing analysis and retrigger
           if (stuck.analysisId) {
             await ctx.db.patch(stuck.analysisId, {
@@ -340,26 +249,31 @@ export const reprocessStuckEntries = mutation({
               processingTime: 0,
             })
           }
-          await ctx.scheduler.runAfter(0, internal.aiAnalysis.processEntry, {
-            analysisId: stuck.analysisId!,
-            entryId: stuck.entryId,
-            priority: 'normal',
-          })
-          reprocessed.push({ ...stuck, action: 'reprocessed_existing' })
+          // Reset to allow HTTP Actions to retry
+          await ctx.scheduler.runAfter(
+            0,
+            internal.aiAnalysis.scheduleHttpAnalysis,
+            {
+              entryId: stuck.entryId as string,
+              userId: entry.userId as string,
+              priority: 'normal',
+            }
+          )
+          reprocessed.push({ ...stuck, action: 'reprocessed_via_http_actions' })
         }
       } catch (error) {
-        reprocessed.push({ 
-          ...stuck, 
+        reprocessed.push({
+          ...stuck,
           action: 'failed_to_reprocess',
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
         })
       }
     }
-    
+
     return {
       found: stuckEntries.length,
       reprocessed: reprocessed.length,
-      details: reprocessed
+      details: reprocessed,
     }
   },
 })
@@ -407,40 +321,228 @@ export const getStats = query({
 })
 
 // Real AI analysis function using DSPy + Gemini implementation
-async function performRealAIAnalysis(
-  content: string,
-  relationshipContext: string,
-  mood?: string,
-  previousAnalyses?: any[]
-) {
-  try {
-    // Prepare sentiment history for stability analysis
-    const sentimentHistory =
-      previousAnalyses?.map(analysis => ({
-        score: analysis.sentimentScore * 4.5 + 5.5, // Convert -1,1 scale back to 1-10
-        timestamp: analysis.createdAt,
-        emotions: analysis.emotionalKeywords,
-      })) || []
+// Internal mutations for HTTP Actions support
+export const updateStatus = internalMutation({
+  args: {
+    entryId: v.string(),
+    status: v.union(
+      v.literal('processing'),
+      v.literal('completed'),
+      v.literal('failed')
+    ),
+    processingAttempts: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query('aiAnalysis')
+      .withIndex('by_entry', q =>
+        q.eq('entryId', args.entryId as Id<'journalEntries'>)
+      )
+      .unique()
 
-    // Call real AI analysis
-    const result = await analyzeJournalEntry(
-      content,
-      relationshipContext,
-      mood,
-      sentimentHistory
-    )
-
-    return {
-      sentimentScore: result.sentimentScore,
-      emotionalKeywords: result.emotionalKeywords,
-      confidenceLevel: result.confidenceLevel,
-      reasoning: result.reasoning,
-      patterns: result.patterns,
-      tokensUsed: result.tokensUsed,
-      apiCost: result.apiCost,
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        status: args.status,
+        ...(args.processingAttempts && {
+          processingAttempts: args.processingAttempts,
+        }),
+      })
+    } else if (args.status === 'processing') {
+      // Create new analysis record
+      const entry = await ctx.db.get(args.entryId as Id<'journalEntries'>)
+      if (entry) {
+        await ctx.db.insert('aiAnalysis', {
+          entryId: args.entryId as Id<'journalEntries'>,
+          userId: entry.userId,
+          relationshipId: entry.relationshipId,
+          sentimentScore: 0,
+          emotionalKeywords: [],
+          confidenceLevel: 0,
+          reasoning: 'Processing...',
+          analysisVersion: 'http-actions-v1.0',
+          processingTime: 0,
+          status: args.status,
+          createdAt: Date.now(),
+          processingAttempts: args.processingAttempts || 1,
+        })
+      }
     }
-  } catch (error) {
-    console.error('AI analysis failed:', error)
-    throw new Error(`AI analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
-  }
-}
+  },
+})
+
+export const storeResult = internalMutation({
+  args: {
+    entryId: v.string(),
+    userId: v.string(),
+    relationshipId: v.optional(v.string()),
+    sentimentScore: v.number(),
+    emotionalKeywords: v.array(v.string()),
+    confidenceLevel: v.number(),
+    reasoning: v.string(),
+    patterns: v.optional(
+      v.object({
+        recurring_themes: v.array(v.string()),
+        emotional_triggers: v.array(v.string()),
+        communication_style: v.string(),
+        relationship_dynamics: v.array(v.string()),
+      })
+    ),
+    analysisVersion: v.string(),
+    processingTime: v.number(),
+    tokensUsed: v.number(),
+    apiCost: v.number(),
+    status: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query('aiAnalysis')
+      .withIndex('by_entry', q =>
+        q.eq('entryId', args.entryId as Id<'journalEntries'>)
+      )
+      .unique()
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        sentimentScore: args.sentimentScore,
+        emotionalKeywords: args.emotionalKeywords,
+        confidenceLevel: args.confidenceLevel,
+        reasoning: args.reasoning,
+        patterns: args.patterns,
+        emotionalStability: (args as any).emotionalStability,
+        energyImpact: (args as any).energyImpact,
+        analysisVersion: args.analysisVersion,
+        processingTime: args.processingTime,
+        tokensUsed: args.tokensUsed,
+        apiCost: args.apiCost,
+        status: args.status as 'processing' | 'completed' | 'failed',
+      })
+      return existing._id
+    } else {
+      const analysisId = await ctx.db.insert('aiAnalysis', {
+        entryId: args.entryId as Id<'journalEntries'>,
+        userId: args.userId as Id<'users'>,
+        relationshipId: args.relationshipId as Id<'relationships'> | undefined,
+        sentimentScore: args.sentimentScore,
+        emotionalKeywords: args.emotionalKeywords,
+        confidenceLevel: args.confidenceLevel,
+        reasoning: args.reasoning,
+        patterns: args.patterns,
+        emotionalStability: (args as any).emotionalStability,
+        energyImpact: (args as any).energyImpact,
+        analysisVersion: args.analysisVersion,
+        processingTime: args.processingTime,
+        tokensUsed: args.tokensUsed,
+        apiCost: args.apiCost,
+        status: args.status as 'processing' | 'completed' | 'failed',
+        createdAt: Date.now(),
+      })
+      return analysisId
+    }
+  },
+})
+
+export const markFailed = internalMutation({
+  args: {
+    entryId: v.string(),
+    error: v.string(),
+    processingAttempts: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query('aiAnalysis')
+      .withIndex('by_entry', q =>
+        q.eq('entryId', args.entryId as Id<'journalEntries'>)
+      )
+      .unique()
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        status: 'failed',
+        reasoning: `Analysis failed: ${args.error}`,
+        ...(args.processingAttempts && {
+          processingAttempts: args.processingAttempts,
+        }),
+      })
+    }
+  },
+})
+
+// Internal action for retry scheduling
+export const retryAnalysisInternal = internalAction({
+  args: {
+    entryId: v.string(),
+    userId: v.string(),
+    retryCount: v.number(),
+  },
+  handler: async (ctx, args) => {
+    // Make HTTP request to own HTTP Action endpoint
+    const response = await fetch(`${process.env.CONVEX_SITE_URL}/ai/analyze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        entryId: args.entryId,
+        userId: args.userId,
+        retryCount: args.retryCount,
+      }),
+    })
+
+    const result = await response.json()
+    return result
+  },
+})
+
+// Internal action to schedule HTTP Action-based AI analysis
+export const scheduleHttpAnalysis = internalAction({
+  args: {
+    entryId: v.string(),
+    userId: v.string(),
+    priority: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Make HTTP request to our HTTP Action endpoint for AI analysis
+    const siteUrl = process.env.CONVEX_SITE_URL
+    if (!siteUrl) {
+      throw new Error('CONVEX_SITE_URL environment variable not set')
+    }
+
+    try {
+      const response = await fetch(`${siteUrl}/ai/analyze`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // TODO: Add proper authentication header when Clerk integration is complete
+          Authorization: `Bearer ${args.userId}`, // Simplified for now
+        },
+        body: JSON.stringify({
+          entryId: args.entryId,
+          userId: args.userId,
+          retryCount: 0,
+          priority: args.priority,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        console.error('HTTP Action AI analysis failed:', result)
+        // Mark as failed in database
+        await ctx.runMutation(internal.aiAnalysis.markFailed, {
+          entryId: args.entryId,
+          error: result.error || 'HTTP Action request failed',
+        })
+      }
+
+      return result
+    } catch (error) {
+      console.error('Failed to call HTTP Action for AI analysis:', error)
+      // Mark as failed in database
+      await ctx.runMutation(internal.aiAnalysis.markFailed, {
+        entryId: args.entryId,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      })
+      throw error
+    }
+  },
+})
+
+// performRealAIAnalysis function removed - AI analysis now uses HTTP Actions
