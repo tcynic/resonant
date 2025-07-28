@@ -30,6 +30,7 @@ export default function NewJournalEntryPage() {
         content: createData.content,
         mood: createData.mood,
         isPrivate: createData.isPrivate,
+        allowAIAnalysis: !createData.isPrivate, // AI analysis allowed when not private
         tags: createData.tags,
       })
 

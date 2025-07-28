@@ -45,7 +45,7 @@ export default function JournalEntryEditor({
   const [mood, setMood] = useState<MoodType | undefined>(
     entry?.mood as MoodType
   )
-  const [isPrivate, setIsPrivate] = useState(entry?.isPrivate ?? true)
+  const [isPrivate, setIsPrivate] = useState(entry?.isPrivate ?? false)
   const [tags, setTags] = useState<string[]>(entry?.tags?.filter(Boolean) || [])
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [characterCount, setCharacterCount] = useState(content.length)
@@ -72,7 +72,7 @@ export default function JournalEntryEditor({
       setContent(draft.content || '')
       setRelationshipIds(draft.relationshipIds || [])
       setMood(draft.mood as MoodType)
-      setIsPrivate(draft.isPrivate ?? true)
+      setIsPrivate(draft.isPrivate ?? false)
       setTags(draft.tags || [])
     }
   )
@@ -160,7 +160,7 @@ export default function JournalEntryEditor({
             setContent(draft.content || '')
             setRelationshipIds(draft.relationshipIds || [])
             setMood(draft.mood as MoodType)
-            setIsPrivate(draft.isPrivate ?? true)
+            setIsPrivate(draft.isPrivate ?? false)
             setTags(draft.tags || [])
           }
         }}

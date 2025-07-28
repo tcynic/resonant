@@ -296,6 +296,10 @@ class RetryManager {
   }
 
   private delay(ms: number): Promise<void> {
+    // Skip delay in Convex environments (mutations/queries can't use setTimeout)
+    if (typeof process !== 'undefined' && process.env.CONVEX_CLOUD_URL) {
+      return Promise.resolve()
+    }
     return new Promise(resolve => setTimeout(resolve, ms))
   }
 }
@@ -502,8 +506,10 @@ export class AIRecoveryService {
 // Singleton recovery service
 export const aiRecovery = new AIRecoveryService()
 
-// Cleanup interval
-setInterval(() => aiRecovery.cleanup(), 60000) // Clean up every minute
+// Cleanup interval (skip in Convex environments)
+if (typeof process === 'undefined' || !process.env.CONVEX_CLOUD_URL) {
+  setInterval(() => aiRecovery.cleanup(), 60000) // Clean up every minute
+}
 
 // Helper function for common AI operations
 export async function executeAIOperation<T>(

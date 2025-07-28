@@ -366,10 +366,11 @@ export interface GetRelationshipsByUserArgs {
 // Journal entry arguments
 export interface CreateJournalEntryArgs {
   userId: string
-  relationshipId: string
+  relationshipId?: string
   content: string
   mood?: string
   isPrivate?: boolean
+  allowAIAnalysis?: boolean
   tags?: string[]
 }
 

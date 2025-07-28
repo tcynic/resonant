@@ -463,28 +463,30 @@ export class AIRateLimiter {
         )
       }
 
-      // Set timeout for queue item
-      setTimeout(() => {
-        const index = this.requestQueue.findIndex(
-          item => item.id === queueItem.id
-        )
-        if (index !== -1) {
-          this.requestQueue.splice(index, 1)
-          reject(
-            new AIResourceLimitError(
-              'requests',
-              this.requestQueue.length,
-              this.config.maxQueueSize,
-              {
-                queueId: queueItem.id,
-                waitTime: Date.now() - queueItem.timestamp,
-                maxWaitTime: this.config.maxWaitTimeMs,
-                reason: 'Queue timeout - request waited too long',
-              }
-            )
+      // Set timeout for queue item (skip in Convex environments)
+      if (typeof process === 'undefined' || !process.env.CONVEX_CLOUD_URL) {
+        setTimeout(() => {
+          const index = this.requestQueue.findIndex(
+            item => item.id === queueItem.id
           )
-        }
-      }, this.config.maxWaitTimeMs)
+          if (index !== -1) {
+            this.requestQueue.splice(index, 1)
+            reject(
+              new AIResourceLimitError(
+                'requests',
+                this.requestQueue.length,
+                this.config.maxQueueSize,
+                {
+                  queueId: queueItem.id,
+                  waitTime: Date.now() - queueItem.timestamp,
+                  maxWaitTime: this.config.maxWaitTimeMs,
+                  reason: 'Queue timeout - request waited too long',
+                }
+              )
+            )
+          }
+        }, this.config.maxWaitTimeMs)
+      }
     })
   }
 
@@ -595,6 +597,11 @@ export class AIRateLimiter {
   }
 
   private startCleanupTimer(): void {
+    // Skip cleanup timer in Convex environments (mutations/queries can't use setInterval)
+    if (typeof process !== 'undefined' && process.env.CONVEX_CLOUD_URL) {
+      return
+    }
+    
     // Clean up every minute
     setInterval(() => {
       this.cleanupBuckets()

@@ -625,6 +625,11 @@ export class AICostTracker {
 
   // Reset budget periods
   private startBudgetResetTimer(): void {
+    // Skip budget reset timer in Convex environments (mutations/queries can't use setInterval)
+    if (typeof process !== 'undefined' && process.env.CONVEX_CLOUD_URL) {
+      return
+    }
+    
     setInterval(
       () => {
         const now = new Date()

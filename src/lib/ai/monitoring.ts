@@ -465,6 +465,11 @@ class AIMonitoringService {
 
   // Cleanup old data
   private startCleanupTimer(): void {
+    // Skip cleanup timer in Convex environments (mutations/queries can't use setInterval)
+    if (typeof process !== 'undefined' && process.env.CONVEX_CLOUD_URL) {
+      return
+    }
+    
     this.cleanupInterval = setInterval(
       () => {
         const errorCutoff =

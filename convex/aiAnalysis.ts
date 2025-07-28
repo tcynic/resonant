@@ -2,7 +2,7 @@ import { mutation, query, internalMutation } from './_generated/server'
 import { v } from 'convex/values'
 import { Id } from './_generated/dataModel'
 import { internal } from './_generated/api'
-import { analyzeJournalEntry, fallbackAnalysis } from './utils/ai-bridge'
+import { analyzeJournalEntry, fallbackAnalysis } from './utils/ai_bridge'
 
 // Queue journal entry for AI analysis (Epic 2)
 export const queueAnalysis = mutation({
@@ -18,9 +18,9 @@ export const queueAnalysis = mutation({
       throw new Error('Journal entry not found')
     }
 
-    // Check if user has AI analysis enabled
+    // Check if user has AI analysis enabled (default to true if not set)
     const user = await ctx.db.get(entry.userId)
-    if (!user?.preferences?.aiAnalysisEnabled) {
+    if (user?.preferences?.aiAnalysisEnabled === false) {
       return { status: 'skipped', reason: 'AI analysis disabled' }
     }
 
@@ -56,7 +56,7 @@ export const queueAnalysis = mutation({
 
     // Schedule the actual AI processing
     const priority =
-      args.priority || (user.tier === 'premium' ? 'high' : 'normal')
+      args.priority || (user?.tier === 'premium' ? 'high' : 'normal')
     await ctx.scheduler.runAfter(0, internal.aiAnalysis.processEntry, {
       analysisId,
       entryId: args.entryId,
@@ -113,6 +113,65 @@ export const getByRelationship = query({
       .order('desc')
       .filter(q => q.eq(q.field('status'), 'completed'))
       .take(limit)
+  },
+})
+
+// Internal function to trigger AI analysis (called by scheduler from journal creation)
+export const triggerAnalysis = internalMutation({
+  args: {
+    entryId: v.id('journalEntries'),
+    priority: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const entry = await ctx.db.get(args.entryId)
+    if (!entry) {
+      throw new Error('Journal entry not found')
+    }
+
+    // Check if user has AI analysis enabled (default to true if not set)
+    const user = await ctx.db.get(entry.userId)
+    if (user?.preferences?.aiAnalysisEnabled === false) {
+      return { status: 'skipped', reason: 'AI analysis disabled' }
+    }
+
+    // Check if entry allows AI analysis
+    if (entry.allowAIAnalysis === false) {
+      return { status: 'skipped', reason: 'Entry marked private from AI' }
+    }
+
+    // Check if already analyzed
+    const existingAnalysis = await ctx.db
+      .query('aiAnalysis')
+      .withIndex('by_entry', q => q.eq('entryId', args.entryId))
+      .unique()
+
+    if (existingAnalysis) {
+      return { status: 'skipped', reason: 'Already analyzed' }
+    }
+
+    // Create processing record and start analysis
+    const analysisId = await ctx.db.insert('aiAnalysis', {
+      entryId: args.entryId,
+      userId: entry.userId,
+      relationshipId: entry.relationshipId,
+      sentimentScore: 0, // Placeholder
+      emotionalKeywords: [],
+      confidenceLevel: 0,
+      reasoning: '',
+      analysisVersion: 'dspy-v1.0',
+      processingTime: 0,
+      status: 'processing',
+      createdAt: Date.now(),
+    })
+
+    // Schedule the actual AI processing
+    await ctx.scheduler.runAfter(0, internal.aiAnalysis.processEntry, {
+      analysisId,
+      entryId: args.entryId,
+      priority: args.priority,
+    })
+
+    return { status: 'queued', analysisId }
   },
 })
 
@@ -194,6 +253,117 @@ export const processEntry = internalMutation({
   },
 })
 
+// Reprocess stuck journal entries (entries without analysis or stuck in processing state)
+export const reprocessStuckEntries = mutation({
+  args: {
+    userId: v.optional(v.id('users')),
+    dryRun: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const dryRun = args.dryRun ?? false
+    
+    // Get all journal entries for the user (or all if no userId provided)
+    const entries = args.userId 
+      ? await ctx.db
+          .query('journalEntries')
+          .withIndex('by_user', q => q.eq('userId', args.userId!))
+          .collect()
+      : await ctx.db.query('journalEntries').collect()
+    
+    // Find entries that don't have completed analysis
+    const stuckEntries = []
+    
+    for (const entry of entries) {
+      // Skip private entries that shouldn't be analyzed
+      if (entry.allowAIAnalysis === false) continue
+      
+      // Check if this entry has any analysis
+      const existingAnalysis = await ctx.db
+        .query('aiAnalysis')
+        .withIndex('by_entry', q => q.eq('entryId', entry._id))
+        .unique()
+      
+      if (!existingAnalysis) {
+        // No analysis at all - needs processing
+        stuckEntries.push({
+          entryId: entry._id,
+          reason: 'no_analysis',
+          createdAt: entry.createdAt
+        })
+      } else if (existingAnalysis.status === 'processing') {
+        // Check if it's been processing for too long (more than 5 minutes)
+        const fiveMinutesAgo = Date.now() - 5 * 60 * 1000
+        if (existingAnalysis.createdAt < fiveMinutesAgo) {
+          stuckEntries.push({
+            entryId: entry._id,
+            reason: 'stuck_processing',
+            createdAt: entry.createdAt,
+            analysisId: existingAnalysis._id
+          })
+        }
+      } else if (existingAnalysis.status === 'failed') {
+        // Failed analysis - could retry
+        stuckEntries.push({
+          entryId: entry._id,
+          reason: 'failed_analysis',
+          createdAt: entry.createdAt,
+          analysisId: existingAnalysis._id
+        })
+      }
+    }
+    
+    if (dryRun) {
+      return {
+        found: stuckEntries.length,
+        entries: stuckEntries,
+        action: 'dry_run_only'
+      }
+    }
+    
+    // Actually reprocess the stuck entries
+    const reprocessed = []
+    for (const stuck of stuckEntries) {
+      try {
+        if (stuck.reason === 'no_analysis') {
+          // Trigger new analysis
+          await ctx.scheduler.runAfter(0, internal.aiAnalysis.triggerAnalysis, {
+            entryId: stuck.entryId,
+            priority: 'normal',
+          })
+          reprocessed.push({ ...stuck, action: 'triggered_new_analysis' })
+        } else if (stuck.reason === 'stuck_processing' || stuck.reason === 'failed_analysis') {
+          // Reset existing analysis and retrigger
+          if (stuck.analysisId) {
+            await ctx.db.patch(stuck.analysisId, {
+              status: 'processing',
+              reasoning: 'Reprocessing stuck entry',
+              processingTime: 0,
+            })
+          }
+          await ctx.scheduler.runAfter(0, internal.aiAnalysis.processEntry, {
+            analysisId: stuck.analysisId!,
+            entryId: stuck.entryId,
+            priority: 'normal',
+          })
+          reprocessed.push({ ...stuck, action: 'reprocessed_existing' })
+        }
+      } catch (error) {
+        reprocessed.push({ 
+          ...stuck, 
+          action: 'failed_to_reprocess',
+          error: error instanceof Error ? error.message : 'Unknown error'
+        })
+      }
+    }
+    
+    return {
+      found: stuckEntries.length,
+      reprocessed: reprocessed.length,
+      details: reprocessed
+    }
+  },
+})
+
 // Get analysis statistics for dashboard
 export const getStats = query({
   args: { userId: v.id('users') },
@@ -270,26 +440,7 @@ async function performRealAIAnalysis(
       apiCost: result.apiCost,
     }
   } catch (error) {
-    console.error('Real AI analysis failed, using fallback:', error)
-
-    // Fallback to rule-based analysis
-    const fallbackResult = fallbackAnalysis(content, mood)
-
-    return {
-      sentimentScore: fallbackResult.sentimentScore || 0,
-      emotionalKeywords: fallbackResult.emotionalKeywords || [],
-      confidenceLevel: fallbackResult.confidenceLevel || 0.5,
-      reasoning:
-        fallbackResult.reasoning ||
-        'Fallback analysis used due to AI service unavailability',
-      patterns: fallbackResult.patterns || {
-        recurring_themes: [],
-        emotional_triggers: [],
-        communication_style: 'unknown',
-        relationship_dynamics: [],
-      },
-      tokensUsed: fallbackResult.tokensUsed || 0,
-      apiCost: fallbackResult.apiCost || 0,
-    }
+    console.error('AI analysis failed:', error)
+    throw new Error(`AI analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }

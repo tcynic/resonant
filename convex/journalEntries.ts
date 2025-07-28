@@ -2,26 +2,29 @@ import { v } from 'convex/values'
 import { mutation, query, MutationCtx, QueryCtx } from './_generated/server'
 import { ConvexError } from 'convex/values'
 import { Id } from './_generated/dataModel'
+import { internal } from './_generated/api'
 
 // Create a new journal entry
 export const createEntry = mutation({
   args: {
     userId: v.id('users'),
-    relationshipId: v.id('relationships'),
+    relationshipId: v.optional(v.id('relationships')),
     content: v.string(),
     mood: v.optional(v.string()),
     isPrivate: v.optional(v.boolean()),
     tags: v.optional(v.array(v.string())),
+    allowAIAnalysis: v.optional(v.boolean()),
   },
   handler: async (
     ctx: MutationCtx,
     args: {
       userId: Id<'users'>
-      relationshipId: Id<'relationships'>
+      relationshipId?: Id<'relationships'>
       content: string
       mood?: string
       isPrivate?: boolean
       tags?: string[]
+      allowAIAnalysis?: boolean
     }
   ) => {
     // Validate input
@@ -38,15 +41,17 @@ export const createEntry = mutation({
       throw new ConvexError('User not found')
     }
 
-    // Verify relationship exists and belongs to user
-    const relationship = await ctx.db.get(args.relationshipId)
-    if (!relationship) {
-      throw new ConvexError('Relationship not found')
-    }
-    if (relationship.userId !== args.userId) {
-      throw new ConvexError(
-        "Unauthorized: Cannot create entry for another user's relationship"
-      )
+    // Verify relationship exists and belongs to user (if specified)
+    if (args.relationshipId) {
+      const relationship = await ctx.db.get(args.relationshipId)
+      if (!relationship) {
+        throw new ConvexError('Relationship not found')
+      }
+      if (relationship.userId !== args.userId) {
+        throw new ConvexError(
+          "Unauthorized: Cannot create entry for another user's relationship"
+        )
+      }
     }
 
     // Validate tags if provided
@@ -65,10 +70,29 @@ export const createEntry = mutation({
         content: args.content.trim(),
         mood: args.mood?.trim(),
         isPrivate: args.isPrivate || false,
+        allowAIAnalysis: args.allowAIAnalysis !== false, // Default to true unless explicitly false
         tags: args.tags?.map(tag => tag.trim()).filter(tag => tag.length > 0),
         createdAt: now,
         updatedAt: now,
       })
+
+      // Queue AI analysis if entry allows it and user has it enabled
+      if (args.allowAIAnalysis !== false) {
+        try {
+          // Schedule AI analysis to run after a short delay
+          await ctx.scheduler.runAfter(
+            2000,
+            internal.aiAnalysis.triggerAnalysis,
+            {
+              entryId,
+              priority: 'normal',
+            }
+          )
+        } catch (analysisError) {
+          // Don't fail the entire entry creation if AI analysis queuing fails
+          console.error('Failed to queue AI analysis:', analysisError)
+        }
+      }
 
       return entryId
     } catch (error) {

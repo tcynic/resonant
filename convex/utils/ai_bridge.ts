@@ -5,7 +5,7 @@
 
 import { getRelationshipAnalyzer } from '../../src/lib/ai/analysis'
 import type { SentimentAnalysisResult } from '../../src/lib/ai/gemini-client'
-import { validateAIEnvironment, logAIConfigStatus } from './ai-config'
+import { validateAIEnvironment, logAIConfigStatus } from './ai_config'
 
 export interface AnalysisResult {
   sentimentScore: number
@@ -288,13 +288,17 @@ export function fallbackAnalysis(
 
 function getMoodSentiment(mood: string): number {
   const moodMap: { [key: string]: number } = {
+    excited: 1.0,
     ecstatic: 1.0,
+    grateful: 0.8,
     joyful: 0.8,
     happy: 0.6,
     content: 0.4,
     calm: 0.2,
     neutral: 0.0,
+    confused: -0.1,
     concerned: -0.2,
+    anxious: -0.3,
     sad: -0.4,
     frustrated: -0.6,
     angry: -0.8,

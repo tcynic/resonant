@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from '@jest/globals'
-import { fallbackAnalysis } from '../utils/ai-bridge'
+import { fallbackAnalysis } from '../utils/ai_bridge'
 
 describe('AI Integration', () => {
   describe('fallbackAnalysis', () => {
