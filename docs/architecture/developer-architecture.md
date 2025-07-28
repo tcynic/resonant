@@ -100,62 +100,75 @@ The AI system uses Convex HTTP Actions for 99.9% reliability:
 ### Reliability Patterns
 
 **Circuit Breaker Implementation:**
+
 ```typescript
 // convex/ai/circuitBreaker.ts
 export const aiCircuitBreaker = {
   maxFailures: 5,
   resetTimeout: 60000, // 1 minute
-  fallbackResponse: { status: 'degraded', message: 'AI temporarily unavailable' }
-};
+  fallbackResponse: {
+    status: 'degraded',
+    message: 'AI temporarily unavailable',
+  },
+}
 ```
 
 **Queue Management:**
+
 ```typescript
 // convex/scheduler/aiProcessing.ts
 export const scheduleAIAnalysis = internalMutation({
-  args: { entryId: v.id("journalEntries"), priority: v.optional(v.string()) },
-  handler: async (ctx, { entryId, priority = "normal" }) => {
+  args: { entryId: v.id('journalEntries'), priority: v.optional(v.string()) },
+  handler: async (ctx, { entryId, priority = 'normal' }) => {
     await ctx.scheduler.runAfter(0, internal.ai.processEntry, {
       entryId,
       retryCount: 0,
-      maxRetries: 3
-    });
-  }
-});
+      maxRetries: 3,
+    })
+  },
+})
 ```
 
 **Error Handling & Retry Logic:**
+
 ```typescript
 // convex/ai/httpActions.ts
-export const processJournalEntry = httpAction(async (ctx, { entryId, retryCount = 0 }) => {
-  try {
-    const response = await fetch('https://api.gemini.flash.google.com/v1/analyze', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${process.env.GEMINI_API_KEY}` },
-      body: JSON.stringify(analysisPayload)
-    });
-    
-    if (!response.ok) {
-      throw new Error(`API Error: ${response.status}`);
-    }
-    
-    const result = await response.json();
-    // Process and store results
-    
-  } catch (error) {
-    if (retryCount < 3) {
-      // Exponential backoff retry
-      await ctx.scheduler.runAfter(
-        Math.pow(2, retryCount) * 1000,
-        internal.ai.processEntry,
-        { entryId, retryCount: retryCount + 1 }
-      );
-    } else {
-      // Log failure and notify user
-      await ctx.runMutation(internal.ai.handleProcessingFailure, { entryId, error: error.message });
+export const processJournalEntry = httpAction(
+  async (ctx, { entryId, retryCount = 0 }) => {
+    try {
+      const response = await fetch(
+        'https://api.gemini.flash.google.com/v1/analyze',
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${process.env.GEMINI_API_KEY}` },
+          body: JSON.stringify(analysisPayload),
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status}`)
+      }
+
+      const result = await response.json()
+      // Process and store results
+    } catch (error) {
+      if (retryCount < 3) {
+        // Exponential backoff retry
+        await ctx.scheduler.runAfter(
+          Math.pow(2, retryCount) * 1000,
+          internal.ai.processEntry,
+          { entryId, retryCount: retryCount + 1 }
+        )
+      } else {
+        // Log failure and notify user
+        await ctx.runMutation(internal.ai.handleProcessingFailure, {
+          entryId,
+          error: error.message,
+        })
+      }
     }
   }
-});
+)
 ```
 
 ### Performance Optimizations
@@ -212,27 +225,30 @@ export const processJournalEntry = httpAction(async (ctx, { entryId, retryCount 
 ### HTTP Actions Development Patterns
 
 **Action Development:**
+
 ```typescript
 // convex/ai/actions.ts
-import { httpAction } from "../_generated/server";
-import { internal } from "../_generated/api";
+import { httpAction } from '../_generated/server'
+import { internal } from '../_generated/api'
 
 export const analyzeJournalEntry = httpAction(async (ctx, args) => {
   // 1. Validate input and check circuit breaker
   // 2. Make external API call with error handling
   // 3. Process response and update database
   // 4. Return status for real-time updates
-});
+})
 ```
 
 **Queue Management:**
+
 ```typescript
 // Scheduling AI processing
-const scheduleAnalysis = useMutation(api.scheduler.scheduleAIAnalysis);
-await scheduleAnalysis({ entryId: "...", priority: "high" });
+const scheduleAnalysis = useMutation(api.scheduler.scheduleAIAnalysis)
+await scheduleAnalysis({ entryId: '...', priority: 'high' })
 ```
 
 **Real-time Status Updates:**
+
 ```typescript
 // React component subscribing to processing status
 const processingStatus = useQuery(api.ai.getProcessingStatus, { entryId });
@@ -253,24 +269,27 @@ const processingStatus = useQuery(api.ai.getProcessingStatus, { entryId });
 ### Testing Strategy
 
 **HTTP Actions Testing:**
+
 ```typescript
 // Test with mocked external APIs
-jest.mock('node-fetch');
-const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
+jest.mock('node-fetch')
+const mockFetch = fetch as jest.MockedFunction<typeof fetch>
 
 test('handles API failures gracefully', async () => {
-  mockFetch.mockRejectedValueOnce(new Error('API Error'));
+  mockFetch.mockRejectedValueOnce(new Error('API Error'))
   // Test retry logic and error handling
-});
+})
 ```
 
 **Integration Testing:**
+
 - Queue processing workflows
 - Circuit breaker behavior
 - Retry logic validation
 - Real-time status updates
 
 **End-to-End Testing:**
+
 - Complete AI processing pipelines
 - User experience during API outages
 - Recovery from failed processing
@@ -278,6 +297,7 @@ test('handles API failures gracefully', async () => {
 ### Code Organization
 
 **HTTP Actions Structure:**
+
 ```
 convex/
 ├── ai/
@@ -294,6 +314,7 @@ convex/
 ```
 
 **Frontend Integration:**
+
 - Feature-based component organization
 - Shared hooks for AI processing status
 - Consistent error handling patterns

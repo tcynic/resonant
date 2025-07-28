@@ -623,7 +623,7 @@ convex/actions/__tests__/ai-processing.test.ts
 - Validate retry logic
 - Error scenario coverage
 
-// Scheduler Testing Pattern  
+// Scheduler Testing Pattern
 convex/scheduler/__tests__/analysis-queue.test.ts
 - Queue management testing
 - Priority handling validation

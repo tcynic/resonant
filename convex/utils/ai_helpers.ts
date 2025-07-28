@@ -135,7 +135,7 @@ export function validateAnalysisEnvironment(): {
 export function generateAnalysisMetadata(
   startTime: number,
   tokenCount?: number,
-  modelVersion: string = 'gemini-1.5-flash'
+  modelVersion: string = 'gemini-2.5-flash-lite'
 ): {
   modelVersion: string
   processingTime: number

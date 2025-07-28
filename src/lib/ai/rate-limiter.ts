@@ -601,7 +601,7 @@ export class AIRateLimiter {
     if (typeof process !== 'undefined' && process.env.CONVEX_CLOUD_URL) {
       return
     }
-    
+
     // Clean up every minute
     setInterval(() => {
       this.cleanupBuckets()

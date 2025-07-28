@@ -91,9 +91,9 @@ Resonant is built on a modern, serverless technology stack optimized for real-ti
 
 ## AI & Machine Learning
 
-### Google Gemini Flash via HTTP Actions
+### Google Gemini 2.5 Flash-Lite via HTTP Actions
 
-- **Why**: High-performance, cost-effective AI model with reliable integration
+- **Why**: Latest high-performance, cost-effective AI model with enhanced capabilities and reliable integration
 - **Usage**:
   - Journal entry sentiment analysis
   - Relationship pattern recognition
@@ -286,42 +286,44 @@ Resonant is built on a modern, serverless technology stack optimized for real-ti
 
 ```typescript
 // convex/ai/actions.ts - External API integration
-import { httpAction } from "../_generated/server";
-import { internal } from "../_generated/api";
+import { httpAction } from '../_generated/server'
+import { internal } from '../_generated/api'
 
 export const analyzeJournalEntry = httpAction(async (ctx, args) => {
-  const { entryId, retryCount = 0 } = args;
-  
+  const { entryId, retryCount = 0 } = args
+
   try {
     // Check circuit breaker status
-    const circuitStatus = await ctx.runQuery(internal.ai.getCircuitStatus);
+    const circuitStatus = await ctx.runQuery(internal.ai.getCircuitStatus)
     if (circuitStatus.isOpen) {
-      throw new Error("Circuit breaker open - AI service unavailable");
+      throw new Error('Circuit breaker open - AI service unavailable')
     }
-    
+
     // Make external API call
-    const response = await fetch("https://api.gemini.flash.google.com/v1/analyze", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.GEMINI_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(analysisPayload)
-    });
-    
+    const response = await fetch(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${process.env.GEMINI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(analysisPayload),
+      }
+    )
+
     if (!response.ok) {
-      throw new Error(`API Error: ${response.status}`);
+      throw new Error(`API Error: ${response.status}`)
     }
-    
-    const result = await response.json();
-    
+
+    const result = await response.json()
+
     // Process and store results
     await ctx.runMutation(internal.ai.storeAnalysisResult, {
       entryId,
       analysis: result,
-      status: "completed"
-    });
-    
+      status: 'completed',
+    })
   } catch (error) {
     // Handle retry logic
     if (retryCount < 3) {
@@ -329,16 +331,16 @@ export const analyzeJournalEntry = httpAction(async (ctx, args) => {
         Math.pow(2, retryCount) * 1000, // Exponential backoff
         internal.ai.retryAnalysis,
         { entryId, retryCount: retryCount + 1 }
-      );
+      )
     } else {
       // Final failure - update status and notify user
       await ctx.runMutation(internal.ai.handleAnalysisFailure, {
         entryId,
-        error: error.message
-      });
+        error: error.message,
+      })
     }
   }
-});
+})
 ```
 
 **Queue Management with Convex Scheduler:**
@@ -346,28 +348,28 @@ export const analyzeJournalEntry = httpAction(async (ctx, args) => {
 ```typescript
 // convex/scheduler/aiProcessing.ts
 export const scheduleAIAnalysis = internalMutation({
-  args: { 
-    entryId: v.id("journalEntries"), 
+  args: {
+    entryId: v.id('journalEntries'),
     priority: v.optional(v.string()),
-    delay: v.optional(v.number())
+    delay: v.optional(v.number()),
   },
-  handler: async (ctx, { entryId, priority = "normal", delay = 0 }) => {
+  handler: async (ctx, { entryId, priority = 'normal', delay = 0 }) => {
     // Update processing status
-    await ctx.db.patch(entryId, { 
-      processingStatus: "queued",
-      queuedAt: Date.now()
-    });
-    
+    await ctx.db.patch(entryId, {
+      processingStatus: 'queued',
+      queuedAt: Date.now(),
+    })
+
     // Schedule HTTP Action
     await ctx.scheduler.runAfter(delay, internal.ai.analyzeJournalEntry, {
       entryId,
       retryCount: 0,
-      priority
-    });
-    
-    return { status: "scheduled", entryId };
-  }
-});
+      priority,
+    })
+
+    return { status: 'scheduled', entryId }
+  },
+})
 ```
 
 **Circuit Breaker Implementation:**
@@ -377,47 +379,48 @@ export const scheduleAIAnalysis = internalMutation({
 export const circuitBreakerConfig = {
   maxFailures: 5,
   resetTimeout: 60000, // 1 minute
-  halfOpenMaxCalls: 3
-};
+  halfOpenMaxCalls: 3,
+}
 
 export const updateCircuitBreaker = internalMutation({
   args: { success: v.boolean(), service: v.string() },
   handler: async (ctx, { success, service }) => {
     const existing = await ctx.db
-      .query("circuitBreakers")
-      .withIndex("by_service", (q) => q.eq("service", service))
-      .first();
-    
+      .query('circuitBreakers')
+      .withIndex('by_service', q => q.eq('service', service))
+      .first()
+
     if (!existing) {
-      await ctx.db.insert("circuitBreakers", {
+      await ctx.db.insert('circuitBreakers', {
         service,
         failures: success ? 0 : 1,
-        state: "closed",
-        lastFailure: success ? null : Date.now()
-      });
-      return;
+        state: 'closed',
+        lastFailure: success ? null : Date.now(),
+      })
+      return
     }
-    
+
     if (success) {
       await ctx.db.patch(existing._id, {
         failures: 0,
-        state: "closed",
-        lastFailure: null
-      });
+        state: 'closed',
+        lastFailure: null,
+      })
     } else {
-      const newFailures = existing.failures + 1;
-      const newState = newFailures >= circuitBreakerConfig.maxFailures 
-        ? "open" 
-        : existing.state;
-      
+      const newFailures = existing.failures + 1
+      const newState =
+        newFailures >= circuitBreakerConfig.maxFailures
+          ? 'open'
+          : existing.state
+
       await ctx.db.patch(existing._id, {
         failures: newFailures,
         state: newState,
-        lastFailure: Date.now()
-      });
+        lastFailure: Date.now(),
+      })
     }
-  }
-});
+  },
+})
 ```
 
 ### Testing HTTP Actions
@@ -426,116 +429,119 @@ export const updateCircuitBreaker = internalMutation({
 
 ```typescript
 // __tests__/httpActions.test.ts
-import { ConvexTestingHelper } from "convex/testing";
-import { jest } from "@jest/globals";
+import { ConvexTestingHelper } from 'convex/testing'
+import { jest } from '@jest/globals'
 
 // Mock fetch for testing
-global.fetch = jest.fn();
-const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
+global.fetch = jest.fn()
+const mockFetch = fetch as jest.MockedFunction<typeof fetch>
 
-describe("AI HTTP Actions", () => {
-  let t: ConvexTestingHelper;
-  
+describe('AI HTTP Actions', () => {
+  let t: ConvexTestingHelper
+
   beforeEach(() => {
-    t = new ConvexTestingHelper();
-    mockFetch.mockClear();
-  });
-  
-  test("handles successful AI analysis", async () => {
+    t = new ConvexTestingHelper()
+    mockFetch.mockClear()
+  })
+
+  test('handles successful AI analysis', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
-        sentiment: "positive",
-        insights: ["Great communication"],
-        healthScore: 8.5
-      })
-    } as Response);
-    
+        sentiment: 'positive',
+        insights: ['Great communication'],
+        healthScore: 8.5,
+      }),
+    } as Response)
+
     const result = await t.action(internal.ai.analyzeJournalEntry, {
-      entryId: "test-entry-id",
-      retryCount: 0
-    });
-    
-    expect(result.status).toBe("completed");
+      entryId: 'test-entry-id',
+      retryCount: 0,
+    })
+
+    expect(result.status).toBe('completed')
     expect(mockFetch).toHaveBeenCalledWith(
-      "https://api.gemini.flash.google.com/v1/analyze",
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent',
       expect.objectContaining({
-        method: "POST",
+        method: 'POST',
         headers: expect.objectContaining({
-          "Authorization": expect.stringContaining("Bearer")
-        })
+          Authorization: expect.stringContaining('Bearer'),
+        }),
       })
-    );
-  });
-  
-  test("implements retry logic on API failure", async () => {
-    mockFetch.mockRejectedValueOnce(new Error("API Error"));
-    
+    )
+  })
+
+  test('implements retry logic on API failure', async () => {
+    mockFetch.mockRejectedValueOnce(new Error('API Error'))
+
     const result = await t.action(internal.ai.analyzeJournalEntry, {
-      entryId: "test-entry-id",
-      retryCount: 0
-    });
-    
+      entryId: 'test-entry-id',
+      retryCount: 0,
+    })
+
     // Should schedule retry
-    expect(result.status).toBe("retry_scheduled");
-    expect(result.nextRetryAt).toBeGreaterThan(Date.now());
-  });
-  
-  test("circuit breaker opens after max failures", async () => {
+    expect(result.status).toBe('retry_scheduled')
+    expect(result.nextRetryAt).toBeGreaterThan(Date.now())
+  })
+
+  test('circuit breaker opens after max failures', async () => {
     // Simulate multiple failures
     for (let i = 0; i < 5; i++) {
-      mockFetch.mockRejectedValueOnce(new Error("API Error"));
+      mockFetch.mockRejectedValueOnce(new Error('API Error'))
       await t.action(internal.ai.analyzeJournalEntry, {
         entryId: `test-entry-${i}`,
-        retryCount: 0
-      });
+        retryCount: 0,
+      })
     }
-    
+
     const circuitStatus = await t.query(internal.ai.getCircuitStatus, {
-      service: "gemini_flash"
-    });
-    
-    expect(circuitStatus.isOpen).toBe(true);
-  });
-});
+      service: 'gemini_2_5_flash_lite',
+    })
+
+    expect(circuitStatus.isOpen).toBe(true)
+  })
+})
 ```
 
 **Integration Testing:**
 
 ```typescript
 // __tests__/aiProcessingFlow.test.ts
-describe("AI Processing Integration", () => {
-  test("complete processing flow from journal entry to results", async () => {
-    const t = new ConvexTestingHelper();
-    
+describe('AI Processing Integration', () => {
+  test('complete processing flow from journal entry to results', async () => {
+    const t = new ConvexTestingHelper()
+
     // 1. Create journal entry
     const entryId = await t.mutation(api.journalEntries.create, {
-      content: "Had a great conversation today",
-      mood: "happy",
-      relationshipIds: ["rel-1"]
-    });
-    
+      content: 'Had a great conversation today',
+      mood: 'happy',
+      relationshipIds: ['rel-1'],
+    })
+
     // 2. Schedule AI analysis
     await t.mutation(api.scheduler.scheduleAIAnalysis, {
       entryId,
-      priority: "high"
-    });
-    
+      priority: 'high',
+    })
+
     // 3. Mock successful AI response
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ sentiment: "positive", insights: ["Good communication"] })
-    } as Response);
-    
+      json: async () => ({
+        sentiment: 'positive',
+        insights: ['Good communication'],
+      }),
+    } as Response)
+
     // 4. Process scheduled action
-    await t.finishAllScheduledFunctions();
-    
+    await t.finishAllScheduledFunctions()
+
     // 5. Verify results stored
-    const updatedEntry = await t.query(api.journalEntries.get, { id: entryId });
-    expect(updatedEntry?.processingStatus).toBe("completed");
-    expect(updatedEntry?.aiAnalysis).toBeDefined();
-  });
-});
+    const updatedEntry = await t.query(api.journalEntries.get, { id: entryId })
+    expect(updatedEntry?.processingStatus).toBe('completed')
+    expect(updatedEntry?.aiAnalysis).toBeDefined()
+  })
+})
 ```
 
 ## Development Workflow
@@ -640,7 +646,7 @@ npm run convex:deploy # Deploy Convex functions
 
 ### HTTP Actions & AI Costs
 
-- Google Gemini Flash chosen for cost-effectiveness
+- Google Gemini 2.5 Flash-Lite chosen for enhanced performance and cost-effectiveness
 - Queue-based processing reduces redundant API calls
 - Circuit breaker prevents costly failed request cascades
 - Retry logic with exponential backoff minimizes wasted calls
@@ -695,9 +701,9 @@ npm run convex:deploy # Deploy Convex functions
 - Reduces security implementation burden
 - Professional user management dashboard
 
-### Gemini Flash vs. OpenAI vs. Anthropic
+### Gemini 2.5 Flash-Lite vs. OpenAI vs. Anthropic
 
-**Decision**: Google Gemini Flash
+**Decision**: Google Gemini 2.5 Flash-Lite
 **Rationale**:
 
 - Cost-effective for high-volume text analysis

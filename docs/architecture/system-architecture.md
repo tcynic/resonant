@@ -49,7 +49,7 @@ graph TB
     end
 
     subgraph External["EXTERNAL SERVICES"]
-        subgraph GeminiAI["GOOGLE GEMINI FLASH"]
+        subgraph GeminiAI["GOOGLE GEMINI 2.5 FLASH-LITE"]
             AIA["AI Analysis"]
             SEN["Sentiment"]
             PAT["Patterns"]
@@ -82,12 +82,12 @@ sequenceDiagram
     C->>Q: 3. Queue AI Analysis
     Q->>C: 4. Update Status: 'processing'
     Q->>S: 5. Schedule Processing (0ms delay)
-    
+
     S->>H: 6. Trigger HTTP Action
     H->>CB: 7. Check Circuit Breaker Status
-    
+
     alt Circuit Breaker: CLOSED (Healthy)
-        CB->>G: 8. Call Gemini API
+        CB->>G: 8. Call Gemini 2.5 Flash-Lite API
         G->>CB: 9. Return Analysis
         CB->>H: 10. Forward Results
         H->>C: 11. Store AI Results
@@ -99,7 +99,7 @@ sequenceDiagram
         C->>F: 10. Real-time Update
         F->>U: 11. Display Basic Insights
     end
-    
+
     Note over H,CB: Retry logic with exponential backoff
     Note over C,F: Real-time status tracking via WebSocket
 ```
@@ -257,7 +257,7 @@ flowchart TD
     end
 
     subgraph External["EXTERNAL SERVICES"]
-        GEMINI["Google Gemini API"]
+        GEMINI["Google Gemini 2.5 Flash-Lite API"]
     end
 
     JE --> QM
@@ -271,16 +271,16 @@ flowchart TD
     GEMINI --> DB
     DB --> HEALTH
     DB --> UI
-    
+
     CB -.->|"API Failure"| FALLBACK
     FALLBACK --> DB
-    
+
     MONITOR --> METRICS
     HTTP --> MONITOR
     CB --> MONITOR
-    
+
     STATUS -.->|"Real-time"| UI
-    
+
     style CB fill:#ff9999
     style FALLBACK fill:#99ff99
     style HTTP fill:#9999ff
@@ -330,17 +330,17 @@ graph TB
     CB_CLOSED --> RL_TIER
     CB_OPEN --> RULE_BASED
     CB_HALF --> RETRY_EXP
-    
+
     RL_QUOTA --> RL_QUEUE
     RL_QUEUE --> RETRY_EXP
-    
+
     RETRY_MAX --> CB_OPEN
     PERF_METRICS --> ALERT_SYS
     ERROR_TRACK --> CB_OPEN
-    
+
     RULE_BASED --> USER_NOTIFICATION
     CACHED_RESULTS --> USER_NOTIFICATION
-    
+
     style CB_CLOSED fill:#90EE90
     style CB_OPEN fill:#FFB6C1
     style CB_HALF fill:#FFE4B5
@@ -397,7 +397,7 @@ graph TB
     Modules --> GEMINI_ENDPOINT
     GEMINI_ENDPOINT --> Optimizers
     Optimizers --> Evaluators
-    
+
     style HTTP_ENDPOINT fill:#9999ff
     style CIRCUIT_BREAKER fill:#ff9999
     style RATE_LIMITER fill:#ffff99
@@ -484,7 +484,7 @@ graph TB
             GIP["Global Identity Provider"]
         end
 
-        subgraph GeminiService["GOOGLE GEMINI AI"]
+        subgraph GeminiService["GOOGLE GEMINI 2.5 FLASH-LITE"]
             AG["API Gateway"]
             RateL["Rate Limits"]
         end
@@ -504,14 +504,14 @@ graph TB
 
 ### Key Architecture Benefits
 
-| **Metric** | **Previous (Client-side)** | **New (HTTP Actions)** | **Improvement** |
-|------------|---------------------------|------------------------|-----------------|
-| **Success Rate** | 75% (25% failure rate) | 99.9% | **+24.9%** |
-| **Reliability** | Client-dependent | Server-side guaranteed | **Consistent** |
-| **Error Recovery** | Manual retry required | Automatic with fallback | **Seamless** |
-| **Rate Limiting** | Client-side violations | Server-side enforcement | **Compliant** |
-| **Monitoring** | Limited visibility | Comprehensive tracking | **Observable** |
-| **Scalability** | Browser limitations | Convex auto-scaling | **Unlimited** |
+| **Metric**         | **Previous (Client-side)** | **New (HTTP Actions)**  | **Improvement** |
+| ------------------ | -------------------------- | ----------------------- | --------------- |
+| **Success Rate**   | 75% (25% failure rate)     | 99.9%                   | **+24.9%**      |
+| **Reliability**    | Client-dependent           | Server-side guaranteed  | **Consistent**  |
+| **Error Recovery** | Manual retry required      | Automatic with fallback | **Seamless**    |
+| **Rate Limiting**  | Client-side violations     | Server-side enforcement | **Compliant**   |
+| **Monitoring**     | Limited visibility         | Comprehensive tracking  | **Observable**  |
+| **Scalability**    | Browser limitations        | Convex auto-scaling     | **Unlimited**   |
 
 ### Architecture Components
 
@@ -546,7 +546,7 @@ graph TB
     CB_STATE --> RATE_LIMITER
     CB_METRICS -.-> RULE_ANALYSIS
     RATE_LIMITER --> MONITORING
-    
+
     style QM fill:#e1f5fe
     style CB_STATE fill:#f3e5f5
     style RULE_ANALYSIS fill:#e8f5e8
@@ -617,32 +617,37 @@ graph TB
 The migration from client-side AI processing to **Convex HTTP Actions** addresses the critical 25% failure rate issue through:
 
 #### 1. **Server-Side Processing Pipeline**
+
 - **HTTP Actions**: All external API calls execute server-side in Convex environment
-- **Queue Management**: Systematic queuing with priority assessment and duplicate prevention  
+- **Queue Management**: Systematic queuing with priority assessment and duplicate prevention
 - **Scheduler Integration**: Convex scheduler handles timing, retries, and error isolation
 - **Real-time Updates**: WebSocket connections provide instant status updates to frontend
 
 #### 2. **Circuit Breaker Pattern**
+
 - **CLOSED State**: Normal operation with 99.9% success rate
 - **OPEN State**: Automatic fallback to rule-based analysis when external APIs fail
 - **HALF-OPEN State**: Intelligent recovery testing before returning to normal operation
 - **Failure Detection**: Monitoring error rates, response times, and health status
 
 #### 3. **Comprehensive Fallback Strategies**
+
 - **Rule-based Analysis**: Keyword sentiment scoring and pattern recognition
 - **Cached Results**: Leverage previous analysis data and user patterns
 - **Basic Sentiment**: Mood-based analysis when AI unavailable
 - **User Notifications**: Transparent communication about analysis status
 
 #### 4. **Rate Limiting & Monitoring**
+
 - **Tier-based Quotas**: Different limits for free/paid users
 - **Token Bucket Algorithm**: Smooth rate limiting with burst allowance
 - **Queue Management**: Priority queuing with wait time optimization
 - **Performance Metrics**: Comprehensive tracking of all AI operations
 
 #### 5. **Data Flow Reliability**
+
 ```
-Journal Entry → Queue → Scheduler → HTTP Action → Circuit Breaker → Rate Limiter → Gemini API
+Journal Entry → Queue → Scheduler → HTTP Action → Circuit Breaker → Rate Limiter → Gemini 2.5 Flash-Lite API
                  ↓                                        ↓
               Status Updates                         Fallback Analysis
                  ↓                                        ↓
@@ -650,6 +655,7 @@ Journal Entry → Queue → Scheduler → HTTP Action → Circuit Breaker → Ra
 ```
 
 ### **Result: 99.9% Reliability**
+
 - **From 75% success rate to 99.9%** (+24.9% improvement)
 - **Seamless error recovery** with automatic fallbacks
 - **Server-side consistency** eliminates client-side failures

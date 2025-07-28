@@ -6,15 +6,16 @@
 **Title**: Migrate AI Analysis from Client-Side to HTTP Actions Architecture  
 **Priority**: P0 (Critical - Fixes 25% failure rate)  
 **Status**: Not Started  
-**Business Value**: High - Reduces AI analysis failure rate from 25% to <5%  
+**Business Value**: High - Reduces AI analysis failure rate from 25% to <5%
 
 ## Problem Statement
 
 The current AI analysis system has a critical architectural flaw - it attempts to run Node.js-dependent AI modules within Convex's serverless environment, causing a 25% failure rate with "promises that never resolve" errors. This significantly impacts user experience and trust in AI features.
 
 **Current Issues:**
+
 - 25% AI analysis failure rate
-- Node.js dependencies failing in Convex serverless environment  
+- Node.js dependencies failing in Convex serverless environment
 - Promises never resolving due to `setInterval` and other client-side dependencies
 - Inconsistent AI processing pipeline
 - Poor error handling and recovery
@@ -40,11 +41,13 @@ Based on the architecture document at `docs/architecture-update1.md`, migrate to
 ## User Stories
 
 ### Story 1: HTTP Actions for AI Processing
+
 **As a** system architect  
 **I want** AI analysis to run in HTTP Actions instead of regular functions  
-**So that** external API calls work reliably without serverless constraints  
+**So that** external API calls work reliably without serverless constraints
 
 **Acceptance Criteria:**
+
 - [ ] Create new HTTP Action for AI processing (`convex/actions/ai-processing.ts`)
 - [ ] Implement Gemini API client with proper error handling
 - [ ] Add authentication and request validation
@@ -55,11 +58,13 @@ Based on the architecture document at `docs/architecture-update1.md`, migrate to
 **Sprint:** 1
 
 ### Story 2: Queue-Based Analysis Pipeline
+
 **As a** system architect  
 **I want** AI analysis requests to be queued and processed asynchronously  
-**So that** the system can handle load and retry failures gracefully  
+**So that** the system can handle load and retry failures gracefully
 
 **Acceptance Criteria:**
+
 - [ ] Implement analysis queue using Convex Scheduler
 - [ ] Add priority handling (normal, high, urgent)
 - [ ] Create queue management functions (enqueue, dequeue, requeue)
@@ -70,11 +75,13 @@ Based on the architecture document at `docs/architecture-update1.md`, migrate to
 **Sprint:** 2
 
 ### Story 3: Real-Time Status Updates
+
 **As a** journal user  
 **I want** to see real-time updates on my AI analysis progress  
-**So that** I know when analysis is complete and can view results immediately  
+**So that** I know when analysis is complete and can view results immediately
 
 **Acceptance Criteria:**
+
 - [ ] Update journal entry status in real-time (pending → processing → completed/failed)
 - [ ] Show progress indicators in UI
 - [ ] Display estimated completion time
@@ -85,11 +92,13 @@ Based on the architecture document at `docs/architecture-update1.md`, migrate to
 **Sprint:** 2
 
 ### Story 4: Comprehensive Error Handling & Recovery
+
 **As a** system architect  
 **I want** robust error handling with circuit breakers and fallback analysis  
-**So that** users get consistent results even when external APIs fail  
+**So that** users get consistent results even when external APIs fail
 
 **Acceptance Criteria:**
+
 - [ ] Implement circuit breaker pattern for Gemini API calls
 - [ ] Add exponential backoff retry logic with jitter
 - [ ] Create fallback analysis using rule-based sentiment detection
@@ -100,11 +109,13 @@ Based on the architecture document at `docs/architecture-update1.md`, migrate to
 **Sprint:** 3
 
 ### Story 5: Enhanced Database Schema
+
 **As a** system architect  
 **I want** database schema optimized for the new AI architecture  
-**So that** we can store enhanced analysis results and processing metadata  
+**So that** we can store enhanced analysis results and processing metadata
 
 **Acceptance Criteria:**
+
 - [ ] Add new `aiAnalysis` table with enhanced fields
 - [ ] Add processing metadata (tokens used, cost, processing time)
 - [ ] Create indexes for efficient querying
@@ -115,11 +126,13 @@ Based on the architecture document at `docs/architecture-update1.md`, migrate to
 **Sprint:** 3
 
 ### Story 6: Monitoring & Observability
+
 **As a** product manager  
 **I want** comprehensive monitoring of AI analysis performance  
-**So that** I can track success rates, costs, and identify issues proactively  
+**So that** I can track success rates, costs, and identify issues proactively
 
 **Acceptance Criteria:**
+
 - [ ] Implement success rate tracking and alerting
 - [ ] Add cost monitoring and budget alerts
 - [ ] Create performance dashboards
@@ -130,11 +143,13 @@ Based on the architecture document at `docs/architecture-update1.md`, migrate to
 **Sprint:** 4
 
 ### Story 7: Legacy System Migration & Cleanup
+
 **As a** system architect  
 **I want** to cleanly migrate from the old system without breaking existing functionality  
-**So that** users experience seamless transition to the new architecture  
+**So that** users experience seamless transition to the new architecture
 
 **Acceptance Criteria:**
+
 - [ ] Create migration script for existing analysis data
 - [ ] Implement feature flag for gradual rollout
 - [ ] Remove old client-side AI modules
@@ -147,23 +162,27 @@ Based on the architecture document at `docs/architecture-update1.md`, migrate to
 ## Technical Implementation Plan
 
 ### Phase 1: Foundation (Sprint 1)
+
 - Set up HTTP Actions infrastructure
 - Implement basic Gemini API client
 - Create core processing functions
 
-### Phase 2: Queue & Real-Time (Sprint 2)  
+### Phase 2: Queue & Real-Time (Sprint 2)
+
 - Build queue management system
 - Implement real-time status updates
 - Basic error handling
 
 ### Phase 3: Resilience (Sprint 3)
+
 - Advanced error handling and recovery
 - Database schema migration
 - Circuit breakers and fallbacks
 
 ### Phase 4: Migration & Monitoring (Sprint 4)
+
 - Complete system migration
-- Full monitoring implementation  
+- Full monitoring implementation
 - Legacy system cleanup
 
 ## Dependencies
@@ -175,12 +194,12 @@ Based on the architecture document at `docs/architecture-update1.md`, migrate to
 
 ## Risks & Mitigations
 
-| Risk | Impact | Probability | Mitigation |
-|------|--------|-------------|------------|
-| Gemini API rate limits | High | Medium | Implement queue with rate limiting, fallback analysis |
-| Migration data loss | High | Low | Comprehensive backup and rollback procedures |
-| Performance degradation | Medium | Medium | Load testing and gradual rollout with feature flags |
-| User experience disruption | Medium | Low | Maintain backward compatibility during migration |
+| Risk                       | Impact | Probability | Mitigation                                            |
+| -------------------------- | ------ | ----------- | ----------------------------------------------------- |
+| Gemini API rate limits     | High   | Medium      | Implement queue with rate limiting, fallback analysis |
+| Migration data loss        | High   | Low         | Comprehensive backup and rollback procedures          |
+| Performance degradation    | Medium | Medium      | Load testing and gradual rollout with feature flags   |
+| User experience disruption | Medium | Low         | Maintain backward compatibility during migration      |
 
 ## Success Metrics
 

@@ -1,6 +1,6 @@
 /**
  * HTTP Actions for AI Processing
- * Handles external API calls to Gemini for journal entry analysis with 99.9% reliability
+ * Handles external API calls to Gemini 2.5 Flash-Lite for journal entry analysis with 99.9% reliability
  */
 
 import { httpAction, internalAction } from './_generated/server'
@@ -112,13 +112,19 @@ interface ExtendedStoreResultArgs {
 }
 
 /**
- * Main HTTP Action for analyzing journal entries via Gemini API
+ * Main HTTP Action for analyzing journal entries via Gemini 2.5 Flash-Lite API
  * Implements retry logic and comprehensive error handling
  */
 export const analyzeJournalEntry = httpAction(async (ctx, request) => {
   const startTime = Date.now()
+  let requestData: AIProcessingRequest | undefined
 
   try {
+    // Parse and validate request using Zod schema first (since we can only read request body once)
+    const rawData = await request.json()
+    requestData = validateAIRequest(rawData)
+    const { entryId, userId, retryCount = 0, priority = 'normal' } = requestData
+
     // Validate authentication
     const authHeader = request.headers.get('Authorization')
     const authResult = await validateUserAuth(authHeader)
@@ -135,11 +141,6 @@ export const analyzeJournalEntry = httpAction(async (ctx, request) => {
         }
       )
     }
-
-    // Parse and validate request using Zod schema
-    const rawData = await request.json()
-    const requestData = validateAIRequest(rawData)
-    const { entryId, userId, retryCount = 0, priority = 'normal' } = requestData
 
     // Verify authenticated user matches request userId
     if (authResult.userId !== userId) {
@@ -336,10 +337,20 @@ export const analyzeJournalEntry = httpAction(async (ctx, request) => {
     const errorMessage =
       error instanceof Error ? error.message : 'Unknown error'
 
-    // Extract request data for retry logic
-    const requestData: AIProcessingRequest = await request
-      .json()
-      .catch(() => ({}))
+    // If we don't have requestData (error occurred during parsing), we can't retry
+    if (!requestData) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `Failed to parse request data: ${errorMessage}`,
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      )
+    }
+
     const { entryId, userId, retryCount = 0 } = requestData
 
     // Implement retry logic with exponential backoff
@@ -366,13 +377,11 @@ export const analyzeJournalEntry = httpAction(async (ctx, request) => {
       )
     } else {
       // Final failure - mark as failed
-      if (entryId) {
-        await ctx.runMutation(internal.aiAnalysis.markFailed, {
-          entryId,
-          error: errorMessage,
-          processingAttempts: retryCount + 1,
-        })
-      }
+      await ctx.runMutation(internal.aiAnalysis.markFailed, {
+        entryId,
+        error: errorMessage,
+        processingAttempts: retryCount + 1,
+      })
 
       return new Response(
         JSON.stringify({
@@ -418,7 +427,7 @@ export const retryAnalysis = httpAction(async (ctx, request) => {
 })
 
 /**
- * Call Gemini API with proper error handling and timeout
+ * Call Gemini 2.5 Flash-Lite API with proper error handling and timeout
  */
 async function callGeminiAPI(
   requestData: GeminiAnalysisRequest
@@ -430,14 +439,13 @@ async function callGeminiAPI(
   }
 
   const API_ENDPOINT =
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${GEMINI_API_KEY}`
 
   const prompt = createAnalysisPrompt(requestData)
 
   const response = await fetch(API_ENDPOINT, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${GEMINI_API_KEY}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -476,23 +484,23 @@ async function callGeminiAPI(
 
   if (!response.ok) {
     const errorText = await response.text()
-    throw new Error(`Gemini API Error (${response.status}): ${errorText}`)
+    throw new Error(`Gemini 2.5 Flash-Lite API Error (${response.status}): ${errorText}`)
   }
 
   const result = await response.json()
 
   if (!result.candidates || result.candidates.length === 0) {
-    throw new Error('No response from Gemini API')
+    throw new Error('No response from Gemini 2.5 Flash-Lite API')
   }
 
   const content = result.candidates[0].content.parts[0].text
 
-  // Parse the structured response from Gemini
+  // Parse the structured response from Gemini 2.5 Flash-Lite
   return parseGeminiResponse(content, requestData)
 }
 
 /**
- * Create analysis prompt for Gemini API using DSPy patterns
+ * Create analysis prompt for Gemini 2.5 Flash-Lite API using DSPy patterns
  * Migrated from src/lib/ai/analysis.ts SentimentAnalysisModule
  */
 function createAnalysisPrompt(requestData: GeminiAnalysisRequest): string {
@@ -612,7 +620,7 @@ Respond with valid JSON only.`
 }
 
 /**
- * Parse Gemini API response into structured format
+ * Parse Gemini 2.5 Flash-Lite API response into structured format
  * Enhanced with DSPy-pattern validation and score conversion
  */
 function parseGeminiResponse(
@@ -623,7 +631,7 @@ function parseGeminiResponse(
     // Extract JSON from response
     const jsonMatch = content.match(/\{[\s\S]*\}/)
     if (!jsonMatch) {
-      throw new Error('No JSON found in Gemini response')
+      throw new Error('No JSON found in Gemini 2.5 Flash-Lite response')
     }
 
     const parsed = JSON.parse(jsonMatch[0])
@@ -725,7 +733,7 @@ function parseGeminiResponse(
         processingTime: Date.now(),
         tokensUsed: estimateTokenUsage(requestData.text),
         apiCost: estimateAPICost(requestData.text),
-        analysisVersion: 'http-actions-dspy-v1.1',
+        analysisVersion: 'gemini-2.5-flash-lite-v1.0',
       },
     }
 
@@ -740,7 +748,7 @@ function parseGeminiResponse(
     return response
   } catch (error) {
     throw new Error(
-      `Failed to parse Gemini response: ${error instanceof Error ? error.message : 'Unknown error'}`
+      `Failed to parse Gemini 2.5 Flash-Lite response: ${error instanceof Error ? error.message : 'Unknown error'}`
     )
   }
 }
@@ -758,7 +766,7 @@ function estimateTokenUsage(text: string): number {
  */
 function estimateAPICost(text: string): number {
   const tokens = estimateTokenUsage(text)
-  // Gemini Flash pricing: approximately $0.075 per 1M input tokens
+  // Gemini 2.5 Flash-Lite pricing: approximately $0.075 per 1M input tokens
   return (tokens / 1000000) * 0.075
 }
 

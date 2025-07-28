@@ -16,6 +16,7 @@ import type {
 import type * as _generated_stubs_api from "../_generated_stubs/api.js";
 import type * as _generated_stubs_server from "../_generated_stubs/server.js";
 import type * as aiAnalysis from "../aiAnalysis.js";
+import type * as ai_processing from "../ai_processing.js";
 import type * as constants from "../constants.js";
 import type * as crons from "../crons.js";
 import type * as dashboard from "../dashboard.js";
@@ -33,6 +34,7 @@ import type * as users from "../users.js";
 import type * as utils_ai_bridge from "../utils/ai_bridge.js";
 import type * as utils_ai_config from "../utils/ai_config.js";
 import type * as utils_ai_helpers from "../utils/ai_helpers.js";
+import type * as utils_ai_validation from "../utils/ai_validation.js";
 import type * as utils_export_helpers from "../utils/export_helpers.js";
 import type * as utils_health_calculations from "../utils/health_calculations.js";
 import type * as utils_notification_content from "../utils/notification_content.js";
@@ -52,6 +54,7 @@ declare const fullApi: ApiFromModules<{
   "_generated_stubs/api": typeof _generated_stubs_api;
   "_generated_stubs/server": typeof _generated_stubs_server;
   aiAnalysis: typeof aiAnalysis;
+  ai_processing: typeof ai_processing;
   constants: typeof constants;
   crons: typeof crons;
   dashboard: typeof dashboard;
@@ -69,6 +72,7 @@ declare const fullApi: ApiFromModules<{
   "utils/ai_bridge": typeof utils_ai_bridge;
   "utils/ai_config": typeof utils_ai_config;
   "utils/ai_helpers": typeof utils_ai_helpers;
+  "utils/ai_validation": typeof utils_ai_validation;
   "utils/export_helpers": typeof utils_export_helpers;
   "utils/health_calculations": typeof utils_health_calculations;
   "utils/notification_content": typeof utils_notification_content;

@@ -9,12 +9,14 @@ This unified approach combines what would traditionally be separate backend and 
 ### Starter Template or Existing Project
 
 Based on my analysis of your current codebase, **Resonant** is built on:
+
 - **Next.js 15** with App Router and Turbopack
 - **Convex** as the backend-as-a-service platform
-- **Clerk** for authentication 
+- **Clerk** for authentication
 - **TypeScript** throughout the stack
 
 The project appears to be based on a modern Convex + Next.js starter pattern with these pre-configured architectural decisions:
+
 - Real-time database with Convex
 - Serverless functions architecture
 - TypeScript-first development
@@ -24,9 +26,9 @@ The project appears to be based on a modern Convex + Next.js starter pattern wit
 
 ### Change Log
 
-| Date | Version | Description | Author |
-|------|---------|-------------|---------|
-| 2025-01-28 | 1.0 | Initial architecture document for AI integration fix | Winston (Architect) |
+| Date       | Version | Description                                          | Author              |
+| ---------- | ------- | ---------------------------------------------------- | ------------------- |
+| 2025-01-28 | 1.0     | Initial architecture document for AI integration fix | Winston (Architect) |
 
 ## High Level Architecture
 
@@ -39,7 +41,8 @@ Resonant employs a **Jamstack + Real-time BaaS** architecture using Next.js 15 f
 Based on your existing setup and requirements, I recommend continuing with your current platform choice but with architectural modifications:
 
 **Platform:** Vercel + Convex + External AI Processing
-**Key Services:** 
+**Key Services:**
+
 - Vercel (Next.js hosting, edge functions)
 - Convex (real-time database, serverless functions, file storage)
 - Clerk (authentication)
@@ -57,6 +60,7 @@ Based on your existing setup and requirements, I recommend continuing with your 
 **Package Organization:** Feature-based with shared types package
 
 This maintains your current structure while adding proper separation for AI services:
+
 ```
 resonant/
 ├── src/                    # Next.js frontend
@@ -71,23 +75,23 @@ resonant/
 ```mermaid
 graph TB
     User[👤 User] --> Web[🌐 Next.js App<br/>Vercel]
-    
+
     Web --> Convex[⚡ Convex Backend<br/>Real-time DB + Functions]
     Web --> Clerk[🔐 Clerk Auth]
-    
+
     Convex --> Queue[📋 AI Analysis Queue<br/>Convex Scheduler]
     Queue --> HTTP[🌍 HTTP Action<br/>AI Processing]
     HTTP --> Gemini[🤖 Google Gemini<br/>AI Analysis]
-    
+
     Convex --> Files[📁 File Storage<br/>Convex Storage]
     Convex --> RT[⚡ Real-time Updates<br/>WebSocket]
-    
+
     subgraph "AI Processing Flow"
         Queue
         HTTP
         Gemini
     end
-    
+
     subgraph "Real-time Flow"
         Convex
         RT
@@ -108,39 +112,41 @@ graph TB
 
 ### Technology Stack Table
 
-| Category | Technology | Version | Purpose | Rationale |
-|----------|------------|---------|---------|-----------|
-| Frontend Language | TypeScript | ^5.3.0 | Type-safe client development | Prevents runtime errors, excellent IDE support, shared types with backend |
-| Frontend Framework | Next.js | ^15.0.0 | React framework with SSR/SSG | App Router for modern routing, Turbopack for fast builds, excellent Vercel integration |
-| UI Component Library | Tailwind CSS + shadcn/ui | ^3.4.0 + latest | Design system and components | Utility-first CSS with high-quality accessible components |
-| State Management | React Query + Convex React | ^5.0.0 + latest | Server state + real-time sync | Convex handles real-time state, React Query for client state management |
-| Backend Language | TypeScript | ^5.3.0 | Type-safe server development | Shared types with frontend, excellent Convex integration |
-| Backend Framework | Convex | latest | Real-time BaaS platform | Real-time database, serverless functions, file storage, auth integration |
-| API Style | Convex Functions | N/A | Type-safe RPC over WebSocket | Real-time updates, type safety, automatic optimization |
-| Database | Convex Database | N/A | Document database with real-time | Built-in real-time subscriptions, ACID transactions, automatic scaling |
-| Cache | Convex Built-in | N/A | Automatic query caching | Built into Convex platform, no additional configuration needed |
-| File Storage | Convex Storage | N/A | File upload and serving | Integrated with database, automatic CDN, simple API |
-| Authentication | Clerk | ^5.0.0 | User authentication service | Excellent Convex integration, social login, user management |
-| AI Integration | Google Gemini + HTTP Actions | latest | AI analysis processing | Reliable external API calls via Convex HTTP Actions |
-| Frontend Testing | Jest + React Testing Library | ^29.0.0 + ^14.0.0 | Unit and component testing | Standard React testing stack, excellent TypeScript support |
-| Backend Testing | Convex Test + Jest | latest + ^29.0.0 | Convex function testing | Official Convex testing utilities for functions and data |
-| E2E Testing | Playwright | ^1.40.0 | End-to-end testing | MCP browser automation support, reliable cross-browser testing |
-| Build Tool | Next.js + Turbopack | ^15.0.0 | Frontend build system | Fast development builds, built-in optimizations |
-| Bundler | Turbopack | Built-in | Next.js bundler | Faster than Webpack, built into Next.js 15 |
-| IaC Tool | Vercel CLI + Convex CLI | latest | Deployment automation | Platform-native deployment tools |
-| CI/CD | GitHub Actions | N/A | Automated testing and deployment | Excellent integration with Vercel and Convex platforms |
-| Monitoring | Vercel Analytics + Convex Dashboard | Built-in | Performance and error tracking | Built into deployment platforms, minimal configuration |
-| Logging | Console + Convex Logs | Built-in | Application logging | Convex provides built-in logging for serverless functions |
-| CSS Framework | Tailwind CSS | ^3.4.0 | Utility-first styling | Rapid development, consistent design system, excellent Next.js integration |
+| Category             | Technology                          | Version           | Purpose                          | Rationale                                                                              |
+| -------------------- | ----------------------------------- | ----------------- | -------------------------------- | -------------------------------------------------------------------------------------- |
+| Frontend Language    | TypeScript                          | ^5.3.0            | Type-safe client development     | Prevents runtime errors, excellent IDE support, shared types with backend              |
+| Frontend Framework   | Next.js                             | ^15.0.0           | React framework with SSR/SSG     | App Router for modern routing, Turbopack for fast builds, excellent Vercel integration |
+| UI Component Library | Tailwind CSS + shadcn/ui            | ^3.4.0 + latest   | Design system and components     | Utility-first CSS with high-quality accessible components                              |
+| State Management     | React Query + Convex React          | ^5.0.0 + latest   | Server state + real-time sync    | Convex handles real-time state, React Query for client state management                |
+| Backend Language     | TypeScript                          | ^5.3.0            | Type-safe server development     | Shared types with frontend, excellent Convex integration                               |
+| Backend Framework    | Convex                              | latest            | Real-time BaaS platform          | Real-time database, serverless functions, file storage, auth integration               |
+| API Style            | Convex Functions                    | N/A               | Type-safe RPC over WebSocket     | Real-time updates, type safety, automatic optimization                                 |
+| Database             | Convex Database                     | N/A               | Document database with real-time | Built-in real-time subscriptions, ACID transactions, automatic scaling                 |
+| Cache                | Convex Built-in                     | N/A               | Automatic query caching          | Built into Convex platform, no additional configuration needed                         |
+| File Storage         | Convex Storage                      | N/A               | File upload and serving          | Integrated with database, automatic CDN, simple API                                    |
+| Authentication       | Clerk                               | ^5.0.0            | User authentication service      | Excellent Convex integration, social login, user management                            |
+| AI Integration       | Google Gemini + HTTP Actions        | latest            | AI analysis processing           | Reliable external API calls via Convex HTTP Actions                                    |
+| Frontend Testing     | Jest + React Testing Library        | ^29.0.0 + ^14.0.0 | Unit and component testing       | Standard React testing stack, excellent TypeScript support                             |
+| Backend Testing      | Convex Test + Jest                  | latest + ^29.0.0  | Convex function testing          | Official Convex testing utilities for functions and data                               |
+| E2E Testing          | Playwright                          | ^1.40.0           | End-to-end testing               | MCP browser automation support, reliable cross-browser testing                         |
+| Build Tool           | Next.js + Turbopack                 | ^15.0.0           | Frontend build system            | Fast development builds, built-in optimizations                                        |
+| Bundler              | Turbopack                           | Built-in          | Next.js bundler                  | Faster than Webpack, built into Next.js 15                                             |
+| IaC Tool             | Vercel CLI + Convex CLI             | latest            | Deployment automation            | Platform-native deployment tools                                                       |
+| CI/CD                | GitHub Actions                      | N/A               | Automated testing and deployment | Excellent integration with Vercel and Convex platforms                                 |
+| Monitoring           | Vercel Analytics + Convex Dashboard | Built-in          | Performance and error tracking   | Built into deployment platforms, minimal configuration                                 |
+| Logging              | Console + Convex Logs               | Built-in          | Application logging              | Convex provides built-in logging for serverless functions                              |
+| CSS Framework        | Tailwind CSS                        | ^3.4.0            | Utility-first styling            | Rapid development, consistent design system, excellent Next.js integration             |
 
 ## Data Models
 
 Based on your existing codebase analysis, here are the core data models that will be shared between frontend and backend, with modifications to support the new AI architecture:
 
 ### User
+
 **Purpose:** Represents application users with authentication and preferences, including AI analysis settings
 
 **Key Attributes:**
+
 - id: Id<"users"> - Unique user identifier from Clerk integration
 - clerkId: string - External Clerk user ID for authentication
 - name: string - User's display name
@@ -151,32 +157,36 @@ Based on your existing codebase analysis, here are the core data models that wil
 - updatedAt: number - Last profile update timestamp
 
 #### TypeScript Interface
+
 ```typescript
 interface User {
-  _id: Id<"users">;
-  clerkId: string;
-  name: string;
-  email: string;
+  _id: Id<'users'>
+  clerkId: string
+  name: string
+  email: string
   preferences: {
-    aiAnalysisEnabled: boolean;
-    reminderSettings: ReminderSettings;
-    privacySettings: PrivacySettings;
-  };
-  tier: "free" | "premium";
-  createdAt: number;
-  updatedAt: number;
+    aiAnalysisEnabled: boolean
+    reminderSettings: ReminderSettings
+    privacySettings: PrivacySettings
+  }
+  tier: 'free' | 'premium'
+  createdAt: number
+  updatedAt: number
 }
 ```
 
 #### Relationships
+
 - Has many journal entries
 - Has many relationships
 - Has many AI analyses (through journal entries)
 
 ### JournalEntry
+
 **Purpose:** Core content entity representing user's relationship journal entries with AI analysis integration
 
 **Key Attributes:**
+
 - id: Id<"journalEntries"> - Unique entry identifier
 - userId: Id<"users"> - Reference to entry author
 - relationshipId: Id<"relationships"> | null - Associated relationship (optional)
@@ -189,34 +199,56 @@ interface User {
 - updatedAt: number - Last modification timestamp
 
 #### TypeScript Interface
+
 ```typescript
 interface JournalEntry {
-  _id: Id<"journalEntries">;
-  userId: Id<"users">;
-  relationshipId?: Id<"relationships">;
-  content: string;
-  mood: MoodType;
-  tags: string[];
-  allowAIAnalysis: boolean;
-  aiAnalysisStatus: "pending" | "processing" | "completed" | "failed" | "skipped";
-  createdAt: number;
-  updatedAt: number;
+  _id: Id<'journalEntries'>
+  userId: Id<'users'>
+  relationshipId?: Id<'relationships'>
+  content: string
+  mood: MoodType
+  tags: string[]
+  allowAIAnalysis: boolean
+  aiAnalysisStatus:
+    | 'pending'
+    | 'processing'
+    | 'completed'
+    | 'failed'
+    | 'skipped'
+  createdAt: number
+  updatedAt: number
 }
 
-type MoodType = "excited" | "ecstatic" | "grateful" | "joyful" | "happy" | 
-                "content" | "calm" | "neutral" | "confused" | "concerned" | 
-                "anxious" | "sad" | "frustrated" | "angry" | "devastated";
+type MoodType =
+  | 'excited'
+  | 'ecstatic'
+  | 'grateful'
+  | 'joyful'
+  | 'happy'
+  | 'content'
+  | 'calm'
+  | 'neutral'
+  | 'confused'
+  | 'concerned'
+  | 'anxious'
+  | 'sad'
+  | 'frustrated'
+  | 'angry'
+  | 'devastated'
 ```
 
 #### Relationships
+
 - Belongs to one user
 - May belong to one relationship
 - Has zero or one AI analysis
 
 ### Relationship
+
 **Purpose:** Represents user's relationships being tracked in the journal
 
 **Key Attributes:**
+
 - id: Id<"relationships"> - Unique relationship identifier
 - userId: Id<"users"> - Reference to relationship owner
 - name: string - Relationship partner's name
@@ -228,32 +260,36 @@ type MoodType = "excited" | "ecstatic" | "grateful" | "joyful" | "happy" |
 - updatedAt: number - Last modification timestamp
 
 #### TypeScript Interface
+
 ```typescript
 interface Relationship {
-  _id: Id<"relationships">;
-  userId: Id<"users">;
-  name: string;
-  initials: string;
-  type: RelationshipType;
-  photoUrl?: string;
-  isActive: boolean;
-  createdAt: number;
-  updatedAt: number;
+  _id: Id<'relationships'>
+  userId: Id<'users'>
+  name: string
+  initials: string
+  type: RelationshipType
+  photoUrl?: string
+  isActive: boolean
+  createdAt: number
+  updatedAt: number
 }
 
-type RelationshipType = "romantic" | "family" | "friend" | "colleague" | "other";
+type RelationshipType = 'romantic' | 'family' | 'friend' | 'colleague' | 'other'
 ```
 
 #### Relationships
+
 - Belongs to one user
 - Has many journal entries
 - Has many AI analyses (through journal entries)
 - Has zero or one health score
 
 ### AIAnalysis
+
 **Purpose:** Stores AI-generated analysis results for journal entries with enhanced error handling and processing metadata
 
 **Key Attributes:**
+
 - id: Id<"aiAnalysis"> - Unique analysis identifier
 - entryId: Id<"journalEntries"> - Reference to analyzed entry
 - userId: Id<"users"> - Reference to entry owner (for queries)
@@ -272,41 +308,45 @@ type RelationshipType = "romantic" | "family" | "friend" | "colleague" | "other"
 - createdAt: number - Analysis start timestamp
 
 #### TypeScript Interface
+
 ```typescript
 interface AIAnalysis {
-  _id: Id<"aiAnalysis">;
-  entryId: Id<"journalEntries">;
-  userId: Id<"users">;
-  relationshipId?: Id<"relationships">;
-  sentimentScore: number;
-  emotionalKeywords: string[];
-  confidenceLevel: number;
-  reasoning: string;
+  _id: Id<'aiAnalysis'>
+  entryId: Id<'journalEntries'>
+  userId: Id<'users'>
+  relationshipId?: Id<'relationships'>
+  sentimentScore: number
+  emotionalKeywords: string[]
+  confidenceLevel: number
+  reasoning: string
   patterns: {
-    recurring_themes: string[];
-    emotional_triggers: string[];
-    communication_style: string;
-    relationship_dynamics: string[];
-  };
-  status: "processing" | "completed" | "failed";
-  analysisVersion: string;
-  processingTime: number;
-  tokensUsed?: number;
-  apiCost?: number;
-  errorMessage?: string;
-  createdAt: number;
+    recurring_themes: string[]
+    emotional_triggers: string[]
+    communication_style: string
+    relationship_dynamics: string[]
+  }
+  status: 'processing' | 'completed' | 'failed'
+  analysisVersion: string
+  processingTime: number
+  tokensUsed?: number
+  apiCost?: number
+  errorMessage?: string
+  createdAt: number
 }
 ```
 
 #### Relationships
+
 - Belongs to one journal entry
 - Belongs to one user
 - May belong to one relationship
 
 ### HealthScore
+
 **Purpose:** Aggregated relationship health metrics derived from AI analyses
 
 **Key Attributes:**
+
 - id: Id<"healthScores"> - Unique score identifier
 - userId: Id<"users"> - Reference to score owner
 - relationshipId: Id<"relationships"> - Associated relationship
@@ -317,20 +357,22 @@ interface AIAnalysis {
 - validUntil: number - Score expiration for recalculation
 
 #### TypeScript Interface
+
 ```typescript
 interface HealthScore {
-  _id: Id<"healthScores">;
-  userId: Id<"users">;
-  relationshipId: Id<"relationships">;
-  overallScore: number;
-  trendDirection: "improving" | "declining" | "stable";
-  lastAnalysisId: Id<"aiAnalysis">;
-  calculatedAt: number;
-  validUntil: number;
+  _id: Id<'healthScores'>
+  userId: Id<'users'>
+  relationshipId: Id<'relationships'>
+  overallScore: number
+  trendDirection: 'improving' | 'declining' | 'stable'
+  lastAnalysisId: Id<'aiAnalysis'>
+  calculatedAt: number
+  validUntil: number
 }
 ```
 
 #### Relationships
+
 - Belongs to one user
 - Belongs to one relationship
 - References one AI analysis
@@ -349,86 +391,98 @@ export const create = mutation({
   args: {
     content: v.string(),
     mood: v.union(
-      v.literal("excited"), v.literal("ecstatic"), v.literal("grateful"),
-      v.literal("joyful"), v.literal("happy"), v.literal("content"),
-      v.literal("calm"), v.literal("neutral"), v.literal("confused"),
-      v.literal("concerned"), v.literal("anxious"), v.literal("sad"),
-      v.literal("frustrated"), v.literal("angry"), v.literal("devastated")
+      v.literal('excited'),
+      v.literal('ecstatic'),
+      v.literal('grateful'),
+      v.literal('joyful'),
+      v.literal('happy'),
+      v.literal('content'),
+      v.literal('calm'),
+      v.literal('neutral'),
+      v.literal('confused'),
+      v.literal('concerned'),
+      v.literal('anxious'),
+      v.literal('sad'),
+      v.literal('frustrated'),
+      v.literal('angry'),
+      v.literal('devastated')
     ),
-    relationshipId: v.optional(v.id("relationships")),
+    relationshipId: v.optional(v.id('relationships')),
     tags: v.array(v.string()),
     allowAIAnalysis: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     // Create entry and automatically queue AI analysis if enabled
-    const entryId = await ctx.db.insert("journalEntries", {
+    const entryId = await ctx.db.insert('journalEntries', {
       ...args,
       userId: await getUserId(ctx),
-      aiAnalysisStatus: args.allowAIAnalysis !== false ? "pending" : "skipped",
+      aiAnalysisStatus: args.allowAIAnalysis !== false ? 'pending' : 'skipped',
       createdAt: Date.now(),
       updatedAt: Date.now(),
-    });
-    
+    })
+
     // Queue AI analysis if user consents
     if (args.allowAIAnalysis !== false) {
       await ctx.scheduler.runAfter(0, internal.aiAnalysis.queueAnalysis, {
         entryId,
-        priority: "normal",
-      });
+        priority: 'normal',
+      })
     }
-    
-    return entryId;
+
+    return entryId
   },
-});
+})
 
 export const list = query({
   args: {
     paginationOpts: paginationOptsValidator,
-    relationshipId: v.optional(v.id("relationships")),
+    relationshipId: v.optional(v.id('relationships')),
   },
   handler: async (ctx, args) => {
-    const userId = await getUserId(ctx);
+    const userId = await getUserId(ctx)
     let query = ctx.db
-      .query("journalEntries")
-      .withIndex("by_user", q => q.eq("userId", userId))
-      .order("desc");
-    
+      .query('journalEntries')
+      .withIndex('by_user', q => q.eq('userId', userId))
+      .order('desc')
+
     if (args.relationshipId) {
-      query = query.filter(q => q.eq(q.field("relationshipId"), args.relationshipId));
+      query = query.filter(q =>
+        q.eq(q.field('relationshipId'), args.relationshipId)
+      )
     }
-    
-    return await query.paginate(args.paginationOpts);
+
+    return await query.paginate(args.paginationOpts)
   },
-});
+})
 
 export const update = mutation({
   args: {
-    id: v.id("journalEntries"),
+    id: v.id('journalEntries'),
     content: v.optional(v.string()),
     mood: v.optional(v.union(/* mood types */)),
     tags: v.optional(v.array(v.string())),
     allowAIAnalysis: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    await authorizeEntryAccess(ctx, args.id);
-    
+    await authorizeEntryAccess(ctx, args.id)
+
     const updates = {
       ...args,
       updatedAt: Date.now(),
-    };
-    
+    }
+
     // Re-queue analysis if content changed and AI is enabled
     if (args.content && args.allowAIAnalysis !== false) {
-      updates.aiAnalysisStatus = "pending";
+      updates.aiAnalysisStatus = 'pending'
       await ctx.scheduler.runAfter(0, internal.aiAnalysis.queueAnalysis, {
         entryId: args.id,
-        priority: "normal",
-      });
+        priority: 'normal',
+      })
     }
-    
-    await ctx.db.patch(args.id, updates);
+
+    await ctx.db.patch(args.id, updates)
   },
-});
+})
 ```
 
 #### AI Analysis Functions
@@ -436,90 +490,92 @@ export const update = mutation({
 ```typescript
 // convex/aiAnalysis.ts
 export const getByEntry = query({
-  args: { entryId: v.id("journalEntries") },
+  args: { entryId: v.id('journalEntries') },
   handler: async (ctx, args) => {
-    await authorizeEntryAccess(ctx, args.entryId);
+    await authorizeEntryAccess(ctx, args.entryId)
     return await ctx.db
-      .query("aiAnalysis")
-      .withIndex("by_entry", q => q.eq("entryId", args.entryId))
-      .unique();
+      .query('aiAnalysis')
+      .withIndex('by_entry', q => q.eq('entryId', args.entryId))
+      .unique()
   },
-});
+})
 
 export const getRecentByUser = query({
   args: {
-    userId: v.id("users"),
+    userId: v.id('users'),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const limit = args.limit || 20;
+    const limit = args.limit || 20
     return await ctx.db
-      .query("aiAnalysis")
-      .withIndex("by_user_created", q => q.eq("userId", args.userId))
-      .order("desc")
-      .filter(q => q.eq(q.field("status"), "completed"))
-      .take(limit);
+      .query('aiAnalysis')
+      .withIndex('by_user_created', q => q.eq('userId', args.userId))
+      .order('desc')
+      .filter(q => q.eq(q.field('status'), 'completed'))
+      .take(limit)
   },
-});
+})
 
 // HTTP Action for AI Processing
 export const processAnalysis = httpAction(async (ctx, request) => {
-  const { analysisId, entryId, priority } = await request.json();
-  
+  const { analysisId, entryId, priority } = await request.json()
+
   try {
-    const entry = await ctx.runQuery(internal.journalEntries.getById, { id: entryId });
-    if (!entry) throw new Error("Entry not found");
-    
+    const entry = await ctx.runQuery(internal.journalEntries.getById, {
+      id: entryId,
+    })
+    if (!entry) throw new Error('Entry not found')
+
     // Call Gemini API
     const aiResult = await callGeminiAPI({
       content: entry.content,
       mood: entry.mood,
       context: await getRelationshipContext(ctx, entry.relationshipId),
-    });
-    
+    })
+
     // Update analysis with results
     await ctx.runMutation(internal.aiAnalysis.updateAnalysis, {
       analysisId,
       result: aiResult,
-      status: "completed",
-    });
-    
+      status: 'completed',
+    })
+
     // Trigger health score recalculation
     if (entry.relationshipId) {
       await ctx.scheduler.runAfter(5000, internal.healthScores.recalculate, {
         userId: entry.userId,
         relationshipId: entry.relationshipId,
-      });
+      })
     }
-    
+
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+      headers: { 'Content-Type': 'application/json' },
+    })
   } catch (error) {
     // Mark analysis as failed
     await ctx.runMutation(internal.aiAnalysis.markFailed, {
       analysisId,
       error: error.message,
-    });
-    
+    })
+
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+      headers: { 'Content-Type': 'application/json' },
+    })
   }
-});
+})
 
 export const reprocessStuckEntries = mutation({
   args: {
-    userId: v.optional(v.id("users")),
+    userId: v.optional(v.id('users')),
     dryRun: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     // Implementation for finding and reprocessing stuck entries
     // Returns summary of entries found and actions taken
   },
-});
+})
 ```
 
 #### Relationship Functions
@@ -531,38 +587,41 @@ export const create = mutation({
     name: v.string(),
     initials: v.string(),
     type: v.union(
-      v.literal("romantic"), v.literal("family"), 
-      v.literal("friend"), v.literal("colleague"), v.literal("other")
+      v.literal('romantic'),
+      v.literal('family'),
+      v.literal('friend'),
+      v.literal('colleague'),
+      v.literal('other')
     ),
     photoUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const userId = await getUserId(ctx);
-    return await ctx.db.insert("relationships", {
+    const userId = await getUserId(ctx)
+    return await ctx.db.insert('relationships', {
       ...args,
       userId,
       isActive: true,
       createdAt: Date.now(),
       updatedAt: Date.now(),
-    });
+    })
   },
-});
+})
 
 export const list = query({
   args: { includeInactive: v.optional(v.boolean()) },
   handler: async (ctx, args) => {
-    const userId = await getUserId(ctx);
+    const userId = await getUserId(ctx)
     let query = ctx.db
-      .query("relationships")
-      .withIndex("by_user", q => q.eq("userId", userId));
-    
+      .query('relationships')
+      .withIndex('by_user', q => q.eq('userId', userId))
+
     if (!args.includeInactive) {
-      query = query.filter(q => q.eq(q.field("isActive"), true));
+      query = query.filter(q => q.eq(q.field('isActive'), true))
     }
-    
-    return await query.collect();
+
+    return await query.collect()
   },
-});
+})
 ```
 
 #### Health Score Functions
@@ -570,58 +629,64 @@ export const list = query({
 ```typescript
 // convex/healthScores.ts
 export const getByRelationship = query({
-  args: { relationshipId: v.id("relationships") },
+  args: { relationshipId: v.id('relationships') },
   handler: async (ctx, args) => {
-    await authorizeRelationshipAccess(ctx, args.relationshipId);
+    await authorizeRelationshipAccess(ctx, args.relationshipId)
     return await ctx.db
-      .query("healthScores")
-      .withIndex("by_relationship", q => q.eq("relationshipId", args.relationshipId))
-      .unique();
+      .query('healthScores')
+      .withIndex('by_relationship', q =>
+        q.eq('relationshipId', args.relationshipId)
+      )
+      .unique()
   },
-});
+})
 
 export const recalculate = internalMutation({
   args: {
-    userId: v.id("users"),
-    relationshipId: v.id("relationships"),
+    userId: v.id('users'),
+    relationshipId: v.id('relationships'),
   },
   handler: async (ctx, args) => {
     // Get recent analyses for relationship
     const analyses = await ctx.db
-      .query("aiAnalysis")
-      .withIndex("by_relationship", q => q.eq("relationshipId", args.relationshipId))
-      .filter(q => q.eq(q.field("status"), "completed"))
-      .order("desc")
-      .take(20);
-    
-    if (analyses.length === 0) return;
-    
+      .query('aiAnalysis')
+      .withIndex('by_relationship', q =>
+        q.eq('relationshipId', args.relationshipId)
+      )
+      .filter(q => q.eq(q.field('status'), 'completed'))
+      .order('desc')
+      .take(20)
+
+    if (analyses.length === 0) return
+
     // Calculate health metrics
-    const healthScore = calculateHealthScore(analyses);
-    
+    const healthScore = calculateHealthScore(analyses)
+
     // Upsert health score record
     const existing = await ctx.db
-      .query("healthScores")
-      .withIndex("by_relationship", q => q.eq("relationshipId", args.relationshipId))
-      .unique();
-    
+      .query('healthScores')
+      .withIndex('by_relationship', q =>
+        q.eq('relationshipId', args.relationshipId)
+      )
+      .unique()
+
     if (existing) {
       await ctx.db.patch(existing._id, {
         ...healthScore,
         calculatedAt: Date.now(),
         validUntil: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
-      });
+      })
     } else {
-      await ctx.db.insert("healthScores", {
+      await ctx.db.insert('healthScores', {
         ...healthScore,
         userId: args.userId,
         relationshipId: args.relationshipId,
         calculatedAt: Date.now(),
         validUntil: Date.now() + 7 * 24 * 60 * 60 * 1000,
-      });
+      })
     }
   },
-});
+})
 ```
 
 #### User Management Functions
@@ -630,16 +695,16 @@ export const recalculate = internalMutation({
 // convex/users.ts
 export const current = query({
   args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return null;
-    
+  handler: async ctx => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) return null
+
     return await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", q => q.eq("clerkId", identity.subject))
-      .unique();
+      .query('users')
+      .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+      .unique()
   },
-});
+})
 
 export const updatePreferences = mutation({
   args: {
@@ -648,18 +713,18 @@ export const updatePreferences = mutation({
     privacySettings: v.optional(v.object({})),
   },
   handler: async (ctx, args) => {
-    const userId = await getUserId(ctx);
-    const user = await ctx.db.get(userId);
-    
+    const userId = await getUserId(ctx)
+    const user = await ctx.db.get(userId)
+
     await ctx.db.patch(userId, {
       preferences: {
         ...user.preferences,
         ...args,
       },
       updatedAt: Date.now(),
-    });
+    })
   },
-});
+})
 ```
 
 ## Components
@@ -669,9 +734,11 @@ Based on the architectural patterns, tech stack, and data models, here are the m
 ### Frontend Components
 
 #### JournalEntryEditor
+
 **Responsibility:** Primary interface for creating and editing journal entries with real-time AI analysis status updates
 
 **Key Interfaces:**
+
 - `onSave(entry: JournalEntryInput): Promise<void>` - Handles entry creation/updates
 - `onAIStatusChange(status: AIAnalysisStatus): void` - Receives real-time AI processing updates
 - `onValidationError(errors: ValidationError[]): void` - Displays form validation feedback
@@ -681,9 +748,11 @@ Based on the architectural patterns, tech stack, and data models, here are the m
 **Technology Stack:** React 19 with useOptimistic, Zod validation, Convex real-time subscriptions
 
 #### AIAnalysisViewer
+
 **Responsibility:** Displays AI analysis results with interactive insights and explanations
 
 **Key Interfaces:**
+
 - `renderAnalysis(analysis: AIAnalysis): ReactElement` - Main analysis display
 - `onInsightClick(insight: AnalysisInsight): void` - Handles user interaction with insights
 - `onRetryAnalysis(): Promise<void>` - Triggers analysis reprocessing
@@ -693,9 +762,11 @@ Based on the architectural patterns, tech stack, and data models, here are the m
 **Technology Stack:** React 19, Chart.js for visualizations, Tailwind CSS for styling
 
 #### RelationshipDashboard
+
 **Responsibility:** Overview of all relationships with health scores and trends
 
 **Key Interfaces:**
+
 - `renderHealthScores(scores: HealthScore[]): ReactElement` - Health score grid
 - `onRelationshipSelect(id: Id<"relationships">): void` - Navigation to relationship details
 - `onRefreshScores(): Promise<void>` - Triggers health score recalculation
@@ -707,9 +778,11 @@ Based on the architectural patterns, tech stack, and data models, here are the m
 ### Backend Components
 
 #### AIAnalysisProcessor
+
 **Responsibility:** Orchestrates AI analysis workflow including queuing, processing, and result storage
 
 **Key Interfaces:**
+
 - `queueAnalysis(entryId: Id<"journalEntries">): Promise<void>` - Adds entry to processing queue
 - `processEntry(analysisId: Id<"aiAnalysis">): Promise<AIAnalysisResult>` - Executes AI analysis
 - `handleFailure(analysisId: Id<"aiAnalysis">, error: Error): Promise<void>` - Error recovery
@@ -719,9 +792,11 @@ Based on the architectural patterns, tech stack, and data models, here are the m
 **Technology Stack:** Convex HTTP Actions, Scheduler for queue management, TypeScript
 
 #### GeminiAPIClient
+
 **Responsibility:** Handles all interactions with Google Gemini API including authentication and rate limiting
 
 **Key Interfaces:**
+
 - `analyzeJournalEntry(content: string, context: AnalysisContext): Promise<GeminiResponse>` - Primary analysis call
 - `checkRateLimit(userId: Id<"users">): Promise<boolean>` - Rate limit validation
 - `estimateCost(content: string): Promise<number>` - Cost prediction
@@ -731,9 +806,11 @@ Based on the architectural patterns, tech stack, and data models, here are the m
 **Technology Stack:** HTTP Actions, fetch API, exponential backoff retry logic
 
 #### HealthScoreCalculator
+
 **Responsibility:** Computes relationship health metrics from AI analysis data
 
 **Key Interfaces:**
+
 - `calculateScore(analyses: AIAnalysis[]): HealthScore` - Core calculation logic
 - `identifyTrends(scores: HistoricalScore[]): TrendAnalysis` - Trend detection
 - `generateRecommendations(score: HealthScore): Recommendation[]` - Actionable insights
@@ -743,9 +820,11 @@ Based on the architectural patterns, tech stack, and data models, here are the m
 **Technology Stack:** Convex mutations, mathematical computation utilities
 
 #### RealTimeNotificationService
+
 **Responsibility:** Manages real-time updates for AI analysis completion and health score changes
 
 **Key Interfaces:**
+
 - `notifyAnalysisComplete(userId: Id<"users">, entryId: Id<"journalEntries">): void` - Analysis completion
 - `notifyHealthScoreUpdate(userId: Id<"users">, relationshipId: Id<"relationships">): void` - Score updates
 - `subscribeToUpdates(userId: Id<"users">): Subscription` - Client subscription management
@@ -757,9 +836,11 @@ Based on the architectural patterns, tech stack, and data models, here are the m
 ### Integration Components
 
 #### AnalysisQueue
+
 **Responsibility:** Manages async processing queue for AI analysis requests with priority handling and retry logic
 
 **Key Interfaces:**
+
 - `enqueue(request: AnalysisRequest, priority: Priority): Promise<void>` - Queue new requests
 - `dequeue(): Promise<AnalysisRequest | null>` - Retrieve next request for processing
 - `requeue(request: AnalysisRequest, delay: number): Promise<void>` - Retry failed requests
@@ -769,9 +850,11 @@ Based on the architectural patterns, tech stack, and data models, here are the m
 **Technology Stack:** Convex Scheduler for durable execution, TypeScript priority queue
 
 #### ErrorRecoveryService
+
 **Responsibility:** Handles AI processing failures with intelligent retry strategies and fallback analysis
 
 **Key Interfaces:**
+
 - `handleFailure(error: AIProcessingError): Promise<RecoveryAction>` - Determine recovery strategy
 - `executeRetry(request: AnalysisRequest, attempt: number): Promise<void>` - Retry with backoff
 - `provideFallbackAnalysis(entry: JournalEntry): Promise<BasicAnalysis>` - Rule-based fallback
@@ -790,49 +873,49 @@ graph TB
         RD[RelationshipDashboard]
         RTN[RealTimeNotifications]
     end
-    
+
     subgraph "API Layer"
         CF[Convex Functions]
         HA[HTTP Actions]
     end
-    
+
     subgraph "Business Logic"
         AAP[AIAnalysisProcessor]
         HSC[HealthScoreCalculator]
         AQ[AnalysisQueue]
         ERS[ErrorRecoveryService]
     end
-    
+
     subgraph "External Services"
         GAC[GeminiAPIClient]
         GAPI[Google Gemini API]
     end
-    
+
     subgraph "Data Layer"
         CDB[Convex Database]
         CFS[Convex File Storage]
     end
-    
+
     JEE --> CF
     AAV --> CF
     RD --> CF
     RTN --> CF
-    
+
     CF --> AAP
     CF --> HSC
     HA --> AAP
-    
+
     AAP --> AQ
     AAP --> ERS
     AAP --> GAC
-    
+
     GAC --> GAPI
-    
+
     AAP --> CDB
     HSC --> CDB
     CF --> CDB
     CF --> CFS
-    
+
     CDB -.-> RTN
 ```
 
@@ -846,17 +929,19 @@ Based on the component design and PRD requirements, here are the external servic
 - **Documentation:** https://ai.google.dev/docs/gemini_api
 - **Base URL(s):** https://generativelanguage.googleapis.com/v1beta
 - **Authentication:** API Key (Bearer token in Authorization header)
-- **Rate Limits:** 
+- **Rate Limits:**
   - Free tier: 15 requests per minute, 1,500 requests per day
   - Paid tier: 1,000 requests per minute, no daily limit
   - Token limits: 1M input tokens, 8K output tokens per request
 
 **Key Endpoints Used:**
+
 - `POST /models/gemini-1.5-flash:generateContent` - Primary text analysis for journal entries
 - `POST /models/gemini-1.5-flash:countTokens` - Token estimation for cost prediction
 - `GET /models` - Available model listing for version management
 
-**Integration Notes:** 
+**Integration Notes:**
+
 - Implements exponential backoff for rate limit handling
 - Uses structured prompts with few-shot examples for consistent analysis quality
 - Requires content filtering compliance for journal entry processing
@@ -868,16 +953,18 @@ Based on the component design and PRD requirements, here are the external servic
 - **Documentation:** https://clerk.com/docs/reference/backend-api
 - **Base URL(s):** https://api.clerk.com/v1
 - **Authentication:** Bearer token using Clerk secret key
-- **Rate Limits:** 
+- **Rate Limits:**
   - 1,000 requests per minute per application
   - Webhook verification required for user sync
 
 **Key Endpoints Used:**
+
 - `GET /users/{user_id}` - Fetch user profile data for initial sync
 - `PATCH /users/{user_id}` - Update user metadata when preferences change
 - `POST /webhooks` - Receive user lifecycle events (create, update, delete)
 
 **Integration Notes:**
+
 - Webhook endpoints in Convex HTTP router handle user synchronization
 - JWT token validation for securing Convex function access
 - Automatic user creation in Convex database on first authentication
@@ -889,16 +976,18 @@ Based on the component design and PRD requirements, here are the external servic
 - **Documentation:** https://vercel.com/docs/analytics/api
 - **Base URL(s):** https://vercel.com/api/v1/analytics
 - **Authentication:** Bearer token using Vercel team token
-- **Rate Limits:** 
+- **Rate Limits:**
   - 100 requests per minute per team
   - Data retention: 30 days free, longer for paid plans
 
 **Key Endpoints Used:**
+
 - `GET /analytics/events` - Custom event tracking for AI analysis completion
 - `GET /analytics/web-vitals` - Core Web Vitals performance metrics
 - `POST /analytics/events` - Log custom events for journal entry creation
 
 **Integration Notes:**
+
 - Primarily used for monitoring AI processing performance and user engagement
 - Custom events track AI analysis success/failure rates
 - Web Vitals monitoring ensures journal entry interface remains responsive
@@ -913,11 +1002,13 @@ Based on the component design and PRD requirements, here are the external servic
 - **Rate Limits:** Based on Convex plan limits, effectively unlimited for normal usage
 
 **Key Endpoints Used:**
+
 - `storage.store(file)` - Upload profile photos and attachments
 - `storage.getUrl(storageId)` - Generate secure URLs for file access
 - `storage.delete(storageId)` - Remove files when users delete content
 
 **Integration Notes:**
+
 - Automatic CDN distribution for global file access
 - Built-in access control tied to Convex authentication
 - Seamless integration with database references
@@ -953,16 +1044,16 @@ sequenceDiagram
     ConvexDB->>ConvexDB: Insert entry with status "pending"
     ConvexDB-->>JournalEditor: Return entry ID
     JournalEditor-->>User: Show entry saved + "AI analysis pending"
-    
+
     ConvexDB->>Scheduler: Schedule AI analysis
     Scheduler->>HTTPAction: processAnalysis(entryId)
     HTTPAction->>ConvexDB: Query entry content
     ConvexDB-->>HTTPAction: Return entry data
-    
+
     HTTPAction->>ConvexDB: Update status to "processing"
     ConvexDB-->>AIViewer: Real-time update (processing)
     AIViewer-->>User: Show "Analyzing..." spinner
-    
+
     HTTPAction->>Gemini: POST /generateContent
     alt Successful Analysis
         Gemini-->>HTTPAction: Return analysis results
@@ -993,14 +1084,14 @@ sequenceDiagram
     Scheduler->>HSCalculator: recalculateScore(relationshipId)
     HSCalculator->>ConvexDB: Query recent analyses for relationship
     ConvexDB-->>HSCalculator: Return analysis history (last 20)
-    
+
     HSCalculator->>HSCalculator: Calculate weighted health score
     HSCalculator->>HSCalculator: Determine trend direction
     HSCalculator->>ConvexDB: Upsert health score record
-    
+
     ConvexDB-->>Dashboard: Real-time update (new score)
     Dashboard-->>User: Update health score display
-    
+
     alt Score Significantly Changed
         HSCalculator->>ConvexDB: Create notification record
         ConvexDB-->>User: Push notification (score change)
@@ -1021,30 +1112,30 @@ sequenceDiagram
     HTTPAction->>Gemini: API call attempt #1
     Gemini-->>HTTPAction: Rate limit error (429)
     HTTPAction->>ErrorService: handleFailure(error, attempt=1)
-    
+
     ErrorService->>ErrorService: Evaluate error type
     ErrorService->>Scheduler: Schedule retry with backoff (30s)
     ErrorService->>ConvexDB: Update status "retrying"
     ConvexDB-->>User: "Analysis delayed, retrying..."
-    
+
     Scheduler->>HTTPAction: Retry attempt #2
     HTTPAction->>Gemini: API call attempt #2
     Gemini-->>HTTPAction: Service unavailable (503)
     HTTPAction->>ErrorService: handleFailure(error, attempt=2)
-    
+
     ErrorService->>ErrorService: Check max retries (3)
     ErrorService->>Scheduler: Schedule retry with backoff (2min)
-    
+
     Scheduler->>HTTPAction: Retry attempt #3
     HTTPAction->>Gemini: API call attempt #3
     Gemini-->>HTTPAction: Service unavailable (503)
     HTTPAction->>ErrorService: handleFailure(error, attempt=3)
-    
+
     ErrorService->>ErrorService: Max retries exceeded
     ErrorService->>FallbackEngine: provideFallbackAnalysis(entry)
     FallbackEngine->>FallbackEngine: Rule-based sentiment analysis
     FallbackEngine-->>ErrorService: Basic analysis results
-    
+
     ErrorService->>ConvexDB: Save fallback analysis + mark as "completed_fallback"
     ConvexDB-->>User: Display analysis with "Limited analysis" note
 ```
@@ -1063,11 +1154,11 @@ sequenceDiagram
     User->>ClerkAuth: Sign in with Google
     ClerkAuth->>ClerkAuth: Authenticate with provider
     ClerkAuth-->>User: Return JWT token
-    
+
     User->>App: Access application with token
     App->>ConvexAuth: Validate JWT
     ConvexAuth->>ConvexDB: Query user by Clerk ID
-    
+
     alt User Exists
         ConvexDB-->>ConvexAuth: Return user record
         ConvexAuth-->>App: Authentication successful
@@ -1079,7 +1170,7 @@ sequenceDiagram
         HTTPAction-->>ClerkAuth: Webhook acknowledged
         ConvexAuth-->>App: Authentication successful
     end
-    
+
     App-->>User: Display personalized dashboard
 ```
 
@@ -1097,17 +1188,17 @@ sequenceDiagram
     ConvexDB->>WebSocket: Broadcast update
     WebSocket-->>User1: Entry created
     WebSocket-->>User2: Entry created (if same user)
-    
+
     HTTPAction->>ConvexDB: Update AI status to "processing"
     ConvexDB->>WebSocket: Broadcast status update
-    WebSocket-->>User1: Show "Analyzing..." 
+    WebSocket-->>User1: Show "Analyzing..."
     WebSocket-->>User2: Show "Analyzing..."
-    
+
     HTTPAction->>ConvexDB: Save AI analysis results
     ConvexDB->>WebSocket: Broadcast analysis complete
     WebSocket-->>User1: Display insights
     WebSocket-->>User2: Display insights
-    
+
     Note over WebSocket: Real-time updates ensure<br/>consistent state across all<br/>user sessions
 ```
 
@@ -1117,8 +1208,8 @@ Here's the concrete Convex schema definition that implements the data models:
 
 ```typescript
 // convex/schema.ts
-import { defineSchema, defineTable } from "convex/server";
-import { v } from "convex/values";
+import { defineSchema, defineTable } from 'convex/server'
+import { v } from 'convex/values'
 
 export default defineSchema({
   users: defineTable({
@@ -1129,7 +1220,11 @@ export default defineSchema({
       aiAnalysisEnabled: v.boolean(),
       reminderSettings: v.object({
         enabled: v.boolean(),
-        frequency: v.union(v.literal("daily"), v.literal("weekly"), v.literal("never")),
+        frequency: v.union(
+          v.literal('daily'),
+          v.literal('weekly'),
+          v.literal('never')
+        ),
         timeOfDay: v.string(), // "09:00" format
       }),
       privacySettings: v.object({
@@ -1137,72 +1232,82 @@ export default defineSchema({
         allowDataExport: v.boolean(),
       }),
     }),
-    tier: v.union(v.literal("free"), v.literal("premium")),
+    tier: v.union(v.literal('free'), v.literal('premium')),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
-    .index("by_clerk_id", ["clerkId"])
-    .index("by_email", ["email"])
-    .index("by_tier", ["tier"]),
+    .index('by_clerk_id', ['clerkId'])
+    .index('by_email', ['email'])
+    .index('by_tier', ['tier']),
 
   relationships: defineTable({
-    userId: v.id("users"),
+    userId: v.id('users'),
     name: v.string(),
     initials: v.string(),
     type: v.union(
-      v.literal("romantic"),
-      v.literal("family"),
-      v.literal("friend"),
-      v.literal("colleague"),
-      v.literal("other")
+      v.literal('romantic'),
+      v.literal('family'),
+      v.literal('friend'),
+      v.literal('colleague'),
+      v.literal('other')
     ),
     photoUrl: v.optional(v.string()),
     isActive: v.boolean(),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
-    .index("by_user", ["userId"])
-    .index("by_user_active", ["userId", "isActive"])
-    .index("by_type", ["type"]),
+    .index('by_user', ['userId'])
+    .index('by_user_active', ['userId', 'isActive'])
+    .index('by_type', ['type']),
 
   journalEntries: defineTable({
-    userId: v.id("users"),
-    relationshipId: v.optional(v.id("relationships")),
+    userId: v.id('users'),
+    relationshipId: v.optional(v.id('relationships')),
     content: v.string(),
     mood: v.union(
-      v.literal("excited"), v.literal("ecstatic"), v.literal("grateful"),
-      v.literal("joyful"), v.literal("happy"), v.literal("content"),
-      v.literal("calm"), v.literal("neutral"), v.literal("confused"),
-      v.literal("concerned"), v.literal("anxious"), v.literal("sad"),
-      v.literal("frustrated"), v.literal("angry"), v.literal("devastated")
+      v.literal('excited'),
+      v.literal('ecstatic'),
+      v.literal('grateful'),
+      v.literal('joyful'),
+      v.literal('happy'),
+      v.literal('content'),
+      v.literal('calm'),
+      v.literal('neutral'),
+      v.literal('confused'),
+      v.literal('concerned'),
+      v.literal('anxious'),
+      v.literal('sad'),
+      v.literal('frustrated'),
+      v.literal('angry'),
+      v.literal('devastated')
     ),
     tags: v.array(v.string()),
     allowAIAnalysis: v.boolean(),
     aiAnalysisStatus: v.union(
-      v.literal("pending"),
-      v.literal("processing"),
-      v.literal("completed"),
-      v.literal("failed"),
-      v.literal("skipped")
+      v.literal('pending'),
+      v.literal('processing'),
+      v.literal('completed'),
+      v.literal('failed'),
+      v.literal('skipped')
     ),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
-    .index("by_user", ["userId"])
-    .index("by_user_created", ["userId", "createdAt"])
-    .index("by_relationship", ["relationshipId"])
-    .index("by_user_relationship", ["userId", "relationshipId"])
-    .index("by_ai_status", ["aiAnalysisStatus"])
-    .index("by_mood", ["mood"])
-    .searchIndex("search_content", {
-      searchField: "content",
-      filterFields: ["userId", "relationshipId"],
+    .index('by_user', ['userId'])
+    .index('by_user_created', ['userId', 'createdAt'])
+    .index('by_relationship', ['relationshipId'])
+    .index('by_user_relationship', ['userId', 'relationshipId'])
+    .index('by_ai_status', ['aiAnalysisStatus'])
+    .index('by_mood', ['mood'])
+    .searchIndex('search_content', {
+      searchField: 'content',
+      filterFields: ['userId', 'relationshipId'],
     }),
 
   aiAnalysis: defineTable({
-    entryId: v.id("journalEntries"),
-    userId: v.id("users"),
-    relationshipId: v.optional(v.id("relationships")),
+    entryId: v.id('journalEntries'),
+    userId: v.id('users'),
+    relationshipId: v.optional(v.id('relationships')),
     sentimentScore: v.number(), // -1 to 1 scale
     emotionalKeywords: v.array(v.string()),
     confidenceLevel: v.number(), // 0 to 1 scale
@@ -1213,7 +1318,11 @@ export default defineSchema({
       communication_style: v.string(),
       relationship_dynamics: v.array(v.string()),
     }),
-    status: v.union(v.literal("processing"), v.literal("completed"), v.literal("failed")),
+    status: v.union(
+      v.literal('processing'),
+      v.literal('completed'),
+      v.literal('failed')
+    ),
     analysisVersion: v.string(),
     processingTime: v.number(), // milliseconds
     tokensUsed: v.optional(v.number()),
@@ -1221,46 +1330,46 @@ export default defineSchema({
     errorMessage: v.optional(v.string()),
     createdAt: v.number(),
   })
-    .index("by_entry", ["entryId"])
-    .index("by_user", ["userId"])
-    .index("by_user_created", ["userId", "createdAt"])
-    .index("by_relationship", ["relationshipId"])
-    .index("by_status", ["status"])
-    .index("by_sentiment", ["sentimentScore"]),
+    .index('by_entry', ['entryId'])
+    .index('by_user', ['userId'])
+    .index('by_user_created', ['userId', 'createdAt'])
+    .index('by_relationship', ['relationshipId'])
+    .index('by_status', ['status'])
+    .index('by_sentiment', ['sentimentScore']),
 
   healthScores: defineTable({
-    userId: v.id("users"),
-    relationshipId: v.id("relationships"),
+    userId: v.id('users'),
+    relationshipId: v.id('relationships'),
     overallScore: v.number(), // 0 to 100 scale
     trendDirection: v.union(
-      v.literal("improving"),
-      v.literal("declining"),
-      v.literal("stable")
+      v.literal('improving'),
+      v.literal('declining'),
+      v.literal('stable')
     ),
-    lastAnalysisId: v.id("aiAnalysis"),
+    lastAnalysisId: v.id('aiAnalysis'),
     calculatedAt: v.number(),
     validUntil: v.number(),
   })
-    .index("by_user", ["userId"])
-    .index("by_relationship", ["relationshipId"])
-    .index("by_user_relationship", ["userId", "relationshipId"])
-    .index("by_score", ["overallScore"])
-    .index("by_validity", ["validUntil"]),
+    .index('by_user', ['userId'])
+    .index('by_relationship', ['relationshipId'])
+    .index('by_user_relationship', ['userId', 'relationshipId'])
+    .index('by_score', ['overallScore'])
+    .index('by_validity', ['validUntil']),
 
   // System tables for monitoring and debugging
   systemLogs: defineTable({
-    level: v.union(v.literal("info"), v.literal("warn"), v.literal("error")),
+    level: v.union(v.literal('info'), v.literal('warn'), v.literal('error')),
     service: v.string(),
     message: v.string(),
     metadata: v.optional(v.any()),
     timestamp: v.number(),
   })
-    .index("by_level", ["level"])
-    .index("by_service", ["service"])
-    .index("by_timestamp", ["timestamp"]),
+    .index('by_level', ['level'])
+    .index('by_service', ['service'])
+    .index('by_timestamp', ['timestamp']),
 
   apiUsage: defineTable({
-    userId: v.id("users"),
+    userId: v.id('users'),
     service: v.string(), // "gemini", "clerk", etc.
     operation: v.string(),
     tokensUsed: v.optional(v.number()),
@@ -1268,11 +1377,11 @@ export default defineSchema({
     success: v.boolean(),
     timestamp: v.number(),
   })
-    .index("by_user", ["userId"])
-    .index("by_service", ["service"])
-    .index("by_timestamp", ["timestamp"])
-    .index("by_user_timestamp", ["userId", "timestamp"]),
-});
+    .index('by_user', ['userId'])
+    .index('by_service', ['service'])
+    .index('by_timestamp', ['timestamp'])
+    .index('by_user_timestamp', ['userId', 'timestamp']),
+})
 ```
 
 ## Frontend Architecture
@@ -1280,12 +1389,13 @@ export default defineSchema({
 ### Component Architecture
 
 #### Component Organization
+
 ```
 src/
 ├── app/                           # Next.js App Router
 │   ├── (auth)/                   # Auth route group
-│   │   ├── sign-in/              
-│   │   └── sign-up/              
+│   │   ├── sign-in/
+│   │   └── sign-up/
 │   ├── dashboard/                # Main dashboard
 │   │   ├── page.tsx
 │   │   └── insights/             # AI insights subpage
@@ -1339,6 +1449,7 @@ src/
 ```
 
 #### Component Template
+
 ```typescript
 // Example: journal-entry-editor.tsx
 "use client";
@@ -1364,10 +1475,10 @@ interface JournalEntryEditorProps {
 export function JournalEntryEditor({ entryId, onSave }: JournalEntryEditorProps) {
   const createEntry = useMutation(api.journalEntries.create);
   const updateEntry = useMutation(api.journalEntries.update);
-  const existingEntry = useQuery(api.journalEntries.getById, 
+  const existingEntry = useQuery(api.journalEntries.getById,
     entryId ? { id: entryId } : "skip"
   );
-  
+
   const [content, setContent] = useState(existingEntry?.content ?? "");
   const [mood, setMood] = useState(existingEntry?.mood ?? "neutral");
   const [tags, setTags] = useState(existingEntry?.tags ?? []);
@@ -1410,7 +1521,7 @@ export function JournalEntryEditor({ entryId, onSave }: JournalEntryEditorProps)
         <CardTitle className="flex items-center justify-between">
           {entryId ? "Edit Entry" : "New Journal Entry"}
           {entryId && existingEntry && (
-            <AIAnalysisStatusIndicator 
+            <AIAnalysisStatusIndicator
               status={existingEntry.aiAnalysisStatus}
               entryId={entryId}
             />
@@ -1424,14 +1535,14 @@ export function JournalEntryEditor({ entryId, onSave }: JournalEntryEditorProps)
           onChange={(e) => setContent(e.target.value)}
           className="min-h-32"
         />
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <MoodSelector value={mood} onChange={setMood} />
           <RelationshipPicker value={relationshipId} onChange={setRelationshipId} />
         </div>
-        
+
         <TagInput value={tags} onChange={setTags} />
-        
+
         <div className="flex items-center space-x-2">
           <input
             type="checkbox"
@@ -1441,7 +1552,7 @@ export function JournalEntryEditor({ entryId, onSave }: JournalEntryEditorProps)
           />
           <label htmlFor="ai-analysis">Enable AI analysis for insights</label>
         </div>
-        
+
         <Button onClick={handleSave} className="w-full">
           {entryId ? "Update Entry" : "Save Entry"}
         </Button>
@@ -1454,31 +1565,33 @@ export function JournalEntryEditor({ entryId, onSave }: JournalEntryEditorProps)
 ### State Management Architecture
 
 #### State Structure
+
 ```typescript
 // State management uses Convex for server state and React state for UI state
 // No global client state management needed due to Convex real-time subscriptions
 
 // Server State (via Convex)
 interface ServerState {
-  user: User | null;
-  journalEntries: PaginationResult<JournalEntry>;
-  relationships: Relationship[];
-  aiAnalyses: AIAnalysis[];
-  healthScores: HealthScore[];
+  user: User | null
+  journalEntries: PaginationResult<JournalEntry>
+  relationships: Relationship[]
+  aiAnalyses: AIAnalysis[]
+  healthScores: HealthScore[]
 }
 
 // Client State (React state in components)
 interface ClientState {
   // UI state only
-  selectedMood: MoodType;
-  editorContent: string;
-  selectedTags: string[];
-  isAutoSaving: boolean;
-  showAnalysisDetails: boolean;
+  selectedMood: MoodType
+  editorContent: string
+  selectedTags: string[]
+  isAutoSaving: boolean
+  showAnalysisDetails: boolean
 }
 ```
 
 #### State Management Patterns
+
 - **Server State**: Managed by Convex with automatic real-time updates
 - **Form State**: Local React state with auto-save to server
 - **UI State**: Component-level state for temporary UI interactions
@@ -1488,6 +1601,7 @@ interface ClientState {
 ### Routing Architecture
 
 #### Route Organization
+
 ```
 app/
 ├── page.tsx                      # Landing page / redirect to dashboard
@@ -1517,6 +1631,7 @@ app/
 ```
 
 #### Protected Route Pattern
+
 ```typescript
 // middleware.ts - Clerk auth middleware
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
@@ -1561,6 +1676,7 @@ export default function DashboardLayout({
 ### Frontend Services Layer
 
 #### API Client Setup
+
 ```typescript
 // lib/convex-client.ts
 import { ConvexReactClient } from "convex/react";
@@ -1594,21 +1710,22 @@ export function ConvexClientProvider({
 ```
 
 #### Service Example
+
 ```typescript
 // hooks/use-journal-entries.ts - Custom hook wrapping Convex queries
-import { useQuery, useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import { Id } from "../../convex/_generated/dataModel";
+import { useQuery, useMutation } from 'convex/react'
+import { api } from '../../convex/_generated/api'
+import { Id } from '../../convex/_generated/dataModel'
 
-export function useJournalEntries(relationshipId?: Id<"relationships">) {
+export function useJournalEntries(relationshipId?: Id<'relationships'>) {
   const entries = useQuery(api.journalEntries.list, {
     paginationOpts: { numItems: 20, cursor: null },
     relationshipId,
-  });
+  })
 
-  const createEntry = useMutation(api.journalEntries.create);
-  const updateEntry = useMutation(api.journalEntries.update);
-  const deleteEntry = useMutation(api.journalEntries.remove);
+  const createEntry = useMutation(api.journalEntries.create)
+  const updateEntry = useMutation(api.journalEntries.update)
+  const deleteEntry = useMutation(api.journalEntries.remove)
 
   return {
     entries,
@@ -1616,22 +1733,22 @@ export function useJournalEntries(relationshipId?: Id<"relationships">) {
     updateEntry,
     deleteEntry,
     isLoading: entries === undefined,
-  };
+  }
 }
 
 // hooks/use-ai-analysis.ts - AI analysis management
-export function useAIAnalysis(entryId: Id<"journalEntries">) {
-  const analysis = useQuery(api.aiAnalysis.getByEntry, { entryId });
-  const retryAnalysis = useMutation(api.aiAnalysis.retryAnalysis);
+export function useAIAnalysis(entryId: Id<'journalEntries'>) {
+  const analysis = useQuery(api.aiAnalysis.getByEntry, { entryId })
+  const retryAnalysis = useMutation(api.aiAnalysis.retryAnalysis)
 
   return {
     analysis,
     retryAnalysis,
     isLoading: analysis === undefined,
     hasAnalysis: !!analysis,
-    isProcessing: analysis?.status === "processing",
-    isFailed: analysis?.status === "failed",
-  };
+    isProcessing: analysis?.status === 'processing',
+    isFailed: analysis?.status === 'failed',
+  }
 }
 ```
 
@@ -1640,6 +1757,7 @@ export function useAIAnalysis(entryId: Id<"journalEntries">) {
 ### Service Architecture
 
 #### Function Organization
+
 ```
 convex/
 ├── schema.ts                     # Database schema definition
@@ -1664,130 +1782,134 @@ convex/
 ```
 
 #### Function Template
+
 ```typescript
 // convex/functions/journalEntries.ts
-import { query, mutation } from "../_generated/server";
-import { ConvexError } from "convex/values";
-import { v } from "convex/values";
-import { paginationOptsValidator } from "convex/server";
-import { getUserId, requireAuth } from "../utils/auth";
-import { validateJournalEntry } from "../utils/validation";
+import { query, mutation } from '../_generated/server'
+import { ConvexError } from 'convex/values'
+import { v } from 'convex/values'
+import { paginationOptsValidator } from 'convex/server'
+import { getUserId, requireAuth } from '../utils/auth'
+import { validateJournalEntry } from '../utils/validation'
 
 export const create = mutation({
   args: {
     content: v.string(),
     mood: v.union(/* mood types */),
-    relationshipId: v.optional(v.id("relationships")),
+    relationshipId: v.optional(v.id('relationships')),
     tags: v.array(v.string()),
     allowAIAnalysis: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     // Authentication
-    const userId = await requireAuth(ctx);
-    
+    const userId = await requireAuth(ctx)
+
     // Validation
-    const validatedData = validateJournalEntry(args);
-    
+    const validatedData = validateJournalEntry(args)
+
     // Business logic
-    const entryId = await ctx.db.insert("journalEntries", {
+    const entryId = await ctx.db.insert('journalEntries', {
       ...validatedData,
       userId,
-      aiAnalysisStatus: validatedData.allowAIAnalysis !== false ? "pending" : "skipped",
+      aiAnalysisStatus:
+        validatedData.allowAIAnalysis !== false ? 'pending' : 'skipped',
       createdAt: Date.now(),
       updatedAt: Date.now(),
-    });
-    
+    })
+
     // Side effects
     if (validatedData.allowAIAnalysis !== false) {
       await ctx.scheduler.runAfter(0, internal.aiAnalysis.queueAnalysis, {
         entryId,
-        priority: "normal",
-      });
+        priority: 'normal',
+      })
     }
-    
-    return entryId;
+
+    return entryId
   },
-});
+})
 
 export const list = query({
   args: {
     paginationOpts: paginationOptsValidator,
-    relationshipId: v.optional(v.id("relationships")),
+    relationshipId: v.optional(v.id('relationships')),
   },
   handler: async (ctx, args) => {
-    const userId = await requireAuth(ctx);
-    
+    const userId = await requireAuth(ctx)
+
     let query = ctx.db
-      .query("journalEntries")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .order("desc");
-    
+      .query('journalEntries')
+      .withIndex('by_user', q => q.eq('userId', userId))
+      .order('desc')
+
     if (args.relationshipId) {
-      query = query.filter((q) => 
-        q.eq(q.field("relationshipId"), args.relationshipId)
-      );
+      query = query.filter(q =>
+        q.eq(q.field('relationshipId'), args.relationshipId)
+      )
     }
-    
-    return await query.paginate(args.paginationOpts);
+
+    return await query.paginate(args.paginationOpts)
   },
-});
+})
 ```
 
 ### Database Architecture
 
 #### Data Access Layer
+
 ```typescript
 // convex/utils/repository.ts - Repository pattern for complex queries
 export class JournalRepository {
   constructor(private ctx: any) {}
 
-  async getEntryWithAnalysis(entryId: Id<"journalEntries">) {
-    const entry = await this.ctx.db.get(entryId);
-    if (!entry) return null;
+  async getEntryWithAnalysis(entryId: Id<'journalEntries'>) {
+    const entry = await this.ctx.db.get(entryId)
+    if (!entry) return null
 
     const analysis = await this.ctx.db
-      .query("aiAnalysis")
-      .withIndex("by_entry", (q) => q.eq("entryId", entryId))
-      .unique();
+      .query('aiAnalysis')
+      .withIndex('by_entry', q => q.eq('entryId', entryId))
+      .unique()
 
-    return { ...entry, analysis };
+    return { ...entry, analysis }
   }
 
   async getRecentEntriesWithHealth(
-    userId: Id<"users">, 
-    relationshipId: Id<"relationships">
+    userId: Id<'users'>,
+    relationshipId: Id<'relationships'>
   ) {
     const entries = await this.ctx.db
-      .query("journalEntries")
-      .withIndex("by_user_relationship", (q) => 
-        q.eq("userId", userId).eq("relationshipId", relationshipId)
+      .query('journalEntries')
+      .withIndex('by_user_relationship', q =>
+        q.eq('userId', userId).eq('relationshipId', relationshipId)
       )
-      .order("desc")
-      .take(10);
+      .order('desc')
+      .take(10)
 
     const healthScore = await this.ctx.db
-      .query("healthScores")
-      .withIndex("by_relationship", (q) => q.eq("relationshipId", relationshipId))
-      .unique();
+      .query('healthScores')
+      .withIndex('by_relationship', q => q.eq('relationshipId', relationshipId))
+      .unique()
 
-    return { entries, healthScore };
+    return { entries, healthScore }
   }
 }
 
 // Usage in functions
 export const getEntryDetails = query({
-  args: { entryId: v.id("journalEntries") },
+  args: { entryId: v.id('journalEntries') },
   handler: async (ctx, args) => {
-    await requireAuth(ctx);
-    const repository = new JournalRepository(ctx);
-    return await repository.getEntryWithAnalysis(args.entryId);
+    await requireAuth(ctx)
+    const repository = new JournalRepository(ctx)
+    return await repository.getEntryWithAnalysis(args.entryId)
   },
-});
+})
 ```
 
 ### Authentication and Authorization
 
 #### Auth Flow
+
 ```mermaid
 sequenceDiagram
     participant Client
@@ -1805,57 +1927,58 @@ sequenceDiagram
 ```
 
 #### Middleware/Guards
+
 ```typescript
 // convex/utils/auth.ts
-import { GenericQueryCtx, GenericMutationCtx } from "convex/server";
-import { ConvexError } from "convex/values";
+import { GenericQueryCtx, GenericMutationCtx } from 'convex/server'
+import { ConvexError } from 'convex/values'
 
 export async function requireAuth(
   ctx: GenericQueryCtx<any> | GenericMutationCtx<any>
 ) {
-  const identity = await ctx.auth.getUserIdentity();
+  const identity = await ctx.auth.getUserIdentity()
   if (!identity) {
-    throw new ConvexError("Authentication required");
+    throw new ConvexError('Authentication required')
   }
-  
+
   const user = await ctx.db
-    .query("users")
-    .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-    .unique();
-    
+    .query('users')
+    .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
+    .unique()
+
   if (!user) {
-    throw new ConvexError("User not found");
+    throw new ConvexError('User not found')
   }
-  
-  return user._id;
+
+  return user._id
 }
 
 export async function requireEntryAccess(
   ctx: GenericQueryCtx<any> | GenericMutationCtx<any>,
-  entryId: Id<"journalEntries">
+  entryId: Id<'journalEntries'>
 ) {
-  const userId = await requireAuth(ctx);
-  const entry = await ctx.db.get(entryId);
-  
+  const userId = await requireAuth(ctx)
+  const entry = await ctx.db.get(entryId)
+
   if (!entry || entry.userId !== userId) {
-    throw new ConvexError("Entry not found or access denied");
+    throw new ConvexError('Entry not found or access denied')
   }
-  
-  return entry;
+
+  return entry
 }
 
 export async function requireRelationshipAccess(
   ctx: GenericQueryCtx<any> | GenericMutationCtx<any>,
-  relationshipId: Id<"relationships">
+  relationshipId: Id<'relationships'>
 ) {
-  const userId = await requireAuth(ctx);
-  const relationship = await ctx.db.get(relationshipId);
-  
+  const userId = await requireAuth(ctx)
+  const relationship = await ctx.db.get(relationshipId)
+
   if (!relationship || relationship.userId !== userId) {
-    throw new ConvexError("Relationship not found or access denied");
+    throw new ConvexError('Relationship not found or access denied')
   }
-  
-  return relationship;
+
+  return relationship
 }
 ```
 
@@ -2005,6 +2128,7 @@ resonant/
 ### Local Development Setup
 
 #### Prerequisites
+
 ```bash
 # Node.js 18+ and npm
 node --version  # Should be 18.x or higher
@@ -2018,6 +2142,7 @@ code --version
 ```
 
 #### Initial Setup
+
 ```bash
 # Clone repository
 git clone <repository-url>
@@ -2041,6 +2166,7 @@ npm run dev           # Start Next.js development server
 ```
 
 #### Development Commands
+
 ```bash
 # Start all services (requires two terminals)
 # Terminal 1: Convex backend
@@ -2076,11 +2202,12 @@ npm run start         # Start production server locally
 #### Required Environment Variables
 
 ##### Frontend (.env.local)
+
 ```bash
 # Convex
 NEXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
 
-# Clerk Authentication  
+# Clerk Authentication
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
 CLERK_SECRET_KEY=sk_test_...
 
@@ -2092,6 +2219,7 @@ NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
 ```
 
 ##### Backend (.env for Convex)
+
 ```bash
 # Set via: npx convex env set VARIABLE_NAME value
 
@@ -2113,6 +2241,7 @@ VERCEL_ANALYTICS_ID=your_analytics_id
 ```
 
 ##### Shared Configuration
+
 ```bash
 # App Configuration
 APP_NAME=Resonant
@@ -2130,12 +2259,14 @@ FEATURE_ANALYTICS=true
 ### Deployment Strategy
 
 **Frontend Deployment:**
+
 - **Platform:** Vercel (optimal for Next.js)
 - **Build Command:** `npm run build`
 - **Output Directory:** `.next` (automatic)
 - **CDN/Edge:** Vercel Edge Network with automatic optimization
 
 **Backend Deployment:**
+
 - **Platform:** Convex Cloud (managed serverless)
 - **Build Command:** `npx convex deploy`
 - **Deployment Method:** Git-based automatic deployment
@@ -2157,28 +2288,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
-          
+
       - name: Install dependencies
         run: npm ci
-        
+
       - name: Run type checking
         run: npm run typecheck
-        
+
       - name: Run linting
         run: npm run lint
-        
+
       - name: Run unit tests
         run: npm test
-        
+
       - name: Build application
         run: npm run build
-        
+
       - name: Run E2E tests
         run: |
           npx playwright install --with-deps
@@ -2190,13 +2321,13 @@ jobs:
     if: github.ref == 'refs/heads/develop'
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Deploy to Convex Staging
         run: |
           npx convex deploy --cmd-url-env-var-name CONVEX_DEPLOYMENT_URL
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_STAGING }}
-          
+
       - name: Deploy to Vercel Staging
         uses: vercel/action@v1
         with:
@@ -2211,13 +2342,13 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Deploy to Convex Production
         run: |
           npx convex deploy --cmd-url-env-var-name CONVEX_DEPLOYMENT_URL --prod
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_PROD }}
-          
+
       - name: Deploy to Vercel Production
         uses: vercel/action@v1
         with:
@@ -2229,27 +2360,30 @@ jobs:
 
 ### Environments
 
-| Environment | Frontend URL | Backend URL | Purpose |
-|-------------|-------------|-------------|---------|
-| Development | http://localhost:3000 | Local Convex instance | Local development |
-| Staging | https://resonant-staging.vercel.app | https://staging-convex.convex.cloud | Pre-production testing |
-| Production | https://resonant.vercel.app | https://prod-convex.convex.cloud | Live environment |
+| Environment | Frontend URL                        | Backend URL                         | Purpose                |
+| ----------- | ----------------------------------- | ----------------------------------- | ---------------------- |
+| Development | http://localhost:3000               | Local Convex instance               | Local development      |
+| Staging     | https://resonant-staging.vercel.app | https://staging-convex.convex.cloud | Pre-production testing |
+| Production  | https://resonant.vercel.app         | https://prod-convex.convex.cloud    | Live environment       |
 
 ## Security and Performance
 
 ### Security Requirements
 
 **Frontend Security:**
+
 - CSP Headers: `default-src 'self'; script-src 'self' 'unsafe-eval' clerk.com convex.cloud; style-src 'self' 'unsafe-inline'`
 - XSS Prevention: React's built-in escaping + Content Security Policy
 - Secure Storage: Clerk handles token storage, no sensitive data in localStorage
 
 **Backend Security:**
+
 - Input Validation: Zod schemas for all function parameters with strict validation
 - Rate Limiting: Convex built-in rate limiting + custom AI usage limits
 - CORS Policy: Automatic CORS handling by Convex for allowed domains
 
 **Authentication Security:**
+
 - Token Storage: Clerk manages JWT tokens with httpOnly cookies
 - Session Management: Clerk automatic session refresh and timeout
 - Password Policy: Clerk enforced strong passwords + MFA support
@@ -2257,11 +2391,13 @@ jobs:
 ### Performance Optimization
 
 **Frontend Performance:**
+
 - Bundle Size Target: <500KB initial bundle, <100KB per route
 - Loading Strategy: React Suspense + Next.js loading.tsx files
 - Caching Strategy: Automatic Vercel edge caching + Convex query caching
 
 **Backend Performance:**
+
 - Response Time Target: <200ms for queries, <1s for mutations
 - Database Optimization: Proper indexing on all query patterns
 - Caching Strategy: Convex automatic query result caching
@@ -2281,6 +2417,7 @@ Frontend Unit (35%)  Backend Unit (35%)
 ### Test Organization
 
 #### Frontend Tests
+
 ```
 src/
 ├── components/
@@ -2301,6 +2438,7 @@ src/
 ```
 
 #### Backend Tests
+
 ```
 convex/
 ├── functions/
@@ -2318,6 +2456,7 @@ convex/
 ```
 
 #### E2E Tests
+
 ```
 tests/
 ├── e2e/
@@ -2337,6 +2476,7 @@ tests/
 ### Test Examples
 
 #### Frontend Component Test
+
 ```typescript
 // src/components/features/journal/__tests__/journal-entry-editor.test.tsx
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
@@ -2436,35 +2576,40 @@ describe('JournalEntryEditor', () => {
 ```
 
 #### Backend API Test
+
 ```typescript
 // convex/functions/__tests__/journalEntries.test.ts
-import { convexTest } from 'convex-test';
-import { expect, test, beforeEach } from 'vitest';
-import { api } from '../../_generated/api';
-import schema from '../../schema';
+import { convexTest } from 'convex-test'
+import { expect, test, beforeEach } from 'vitest'
+import { api } from '../../_generated/api'
+import schema from '../../schema'
 
 test('journal entry creation triggers AI analysis', async () => {
-  const t = convexTest(schema);
+  const t = convexTest(schema)
 
   // Create a test user
-  const userId = await t.run(async (ctx) => {
+  const userId = await t.run(async ctx => {
     return await ctx.db.insert('users', {
       clerkId: 'test-user-123',
       name: 'Test User',
       email: 'test@example.com',
       preferences: {
         aiAnalysisEnabled: true,
-        reminderSettings: { enabled: false, frequency: 'never', timeOfDay: '09:00' },
+        reminderSettings: {
+          enabled: false,
+          frequency: 'never',
+          timeOfDay: '09:00',
+        },
         privacySettings: { shareAnalytics: false, allowDataExport: true },
       },
       tier: 'free',
       createdAt: Date.now(),
       updatedAt: Date.now(),
-    });
-  });
+    })
+  })
 
   // Mock authentication
-  t.withIdentity({ subject: 'test-user-123' });
+  t.withIdentity({ subject: 'test-user-123' })
 
   // Create journal entry
   const entryId = await t.mutation(api.journalEntries.create, {
@@ -2472,44 +2617,48 @@ test('journal entry creation triggers AI analysis', async () => {
     mood: 'happy',
     tags: ['conversation', 'quality-time'],
     allowAIAnalysis: true,
-  });
+  })
 
   // Verify entry was created
-  const entry = await t.query(api.journalEntries.getById, { id: entryId });
+  const entry = await t.query(api.journalEntries.getById, { id: entryId })
   expect(entry).toMatchObject({
     content: 'I had a wonderful day with my partner. We talked for hours.',
     mood: 'happy',
     tags: ['conversation', 'quality-time'],
     allowAIAnalysis: true,
     aiAnalysisStatus: 'pending',
-  });
+  })
 
   // Verify AI analysis was queued (would be scheduled task in real system)
   // This is a simplified test - in practice, you'd test the scheduler integration
-  expect(entry.aiAnalysisStatus).toBe('pending');
-});
+  expect(entry.aiAnalysisStatus).toBe('pending')
+})
 
 test('journal entry without AI consent skips analysis', async () => {
-  const t = convexTest(schema);
+  const t = convexTest(schema)
 
   // Create test user
-  const userId = await t.run(async (ctx) => {
+  const userId = await t.run(async ctx => {
     return await ctx.db.insert('users', {
       clerkId: 'test-user-123',
       name: 'Test User',
       email: 'test@example.com',
       preferences: {
         aiAnalysisEnabled: true,
-        reminderSettings: { enabled: false, frequency: 'never', timeOfDay: '09:00' },
+        reminderSettings: {
+          enabled: false,
+          frequency: 'never',
+          timeOfDay: '09:00',
+        },
         privacySettings: { shareAnalytics: false, allowDataExport: true },
       },
       tier: 'free',
       createdAt: Date.now(),
       updatedAt: Date.now(),
-    });
-  });
+    })
+  })
 
-  t.withIdentity({ subject: 'test-user-123' });
+  t.withIdentity({ subject: 'test-user-123' })
 
   // Create entry with AI analysis disabled
   const entryId = await t.mutation(api.journalEntries.create, {
@@ -2517,86 +2666,92 @@ test('journal entry without AI consent skips analysis', async () => {
     mood: 'neutral',
     tags: [],
     allowAIAnalysis: false,
-  });
+  })
 
-  const entry = await t.query(api.journalEntries.getById, { id: entryId });
-  expect(entry.aiAnalysisStatus).toBe('skipped');
-});
+  const entry = await t.query(api.journalEntries.getById, { id: entryId })
+  expect(entry.aiAnalysisStatus).toBe('skipped')
+})
 ```
 
 #### E2E Test
+
 ```typescript
 // tests/e2e/ai-analysis.spec.ts
-import { test, expect } from '@playwright/test';
+import { test, expect } from '@playwright/test'
 
 test.describe('AI Analysis Workflow', () => {
   test.beforeEach(async ({ page }) => {
     // Sign in before each test
-    await page.goto('/sign-in');
-    await page.fill('[data-testid="email-input"]', 'test@example.com');
-    await page.fill('[data-testid="password-input"]', 'testpassword');
-    await page.click('[data-testid="sign-in-button"]');
-    await page.waitForURL('/dashboard');
-  });
+    await page.goto('/sign-in')
+    await page.fill('[data-testid="email-input"]', 'test@example.com')
+    await page.fill('[data-testid="password-input"]', 'testpassword')
+    await page.click('[data-testid="sign-in-button"]')
+    await page.waitForURL('/dashboard')
+  })
 
-  test('should create journal entry and show AI analysis progress', async ({ page }) => {
+  test('should create journal entry and show AI analysis progress', async ({
+    page,
+  }) => {
     // Navigate to new entry page
-    await page.goto('/journal/new');
+    await page.goto('/journal/new')
 
     // Fill out journal entry
-    await page.fill('[data-testid="content-textarea"]', 
+    await page.fill(
+      '[data-testid="content-textarea"]',
       'I had a meaningful conversation with my partner today. We discussed our future plans and I feel more connected than ever.'
-    );
+    )
 
     // Select mood
-    await page.click('[data-testid="mood-selector"]');
-    await page.click('[data-testid="mood-happy"]');
+    await page.click('[data-testid="mood-selector"]')
+    await page.click('[data-testid="mood-happy"]')
 
     // Add tags
-    await page.fill('[data-testid="tag-input"]', 'communication');
-    await page.keyboard('Enter');
-    await page.fill('[data-testid="tag-input"]', 'future-planning');
-    await page.keyboard('Enter');
+    await page.fill('[data-testid="tag-input"]', 'communication')
+    await page.keyboard('Enter')
+    await page.fill('[data-testid="tag-input"]', 'future-planning')
+    await page.keyboard('Enter')
 
     // Ensure AI analysis is enabled
-    const aiCheckbox = page.locator('[data-testid="ai-analysis-checkbox"]');
-    await expect(aiCheckbox).toBeChecked();
+    const aiCheckbox = page.locator('[data-testid="ai-analysis-checkbox"]')
+    await expect(aiCheckbox).toBeChecked()
 
     // Save entry
-    await page.click('[data-testid="save-entry-button"]');
+    await page.click('[data-testid="save-entry-button"]')
 
     // Should redirect to entry view
-    await page.waitForURL('/journal/*');
+    await page.waitForURL('/journal/*')
 
     // Should show AI analysis pending state
-    const statusIndicator = page.locator('[data-testid="ai-status-indicator"]');
-    await expect(statusIndicator).toContainText('Analyzing');
+    const statusIndicator = page.locator('[data-testid="ai-status-indicator"]')
+    await expect(statusIndicator).toContainText('Analyzing')
 
     // Wait for AI analysis to complete (with timeout)
     await page.waitForFunction(
       () => {
-        const status = document.querySelector('[data-testid="ai-status-indicator"]');
-        return status && status.textContent?.includes('Complete');
+        const status = document.querySelector(
+          '[data-testid="ai-status-indicator"]'
+        )
+        return status && status.textContent?.includes('Complete')
       },
       { timeout: 30000 } // 30 second timeout for AI processing
-    );
+    )
 
     // Verify analysis results are displayed
-    const analysisSection = page.locator('[data-testid="ai-analysis-results"]');
-    await expect(analysisSection).toBeVisible();
+    const analysisSection = page.locator('[data-testid="ai-analysis-results"]')
+    await expect(analysisSection).toBeVisible()
 
     // Check for sentiment score
-    const sentimentScore = page.locator('[data-testid="sentiment-score"]');
-    await expect(sentimentScore).toBeVisible();
+    const sentimentScore = page.locator('[data-testid="sentiment-score"]')
+    await expect(sentimentScore).toBeVisible()
 
     // Check for emotional keywords
-    const emotionalKeywords = page.locator('[data-testid="emotional-keywords"]');
-    await expect(emotionalKeywords).toBeVisible();
+    const emotionalKeywords = page.locator('[data-testid="emotional-keywords"]')
+    await expect(emotionalKeywords).toBeVisible()
 
     // Check for insights
-    const insights = page.locator('[data-testid="ai-insights"]');
-    await expect(insights).toBeVisible();
-  });
+    const insights = page.locator('[data-testid="ai-insights"]')
+    await expect(insights).toBeVisible()
+  })
 
   test('should handle AI analysis failure gracefully', async ({ page }) => {
     // Mock API failure by intercepting requests
@@ -2604,45 +2759,53 @@ test.describe('AI Analysis Workflow', () => {
       route.fulfill({
         status: 500,
         body: JSON.stringify({ error: 'AI service temporarily unavailable' }),
-      });
-    });
+      })
+    })
 
-    await page.goto('/journal/new');
-    
-    await page.fill('[data-testid="content-textarea"]', 'Test entry for error handling.');
-    await page.click('[data-testid="save-entry-button"]');
-    
-    await page.waitForURL('/journal/*');
+    await page.goto('/journal/new')
+
+    await page.fill(
+      '[data-testid="content-textarea"]',
+      'Test entry for error handling.'
+    )
+    await page.click('[data-testid="save-entry-button"]')
+
+    await page.waitForURL('/journal/*')
 
     // Should show retry option
-    const retryButton = page.locator('[data-testid="retry-analysis-button"]');
-    await expect(retryButton).toBeVisible();
+    const retryButton = page.locator('[data-testid="retry-analysis-button"]')
+    await expect(retryButton).toBeVisible()
 
     // Should show fallback analysis
-    const fallbackNotice = page.locator('[data-testid="fallback-analysis-notice"]');
-    await expect(fallbackNotice).toContainText('Limited analysis available');
-  });
+    const fallbackNotice = page.locator(
+      '[data-testid="fallback-analysis-notice"]'
+    )
+    await expect(fallbackNotice).toContainText('Limited analysis available')
+  })
 
   test('should respect user privacy settings', async ({ page }) => {
-    await page.goto('/journal/new');
+    await page.goto('/journal/new')
 
-    await page.fill('[data-testid="content-textarea"]', 'This is private information.');
+    await page.fill(
+      '[data-testid="content-textarea"]',
+      'This is private information.'
+    )
 
     // Disable AI analysis
-    await page.uncheck('[data-testid="ai-analysis-checkbox"]');
+    await page.uncheck('[data-testid="ai-analysis-checkbox"]')
 
-    await page.click('[data-testid="save-entry-button"]');
-    await page.waitForURL('/journal/*');
+    await page.click('[data-testid="save-entry-button"]')
+    await page.waitForURL('/journal/*')
 
     // Should not show AI analysis section
-    const analysisSection = page.locator('[data-testid="ai-analysis-results"]');
-    await expect(analysisSection).not.toBeVisible();
+    const analysisSection = page.locator('[data-testid="ai-analysis-results"]')
+    await expect(analysisSection).not.toBeVisible()
 
     // Should show privacy respected message
-    const privacyNotice = page.locator('[data-testid="privacy-notice"]');
-    await expect(privacyNotice).toContainText('AI analysis disabled');
-  });
-});
+    const privacyNotice = page.locator('[data-testid="privacy-notice"]')
+    await expect(privacyNotice).toContainText('AI analysis disabled')
+  })
+})
 ```
 
 ## Coding Standards
@@ -2650,7 +2813,7 @@ test.describe('AI Analysis Workflow', () => {
 ### Critical Fullstack Rules
 
 - **Type Safety First:** Always use TypeScript interfaces from packages/shared-types - never use `any` type or skip type definitions
-- **API Communication:** All Convex function calls must use generated API types from convex/_generated/api - never make direct HTTP calls to Convex
+- **API Communication:** All Convex function calls must use generated API types from convex/\_generated/api - never make direct HTTP calls to Convex
 - **Environment Variables:** Access environment variables only through validated config objects in lib/config.ts - never use process.env directly in components
 - **Error Handling:** All Convex functions must use standardized error handling with ConvexError - wrap all mutations in try-catch blocks
 - **State Management:** Use Convex real-time queries for server state, React state only for UI state - never duplicate server data in React state
@@ -2662,16 +2825,16 @@ test.describe('AI Analysis Workflow', () => {
 
 ### Naming Conventions
 
-| Element | Frontend | Backend | Example |
-|---------|----------|---------|---------|
-| Components | PascalCase | - | `JournalEntryEditor` |
-| Hooks | camelCase with 'use' | - | `useJournalEntries` |
-| Convex Functions | camelCase | camelCase | `createEntry`, `getByUser` |
-| Convex Tables | camelCase | camelCase | `journalEntries`, `aiAnalysis` |
-| API Routes | - | kebab-case | `/api/ai-analysis` |
-| Database Fields | camelCase | camelCase | `createdAt`, `aiAnalysisStatus` |
-| Constants | SCREAMING_SNAKE_CASE | SCREAMING_SNAKE_CASE | `MAX_RETRY_ATTEMPTS` |
-| Types/Interfaces | PascalCase | PascalCase | `JournalEntry`, `AIAnalysis` |
+| Element          | Frontend             | Backend              | Example                         |
+| ---------------- | -------------------- | -------------------- | ------------------------------- |
+| Components       | PascalCase           | -                    | `JournalEntryEditor`            |
+| Hooks            | camelCase with 'use' | -                    | `useJournalEntries`             |
+| Convex Functions | camelCase            | camelCase            | `createEntry`, `getByUser`      |
+| Convex Tables    | camelCase            | camelCase            | `journalEntries`, `aiAnalysis`  |
+| API Routes       | -                    | kebab-case           | `/api/ai-analysis`              |
+| Database Fields  | camelCase            | camelCase            | `createdAt`, `aiAnalysisStatus` |
+| Constants        | SCREAMING_SNAKE_CASE | SCREAMING_SNAKE_CASE | `MAX_RETRY_ATTEMPTS`            |
+| Types/Interfaces | PascalCase           | PascalCase           | `JournalEntry`, `AIAnalysis`    |
 
 ## Error Handling Strategy
 
@@ -2691,7 +2854,7 @@ sequenceDiagram
     ErrorHandler-->>Frontend: Structured error response
     Frontend->>Frontend: Display user-friendly message
     Frontend-->>User: Show error notification
-    
+
     alt Retryable Error
         Frontend->>Frontend: Show retry button
         User->>Frontend: Click retry
@@ -2707,14 +2870,14 @@ sequenceDiagram
 ```typescript
 interface ApiError {
   error: {
-    code: string;
-    message: string;
-    details?: Record<string, any>;
-    timestamp: string;
-    requestId: string;
-    retryable: boolean;
-    userMessage: string;
-  };
+    code: string
+    message: string
+    details?: Record<string, any>
+    timestamp: string
+    requestId: string
+    retryable: boolean
+    userMessage: string
+  }
 }
 
 // Common error codes
@@ -2754,10 +2917,10 @@ export function handleConvexError(error: unknown): AppError {
     const code = error.data?.code || 'UNKNOWN_ERROR';
     const retryable = error.data?.retryable || false;
     const userMessage = error.data?.userMessage || 'An unexpected error occurred';
-    
+
     return new AppError(error.message, code, retryable, userMessage);
   }
-  
+
   return new AppError(
     'An unexpected error occurred',
     'UNKNOWN_ERROR',
@@ -2767,10 +2930,10 @@ export function handleConvexError(error: unknown): AppError {
 }
 
 export function showErrorToast(error: AppError | Error) {
-  const appError = error instanceof AppError 
-    ? error 
+  const appError = error instanceof AppError
+    ? error
     : new AppError(error.message, 'UNKNOWN_ERROR');
-    
+
   toast({
     variant: 'destructive',
     title: 'Error',
@@ -2789,10 +2952,10 @@ import { useRouter } from 'next/navigation';
 
 export function useErrorBoundary() {
   const router = useRouter();
-  
+
   const handleError = (error: Error, errorInfo: any) => {
     console.error('Error boundary caught error:', error, errorInfo);
-    
+
     // Log to monitoring service
     if (typeof window !== 'undefined') {
       // Send to error tracking service
@@ -2801,13 +2964,13 @@ export function useErrorBoundary() {
         fatal: false,
       });
     }
-    
+
     // Navigate to error page for critical errors
     if (error.message.includes('CRITICAL')) {
       router.push('/error');
     }
   };
-  
+
   return { handleError };
 }
 ```
@@ -2816,7 +2979,7 @@ export function useErrorBoundary() {
 
 ```typescript
 // convex/utils/error-handler.ts
-import { ConvexError } from 'convex/values';
+import { ConvexError } from 'convex/values'
 
 export enum ErrorCodes {
   VALIDATION_ERROR = 'VALIDATION_ERROR',
@@ -2844,67 +3007,73 @@ export function createConvexError(
     details,
     timestamp: new Date().toISOString(),
     requestId: generateRequestId(),
-  });
+  })
 }
 
 export function getDefaultUserMessage(code: ErrorCodes): string {
   const messages = {
     [ErrorCodes.VALIDATION_ERROR]: 'Please check your input and try again.',
     [ErrorCodes.AUTHENTICATION_REQUIRED]: 'Please sign in to continue.',
-    [ErrorCodes.AUTHORIZATION_DENIED]: 'You don\'t have permission to perform this action.',
+    [ErrorCodes.AUTHORIZATION_DENIED]:
+      "You don't have permission to perform this action.",
     [ErrorCodes.RESOURCE_NOT_FOUND]: 'The requested item could not be found.',
-    [ErrorCodes.AI_SERVICE_UNAVAILABLE]: 'AI analysis is temporarily unavailable. Please try again later.',
-    [ErrorCodes.RATE_LIMIT_EXCEEDED]: 'Too many requests. Please wait a moment and try again.',
-    [ErrorCodes.EXTERNAL_SERVICE_ERROR]: 'External service is temporarily unavailable.',
-    [ErrorCodes.INTERNAL_SERVER_ERROR]: 'Something went wrong on our end. Please try again.',
-  };
-  
-  return messages[code] || 'An unexpected error occurred.';
+    [ErrorCodes.AI_SERVICE_UNAVAILABLE]:
+      'AI analysis is temporarily unavailable. Please try again later.',
+    [ErrorCodes.RATE_LIMIT_EXCEEDED]:
+      'Too many requests. Please wait a moment and try again.',
+    [ErrorCodes.EXTERNAL_SERVICE_ERROR]:
+      'External service is temporarily unavailable.',
+    [ErrorCodes.INTERNAL_SERVER_ERROR]:
+      'Something went wrong on our end. Please try again.',
+  }
+
+  return messages[code] || 'An unexpected error occurred.'
 }
 
 function generateRequestId(): string {
-  return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 }
 
 // Example usage in Convex function
 export const createJournalEntry = mutation({
-  args: { /* ... */ },
+  args: {
+    /* ... */
+  },
   handler: async (ctx, args) => {
     try {
       // Validate user authentication
-      const userId = await requireAuth(ctx);
-      
+      const userId = await requireAuth(ctx)
+
       // Validate input
-      const validatedArgs = validateJournalEntryInput(args);
-      
+      const validatedArgs = validateJournalEntryInput(args)
+
       // Business logic
       const entryId = await ctx.db.insert('journalEntries', {
         ...validatedArgs,
         userId,
         createdAt: Date.now(),
         updatedAt: Date.now(),
-      });
-      
-      return entryId;
-      
+      })
+
+      return entryId
     } catch (error) {
       if (error instanceof ConvexError) {
-        throw error; // Re-throw ConvexErrors as-is
+        throw error // Re-throw ConvexErrors as-is
       }
-      
+
       // Log unexpected errors
-      console.error('Unexpected error in createJournalEntry:', error);
-      
+      console.error('Unexpected error in createJournalEntry:', error)
+
       // Convert to user-friendly error
       throw createConvexError(
         ErrorCodes.INTERNAL_SERVER_ERROR,
         `Failed to create journal entry: ${error.message}`,
         'Unable to save your journal entry. Please try again.',
         true // This is retryable
-      );
+      )
     }
   },
-});
+})
 ```
 
 ## Monitoring and Observability
@@ -2919,6 +3088,7 @@ export const createJournalEntry = mutation({
 ### Key Metrics
 
 **Frontend Metrics:**
+
 - Core Web Vitals (LCP, FID, CLS)
 - JavaScript errors and unhandled rejections
 - API response times for Convex function calls
@@ -2926,6 +3096,7 @@ export const createJournalEntry = mutation({
 - Page load times and navigation performance
 
 **Backend Metrics:**
+
 - Request rate (functions called per minute)
 - Error rate (percentage of failed function calls)
 - Response time (95th percentile latency for queries/mutations)
@@ -2939,6 +3110,7 @@ export const createJournalEntry = mutation({
 Based on the comprehensive architecture document created, here's the validation checklist results:
 
 ### ✅ Architecture Completeness
+
 - **High-level architecture defined** - Jamstack + BaaS with Convex real-time capabilities
 - **Technology stack finalized** - Next.js 15, Convex, TypeScript, Clerk authentication
 - **Data models specified** - Complete schema with proper indexing and relationships
@@ -2946,6 +3118,7 @@ Based on the comprehensive architecture document created, here's the validation 
 - **Component architecture planned** - Feature-based organization with clear separation of concerns
 
 ### ✅ AI Integration Solution
+
 - **Core problem identified** - Node.js dependencies incompatible with Convex serverless environment
 - **Solution architected** - HTTP Actions for AI processing, maintaining real-time capabilities for UI
 - **Error handling strategy** - Comprehensive retry logic with fallback analysis
@@ -2953,30 +3126,35 @@ Based on the comprehensive architecture document created, here's the validation 
 - **Cost management** - Token tracking and rate limiting implementation
 
 ### ✅ Security & Performance
+
 - **Authentication flow secured** - Clerk integration with proper JWT validation
 - **Input validation implemented** - Zod schemas throughout the stack
 - **Performance targets set** - <200ms queries, <1s mutations, <500KB bundles
 - **Monitoring strategy** - Comprehensive metrics collection and alerting
 
 ### ✅ Development Workflow
+
 - **Local development setup** - Dual-server development with Convex + Next.js
 - **Testing strategy** - Unit, integration, and E2E testing with specific examples
 - **CI/CD pipeline** - Automated testing and deployment to staging/production
 - **Code standards** - TypeScript-first with specific fullstack rules
 
 ### ✅ Implementation Readiness
+
 - **Migration path clear** - Specific steps to move from current failing architecture
 - **Risk mitigation** - Fallback strategies for AI service outages
 - **Scalability considered** - Queue-based processing and efficient data structures
 - **Documentation complete** - Comprehensive technical specification for development team
 
 ### 🎯 Success Criteria Met
+
 - **Failure rate reduction**: Architecture should reduce AI failures from 25% to <5%
 - **Response time maintenance**: Real-time UI updates preserved during async AI processing
 - **Development velocity**: Clear patterns and tooling for rapid feature development
 - **Operational reliability**: Monitoring and error handling for production stability
 
 ### 📋 Next Steps
+
 1. **Immediate**: Implement HTTP Actions for AI processing
 2. **Short-term**: Migrate existing AI analysis functions to new architecture
 3. **Medium-term**: Deploy monitoring and alerting systems

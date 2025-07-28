@@ -127,7 +127,7 @@ export interface AIModelConfig {
 }
 
 export const defaultAIConfig: Omit<AIModelConfig, 'apiKey'> = {
-  model: 'gemini-1.5-flash',
+  model: 'gemini-2.5-flash-lite',
   temperature: 0.3,
   maxTokens: 1000,
   topP: 0.95,

@@ -35,7 +35,7 @@ This document defines the precise methodology for calculating relationship healt
 
 **Calculation Process**:
 
-1. AI analyzes full journal entry text using Gemini Flash
+1. AI analyzes full journal entry text using Gemini 2.5 Flash-Lite
 2. Detects multiple emotions within single entry
 3. Calculates average sentiment score across all detected emotions
 4. Applies recency weighting (recent entries have higher impact)

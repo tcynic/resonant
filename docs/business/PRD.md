@@ -121,7 +121,7 @@ People who want to mindfully manage relationships and improve their emotional co
 
 **Priority:** P0 (Critical)
 
-- Sentiment analysis using DSPy + Google Gemini Flash via Convex HTTP Actions
+- Sentiment analysis using DSPy + Google Gemini 2.5 Flash-Lite via Convex HTTP Actions
 - Queue-based processing with Convex Scheduler for reliable external API calls
 - Basic relationship health scoring (0-100) with real-time status updates
 - Pattern recognition for relationship trends
@@ -130,7 +130,7 @@ People who want to mindfully manage relationships and improve their emotional co
 
 **Architecture Specifications:**
 
-- **HTTP Actions:** All external Gemini API calls routed through Convex HTTP Actions
+- **HTTP Actions:** All external Gemini 2.5 Flash-Lite API calls routed through Convex HTTP Actions
 - **Queue System:** Convex Scheduler manages AI processing queue for reliability
 - **Status Tracking:** Real-time database updates for processing status and results
 - **Error Handling:** Circuit breakers, retry logic, and graceful fallback analysis
@@ -209,7 +209,7 @@ People who want to mindfully manage relationships and improve their emotional co
 - **Frontend:** Next.js + TypeScript + Tailwind CSS
 - **Database/Backend:** Convex (real-time, serverless)
 - **Authentication:** Clerk
-- **AI/ML:** DSPy + Google Gemini Flash
+- **AI/ML:** DSPy + Google Gemini 2.5 Flash-Lite
 - **Deployment:** Vercel
 
 ### 5.2 Performance Requirements
@@ -315,7 +315,7 @@ People who want to mindfully manage relationships and improve their emotional co
 
 - Convex HTTP Actions setup for external API calls
 - Convex Scheduler implementation for queue-based processing
-- Sentiment analysis integration via HTTP Actions + Google Gemini
+- Sentiment analysis integration via HTTP Actions + Google Gemini 2.5 Flash-Lite
 - Real-time status tracking system for AI processing
 - Circuit breaker and retry logic implementation
 - Basic relationship health scoring with fallback mechanisms
@@ -342,7 +342,7 @@ People who want to mindfully manage relationships and improve their emotional co
 
 ### 10.1 Technical Risks
 
-- **AI API reliability (Current: 25% failure rate):** 
+- **AI API reliability (Current: 25% failure rate):**
   - **Risk:** Direct client-side API calls causing high failure rates
   - **Mitigation:** Convex HTTP Actions architecture with queue-based processing, circuit breakers, and fallback analysis systems
   - **Target:** Achieve >95% reliability through robust error handling
@@ -371,7 +371,7 @@ People who want to mindfully manage relationships and improve their emotional co
 
 - **Convex HTTP Actions:** Critical for reliable external API calls (replaces direct client calls)
 - **Convex Scheduler:** Essential for queue-based AI processing and reliability
-- Google Gemini Flash API availability and performance
+- Google Gemini 2.5 Flash-Lite API availability and performance
 - Clerk authentication service reliability
 - Convex platform stability and scaling
 - Vercel deployment platform

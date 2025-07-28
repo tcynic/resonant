@@ -255,7 +255,7 @@ export class GeminiClient {
 
         if (attempt < maxRetries) {
           const delay = retryDelay * Math.pow(2, attempt - 1) // Exponential backoff
-          
+
           // Skip delay in Convex environments (mutations/queries can't use setTimeout)
           if (typeof process !== 'undefined' && process.env.CONVEX_CLOUD_URL) {
             // In Convex, retry immediately without delay

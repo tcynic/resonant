@@ -207,11 +207,12 @@ graph TB
 #### HTTP Actions Endpoints
 
 1. **`/api/ai/analyze`** - Main AI analysis endpoint
+
    ```typescript
    POST /api/ai/analyze
    Content-Type: application/json
    Authorization: Bearer <convex-auth-token>
-   
+
    {
      "entryId": "journal_entry_id",
      "priority": "high" | "normal" | "low",
@@ -221,9 +222,10 @@ graph TB
    ```
 
 2. **`/api/ai/status`** - Processing status endpoint
+
    ```typescript
    GET /api/ai/status/{analysisId}
-   
+
    Response:
    {
      "status": "queued" | "processing" | "completed" | "failed",
@@ -235,7 +237,7 @@ graph TB
 
 3. **`/api/ai/retry`** - Retry failed analysis
    ```typescript
-   POST /api/ai/retry/{analysisId}
+   POST / api / ai / retry / { analysisId }
    ```
 
 #### Queue-Based Processing Flow
@@ -255,11 +257,11 @@ sequenceDiagram
     CV->>QM: Queue AI analysis
     QM->>DB: Create analysis record (status: queued)
     QM-->>UI: Return analysisId
-    
+
     QM->>HA: Trigger HTTP Action
     HA->>DB: Update status (processing)
     HA->>CB: Check circuit breaker
-    
+
     alt Circuit Open
         CB-->>HA: Reject (too many failures)
         HA->>DB: Update status (failed - circuit open)
@@ -269,18 +271,19 @@ sequenceDiagram
         CB-->>HA: Forward response
         HA->>DB: Save results (status: completed)
     end
-    
+
     DB-->>UI: Real-time status update
 ```
 
 #### Error Handling Patterns
 
 1. **Circuit Breaker Implementation**
+
    ```typescript
    interface CircuitBreakerConfig {
-     failureThreshold: 5,     // Open after 5 failures
-     recoveryTimeout: 30000,  // 30 second recovery window
-     monitoringWindow: 60000  // 1 minute monitoring window
+     failureThreshold: 5 // Open after 5 failures
+     recoveryTimeout: 30000 // 30 second recovery window
+     monitoringWindow: 60000 // 1 minute monitoring window
    }
    ```
 
@@ -301,13 +304,13 @@ sequenceDiagram
 export const aiAnalyzeAction = httpAction(async (ctx, request) => {
   // Extract auth token from request headers
   const authToken = request.headers.get('authorization')?.replace('Bearer ', '')
-  
+
   // Validate token with Convex auth
   const identity = await ctx.auth.getUserIdentity()
   if (!identity) {
     return new Response('Unauthorized', { status: 401 })
   }
-  
+
   // Proceed with AI processing...
 })
 ```
@@ -320,17 +323,17 @@ aiAnalysis: defineTable({
   entryId: v.id('journalEntries'),
   userId: v.id('users'),
   relationshipId: v.optional(v.id('relationships')),
-  
+
   // Analysis results
   sentimentScore: v.number(),
   emotionalKeywords: v.array(v.string()),
   confidenceLevel: v.number(),
   reasoning: v.string(),
-  
+
   // Processing metadata
   status: v.union(
     v.literal('queued'),
-    v.literal('processing'), 
+    v.literal('processing'),
     v.literal('completed'),
     v.literal('failed'),
     v.literal('retrying')
@@ -338,20 +341,20 @@ aiAnalysis: defineTable({
   progress: v.optional(v.number()), // 0-100
   queuePosition: v.optional(v.number()),
   estimatedCompletion: v.optional(v.number()),
-  
+
   // Reliability metrics
   attemptCount: v.number(),
   lastAttempt: v.number(),
   processingTime: v.number(),
   tokensUsed: v.optional(v.number()),
   apiCost: v.optional(v.number()),
-  
+
   // Error tracking
   lastError: v.optional(v.string()),
   circuitBreakerStatus: v.optional(
     v.union(v.literal('closed'), v.literal('open'), v.literal('half-open'))
   ),
-  
+
   analysisVersion: v.string(),
   createdAt: v.number(),
   updatedAt: v.number(),
@@ -406,7 +409,9 @@ aiAnalysis: defineTable({
 ## Reliability Improvements
 
 ### Problem Addressed
+
 The previous client-side AI processing architecture suffered from a **25% failure rate** due to:
+
 - Network timeouts during direct API calls
 - Client-side memory limitations
 - Inconsistent error handling
@@ -414,6 +419,7 @@ The previous client-side AI processing architecture suffered from a **25% failur
 - Browser-specific API restrictions
 
 ### HTTP Actions Solution
+
 The new architecture provides **99.9% reliability** through:
 
 1. **Server-Side Processing**: All AI calls happen on Convex servers
@@ -426,16 +432,19 @@ The new architecture provides **99.9% reliability** through:
 ### Migration Strategy
 
 #### Phase 1: Dual Architecture (Current)
+
 - Maintain existing client-side calls for backward compatibility
 - Introduce HTTP Actions for new analysis requests
 - A/B test reliability improvements
 
 #### Phase 2: Queue-First Approach
+
 - Route all new analysis through HTTP Actions
 - Migrate existing failed analyses to queue system
 - Implement comprehensive monitoring
 
 #### Phase 3: Complete Migration
+
 - Deprecate client-side AI processing
 - Full HTTP Actions implementation
 - Advanced queue management features
@@ -443,6 +452,7 @@ The new architecture provides **99.9% reliability** through:
 ### Monitoring and Alerting
 
 #### Key Metrics
+
 - **Queue Processing Time**: Target < 10s average
 - **Circuit Breaker Status**: Monitor open/closed states
 - **Failure Rate**: Target < 0.1%
@@ -450,6 +460,7 @@ The new architecture provides **99.9% reliability** through:
 - **Queue Depth**: Monitor backlog size
 
 #### Alert Thresholds
+
 - Queue processing time > 30s
 - Failure rate > 1% over 5 minutes
 - Circuit breaker open for > 2 minutes
@@ -459,6 +470,7 @@ The new architecture provides **99.9% reliability** through:
 ### Development Guidelines
 
 #### HTTP Actions Best Practices
+
 1. **Always validate inputs** before external API calls
 2. **Implement circuit breakers** for all external services
 3. **Use exponential backoff** with jitter for retries
@@ -466,6 +478,7 @@ The new architecture provides **99.9% reliability** through:
 5. **Update status in real-time** for user feedback
 
 #### Testing Requirements
+
 1. **Circuit breaker testing** with simulated failures
 2. **Load testing** queue performance under stress
 3. **Timeout testing** with slow AI responses

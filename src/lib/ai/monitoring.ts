@@ -469,7 +469,7 @@ class AIMonitoringService {
     if (typeof process !== 'undefined' && process.env.CONVEX_CLOUD_URL) {
       return
     }
-    
+
     this.cleanupInterval = setInterval(
       () => {
         const errorCutoff =

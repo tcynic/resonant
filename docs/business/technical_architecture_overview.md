@@ -76,15 +76,15 @@
 // HTTP Action for AI analysis
 export const analyzeJournalEntry = httpAction(async (ctx, request) => {
   // Reliable external API call from Convex serverless function
-  const analysis = await callGeminiAPI(entryContent);
-  
+  const analysis = await callGeminiAPI(entryContent)
+
   // Update database with real-time subscriptions
   await ctx.runMutation(internal.journalEntries.updateAnalysis, {
     entryId,
     sentiment: analysis.sentiment,
-    healthScore: analysis.healthScore
-  });
-});
+    healthScore: analysis.healthScore,
+  })
+})
 ```
 
 ## MVP Success Criteria

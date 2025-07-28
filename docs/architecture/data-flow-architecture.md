@@ -305,6 +305,7 @@ sequenceDiagram
    ```
 
 2. **Analysis Status Tracking**:
+
    ```typescript
    {
      entryId: Id<"journalEntries">,
@@ -364,39 +365,39 @@ flowchart TD
     DB --> QS[Queue Status: queued]
     QS --> SC[Convex Scheduler]
     SC --> HA[HTTP Action Trigger]
-    
+
     HA --> CB{Circuit Breaker Check}
     CB -->|Open - API Healthy| EA[External AI API Call]
     CB -->|Closed - API Unhealthy| FB[Fallback Analysis]
-    
+
     EA --> PS1[Processing Status Update]
     PS1 --> VP[Validate & Preprocess]
     VP --> SE[Sentiment Analysis]
     VP --> PD[Pattern Detection]
     VP --> CS[Communication Style]
-    
+
     SE --> AR[Analysis Results]
     PD --> AR
     CS --> AR
-    
+
     FB --> FA[Local Fallback Analysis]
     FA --> AR
-    
+
     AR --> HS[Health Score Calculation]
     AR --> IG[Insight Generation]
     AR --> TR[Trend Analysis]
-    
+
     HS --> CS1[Completed Status Update]
     IG --> CS1
     TR --> CS1
     CS1 --> DB2[(Database Update)]
-    
+
     DB2 --> RT[Real-time Broadcast]
     RT --> UI[UI Status Updates]
-    
+
     EA -.->|API Failure| RL[Retry Logic]
     RL -.->|Max Retries| FB
-    
+
     style JE fill:#e3f2fd
     style HA fill:#ffecb3
     style CB fill:#fff3e0
@@ -415,8 +416,8 @@ flowchart TD
 
    ```typescript
    interface AnalysisStatus {
-     entryId: Id<"journalEntries">
-     userId: Id<"users">
+     entryId: Id<'journalEntries'>
+     userId: Id<'users'>
      status: 'queued' | 'processing' | 'completed' | 'failed' | 'fallback'
      queuedAt: number
      startedAt?: number
@@ -465,7 +466,10 @@ flowchart TD
      }
      trendDirection: 'improving' | 'stable' | 'declining'
      confidence: number
-     calculationMethod: 'full_ai_analysis' | 'partial_analysis' | 'fallback_scoring'
+     calculationMethod:
+       | 'full_ai_analysis'
+       | 'partial_analysis'
+       | 'fallback_scoring'
    }
    ```
 
@@ -495,11 +499,12 @@ flowchart TD
      backoffMultiplier: 2
      jitterMs: 500
    }
-   
+
    // Retry schedule: 1s, 2s, 4s (with jitter)
    const calculateRetryDelay = (attempt: number): number => {
      const delay = Math.min(
-       RetryConfig.baseDelayMs * Math.pow(RetryConfig.backoffMultiplier, attempt),
+       RetryConfig.baseDelayMs *
+         Math.pow(RetryConfig.backoffMultiplier, attempt),
        RetryConfig.maxDelayMs
      )
      return delay + Math.random() * RetryConfig.jitterMs
@@ -597,7 +602,7 @@ sequenceDiagram
        // Entry created immediately, analysis queued
        // Real-time status updates will follow:
        // 1. status: "queued"
-       // 2. status: "processing" 
+       // 2. status: "processing"
        // 3. status: "completed"/"failed"/"fallback"
      } catch (error) {
        // Handle creation error
@@ -610,7 +615,7 @@ sequenceDiagram
    ```typescript
    const AnalysisStatusIndicator = ({ entryId }) => {
      const status = useQuery(api.analysisStatus.getByEntryId, { entryId })
-     
+
      switch (status?.status) {
        case 'queued':
          return <Badge variant="secondary">Analysis Queued</Badge>

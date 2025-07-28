@@ -387,6 +387,34 @@ export const storeResult = internalMutation({
         relationship_dynamics: v.array(v.string()),
       })
     ),
+    emotionalStability: v.optional(
+      v.object({
+        stability_score: v.number(),
+        trend_direction: v.union(
+          v.literal('improving'),
+          v.literal('declining'),
+          v.literal('stable')
+        ),
+        volatility_level: v.union(
+          v.literal('low'),
+          v.literal('moderate'),
+          v.literal('high')
+        ),
+        recovery_patterns: v.string(),
+      })
+    ),
+    energyImpact: v.optional(
+      v.object({
+        energy_score: v.number(),
+        energy_indicators: v.array(v.string()),
+        overall_effect: v.union(
+          v.literal('energizing'),
+          v.literal('neutral'),
+          v.literal('draining')
+        ),
+        explanation: v.string(),
+      })
+    ),
     analysisVersion: v.string(),
     processingTime: v.number(),
     tokensUsed: v.number(),

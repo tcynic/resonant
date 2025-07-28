@@ -339,7 +339,7 @@ export const transferData = mutation({
 export const analyzeWithAI = httpAction(async (ctx, request) => {
   // Parse and validate request
   const { entryId, analysisType, userId } = await request.json()
-  
+
   // Authenticate request
   const identity = await ctx.auth.getUserIdentity()
   if (!identity || identity.subject !== userId) {
@@ -367,14 +367,14 @@ export const analyzeWithAI = httpAction(async (ctx, request) => {
       internal.circuitBreaker.getStatus,
       { service: 'gemini-ai' }
     )
-    
+
     if (circuitBreakerStatus === 'open') {
       // Use fallback analysis
       const fallbackResult = await ctx.runAction(
         internal.aiAnalysis.fallbackAnalysis,
         { entryId, analysisType }
       )
-      
+
       return Response.json({
         analysisId: fallbackResult.analysisId,
         status: 'completed_fallback',
@@ -413,11 +413,9 @@ export const analyzeWithAI = httpAction(async (ctx, request) => {
 
     // Generate insights if confidence is high
     if (analysisResult.confidence > 0.8) {
-      await ctx.scheduler.runAfter(
-        0,
-        internal.insights.generateFromAnalysis,
-        { analysisId }
-      )
+      await ctx.scheduler.runAfter(0, internal.insights.generateFromAnalysis, {
+        analysisId,
+      })
     }
 
     // Record success for circuit breaker
@@ -430,7 +428,6 @@ export const analyzeWithAI = httpAction(async (ctx, request) => {
       status: 'completed',
       confidence: analysisResult.confidence,
     })
-
   } catch (error) {
     // Record failure for circuit breaker
     await ctx.runMutation(internal.circuitBreaker.recordFailure, {
@@ -479,7 +476,7 @@ async function retryWithBackoff<T>(
       return await operation()
     } catch (error) {
       lastError = error instanceof Error ? error : new Error('Unknown error')
-      
+
       if (attempt === options.maxRetries) {
         throw lastError
       }
@@ -489,7 +486,7 @@ async function retryWithBackoff<T>(
         options.baseDelay * Math.pow(2, attempt),
         options.maxDelay
       )
-      
+
       if (options.jitter) {
         delay = delay * (0.75 + Math.random() * 0.5) // ±25% jitter
       }
@@ -522,8 +519,10 @@ export const getCircuitBreakerStatus = query({
     }
 
     // Check if we should reset the circuit breaker
-    if (breaker.status === 'open' && 
-        now - breaker.lastFailure > config.recoveryTimeout) {
+    if (
+      breaker.status === 'open' &&
+      now - breaker.lastFailure > config.recoveryTimeout
+    ) {
       return 'half-open'
     }
 
@@ -555,7 +554,7 @@ http.route({
   handler: getAnalysisStatus,
 })
 
-// AI retry endpoint  
+// AI retry endpoint
 http.route({
   path: '/api/ai/retry',
   method: 'POST',

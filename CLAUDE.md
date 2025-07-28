@@ -244,8 +244,8 @@ NEXT_PUBLIC_CONVEX_URL=         # From npx convex dev
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=  # From Clerk dashboard
 CLERK_SECRET_KEY=                   # From Clerk dashboard
 
-# AI Features (Future)
-GOOGLE_GEMINI_API_KEY=              # For AI analysis features
+# AI Features (Gemini 2.5 Flash-Lite)
+GOOGLE_GEMINI_API_KEY=              # For Gemini 2.5 Flash-Lite AI analysis
 ```
 
 ### Development Dependencies

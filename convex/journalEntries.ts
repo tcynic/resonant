@@ -1,5 +1,11 @@
 import { v } from 'convex/values'
-import { mutation, query, MutationCtx, QueryCtx } from './_generated/server'
+import {
+  mutation,
+  query,
+  internalQuery,
+  MutationCtx,
+  QueryCtx,
+} from './_generated/server'
 import { ConvexError } from 'convex/values'
 import { Id } from './_generated/dataModel'
 import { internal } from './_generated/api'
@@ -79,12 +85,14 @@ export const createEntry = mutation({
       // Queue AI analysis if entry allows it and user has it enabled
       if (args.allowAIAnalysis !== false) {
         try {
-          // Schedule AI analysis to run after a short delay
+          // Schedule HTTP Action-based AI analysis to run after a short delay
+          // Using fetch to call our own HTTP Action endpoint
           await ctx.scheduler.runAfter(
             2000,
-            internal.aiAnalysis.triggerAnalysis,
+            internal.aiAnalysis.scheduleHttpAnalysis,
             {
-              entryId,
+              entryId: entryId as string,
+              userId: args.userId as string,
               priority: 'normal',
             }
           )
@@ -423,6 +431,34 @@ export const getRecent = query({
       .withIndex('by_user', (q: any) => q.eq('userId', args.userId))
       .order('desc')
       .take(limit)
+  },
+})
+
+// Internal query for HTTP Actions to get journal entry data for AI analysis
+export const getForAnalysis = internalQuery({
+  args: { entryId: v.string() },
+  handler: async (ctx: QueryCtx, args: { entryId: string }) => {
+    const entry = await ctx.db.get(args.entryId as Id<'journalEntries'>)
+    if (!entry) {
+      return null
+    }
+
+    // Get relationship name if available
+    let relationshipName = null
+    if (entry.relationshipId) {
+      const relationship = await ctx.db.get(entry.relationshipId)
+      relationshipName = relationship?.name || relationship?.initials || null
+    }
+
+    return {
+      content: entry.content,
+      mood: entry.mood,
+      relationshipId: entry.relationshipId,
+      relationshipName,
+      allowAIAnalysis: entry.allowAIAnalysis,
+      userId: entry.userId,
+      createdAt: entry.createdAt,
+    }
   },
 })
 
