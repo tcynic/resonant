@@ -6,8 +6,9 @@ import { useState } from 'react'
 import JournalEntryEditor from '@/components/features/journal/journal-entry-editor'
 import {
   useJournalEntryById,
-  useJournalEntryMutations,
-} from '@/hooks/journal/use-journal-entries'
+  useUpdateJournalEntry,
+} from '@/hooks/convex/use-journal-entries'
+import { useCurrentUser } from '@/hooks/convex/use-users'
 import { UpdateJournalEntryData } from '@/lib/types'
 
 export default function EditJournalEntryPage() {
@@ -15,17 +16,31 @@ export default function EditJournalEntryPage() {
   const params = useParams()
   const entryId = params.id as string
 
-  const { journalEntry, isLoading: isLoadingEntry } =
-    useJournalEntryById(entryId)
-  const { updateJournalEntry } = useJournalEntryMutations()
+  const { user } = useCurrentUser()
+  const { entry: journalEntry, isLoading: isLoadingEntry } =
+    useJournalEntryById(entryId, user?._id)
+  const { updateEntry } = useUpdateJournalEntry()
   const [isLoading, setIsLoading] = useState(false)
 
   const handleSave = async (data: UpdateJournalEntryData): Promise<string> => {
+    if (!user) {
+      throw new Error('User not authenticated')
+    }
+
     setIsLoading(true)
     try {
-      await updateJournalEntry(entryId, data)
-      router.push(`/journal/${entryId}`)
-      return entryId
+      const result = await updateEntry({
+        entryId,
+        userId: user._id,
+        ...data,
+      })
+
+      if (result.success) {
+        router.push(`/journal/${entryId}`)
+        return entryId
+      } else {
+        throw new Error(result.error || 'Failed to update entry')
+      }
     } catch (error) {
       console.error('Failed to update journal entry:', error)
       throw error

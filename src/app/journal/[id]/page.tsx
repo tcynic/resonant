@@ -6,8 +6,9 @@ import { useMemo } from 'react'
 import JournalEntryDetail from '@/components/features/journal/journal-entry-detail'
 import {
   useJournalEntryById,
-  useJournalEntries,
-} from '@/hooks/journal/use-journal-entries'
+  useJournalEntriesByUser,
+} from '@/hooks/convex/use-journal-entries'
+import { useCurrentUser } from '@/hooks/convex/use-users'
 import { useRelationships } from '@/hooks/use-relationships'
 
 export default function JournalEntryViewPage() {
@@ -15,9 +16,13 @@ export default function JournalEntryViewPage() {
   const params = useParams()
   const entryId = params.id as string
 
-  const { journalEntry, isLoading } = useJournalEntryById(entryId)
+  const { user } = useCurrentUser()
+  const { entry: journalEntry, isLoading } = useJournalEntryById(
+    entryId,
+    user?._id
+  )
   const { relationships } = useRelationships()
-  const { journalEntries } = useJournalEntries()
+  const { entries: journalEntries } = useJournalEntriesByUser(user?._id)
 
   // Find the relationship for this entry
   const relationship = useMemo(() => {
