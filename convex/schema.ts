@@ -182,6 +182,8 @@ export default defineSchema({
     deadLetterQueue: v.optional(v.boolean()), // Mark items in dead letter queue
     deadLetterReason: v.optional(v.string()), // Why item was moved to dead letter queue
     deadLetterTimestamp: v.optional(v.number()), // When moved to dead letter queue
+    deadLetterCategory: v.optional(v.string()), // Category of dead letter failure
+    deadLetterMetadata: v.optional(v.any()), // Enhanced metadata for investigation
     status: v.union(
       v.literal('processing'),
       v.literal('completed'),

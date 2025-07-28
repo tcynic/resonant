@@ -3,48 +3,48 @@
  * Handles periodic maintenance tasks for the queue system including automatic requeuing of transient failures
  */
 
-import { cronJobs } from 'convex/server'
 import { internalMutation } from '../_generated/server'
 import { internal } from '../_generated/api'
 
 /**
- * Scheduled function to automatically requeue transient failures
- * Runs every 5 minutes to check for failed analyses that should be retried
+ * Manual function to automatically requeue transient failures
+ * Can be called manually or triggered by external scheduler
  */
-export const scheduledAutoRequeue = cronJobs.interval(
-  'auto-requeue-transient-failures',
-  { minutes: 5 },
-  internal.scheduler.autoRequeueTransientFailures,
-  {
-    maxAge: 30 * 60 * 1000, // Check failures from last 30 minutes
-    batchSize: 20, // Process up to 20 items per run
-  }
-)
+export const triggerAutoRequeue = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    // Call the auto-requeue function with default parameters
+    return await ctx.runMutation(internal.scheduler.autoRequeueTransientFailures, {
+      maxAge: 30 * 60 * 1000, // Check failures from last 30 minutes
+      batchSize: 20, // Process up to 20 items per run
+    })
+  },
+})
 
 /**
- * Scheduled function to upgrade aging requests
- * Runs every 2 minutes to upgrade priority of items waiting too long
+ * Manual function to upgrade aging requests
+ * Can be called manually or triggered by external scheduler
  */
-export const scheduledPriorityUpgrade = cronJobs.interval(
-  'upgrade-aging-requests',
-  { minutes: 2 },
-  internal.scheduler.upgradeAgingRequests,
-  {}
-)
+export const triggerPriorityUpgrade = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.runMutation(internal.scheduler.upgradeAgingRequests, {})
+  },
+})
 
 /**
- * Scheduled function to purge expired queue items
- * Runs every hour to clean up very old stuck items
+ * Manual function to purge expired queue items
+ * Can be called manually or triggered by external scheduler
  */
-export const scheduledQueueCleanup = cronJobs.interval(
-  'purge-expired-queue',
-  { hours: 1 },
-  internal.scheduler.purgeExpiredQueue,
-  {
-    maxAgeMs: 24 * 60 * 60 * 1000, // 24 hours
-    dryRun: false,
-  }
-)
+export const triggerQueueCleanup = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.runMutation(internal.scheduler.purgeExpiredQueue, {
+      maxAgeMs: 24 * 60 * 60 * 1000, // 24 hours
+      dryRun: false,
+    })
+  },
+})
 
 /**
  * Manual trigger for emergency auto-requeue

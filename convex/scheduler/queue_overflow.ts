@@ -11,11 +11,11 @@ import {
   QUEUE_CONFIG,
   PRIORITY_CRITERIA,
   PRIORITY_LEVELS,
-} from './queue-config'
+} from './queue_config'
 import {
   getPriorityValue,
   shouldUpgradePriority,
-} from '../utils/priority-assessment'
+} from '../utils/priority_assessment'
 
 /**
  * Queue overflow strategies
@@ -437,6 +437,11 @@ export const getDeadLetterQueueStats = internalQuery({
           ) / deadLetterItems.length
         : 0
 
+    // Filter items that may be recoverable for manual review
+    const recoverableItems = deadLetterItems.filter(item =>
+      isRecoverable(item.deadLetterReason || '', item.lastErrorMessage || '')
+    )
+
     return {
       summary: {
         totalDeadLetterItems: deadLetterItems.length,
@@ -568,7 +573,13 @@ export const recoverFromDeadLetterQueue = internalMutation({
  * Get queue load balancing recommendations
  */
 export const getLoadBalancingRecommendations = internalQuery({
-  handler: async ctx => {
+  handler: async (ctx): Promise<{
+    currentLoad: ReturnType<typeof analyzeLoadDistribution>
+    capacity: any
+    backpressure: any
+    recommendations: ReturnType<typeof generateLoadBalancingRecommendations>
+    timestamp: number
+  }> => {
     const capacityCheck = await ctx.runQuery(
       internal.scheduler.checkQueueCapacityInternal,
       {}

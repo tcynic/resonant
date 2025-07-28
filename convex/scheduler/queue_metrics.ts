@@ -3,14 +3,14 @@
  * Comprehensive real-time monitoring and analytics for the AI analysis queue
  */
 
-import { internalQuery, internalMutation } from '../_generated/server'
+import { internalQuery, internalMutation, query } from '../_generated/server'
 import { v } from 'convex/values'
 import {
   QUEUE_CONFIG,
   PRIORITY_CRITERIA,
   QUEUE_HEALTH_LEVELS,
-} from './queue-config'
-import { getPriorityValue, isWithinSla } from '../utils/priority-assessment'
+} from './queue_config'
+import { getPriorityValue, isWithinSla } from '../utils/priority_assessment'
 
 /**
  * Public query for real-time queue dashboard (admin access)

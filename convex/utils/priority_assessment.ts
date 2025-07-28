@@ -2,7 +2,7 @@ import {
   QueuePriority,
   PRIORITY_CRITERIA,
   PRIORITY_LEVELS,
-} from '../scheduler/queue-config'
+} from '../scheduler/queue_config'
 
 /**
  * User tier type from schema

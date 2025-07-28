@@ -5,23 +5,23 @@ import {
   QUEUE_CONFIG,
   PRIORITY_CRITERIA,
   PRIORITY_LEVELS,
-} from './queue-config'
+} from './queue_config'
 import {
   assessPriority,
   assessPriorityWithContent,
   shouldUpgradePriority,
   getPriorityValue,
   comparePriorities,
-} from '../utils/priority-assessment'
+} from '../utils/priority_assessment'
 import {
   QueueCircuitBreaker,
   shouldTripCircuitBreaker,
   isRecoverableError,
-} from '../utils/circuit-breaker'
+} from '../utils/circuit_breaker'
 import {
   calculateRetryStrategy,
   createRetryContext,
-} from '../utils/retry-strategy'
+} from '../utils/retry_strategy'
 
 /**
  * Enqueue an analysis request with priority-based processing
@@ -667,7 +667,7 @@ export const checkQueueCapacityInternal = internalQuery({
   },
   handler: async (ctx, args) => {
     // Import and call the function from queue-overflow module
-    const { checkQueueCapacity } = await import('./queue-overflow')
+    const { checkQueueCapacity } = await import('./queue_overflow')
     return await checkQueueCapacity(ctx, args)
   },
 })

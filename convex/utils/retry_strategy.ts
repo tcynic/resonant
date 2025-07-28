@@ -3,8 +3,8 @@
  * Integrates circuit breaker patterns with intelligent backoff
  */
 
-import { RETRY_CONFIG } from '../scheduler/queue-config'
-import { shouldTripCircuitBreaker, isRecoverableError } from './circuit-breaker'
+import { RETRY_CONFIG } from '../scheduler/queue_config'
+import { shouldTripCircuitBreaker, isRecoverableError } from './circuit_breaker'
 
 export type QueuePriority = 'normal' | 'high' | 'urgent'
 

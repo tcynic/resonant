@@ -14,7 +14,7 @@ import {
   validateUserAuth,
   generateRequestLogData,
 } from './utils/ai_validation'
-import { isRecoverableError } from './utils/circuit-breaker'
+import { isRecoverableError } from './utils/circuit_breaker'
 
 // TypeScript interfaces for input/output validation
 export interface AIProcessingRequest {
