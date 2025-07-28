@@ -80,7 +80,7 @@ describe('PrivacySettings', () => {
     getInitials: jest.fn(),
     hasVerifiedEmailAddress: jest.fn(),
     hasVerifiedPhoneNumber: jest.fn(),
-  } as unknown
+  } as any
 
   const mockUserData = {
     _id: 'convex_user_123',
@@ -108,7 +108,7 @@ describe('PrivacySettings', () => {
       withOptimisticUpdate: jest
         .fn()
         .mockReturnValue(mockUpdatePrivacySettings),
-    } as unknown)
+    } as any)
     mockUpdatePrivacySettings.mockResolvedValue(undefined)
   })
 

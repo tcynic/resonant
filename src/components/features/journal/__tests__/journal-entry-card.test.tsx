@@ -53,6 +53,7 @@ jest.mock('@/components/ui/button', () => {
 describe('JournalEntryCard', () => {
   const mockEntry: JournalEntry = {
     _id: 'entry_123',
+    _creationTime: Date.now() - 86400000,
     userId: 'user_123',
     relationshipId: 'rel_123',
     content:
@@ -66,6 +67,7 @@ describe('JournalEntryCard', () => {
 
   const mockRelationship: Relationship = {
     _id: 'rel_123',
+    _creationTime: Date.now(),
     name: 'Alice',
     type: 'friend',
     userId: 'user_123',

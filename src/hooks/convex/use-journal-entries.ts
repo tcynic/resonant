@@ -5,6 +5,7 @@
 
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
+import { Id } from '../../../convex/_generated/dataModel'
 import {
   CreateJournalEntryArgs,
   UpdateJournalEntryArgs,
@@ -27,7 +28,7 @@ export const useJournalEntriesByUser = (
 ) => {
   const entries = useQuery(
     api.journalEntries.getByUser,
-    userId ? { userId, limit } : 'skip'
+    userId ? { userId: userId as Id<'users'>, limit } : 'skip'
   )
 
   return {
@@ -57,7 +58,12 @@ export const useJournalEntriesByUser = (
 export const useJournalEntryById = (entryId?: string, userId?: string) => {
   const entry = useQuery(
     api.journalEntries.getById,
-    entryId && userId ? { entryId, userId } : 'skip'
+    entryId && userId
+      ? {
+          entryId: entryId as Id<'journalEntries'>,
+          userId: userId as Id<'users'>,
+        }
+      : 'skip'
   )
 
   return {
@@ -78,7 +84,7 @@ export const useRecentJournalEntries = (
 ) => {
   const entries = useQuery(
     api.journalEntries.getRecent,
-    userId ? { userId, limit } : 'skip'
+    userId ? { userId: userId as Id<'users'>, limit } : 'skip'
   )
 
   return {
@@ -100,16 +106,29 @@ export const useSearchJournalEntries = (
 ) => {
   const results = useQuery(
     api.journalEntries.search,
-    userId && query ? { userId, query, filters, page, limit } : 'skip'
+    userId && query
+      ? {
+          userId: userId as Id<'users'>,
+          query,
+          relationshipId: filters?.relationshipId as
+            | Id<'relationships'>
+            | undefined,
+          startDate: filters?.startDate,
+          endDate: filters?.endDate,
+          isPrivate: filters?.isPrivate,
+          tags: filters?.tags,
+          limit,
+        }
+      : 'skip'
   )
 
   return {
     results,
-    entries: results?.entries || [],
-    total: results?.total || 0,
-    hasMore: results?.hasMore || false,
+    entries: results || [],
+    total: results?.length || 0,
+    hasMore: false, // Simple implementation for now
     isLoading: results === undefined,
-    isEmpty: results?.entries?.length === 0,
+    isEmpty: results?.length === 0,
   }
 }
 
@@ -127,7 +146,11 @@ export const useCreateJournalEntry = () => {
     createEntry: useCallback(
       async (args: CreateJournalEntryArgs) => {
         try {
-          const entryId = await createEntry(args)
+          const entryId = await createEntry({
+            ...args,
+            userId: args.userId as Id<'users'>,
+            relationshipId: args.relationshipId as Id<'relationships'>,
+          })
           return { success: true, entryId }
         } catch (error) {
           console.error('Failed to create journal entry:', error)
@@ -155,7 +178,11 @@ export const useUpdateJournalEntry = () => {
     updateEntry: useCallback(
       async (args: UpdateJournalEntryArgs) => {
         try {
-          await updateEntry(args)
+          await updateEntry({
+            ...args,
+            entryId: args.entryId as Id<'journalEntries'>,
+            userId: args.userId as Id<'users'>,
+          })
           return { success: true }
         } catch (error) {
           console.error('Failed to update journal entry:', error)
@@ -183,7 +210,10 @@ export const useDeleteJournalEntry = () => {
     deleteEntry: useCallback(
       async (entryId: string, userId: string) => {
         try {
-          await deleteEntry({ entryId, userId })
+          await deleteEntry({
+            entryId: entryId as Id<'journalEntries'>,
+            userId: userId as Id<'users'>,
+          })
           return { success: true }
         } catch (error) {
           console.error('Failed to delete journal entry:', error)

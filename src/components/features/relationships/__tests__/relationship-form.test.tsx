@@ -163,6 +163,7 @@ describe('RelationshipForm', () => {
   describe('Edit Mode', () => {
     const mockRelationship = {
       _id: 'rel_123',
+      _creationTime: Date.now(),
       userId: 'user_123',
       name: 'Jane Smith',
       type: 'family' as const,
@@ -245,6 +246,7 @@ describe('RelationshipForm', () => {
     it('shows photo preview when photo is provided', () => {
       const mockRelationship = {
         _id: 'rel_123',
+        _creationTime: Date.now(),
         userId: 'user_123',
         name: 'Jane Smith',
         type: 'family' as const,

@@ -22,7 +22,18 @@ import { useCallback } from 'react'
  * Get active insights for a user
  */
 export const useActiveInsights = (args?: GetActiveInsightsArgs) => {
-  const insights = useQuery(api.insights.getActive, args || 'skip')
+  const insights = useQuery(
+    api.insights.getActive,
+    args
+      ? {
+          ...args,
+          userId: args.userId as Id<'users'>,
+          relationshipId: args.relationshipId as
+            | Id<'relationships'>
+            | undefined,
+        }
+      : 'skip'
+  )
 
   return {
     insights: insights || [],
@@ -176,7 +187,10 @@ export const useMarkInsightActedOn = () => {
     markActedOn: useCallback(
       async (args: MarkInsightActedOnArgs) => {
         try {
-          await markActedOn(args)
+          await markActedOn({
+            ...args,
+            insightId: args.insightId as Id<'insights'>,
+          })
           return { success: true }
         } catch (error) {
           console.error('Failed to mark insight as acted on:', error)
@@ -204,7 +218,10 @@ export const useRateInsight = () => {
     rateInsight: useCallback(
       async (args: RateInsightArgs) => {
         try {
-          await rateInsight(args)
+          await rateInsight({
+            ...args,
+            insightId: args.insightId as Id<'insights'>,
+          })
           return { success: true }
         } catch (error) {
           console.error('Failed to rate insight:', error)

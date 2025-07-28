@@ -7,6 +7,7 @@ import { HealthScore, Relationship } from '@/lib/types'
 // Mock data
 const mockRelationship: Relationship = {
   _id: 'rel-1' as never,
+  _creationTime: Date.now(),
   userId: 'user-1' as never,
   name: 'Test Partner',
   type: 'partner',

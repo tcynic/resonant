@@ -2,6 +2,7 @@ import { mutation, query, internalMutation } from './_generated/server'
 import { v } from 'convex/values'
 import { Id } from './_generated/dataModel'
 import { internal } from './_generated/api'
+import { analyzeJournalEntry, fallbackAnalysis } from './utils/ai-bridge'
 
 // Queue journal entry for AI analysis (Epic 2)
 export const queueAnalysis = mutation({
@@ -150,8 +151,8 @@ export const processEntry = internalMutation({
         .filter(q => q.eq(q.field('status'), 'completed'))
         .take(5)
 
-      // Simulate DSPy analysis (replace with actual DSPy integration)
-      const analysisResult = await simulateDSPyAnalysis(
+      // Real AI analysis using DSPy integration
+      const analysisResult = await performRealAIAnalysis(
         entry.content,
         relationshipContext,
         entry.mood,
@@ -235,182 +236,60 @@ export const getStats = query({
   },
 })
 
-// Mock DSPy analysis function (replace with real DSPy + Gemini implementation)
-async function simulateDSPyAnalysis(
+// Real AI analysis function using DSPy + Gemini implementation
+async function performRealAIAnalysis(
   content: string,
   relationshipContext: string,
   mood?: string,
   previousAnalyses?: any[]
 ) {
-  // Simulate processing delay (remove in production)
-  await new Promise(resolve => setTimeout(resolve, Math.random() * 2000 + 1000))
+  try {
+    // Prepare sentiment history for stability analysis
+    const sentimentHistory =
+      previousAnalyses?.map(analysis => ({
+        score: analysis.sentimentScore * 4.5 + 5.5, // Convert -1,1 scale back to 1-10
+        timestamp: analysis.createdAt,
+        emotions: analysis.emotionalKeywords,
+      })) || []
 
-  // Enhanced sentiment analysis simulation
-  const positiveWords = [
-    'love',
-    'happy',
-    'joy',
-    'great',
-    'wonderful',
-    'amazing',
-    'grateful',
-    'excited',
-    'proud',
-  ]
-  const negativeWords = [
-    'sad',
-    'angry',
-    'frustrated',
-    'disappointed',
-    'hurt',
-    'upset',
-    'worried',
-    'stressed',
-  ]
-  const conflictWords = [
-    'argue',
-    'fight',
-    'disagree',
-    'conflict',
-    'tension',
-    'misunderstanding',
-  ]
+    // Call real AI analysis
+    const result = await analyzeJournalEntry(
+      content,
+      relationshipContext,
+      mood,
+      sentimentHistory
+    )
 
-  const words = content.toLowerCase().split(/\s+/)
-  let sentimentScore = 0
-  const emotionalKeywords: string[] = []
-  let hasConflict = false
-
-  words.forEach(word => {
-    if (positiveWords.some(pw => word.includes(pw))) {
-      sentimentScore += 0.2
-      emotionalKeywords.push(word)
-    } else if (negativeWords.some(nw => word.includes(nw))) {
-      sentimentScore -= 0.2
-      emotionalKeywords.push(word)
-    } else if (conflictWords.some(cw => word.includes(cw))) {
-      hasConflict = true
-      sentimentScore -= 0.1
-      emotionalKeywords.push(word)
+    return {
+      sentimentScore: result.sentimentScore,
+      emotionalKeywords: result.emotionalKeywords,
+      confidenceLevel: result.confidenceLevel,
+      reasoning: result.reasoning,
+      patterns: result.patterns,
+      tokensUsed: result.tokensUsed,
+      apiCost: result.apiCost,
     }
-  })
+  } catch (error) {
+    console.error('Real AI analysis failed, using fallback:', error)
 
-  // Mood influence
-  if (mood) {
-    const moodScore = getMoodSentiment(mood)
-    sentimentScore = (sentimentScore + moodScore) / 2 // Average with mood
+    // Fallback to rule-based analysis
+    const fallbackResult = fallbackAnalysis(content, mood)
+
+    return {
+      sentimentScore: fallbackResult.sentimentScore || 0,
+      emotionalKeywords: fallbackResult.emotionalKeywords || [],
+      confidenceLevel: fallbackResult.confidenceLevel || 0.5,
+      reasoning:
+        fallbackResult.reasoning ||
+        'Fallback analysis used due to AI service unavailability',
+      patterns: fallbackResult.patterns || {
+        recurring_themes: [],
+        emotional_triggers: [],
+        communication_style: 'unknown',
+        relationship_dynamics: [],
+      },
+      tokensUsed: fallbackResult.tokensUsed || 0,
+      apiCost: fallbackResult.apiCost || 0,
+    }
   }
-
-  // Normalize sentiment score to -1 to 1 range
-  sentimentScore = Math.max(-1, Math.min(1, sentimentScore))
-
-  // Pattern detection based on content and previous analyses
-  const patterns = detectPatterns(
-    content,
-    relationshipContext,
-    previousAnalyses || []
-  )
-
-  return {
-    sentimentScore: Number(sentimentScore.toFixed(3)),
-    emotionalKeywords: [...new Set(emotionalKeywords)].slice(0, 5), // Top 5 unique keywords
-    confidenceLevel: Number((0.7 + Math.random() * 0.25).toFixed(3)), // 70-95% confidence
-    reasoning: generateReasoning(
-      words.length,
-      emotionalKeywords.length,
-      sentimentScore,
-      hasConflict
-    ),
-    patterns,
-    tokensUsed: Math.floor(words.length * 1.3), // Estimate tokens
-    apiCost: Number((Math.floor(words.length * 1.3) * 0.00015).toFixed(6)), // Cost estimate
-  }
-}
-
-function getMoodSentiment(mood: string): number {
-  const moodMap: { [key: string]: number } = {
-    ecstatic: 1.0,
-    joyful: 0.8,
-    happy: 0.6,
-    content: 0.4,
-    calm: 0.2,
-    neutral: 0.0,
-    concerned: -0.2,
-    sad: -0.4,
-    frustrated: -0.6,
-    angry: -0.8,
-    devastated: -1.0,
-  }
-
-  return moodMap[mood.toLowerCase()] || 0
-}
-
-function detectPatterns(
-  content: string,
-  relationshipContext: string,
-  previousAnalyses: any[]
-) {
-  const themes: string[] = []
-  const triggers: string[] = []
-
-  // Communication style detection
-  let communicationStyle = 'neutral'
-  if (content.includes('we talked') || content.includes('we discussed')) {
-    communicationStyle = 'collaborative'
-    themes.push('open_communication')
-  } else if (content.includes('I told') || content.includes('I said')) {
-    communicationStyle = 'direct'
-  }
-
-  // Common themes detection
-  if (content.includes('support') || content.includes('help')) {
-    themes.push('mutual_support')
-  }
-  if (content.includes('time together') || content.includes('spent time')) {
-    themes.push('quality_time')
-  }
-  if (content.includes('understand') || content.includes('listen')) {
-    themes.push('empathy')
-  }
-
-  // Emotional triggers
-  if (content.includes('work') || content.includes('job')) {
-    triggers.push('work_stress')
-  }
-  if (content.includes('family') || content.includes('parents')) {
-    triggers.push('family_dynamics')
-  }
-
-  return {
-    recurring_themes: themes,
-    emotional_triggers: triggers,
-    communication_style: communicationStyle,
-    relationship_dynamics: ['building_connection', 'navigating_challenges'],
-  }
-}
-
-function generateReasoning(
-  wordCount: number,
-  emotionalWordCount: number,
-  sentiment: number,
-  hasConflict: boolean
-): string {
-  let reasoning = `Analyzed ${wordCount} words with ${emotionalWordCount} emotional indicators. `
-
-  if (sentiment > 0.3) {
-    reasoning += 'Strong positive sentiment detected. '
-  } else if (sentiment < -0.3) {
-    reasoning += 'Concerning negative sentiment identified. '
-  } else {
-    reasoning += 'Balanced emotional tone observed. '
-  }
-
-  if (hasConflict) {
-    reasoning +=
-      'Conflict indicators present, suggesting areas for relationship attention.'
-  } else {
-    reasoning += 'Communication appears constructive and healthy.'
-  }
-
-  return reasoning
 }

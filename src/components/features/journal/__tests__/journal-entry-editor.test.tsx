@@ -246,6 +246,7 @@ describe('JournalEntryEditor', () => {
   describe('Edit Entry Mode', () => {
     const mockEntry: JournalEntry = {
       _id: 'entry_123',
+      _creationTime: Date.now() - 86400000,
       userId: 'user_123',
       relationshipId: 'rel_1',
       content: 'Existing journal entry content',
@@ -397,6 +398,7 @@ describe('JournalEntryEditor', () => {
     it('should show loading state during update', () => {
       const mockEntry: JournalEntry = {
         _id: 'entry_123',
+        _creationTime: Date.now(),
         userId: 'user_123',
         relationshipId: 'rel_1',
         content: 'Existing content',

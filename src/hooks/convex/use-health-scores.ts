@@ -5,7 +5,8 @@
 
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
-import { HealthScore, ForceRecalculateArgs } from '@/lib/types'
+import { Id } from '../../../convex/_generated/dataModel'
+import { HealthScore } from '@/lib/types'
 import { useCallback } from 'react'
 
 // ============================================================================
@@ -18,7 +19,9 @@ import { useCallback } from 'react'
 export const useHealthScoreByRelationship = (relationshipId?: string) => {
   const healthScore = useQuery(
     api.healthScores.getByRelationship,
-    relationshipId ? { relationshipId } : 'skip'
+    relationshipId
+      ? { relationshipId: relationshipId as Id<'relationships'> }
+      : 'skip'
   )
 
   return {
@@ -45,7 +48,7 @@ export const useHealthScoreByRelationship = (relationshipId?: string) => {
 export const useHealthScoresByUser = (userId?: string) => {
   const healthScores = useQuery(
     api.healthScores.getByUser,
-    userId ? { userId } : 'skip'
+    userId ? { userId: userId as Id<'users'> } : 'skip'
   )
 
   return {
@@ -81,7 +84,7 @@ export const useHealthScoresByUser = (userId?: string) => {
 export const useHealthScoresSummary = (userId?: string) => {
   const summary = useQuery(
     api.healthScores.getSummary,
-    userId ? { userId } : 'skip'
+    userId ? { userId: userId as Id<'users'> } : 'skip'
   )
 
   return {
@@ -122,7 +125,9 @@ export const useHealthScoreHistory = (
 ) => {
   const history = useQuery(
     api.healthScores.getHistory,
-    relationshipId ? { relationshipId, days } : 'skip'
+    relationshipId
+      ? { relationshipId: relationshipId as Id<'relationships'>, days }
+      : 'skip'
   )
 
   return {
@@ -160,9 +165,15 @@ export const useForceRecalculate = () => {
 
   return {
     forceRecalculate: useCallback(
-      async (args: ForceRecalculateArgs) => {
+      async (args: { relationshipId?: string; userId?: string }) => {
         try {
-          const result = await forceRecalculate(args)
+          const result = await forceRecalculate({
+            ...args,
+            relationshipId: args.relationshipId as
+              | Id<'relationships'>
+              | undefined,
+            userId: args.userId as Id<'users'>,
+          })
           return { success: true, data: result }
         } catch (error) {
           console.error('Failed to recalculate health scores:', error)
@@ -249,11 +260,11 @@ export const useHealthScoreUtils = () => {
       []
     ),
 
-    // Recommendations
-    getPriorityRecommendation: useCallback((healthScore?: HealthScore) => {
-      if (!healthScore?.recommendations?.length) return null
-      return healthScore.recommendations[0] // First recommendation is highest priority
-    }, []),
+    // Recommendations - commented out until HealthScore type includes recommendations
+    // getPriorityRecommendation: useCallback((healthScore?: HealthScore) => {
+    //   if (!healthScore?.recommendations?.length) return null
+    //   return healthScore.recommendations[0] // First recommendation is highest priority
+    // }, []),
   }
 }
 

@@ -176,6 +176,7 @@ describe('JournalEntriesList', () => {
   const mockEntries: JournalEntry[] = [
     {
       _id: 'entry_1',
+      _creationTime: Date.now() - 86400000,
       userId: 'user_1',
       relationshipId: 'rel_1',
       content:
@@ -188,6 +189,7 @@ describe('JournalEntriesList', () => {
     },
     {
       _id: 'entry_2',
+      _creationTime: Date.now() - 43200000,
       userId: 'user_1',
       relationshipId: 'rel_2',
       content:
@@ -200,6 +202,7 @@ describe('JournalEntriesList', () => {
     },
     {
       _id: 'entry_3',
+      _creationTime: Date.now() - 21600000,
       userId: 'user_1',
       relationshipId: 'rel_1',
       content: 'Third entry about Alice again. Different topic this time.',

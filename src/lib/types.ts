@@ -20,6 +20,7 @@ export interface User {
 // Relationship types
 export interface Relationship {
   _id: string
+  _creationTime: number
   userId: string
   name: string
   type: RelationshipType

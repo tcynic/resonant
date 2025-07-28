@@ -25,15 +25,12 @@ const mockMutationWithMethods = Object.assign(mockMarkReminderClicked, {
 }) as ReactMutation<FunctionReference<'mutation'>>
 
 // Mock Notification API
-const mockNotificationConstructor =
-  jest.fn() as jest.MockedFunction<unknown> & {
-    new (title: string, options?: NotificationOptions): Notification
-    permission: NotificationPermission
-    requestPermission: jest.MockedFunction<
-      typeof Notification.requestPermission
-    >
-    mockReturnValue: jest.MockedFunction<unknown>['mockReturnValue']
-  }
+const mockNotificationConstructor = jest.fn() as jest.MockedFunction<any> & {
+  new (title: string, options?: NotificationOptions): Notification
+  permission: NotificationPermission
+  requestPermission: jest.MockedFunction<typeof Notification.requestPermission>
+  mockReturnValue: jest.MockedFunction<any>['mockReturnValue']
+}
 const mockRequestPermission = jest.fn() as jest.MockedFunction<
   typeof Notification.requestPermission
 >

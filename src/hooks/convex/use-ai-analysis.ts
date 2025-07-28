@@ -73,7 +73,9 @@ export const useAnalysesByRelationship = (
 ) => {
   const analyses = useQuery(
     api.aiAnalysis.getByRelationship,
-    relationshipId ? { relationshipId, limit } : 'skip'
+    relationshipId
+      ? { relationshipId: relationshipId as Id<'relationships'>, limit }
+      : 'skip'
   )
 
   return {
@@ -93,9 +95,10 @@ export const useAnalysesByRelationship = (
       : 0,
 
     // Trend analysis
-    recentTrend:
-      analyses?.slice(0, 5).reduce((sum, a) => sum + a.sentimentScore, 0) /
-        Math.min(5, analyses?.length || 1) || 0,
+    recentTrend: analyses?.length
+      ? analyses.slice(0, 5).reduce((sum, a) => sum + a.sentimentScore, 0) /
+        Math.min(5, analyses.length)
+      : 0,
   }
 }
 
@@ -103,7 +106,10 @@ export const useAnalysesByRelationship = (
  * Get AI analysis statistics for a user
  */
 export const useAnalysisStats = (userId?: string) => {
-  const stats = useQuery(api.aiAnalysis.getStats, userId ? { userId } : 'skip')
+  const stats = useQuery(
+    api.aiAnalysis.getStats,
+    userId ? { userId: userId as Id<'users'> } : 'skip'
+  )
 
   return {
     stats,

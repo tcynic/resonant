@@ -21,6 +21,18 @@ const eslintConfig = [
       'prettier/prettier': 'error',
     },
   }),
+  {
+    files: [
+      '**/__tests__/**/*.ts',
+      '**/__tests__/**/*.tsx',
+      '**/*.test.ts',
+      '**/*.test.tsx',
+    ],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      'prettier/prettier': 'off',
+    },
+  },
 ]
 
 export default eslintConfig

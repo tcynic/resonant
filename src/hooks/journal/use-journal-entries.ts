@@ -80,6 +80,7 @@ export function useJournalEntryById(entryId?: string) {
   const journalEntry: JournalEntry | null = entryId
     ? {
         _id: entryId,
+        _creationTime: Date.now() - 86400000,
         userId: 'mock_user_id',
         relationshipId: 'mock_relationship_id',
         content: 'Mock journal entry content for testing',

@@ -40,13 +40,13 @@ export default function JournalEntryEditor({
   // Form state
   const [content, setContent] = useState(entry?.content || '')
   const [relationshipIds, setRelationshipIds] = useState<string[]>(
-    entry ? [entry.relationshipId] : []
+    entry && entry.relationshipId ? [entry.relationshipId] : []
   )
   const [mood, setMood] = useState<MoodType | undefined>(
     entry?.mood as MoodType
   )
   const [isPrivate, setIsPrivate] = useState(entry?.isPrivate ?? true)
-  const [tags, setTags] = useState<string[]>(entry?.tags || [])
+  const [tags, setTags] = useState<string[]>(entry?.tags?.filter(Boolean) || [])
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [characterCount, setCharacterCount] = useState(content.length)
 

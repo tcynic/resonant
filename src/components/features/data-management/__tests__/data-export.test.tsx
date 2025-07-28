@@ -99,7 +99,7 @@ describe('DataExport', () => {
     getInitials: jest.fn(),
     hasVerifiedEmailAddress: jest.fn(),
     hasVerifiedPhoneNumber: jest.fn(),
-  } as unknown
+  } as any
 
   const mockUserData = {
     _id: 'convex_user_123',
@@ -143,7 +143,7 @@ describe('DataExport', () => {
       isLoaded: true,
       isSignedIn: true,
     })
-    mockUseQuery.mockImplementation((api: unknown, ...args: unknown[]) => {
+    mockUseQuery.mockImplementation((api: any, ...args: any[]) => {
       if (args[0] === 'skip') return null
       if (
         api &&
@@ -164,7 +164,7 @@ describe('DataExport', () => {
     mockUseMutation.mockReturnValue({
       ...mockCreateExport,
       withOptimisticUpdate: jest.fn().mockReturnValue(mockCreateExport),
-    } as unknown)
+    } as any)
     mockCreateExport.mockResolvedValue(mockExportResult)
   })
 
@@ -438,7 +438,7 @@ describe('DataExport', () => {
       emailAddresses: [],
       passwordEnabled: false,
       lastSignInAt: null,
-    } as unknown
+    } as any
     mockUseUser.mockReturnValue({
       user: userWithoutEmail,
       isLoaded: true,

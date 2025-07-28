@@ -22,6 +22,7 @@ describe('RelationshipPicker', () => {
   const mockRelationships = [
     {
       _id: 'rel_1',
+      _creationTime: Date.now(),
       userId: 'user_123',
       name: 'Alice Johnson',
       type: 'friend' as const,
@@ -31,6 +32,7 @@ describe('RelationshipPicker', () => {
     },
     {
       _id: 'rel_2',
+      _creationTime: Date.now(),
       userId: 'user_123',
       name: 'Bob Smith',
       type: 'partner' as const,
@@ -40,6 +42,7 @@ describe('RelationshipPicker', () => {
     },
     {
       _id: 'rel_3',
+      _creationTime: Date.now(),
       userId: 'user_123',
       name: 'Carol Davis',
       type: 'family' as const,
@@ -58,7 +61,7 @@ describe('RelationshipPicker', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockUseRelationships.mockReturnValue({
-      relationships: mockRelationships,
+      relationships: mockRelationships as never,
       relationshipsCount: mockRelationships.length,
       isLoading: false,
       currentUser: {

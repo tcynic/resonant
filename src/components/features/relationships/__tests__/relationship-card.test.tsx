@@ -6,6 +6,7 @@ import RelationshipCard from '../relationship-card'
 
 const mockRelationship = {
   _id: 'rel_123',
+  _creationTime: Date.now(),
   userId: 'user_123',
   name: 'John Doe',
   type: 'friend' as const,
@@ -24,7 +25,11 @@ describe('RelationshipCard', () => {
   })
 
   it('renders relationship without photo', () => {
-    const relationshipWithoutPhoto = { ...mockRelationship, photo: undefined }
+    const relationshipWithoutPhoto = {
+      ...mockRelationship,
+      _creationTime: Date.now(),
+      photo: undefined,
+    }
     render(<RelationshipCard relationship={relationshipWithoutPhoto} />)
 
     expect(screen.getByText('John Doe')).toBeInTheDocument()
