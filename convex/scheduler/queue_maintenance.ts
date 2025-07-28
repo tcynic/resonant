@@ -12,12 +12,15 @@ import { internal } from '../_generated/api'
  */
 export const triggerAutoRequeue = internalMutation({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     // Call the auto-requeue function with default parameters
-    return await ctx.runMutation(internal.scheduler.autoRequeueTransientFailures, {
-      maxAge: 30 * 60 * 1000, // Check failures from last 30 minutes
-      batchSize: 20, // Process up to 20 items per run
-    })
+    return await ctx.runMutation(
+      internal.scheduler.autoRequeueTransientFailures,
+      {
+        maxAge: 30 * 60 * 1000, // Check failures from last 30 minutes
+        batchSize: 20, // Process up to 20 items per run
+      }
+    )
   },
 })
 
@@ -27,7 +30,7 @@ export const triggerAutoRequeue = internalMutation({
  */
 export const triggerPriorityUpgrade = internalMutation({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     return await ctx.runMutation(internal.scheduler.upgradeAgingRequests, {})
   },
 })
@@ -38,7 +41,7 @@ export const triggerPriorityUpgrade = internalMutation({
  */
 export const triggerQueueCleanup = internalMutation({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     return await ctx.runMutation(internal.scheduler.purgeExpiredQueue, {
       maxAgeMs: 24 * 60 * 60 * 1000, // 24 hours
       dryRun: false,

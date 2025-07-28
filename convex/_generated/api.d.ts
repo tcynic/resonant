@@ -32,6 +32,7 @@ import type * as scheduler_queue_config from "../scheduler/queue_config.js";
 import type * as scheduler_queue_maintenance from "../scheduler/queue_maintenance.js";
 import type * as scheduler_queue_metrics from "../scheduler/queue_metrics.js";
 import type * as scheduler_queue_overflow from "../scheduler/queue_overflow.js";
+import type * as scheduler from "../scheduler.js";
 import type * as search from "../search.js";
 import type * as test_testDataManager from "../test/testDataManager.js";
 import type * as userPatterns from "../userPatterns.js";
@@ -79,6 +80,7 @@ declare const fullApi: ApiFromModules<{
   "scheduler/queue_maintenance": typeof scheduler_queue_maintenance;
   "scheduler/queue_metrics": typeof scheduler_queue_metrics;
   "scheduler/queue_overflow": typeof scheduler_queue_overflow;
+  scheduler: typeof scheduler;
   search: typeof search;
   "test/testDataManager": typeof test_testDataManager;
   userPatterns: typeof userPatterns;

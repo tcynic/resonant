@@ -20,6 +20,8 @@ import RecentActivity from '@/components/features/dashboard/recent-activity'
 import EntryHistory from '@/components/features/dashboard/entry-history'
 import ConnectionStatus from '@/components/features/dashboard/connection-status'
 import RealTimeIndicator from '@/components/features/dashboard/real-time-indicator'
+import { AIProcessingSummary } from '@/components/features/dashboard/ai-processing-summary'
+import { RecentAnalysisActivity } from '@/components/features/dashboard/recent-analysis-activity'
 import { Card, CardHeader, CardContent } from '@/components/ui/card'
 import ErrorBoundary, {
   DashboardErrorFallback,
@@ -474,7 +476,7 @@ export default function DashboardContent() {
           </div>
 
           {/* Recent Activity */}
-          <div>
+          <div className="space-y-6">
             <ErrorBoundary
               fallback={
                 <NetworkErrorFallback onRetry={() => safeWindow.reload()} />
@@ -485,6 +487,27 @@ export default function DashboardContent() {
                 totalCount={recentActivity?.totalCount || 0}
                 analysisRate={recentActivity?.analysisRate || 0}
                 showViewAll={true}
+              />
+            </ErrorBoundary>
+
+            {/* AI Processing Summary */}
+            <ErrorBoundary
+              fallback={
+                <NetworkErrorFallback onRetry={() => safeWindow.reload()} />
+              }
+            >
+              <AIProcessingSummary userId={convexUser!._id as Id<'users'>} />
+            </ErrorBoundary>
+
+            {/* Recent Analysis Activity */}
+            <ErrorBoundary
+              fallback={
+                <NetworkErrorFallback onRetry={() => safeWindow.reload()} />
+              }
+            >
+              <RecentAnalysisActivity
+                userId={convexUser!._id as Id<'users'>}
+                limit={5}
               />
             </ErrorBoundary>
           </div>

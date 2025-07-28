@@ -315,6 +315,24 @@ export const getStats = query({
 
 // Real AI analysis function using DSPy + Gemini implementation
 // Internal mutations for HTTP Actions support
+// Status transition validation
+function validateStatusTransition(
+  currentStatus: 'processing' | 'completed' | 'failed' | undefined,
+  newStatus: 'processing' | 'completed' | 'failed'
+): boolean {
+  // Allow any transition from undefined (new record)
+  if (!currentStatus) return true
+
+  // Define valid state transitions
+  const validTransitions = {
+    processing: ['completed', 'failed'],
+    completed: [], // Completed is final
+    failed: ['processing'], // Failed can be retried
+  }
+
+  return validTransitions[currentStatus].includes(newStatus as never)
+}
+
 export const updateStatus = internalMutation({
   args: {
     entryId: v.string(),
@@ -334,6 +352,13 @@ export const updateStatus = internalMutation({
       .unique()
 
     if (existing) {
+      // Validate status transition
+      if (!validateStatusTransition(existing.status, args.status)) {
+        throw new Error(
+          `Invalid status transition from ${existing.status} to ${args.status}`
+        )
+      }
+
       await ctx.db.patch(existing._id, {
         status: args.status,
         ...(args.processingAttempts && {
@@ -429,8 +454,8 @@ export const storeResult = internalMutation({
         confidenceLevel: args.confidenceLevel,
         reasoning: args.reasoning,
         patterns: args.patterns,
-        emotionalStability: (args as any).emotionalStability,
-        energyImpact: (args as any).energyImpact,
+        emotionalStability: args.emotionalStability,
+        energyImpact: args.energyImpact,
         analysisVersion: args.analysisVersion,
         processingTime: args.processingTime,
         tokensUsed: args.tokensUsed,
@@ -448,8 +473,8 @@ export const storeResult = internalMutation({
         confidenceLevel: args.confidenceLevel,
         reasoning: args.reasoning,
         patterns: args.patterns,
-        emotionalStability: (args as any).emotionalStability,
-        energyImpact: (args as any).energyImpact,
+        emotionalStability: args.emotionalStability,
+        energyImpact: args.energyImpact,
         analysisVersion: args.analysisVersion,
         processingTime: args.processingTime,
         tokensUsed: args.tokensUsed,
@@ -654,6 +679,159 @@ export const isQueueBasedProcessingAvailable = query({
       migrationComplete: true,
       recommendedMethod: 'queueAnalysis',
     }
+  },
+})
+
+// Real-time status queries for Story AI-Migration.3
+
+// Get real-time analysis status with queue information
+export const getStatusWithQueue = query({
+  args: { entryId: v.id('journalEntries') },
+  handler: async (ctx, args) => {
+    const analysis = await ctx.db
+      .query('aiAnalysis')
+      .withIndex('by_entry', q => q.eq('entryId', args.entryId))
+      .order('desc')
+      .first()
+
+    if (!analysis) return null
+
+    // Calculate real-time ETA if processing
+    if (analysis.status === 'processing' && analysis.queuePosition) {
+      const currentTime = Date.now()
+      const averageProcessingTime = await getAverageProcessingTime(
+        ctx,
+        analysis.priority
+      )
+      const estimatedCompletion =
+        currentTime + analysis.queuePosition * averageProcessingTime
+
+      return {
+        ...analysis,
+        estimatedCompletionTime: estimatedCompletion,
+        statusUpdatedAt: currentTime,
+      }
+    }
+
+    return analysis
+  },
+})
+
+// Get user's active processing items
+export const getUserActiveProcessing = query({
+  args: { userId: v.id('users') },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query('aiAnalysis')
+      .withIndex('by_user_status', q =>
+        q.eq('userId', args.userId).eq('status', 'processing')
+      )
+      .order('desc')
+      .take(10)
+  },
+})
+
+// Helper function to calculate average processing time
+async function getAverageProcessingTime(
+  ctx: QueryCtx,
+  priority?: 'normal' | 'high' | 'urgent'
+): Promise<number> {
+  const recentCompleted = await ctx.db
+    .query('aiAnalysis')
+    .withIndex('by_status_created', q => q.eq('status', 'completed'))
+    .order('desc')
+    .take(20)
+
+  const priorityFiltered = priority
+    ? recentCompleted.filter(a => a.priority === priority)
+    : recentCompleted
+
+  if (priorityFiltered.length === 0) {
+    // Default processing times by priority
+    const defaults = { urgent: 15000, high: 30000, normal: 45000 }
+    return defaults[priority || 'normal']
+  }
+
+  const avgTime =
+    priorityFiltered.reduce((sum, a) => sum + (a.processingTime || 45000), 0) /
+    priorityFiltered.length
+
+  return Math.max(avgTime, 10000) // Minimum 10 seconds
+}
+
+// Additional queries for dashboard components
+
+// Get processing statistics for dashboard display
+export const getProcessingStats = query({
+  args: { userId: v.id('users') },
+  handler: async (ctx, args) => {
+    const now = Date.now()
+    const todayStart = new Date(now).setHours(0, 0, 0, 0)
+
+    const analyses = await ctx.db
+      .query('aiAnalysis')
+      .withIndex('by_user', q => q.eq('userId', args.userId))
+      .collect()
+
+    const todayAnalyses = analyses.filter(a => a.createdAt >= todayStart)
+    const processing = analyses.filter(a => a.status === 'processing')
+    const completed = analyses.filter(a => a.status === 'completed')
+
+    const averageWaitTime =
+      processing.length > 0
+        ? processing.reduce((sum, a) => {
+            const waitTime = a.processingStartedAt
+              ? a.processingStartedAt - (a.queuedAt || a.createdAt)
+              : now - (a.queuedAt || a.createdAt)
+            return sum + waitTime
+          }, 0) / processing.length
+        : 0
+
+    return {
+      totalProcessing: processing.length,
+      completedToday: todayAnalyses.filter(a => a.status === 'completed')
+        .length,
+      failedToday: todayAnalyses.filter(a => a.status === 'failed').length,
+      averageWaitTime,
+      totalCompleted: completed.length,
+      successRate:
+        analyses.length > 0 ? (completed.length / analyses.length) * 100 : 0,
+    }
+  },
+})
+
+// Get recent analysis activity for dashboard
+export const getRecentAnalyses = query({
+  args: {
+    userId: v.id('users'),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit || 10
+
+    const analyses = await ctx.db
+      .query('aiAnalysis')
+      .withIndex('by_user', q => q.eq('userId', args.userId))
+      .order('desc')
+      .take(limit)
+
+    // Enrich with entry content and relationship info
+    const enrichedAnalyses = await Promise.all(
+      analyses.map(async analysis => {
+        const entry = await ctx.db.get(analysis.entryId)
+        const relationship = analysis.relationshipId
+          ? await ctx.db.get(analysis.relationshipId)
+          : null
+
+        return {
+          ...analysis,
+          entryContent: entry?.content,
+          relationshipName: relationship?.name,
+        }
+      })
+    )
+
+    return enrichedAnalyses
   },
 })
 

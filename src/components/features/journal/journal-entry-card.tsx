@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { JournalEntry, Relationship, MoodType } from '@/lib/types'
 import Button from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { AIAnalysisStatus } from './ai-analysis-status'
 
 interface JournalEntryCardProps {
   entry: JournalEntry
@@ -121,6 +122,13 @@ export default function JournalEntryCard({
         <div className="text-sm text-gray-800 leading-relaxed">
           {truncateContent(entry.content)}
         </div>
+
+        {/* AI Analysis Status */}
+        <AIAnalysisStatus
+          entryId={entry._id}
+          compact={true}
+          showProgress={true}
+        />
 
         {/* Tags */}
         {entry.tags && entry.tags.length > 0 && (

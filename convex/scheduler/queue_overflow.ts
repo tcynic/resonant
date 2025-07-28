@@ -573,7 +573,9 @@ export const recoverFromDeadLetterQueue = internalMutation({
  * Get queue load balancing recommendations
  */
 export const getLoadBalancingRecommendations = internalQuery({
-  handler: async (ctx): Promise<{
+  handler: async (
+    ctx
+  ): Promise<{
     currentLoad: ReturnType<typeof analyzeLoadDistribution>
     capacity: any
     backpressure: any

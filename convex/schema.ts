@@ -200,7 +200,8 @@ export default defineSchema({
     .index('by_priority_queued', ['priority', 'queuedAt'])
     .index('by_status_priority', ['status', 'priority'])
     .index('by_queue_position', ['queuePosition'])
-    .index('by_processing_started', ['processingStartedAt']),
+    .index('by_processing_started', ['processingStartedAt'])
+    .index('by_user_status', ['userId', 'status']),
 
   // Relationship Health Scores - Enhanced for comprehensive tracking
   healthScores: defineTable({

@@ -1,4 +1,4 @@
-import { QueuePriority } from '../scheduler/queue-config'
+import { QueuePriority } from '../scheduler/queue_config'
 
 /**
  * Queue item interface for utility functions
