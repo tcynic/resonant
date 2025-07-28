@@ -121,15 +121,28 @@ People who want to mindfully manage relationships and improve their emotional co
 
 **Priority:** P0 (Critical)
 
-- Sentiment analysis using DSPy + Google Gemini Flash
-- Basic relationship health scoring (0-100)
+- Sentiment analysis using DSPy + Google Gemini Flash via Convex HTTP Actions
+- Queue-based processing with Convex Scheduler for reliable external API calls
+- Basic relationship health scoring (0-100) with real-time status updates
 - Pattern recognition for relationship trends
+- Circuit breaker and fallback analysis for resilience
+- Real-time processing status tracking via Convex database
+
+**Architecture Specifications:**
+
+- **HTTP Actions:** All external Gemini API calls routed through Convex HTTP Actions
+- **Queue System:** Convex Scheduler manages AI processing queue for reliability
+- **Status Tracking:** Real-time database updates for processing status and results
+- **Error Handling:** Circuit breakers, retry logic, and graceful fallback analysis
+- **Reliability Target:** >95% successful AI analysis completion rate
 
 **Acceptance Criteria:**
 
-- AI analyzes journal entries for emotional sentiment
-- Relationship health scores are calculated and displayed
+- AI analyzes journal entries for emotional sentiment with >95% reliability
+- Relationship health scores are calculated and displayed with real-time status
 - Users receive basic insights about relationship patterns
+- Failed analysis attempts gracefully fallback to basic sentiment scoring
+- Processing status is visible to users in real-time
 
 #### 4.1.5 Basic Dashboard
 
@@ -203,8 +216,12 @@ People who want to mindfully manage relationships and improve their emotional co
 
 - Page load times under 2 seconds
 - AI analysis completion within 30 seconds
+- AI analysis reliability >95% success rate (addressing current 25% failure rate)
+- Queue processing latency under 5 seconds for status updates
 - 99.9% uptime availability
 - Support for 10,000+ concurrent users
+- HTTP Actions response time under 10 seconds
+- Real-time status updates delivered within 2 seconds
 
 ### 5.3 Security & Privacy Requirements
 
@@ -296,10 +313,14 @@ People who want to mindfully manage relationships and improve their emotional co
 
 ### 9.2 Phase 2 - AI Analysis (Weeks 5-8)
 
-- Sentiment analysis integration
-- Basic relationship health scoring
-- Simple dashboard implementation
-- Entry history views
+- Convex HTTP Actions setup for external API calls
+- Convex Scheduler implementation for queue-based processing
+- Sentiment analysis integration via HTTP Actions + Google Gemini
+- Real-time status tracking system for AI processing
+- Circuit breaker and retry logic implementation
+- Basic relationship health scoring with fallback mechanisms
+- Simple dashboard implementation with processing status indicators
+- Entry history views with analysis status display
 
 ### 9.3 Phase 3 - Insights & Guidance (Weeks 9-12)
 
@@ -321,7 +342,12 @@ People who want to mindfully manage relationships and improve their emotional co
 
 ### 10.1 Technical Risks
 
-- **AI API reliability:** Implement fallback systems and caching
+- **AI API reliability (Current: 25% failure rate):** 
+  - **Risk:** Direct client-side API calls causing high failure rates
+  - **Mitigation:** Convex HTTP Actions architecture with queue-based processing, circuit breakers, and fallback analysis systems
+  - **Target:** Achieve >95% reliability through robust error handling
+- **External API rate limits:** Implement intelligent queuing and throttling via Convex Scheduler
+- **Processing queue congestion:** Monitor queue depth and implement priority handling
 - **Data privacy breaches:** Implement robust security measures and regular audits
 - **Scalability issues:** Use serverless architecture for automatic scaling
 
@@ -343,10 +369,18 @@ People who want to mindfully manage relationships and improve their emotional co
 
 ### 11.1 External Dependencies
 
+- **Convex HTTP Actions:** Critical for reliable external API calls (replaces direct client calls)
+- **Convex Scheduler:** Essential for queue-based AI processing and reliability
 - Google Gemini Flash API availability and performance
 - Clerk authentication service reliability
 - Convex platform stability and scaling
 - Vercel deployment platform
+
+**Critical Architecture Dependencies:**
+
+- HTTP Actions must be available for all external API integrations
+- Convex database real-time capabilities for status tracking
+- Scheduler service for queue management and retry logic
 
 ### 11.2 Key Assumptions
 

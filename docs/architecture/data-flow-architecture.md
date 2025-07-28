@@ -38,16 +38,21 @@ graph TB
     subgraph "Backend Layer"
         CV[Convex Real-time DB]
         CF[Convex Functions]
-        AI[AI Analysis Engine]
+        CS[Convex Scheduler]
+        HA[HTTP Actions]
+        CB[Circuit Breaker]
+        AI[External AI APIs]
     end
 
     subgraph "Data Layer"
         US[Users Schema]
         RS[Relationships Schema]
         JE[Journal Entries Schema]
+        AS[Analysis Status Schema]
         AN[AI Analysis Schema]
         HS[Health Scores Schema]
         IN[Insights Schema]
+        CBS[Circuit Breaker State]
     end
 
     UI --> CM
@@ -57,13 +62,18 @@ graph TB
     RC --> CH
     CH --> CF
     CF --> CV
-    CF --> AI
+    CF --> CS
+    CS --> HA
+    HA --> CB
+    CB --> AI
     CV --> US
     CV --> RS
     CV --> JE
+    CV --> AS
     CV --> AN
     CV --> HS
     CV --> IN
+    CV --> CBS
 
     classDef client fill:#e1f5fe
     classDef auth fill:#fff3e0
@@ -72,18 +82,21 @@ graph TB
 
     class UI,RC,CH client
     class CM,CA,WH auth
-    class CV,CF,AI backend
-    class US,RS,JE,AN,HS,IN data
+    class CV,CF,CS,HA,CB,AI backend
+    class US,RS,JE,AS,AN,HS,IN,CBS data
 ```
 
 ### Key Technology Components
 
 - **Frontend**: Next.js 15 with React 19, TypeScript, Tailwind CSS 4
-- **Backend**: Convex (real-time database + serverless functions)
+- **Backend**: Convex (real-time database + serverless functions + HTTP Actions)
+- **Reliable Processing**: Convex Scheduler with queue management and retry logic
+- **External APIs**: HTTP Actions for server-side AI API calls with circuit breaker
 - **Authentication**: Clerk with Next.js integration
-- **AI Analysis**: Google Gemini API integration (future)
+- **AI Analysis**: Google Gemini API with fallback analysis system
 - **Charts**: Chart.js and Recharts for data visualization
 - **Development**: Turbopack for fast builds
+- **Reliability**: Circuit breaker pattern, exponential backoff, graceful degradation
 
 ---
 
@@ -186,7 +199,7 @@ sequenceDiagram
 
 ## Journal Entry Creation Flow
 
-Real-time journal entry creation with AI analysis and health score updates:
+Real-time journal entry creation with reliable HTTP Actions AI analysis and status tracking:
 
 ```mermaid
 sequenceDiagram
@@ -194,7 +207,9 @@ sequenceDiagram
     participant JE as Journal Editor
     participant CF as Convex Functions
     participant DB as Convex Database
-    participant AI as AI Analysis Engine
+    participant SC as Convex Scheduler
+    participant HA as HTTP Action
+    participant EA as External AI API
     participant RT as Real-time Updates
     participant DS as Dashboard
 
@@ -205,29 +220,59 @@ sequenceDiagram
     CF->>DB: Update journal entry
     CF->>RT: Trigger real-time update
 
-    Note over U, DS: Entry Completion
+    Note over U, DS: Entry Completion & Queuing
     U->>JE: Submit final entry
     JE->>CF: createEntry mutation
     CF->>DB: Validate relationship ownership
     CF->>DB: Insert journal entry
-    CF->>AI: Trigger AI analysis
-    CF->>JE: Return entry ID
+    CF->>DB: Create analysis status (queued)
+    CF->>SC: Schedule AI analysis job
+    CF->>JE: Return entry ID (immediate response)
+    CF->>RT: Broadcast entry created + queued status
 
-    Note over AI, DS: AI Analysis Pipeline
-    AI->>CF: analyzeEntry mutation
-    CF->>DB: Create AI analysis record
-    CF->>AI: Process sentiment & patterns
-    AI->>CF: Return analysis results
-    CF->>DB: Update analysis status
-    CF->>CF: Calculate health scores
-    CF->>DB: Update health scores
-    CF->>RT: Broadcast updates
+    Note over SC, DS: HTTP Actions Processing Pipeline
+    SC->>HA: Trigger analysis HTTP action
+    HA->>DB: Update status to processing
+    HA->>RT: Broadcast processing status
+    RT->>DS: Show "Analysis in progress" UI
 
-    Note over RT, DS: Real-time Updates
-    RT->>DS: Update entry list
-    RT->>DS: Update health scores
-    RT->>DS: Update trend charts
-    DS->>U: Show updated dashboard
+    Note over HA, DS: Circuit Breaker & API Call
+    HA->>HA: Check circuit breaker state
+    alt Circuit Breaker Closed (API Healthy)
+        HA->>EA: Call external AI API
+        EA->>HA: Return analysis results
+        HA->>DB: Update analysis results
+        HA->>DB: Update status to completed
+        HA->>CF: Calculate health scores
+        CF->>DB: Update health scores
+    else Circuit Breaker Open (API Unhealthy)
+        HA->>HA: Execute fallback analysis
+        HA->>DB: Update with fallback results
+        HA->>DB: Update status to fallback
+    else API Call Fails
+        HA->>HA: Increment retry count
+        alt Max retries not reached
+            HA->>SC: Schedule retry with backoff
+        else Max retries reached
+            HA->>HA: Execute fallback analysis
+            HA->>DB: Update status to fallback
+        end
+    end
+
+    Note over RT, DS: Real-time Status Updates
+    RT->>DS: Update analysis status
+    RT->>DS: Update health scores (when completed)
+    RT->>DS: Update trend charts (when completed)
+    RT->>DS: Show completion/fallback indicators
+    DS->>U: Show final analysis results
+
+    Note over U, DS: Error Recovery
+    alt Analysis Failed Completely
+        RT->>DS: Show "Analysis unavailable" state
+        DS->>U: Option to manually retry
+        U->>CF: Retry analysis request
+        CF->>SC: Re-queue for processing
+    end
 ```
 
 ### Data Transformations
@@ -259,7 +304,22 @@ sequenceDiagram
    }
    ```
 
-2. **AI Analysis Results**:
+2. **Analysis Status Tracking**:
+   ```typescript
+   {
+     entryId: Id<"journalEntries">,
+     userId: Id<"users">,
+     status: "queued", // → "processing" → "completed"/"failed"/"fallback"
+     queuedAt: Date.now(),
+     startedAt: undefined,
+     completedAt: undefined,
+     retryCount: 0,
+     circuitBreakerState: "closed",
+     errorMessage: undefined
+   }
+   ```
+
+3. **AI Analysis Results (HTTP Actions)**:
    ```typescript
    {
      entryId: Id<"journalEntries">,
@@ -273,55 +333,101 @@ sequenceDiagram
        communication_style: "collaborative",
        relationship_dynamics: ["mutual_support"]
      },
-     status: "completed"
+     status: "completed",
+     processingSource: "external_api", // or "fallback_analysis"
+     apiResponseTime: 1250, // milliseconds
+     analysisMethod: "ai_powered", // or "rule_based_fallback"
+     completedAt: Date.now()
    }
    ```
 
 ### Performance Optimizations
 
 - **Auto-save**: Debounced saves every 2 seconds during editing
-- **Batch Updates**: Group multiple operations in single transaction
-- **Optimistic Updates**: UI updates immediately before server confirmation
-- **Background Processing**: AI analysis runs asynchronously
+- **Immediate Response**: Journal entry creation returns instantly, analysis queued separately
+- **Optimistic Updates**: UI updates immediately, shows "Analysis in progress" state
+- **Server-side Processing**: HTTP Actions handle external API calls reliably
+- **Queue Management**: Convex Scheduler manages processing queue with backoff
+- **Status Streaming**: Real-time updates show analysis progress without polling
+- **Circuit Breaker**: Prevents cascade failures, maintains system responsiveness
+- **Fallback Processing**: Graceful degradation when external APIs are unavailable
 
 ---
 
 ## AI Analysis Pipeline
 
-The AI analysis system processes journal entries to generate insights and health scores:
+The AI analysis system uses HTTP Actions for reliable server-side processing with queue management and real-time status updates:
 
 ```mermaid
 flowchart TD
-    JE[Journal Entry Created] --> AQ[Analysis Queue]
-    AQ --> VP[Validate & Preprocess]
+    JE[Journal Entry Created] --> DB[(Database Insert)]
+    DB --> QS[Queue Status: queued]
+    QS --> SC[Convex Scheduler]
+    SC --> HA[HTTP Action Trigger]
+    
+    HA --> CB{Circuit Breaker Check}
+    CB -->|Open - API Healthy| EA[External AI API Call]
+    CB -->|Closed - API Unhealthy| FB[Fallback Analysis]
+    
+    EA --> PS1[Processing Status Update]
+    PS1 --> VP[Validate & Preprocess]
     VP --> SE[Sentiment Analysis]
     VP --> PD[Pattern Detection]
     VP --> CS[Communication Style]
-
+    
     SE --> AR[Analysis Results]
     PD --> AR
     CS --> AR
-
+    
+    FB --> FA[Local Fallback Analysis]
+    FA --> AR
+    
     AR --> HS[Health Score Calculation]
     AR --> IG[Insight Generation]
     AR --> TR[Trend Analysis]
-
-    HS --> DB[(Database Update)]
-    IG --> DB
-    TR --> DB
-
-    DB --> RT[Real-time Broadcast]
-    RT --> UI[UI Updates]
-
+    
+    HS --> CS1[Completed Status Update]
+    IG --> CS1
+    TR --> CS1
+    CS1 --> DB2[(Database Update)]
+    
+    DB2 --> RT[Real-time Broadcast]
+    RT --> UI[UI Status Updates]
+    
+    EA -.->|API Failure| RL[Retry Logic]
+    RL -.->|Max Retries| FB
+    
     style JE fill:#e3f2fd
+    style HA fill:#ffecb3
+    style CB fill:#fff3e0
     style AR fill:#f3e5f5
     style DB fill:#e8f5e8
+    style DB2 fill:#e8f5e8
     style UI fill:#fff3e0
+    style QS fill:#e1f5fe
+    style PS1 fill:#e1f5fe
+    style CS1 fill:#e8f5e8
 ```
 
-### Analysis Components
+### HTTP Actions Processing Pipeline
 
-1. **Sentiment Analysis**:
+1. **Processing Status Tracking**:
+
+   ```typescript
+   interface AnalysisStatus {
+     entryId: Id<"journalEntries">
+     userId: Id<"users">
+     status: 'queued' | 'processing' | 'completed' | 'failed' | 'fallback'
+     queuedAt: number
+     startedAt?: number
+     completedAt?: number
+     errorMessage?: string
+     retryCount: number
+     circuitBreakerState: 'closed' | 'open' | 'half-open'
+   }
+   ```
+
+2. **Sentiment Analysis Results**:
 
    ```typescript
    interface SentimentAnalysis {
@@ -329,10 +435,12 @@ flowchart TD
      emotionalKeywords: string[]
      confidenceLevel: number // 0 to 1
      reasoning: string // AI explanation
+     processingSource: 'external_api' | 'fallback_analysis'
+     apiResponseTime?: number
    }
    ```
 
-2. **Pattern Detection**:
+3. **Pattern Detection**:
 
    ```typescript
    interface PatternAnalysis {
@@ -340,10 +448,11 @@ flowchart TD
      emotional_triggers: string[] // ["stress", "misunderstanding"]
      communication_style: string // "direct" | "collaborative" | "neutral"
      relationship_dynamics: string[] // ["mutual_support", "conflict"]
+     analysisMethod: 'ai_powered' | 'rule_based_fallback'
    }
    ```
 
-3. **Health Score Calculation**:
+4. **Health Score Calculation**:
    ```typescript
    interface HealthScore {
      score: number // 0-100 overall score
@@ -356,15 +465,67 @@ flowchart TD
      }
      trendDirection: 'improving' | 'stable' | 'declining'
      confidence: number
+     calculationMethod: 'full_ai_analysis' | 'partial_analysis' | 'fallback_scoring'
    }
    ```
 
-### Error Handling & Retry Logic
+### Circuit Breaker & Reliability Features
 
-- **API Rate Limits**: Exponential backoff with jitter
-- **Analysis Failures**: Mark as failed, schedule retry
-- **Partial Results**: Save intermediate results, continue processing
-- **Timeout Handling**: 30-second timeout with graceful degradation
+1. **Circuit Breaker Implementation**:
+
+   ```typescript
+   interface CircuitBreakerState {
+     state: 'closed' | 'open' | 'half-open'
+     failureCount: number
+     lastFailureTime: number
+     nextAttemptTime: number
+     successThreshold: number // For half-open -> closed transition
+     failureThreshold: number // For closed -> open transition
+     timeout: number // How long to stay open
+   }
+   ```
+
+2. **Retry Logic with Exponential Backoff**:
+
+   ```typescript
+   interface RetryConfig {
+     maxRetries: 3
+     baseDelayMs: 1000
+     maxDelayMs: 30000
+     backoffMultiplier: 2
+     jitterMs: 500
+   }
+   
+   // Retry schedule: 1s, 2s, 4s (with jitter)
+   const calculateRetryDelay = (attempt: number): number => {
+     const delay = Math.min(
+       RetryConfig.baseDelayMs * Math.pow(RetryConfig.backoffMultiplier, attempt),
+       RetryConfig.maxDelayMs
+     )
+     return delay + Math.random() * RetryConfig.jitterMs
+   }
+   ```
+
+3. **Fallback Analysis System**:
+   ```typescript
+   interface FallbackAnalysis {
+     useLexiconBasedSentiment: boolean
+     usePatternMatching: boolean
+     useHistoricalData: boolean
+     confidenceReduction: number // How much to reduce confidence scores
+     fallbackReason: 'api_timeout' | 'api_error' | 'rate_limit' | 'circuit_open'
+   }
+   ```
+
+### Error Handling & Recovery
+
+- **HTTP Action Timeouts**: 30-second timeout with automatic retry
+- **External API Failures**: Circuit breaker prevents cascade failures
+- **Queue Processing**: Failed items re-queued with exponential backoff
+- **Partial Results**: Save intermediate analysis state for debugging
+- **Graceful Degradation**: Fallback to rule-based analysis when AI fails
+- **Status Monitoring**: Real-time status updates to UI during processing
+- **Dead Letter Queue**: Failed items after max retries moved to manual review queue
 
 ---
 
@@ -407,11 +568,15 @@ sequenceDiagram
 
 ### Subscription Management
 
-1. **Query Subscriptions**:
+1. **Query Subscriptions with Status Tracking**:
 
    ```typescript
-   // Auto-subscribes to real-time updates
+   // Auto-subscribes to real-time updates including analysis status
    const entries = useQuery(api.journalEntries.getEntriesByUser, {
+     userId: user?.id,
+   })
+
+   const analysisStatuses = useQuery(api.analysisStatus.getByUser, {
      userId: user?.id,
    })
 
@@ -420,18 +585,43 @@ sequenceDiagram
    })
    ```
 
-2. **Mutation Handling**:
+2. **HTTP Actions Status Updates**:
 
    ```typescript
    const createEntry = useMutation(api.journalEntries.createEntry)
 
-   // Optimistic update with error handling
+   // Immediate response with queued analysis
    const handleSubmit = async data => {
      try {
-       await createEntry(data)
-       // Real-time update automatically received
+       const entryId = await createEntry(data)
+       // Entry created immediately, analysis queued
+       // Real-time status updates will follow:
+       // 1. status: "queued"
+       // 2. status: "processing" 
+       // 3. status: "completed"/"failed"/"fallback"
      } catch (error) {
-       // Handle error, revert optimistic changes
+       // Handle creation error
+     }
+   }
+   ```
+
+3. **Status-aware UI Components**:
+
+   ```typescript
+   const AnalysisStatusIndicator = ({ entryId }) => {
+     const status = useQuery(api.analysisStatus.getByEntryId, { entryId })
+     
+     switch (status?.status) {
+       case 'queued':
+         return <Badge variant="secondary">Analysis Queued</Badge>
+       case 'processing':
+         return <Badge variant="outline">Analyzing...</Badge>
+       case 'completed':
+         return <Badge variant="default">Analysis Complete</Badge>
+       case 'fallback':
+         return <Badge variant="warning">Fallback Analysis</Badge>
+       case 'failed':
+         return <Badge variant="destructive">Analysis Failed</Badge>
      }
    }
    ```
@@ -915,12 +1105,16 @@ flowchart TD
 
 ## Conclusion
 
-The Resonant application architecture provides:
+The Resonant application architecture with HTTP Actions provides:
 
-- **Real-time Data Flow**: Instant updates across all connected clients
-- **Scalable AI Pipeline**: Asynchronous processing with retry mechanisms
-- **Robust Security**: Multi-layer authentication and authorization
-- **Performance Optimization**: Strategic caching and efficient queries
-- **User Privacy**: Granular controls and data protection
+- **Real-time Data Flow**: Instant UI responses with live status tracking during processing
+- **Reliable AI Pipeline**: Server-side HTTP Actions with circuit breaker protection and fallback analysis
+- **Queue-based Processing**: Convex Scheduler manages analysis queue with exponential backoff retry logic
+- **Graceful Degradation**: Fallback analysis ensures users always receive insights, even when external APIs fail
+- **Status Transparency**: Real-time updates show analysis progress from queued → processing → completed
+- **Robust Security**: Multi-layer authentication and authorization with secure server-side API calls
+- **Performance Optimization**: Immediate entry creation with background analysis processing
+- **High Availability**: Circuit breaker prevents cascade failures, maintaining system responsiveness
+- **User Privacy**: Granular controls and data protection with server-side processing
 
-This architecture supports the application's core mission of providing meaningful relationship insights while maintaining user privacy and system performance.
+This HTTP Actions architecture eliminates the 25% failure rate of client-side AI processing by moving all external API calls to reliable server-side HTTP Actions with comprehensive error handling, retry logic, and fallback systems. Users now experience consistent, fast responses with transparent status updates throughout the analysis process.

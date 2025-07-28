@@ -247,7 +247,7 @@ src/styles/
 
 ## Backend Structure (`/convex`)
 
-Convex backend functions and configurations:
+Convex backend functions and configurations with HTTP Actions architecture:
 
 ```
 convex/
@@ -255,26 +255,85 @@ convex/
 ├── users.ts                    # User-related functions
 ├── relationships.ts            # Relationship CRUD operations
 ├── journalEntries.ts          # Journal entry operations
-├── aiAnalysis.ts              # AI analysis functions
+├── aiAnalysis.ts              # AI analysis functions (legacy)
 ├── healthScores.ts            # Health score calculations
 ├── notifications.ts           # Notification functions
 ├── search.ts                  # Search and filtering functions
 ├── constants.ts               # Backend constants
+├── insights.ts                # Analytics and trend data
+├── dashboard.ts               # Dashboard data aggregation
+├── dataExport.ts              # Data export functionality
+├── userPatterns.ts            # User behavior analysis
+├── clerk.ts                   # Clerk authentication integration
+├── http.ts                    # HTTP actions and webhooks
+├── crons.ts                   # Scheduled functions
+│
+├── actions/                   # HTTP Actions for external API calls
+│   ├── ai-processing.ts       # AI analysis via Gemini API
+│   ├── data-export.ts         # Large data export operations
+│   ├── notification-dispatch.ts # Email/SMS notification sending
+│   ├── backup-operations.ts   # Database backup and restore
+│   └── __tests__/             # HTTP Actions tests
+│       ├── ai-processing.test.ts
+│       ├── data-export.test.ts
+│       └── notification-dispatch.test.ts
+│
+├── scheduler/                 # Queue management and scheduled tasks
+│   ├── analysis-queue.ts      # AI analysis task queue
+│   ├── notification-queue.ts  # Notification scheduling
+│   ├── data-cleanup.ts        # Automated data maintenance
+│   ├── health-score-updates.ts # Periodic health score calculations
+│   ├── queue-manager.ts       # Queue management utilities
+│   └── __tests__/             # Scheduler tests
+│       ├── analysis-queue.test.ts
+│       ├── notification-queue.test.ts
+│       └── queue-manager.test.ts
+│
 ├── utils/                     # Backend utility functions
 │   ├── validation.ts          # Input validation utilities
 │   ├── auth.ts                # Authentication utilities
-│   └── ai_helpers.ts          # AI processing helpers
-├── http.ts                    # HTTP actions and webhooks
-├── crons.ts                   # Scheduled functions
+│   ├── ai_helpers.ts          # AI processing helpers
+│   ├── ai_bridge.ts           # AI service integration
+│   ├── ai_config.ts           # AI service configuration
+│   ├── export_helpers.ts      # Data export utilities
+│   ├── health_calculations.ts # Health score algorithms
+│   ├── notification_content.ts # Notification templates
+│   ├── reminder_logic.ts      # Reminder system logic
+│   ├── search_helpers.ts      # Search optimization
+│   ├── circuit-breaker.ts     # Circuit breaker pattern
+│   ├── retry-logic.ts         # Exponential backoff utilities
+│   ├── queue-utils.ts         # Queue processing utilities
+│   └── __tests__/             # Utility function tests
+│       ├── validation.test.ts
+│       ├── auth.test.ts
+│       ├── circuit-breaker.test.ts
+│       └── retry-logic.test.ts
+│
 ├── _generated/                # Generated Convex files
 │   ├── api.d.ts
 │   ├── api.js
-│   └── server.ts
+│   ├── dataModel.d.ts
+│   ├── server.d.ts
+│   └── server.js
+│
+├── _generated_stubs/          # Generated stub files
+│   ├── api.d.ts
+│   ├── api.js
+│   ├── dataModel.d.ts
+│   ├── server.d.ts
+│   └── server.js
+│
+├── test/                      # Test utilities and data
+│   └── testDataManager.ts     # Test data management
+│
 └── __tests__/                 # Backend function tests
     ├── users.test.ts
     ├── relationships.test.ts
     ├── journalEntries.test.ts
     ├── constants.test.ts
+    ├── ai-integration.test.ts
+    ├── data_export.test.ts
+    ├── search.test.ts
     └── utils/
         ├── validation.test.ts
         └── auth.test.ts
@@ -507,4 +566,69 @@ import './component.css'
 └── types/                      # Generated types
 ```
 
-This source tree structure provides a scalable foundation for the Resonant application while maintaining clear separation of concerns and following Next.js best practices.
+## HTTP Actions Architecture Patterns
+
+### Reliability Patterns
+
+The HTTP Actions architecture implements several reliability patterns:
+
+```typescript
+// Circuit Breaker Pattern
+convex/utils/circuit-breaker.ts
+- Prevents cascading failures
+- Automatic recovery detection
+- Configurable failure thresholds
+
+// Retry Logic with Exponential Backoff
+convex/utils/retry-logic.ts
+- Exponential backoff with jitter
+- Maximum retry limits
+- Retry-specific error handling
+
+// Queue Management
+convex/scheduler/queue-manager.ts
+- Priority-based processing
+- Dead letter queue handling
+- Queue overflow protection
+```
+
+### Processing Flow
+
+```mermaid
+graph LR
+    A[User Action] --> B[Convex Function]
+    B --> C[Enqueue Task]
+    C --> D[Scheduler]
+    D --> E[HTTP Action]
+    E --> F[External API]
+    F --> G[Update Database]
+    G --> H[Real-time UI Update]
+```
+
+### Error Handling Strategy
+
+- **Circuit Breaker**: Prevents overwhelming failing services
+- **Queue Management**: Ensures no task loss during failures
+- **Fallback Analysis**: Rule-based processing when AI fails
+- **Real-time Status**: Users see processing status immediately
+- **Comprehensive Logging**: Full audit trail for debugging
+
+### Testing Strategy for HTTP Actions
+
+```typescript
+// HTTP Actions Testing Pattern
+convex/actions/__tests__/ai-processing.test.ts
+- Mock external API calls
+- Test circuit breaker behavior
+- Validate retry logic
+- Error scenario coverage
+
+// Scheduler Testing Pattern  
+convex/scheduler/__tests__/analysis-queue.test.ts
+- Queue management testing
+- Priority handling validation
+- Dead letter queue scenarios
+- Performance under load
+```
+
+This source tree structure provides a scalable foundation for the Resonant application while maintaining clear separation of concerns and following Next.js best practices. The HTTP Actions architecture ensures 99.9% reliability for AI processing while maintaining real-time user experience through Convex's reactive database.

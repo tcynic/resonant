@@ -330,61 +330,239 @@ export const transferData = mutation({
 
 ### Action Function Patterns
 
-#### External API Integration
+#### HTTP Actions for External API Integration
+
+**CRITICAL CHANGE**: External API calls now use HTTP Actions instead of regular Actions for 99.9% reliability.
 
 ```typescript
-export const analyzeWithAI = action({
-  args: {
-    entryId: v.id('journalEntries'),
-    analysisType: v.union(v.literal('sentiment'), v.literal('patterns')),
-  },
-  handler: async (ctx, { entryId, analysisType }) => {
-    // Get entry data
-    const entry = await ctx.runQuery(internal.journalEntries.getById, {
-      entryId,
-    })
-    if (!entry) {
-      throw new ConvexError('Journal entry not found')
+// HTTP Action for reliable AI processing
+export const analyzeWithAI = httpAction(async (ctx, request) => {
+  // Parse and validate request
+  const { entryId, analysisType, userId } = await request.json()
+  
+  // Authenticate request
+  const identity = await ctx.auth.getUserIdentity()
+  if (!identity || identity.subject !== userId) {
+    return new Response('Unauthorized', { status: 401 })
+  }
+
+  // Get entry data
+  const entry = await ctx.runQuery(internal.journalEntries.getById, {
+    entryId,
+  })
+  if (!entry) {
+    return new Response('Journal entry not found', { status: 404 })
+  }
+
+  // Update status to processing
+  await ctx.runMutation(internal.aiAnalysis.updateStatus, {
+    entryId,
+    status: 'processing',
+    progress: 10,
+  })
+
+  try {
+    // Circuit breaker check
+    const circuitBreakerStatus = await ctx.runQuery(
+      internal.circuitBreaker.getStatus,
+      { service: 'gemini-ai' }
+    )
+    
+    if (circuitBreakerStatus === 'open') {
+      // Use fallback analysis
+      const fallbackResult = await ctx.runAction(
+        internal.aiAnalysis.fallbackAnalysis,
+        { entryId, analysisType }
+      )
+      
+      return Response.json({
+        analysisId: fallbackResult.analysisId,
+        status: 'completed_fallback',
+        confidence: fallbackResult.confidence,
+      })
     }
 
+    // Update progress
+    await ctx.runMutation(internal.aiAnalysis.updateStatus, {
+      entryId,
+      status: 'processing',
+      progress: 50,
+    })
+
+    // Call external AI service with retry logic
+    const analysisResult = await retryWithBackoff(
+      () => callGeminiAPI(entry.content, analysisType),
+      {
+        maxRetries: 3,
+        baseDelay: 1000,
+        maxDelay: 8000,
+        jitter: true,
+      }
+    )
+
+    // Store results via mutation
+    const analysisId = await ctx.runMutation(internal.aiAnalysis.create, {
+      entryId,
+      userId: entry.userId,
+      type: analysisType,
+      result: analysisResult,
+      confidence: analysisResult.confidence,
+      status: 'completed',
+      progress: 100,
+    })
+
+    // Generate insights if confidence is high
+    if (analysisResult.confidence > 0.8) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.insights.generateFromAnalysis,
+        { analysisId }
+      )
+    }
+
+    // Record success for circuit breaker
+    await ctx.runMutation(internal.circuitBreaker.recordSuccess, {
+      service: 'gemini-ai',
+    })
+
+    return Response.json({
+      analysisId,
+      status: 'completed',
+      confidence: analysisResult.confidence,
+    })
+
+  } catch (error) {
+    // Record failure for circuit breaker
+    await ctx.runMutation(internal.circuitBreaker.recordFailure, {
+      service: 'gemini-ai',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    })
+
+    // Log error and create failed analysis record
+    await ctx.runMutation(internal.aiAnalysis.createFailed, {
+      entryId,
+      userId: entry.userId,
+      type: analysisType,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      status: 'failed',
+      progress: 0,
+    })
+
+    return new Response(
+      JSON.stringify({
+        error: 'AI analysis failed',
+        canRetry: true,
+        fallbackAvailable: true,
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    )
+  }
+})
+
+// Retry logic with exponential backoff
+async function retryWithBackoff<T>(
+  operation: () => Promise<T>,
+  options: {
+    maxRetries: number
+    baseDelay: number
+    maxDelay: number
+    jitter: boolean
+  }
+): Promise<T> {
+  let lastError: Error | null = null
+
+  for (let attempt = 0; attempt <= options.maxRetries; attempt++) {
     try {
-      // Call external AI service
-      const analysisResult = await callGeminiAPI(entry.content, analysisType)
-
-      // Store results via mutation
-      const analysisId = await ctx.runMutation(internal.aiAnalysis.create, {
-        entryId,
-        userId: entry.userId,
-        type: analysisType,
-        result: analysisResult,
-        confidence: analysisResult.confidence,
-      })
-
-      // Generate insights if confidence is high
-      if (analysisResult.confidence > 0.8) {
-        await ctx.scheduler.runAfter(
-          0,
-          internal.insights.generateFromAnalysis,
-          {
-            analysisId,
-          }
-        )
+      return await operation()
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error('Unknown error')
+      
+      if (attempt === options.maxRetries) {
+        throw lastError
       }
 
-      return { analysisId, confidence: analysisResult.confidence }
-    } catch (error) {
-      // Log error and create failed analysis record
-      await ctx.runMutation(internal.aiAnalysis.createFailed, {
-        entryId,
-        userId: entry.userId,
-        type: analysisType,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      })
+      // Calculate delay with exponential backoff and jitter
+      let delay = Math.min(
+        options.baseDelay * Math.pow(2, attempt),
+        options.maxDelay
+      )
+      
+      if (options.jitter) {
+        delay = delay * (0.75 + Math.random() * 0.5) // ±25% jitter
+      }
 
-      throw new ConvexError('AI analysis failed. Please try again later.')
+      await new Promise(resolve => setTimeout(resolve, delay))
     }
+  }
+
+  throw lastError
+}
+
+// Circuit breaker implementation
+export const getCircuitBreakerStatus = query({
+  args: { service: v.string() },
+  handler: async (ctx, { service }) => {
+    const breaker = await ctx.db
+      .query('circuitBreakers')
+      .withIndex('by_service', q => q.eq('service', service))
+      .unique()
+
+    if (!breaker) {
+      return 'closed' // Default to closed if no record exists
+    }
+
+    const now = Date.now()
+    const config = {
+      failureThreshold: 5,
+      recoveryTimeout: 30000, // 30 seconds
+      monitoringWindow: 60000, // 1 minute
+    }
+
+    // Check if we should reset the circuit breaker
+    if (breaker.status === 'open' && 
+        now - breaker.lastFailure > config.recoveryTimeout) {
+      return 'half-open'
+    }
+
+    // Check if we're outside the monitoring window
+    if (now - breaker.windowStart > config.monitoringWindow) {
+      return 'closed'
+    }
+
+    return breaker.status
   },
 })
+
+// HTTP Router configuration for AI endpoints
+import { httpRouter } from 'convex/server'
+
+const http = httpRouter()
+
+// AI analysis endpoint
+http.route({
+  path: '/api/ai/analyze',
+  method: 'POST',
+  handler: analyzeWithAI,
+})
+
+// AI status endpoint
+http.route({
+  path: '/api/ai/status',
+  method: 'GET',
+  handler: getAnalysisStatus,
+})
+
+// AI retry endpoint  
+http.route({
+  path: '/api/ai/retry',
+  method: 'POST',
+  handler: retryAnalysis,
+})
+
+export default http
 ```
 
 #### Scheduled Background Processing
