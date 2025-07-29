@@ -2,7 +2,7 @@
 
 ## Status
 
-**QA Approved** ✅ - Ready for Production
+**Done** ✅ - Deployed to Production
 
 ## Story
 

@@ -1079,31 +1079,54 @@ export default defineSchema({
     .index('by_status', ['status'])
     .index('by_started_at', ['startedAt']),
 
-  // Monitoring Alerts (Story AI-Migration.4)
+  // Enhanced Monitoring Alerts (Story AI-Migration.6)
   monitoringAlerts: defineTable({
-    name: v.string(),
-    description: v.string(),
+    alertType: v.string(), // 'success_rate', 'cost_budget', 'health_check', 'processing_time', 'failure_detection'
+    severity: v.union(
+      v.literal('warning'),
+      v.literal('critical'),
+      v.literal('emergency')
+    ),
+    message: v.string(),
+    triggeredAt: v.number(),
+    acknowledgedAt: v.optional(v.number()),
+    acknowledgedBy: v.optional(v.id('users')),
+    resolvedAt: v.optional(v.number()),
+    resolvedBy: v.optional(v.id('users')),
+    metadata: v.optional(v.any()), // Alert-specific data
     conditions: v.object({
-      errorCount: v.optional(v.number()),
-      errorRate: v.optional(v.number()),
-      category: v.optional(v.string()),
-      severity: v.optional(v.string()),
+      threshold: v.number(),
+      actualValue: v.number(),
       service: v.optional(v.string()),
-      timeWindow: v.number(),
+      timeWindow: v.string(), // '1h', '24h', '7d', etc.
     }),
-    actions: v.object({
-      notify: v.boolean(),
-      autoResolve: v.boolean(),
-      escalate: v.boolean(),
-    }),
-    enabled: v.boolean(),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-    triggeredCount: v.number(),
+    escalationLevel: v.number(), // 0 = initial, 1+ = escalated
+    escalatedAt: v.optional(v.number()),
+    autoResolved: v.boolean(),
+    notificationsSent: v.array(v.string()), // Track which channels were notified
+    // Legacy fields for backward compatibility
+    name: v.optional(v.string()),
+    description: v.optional(v.string()),
+    actions: v.optional(
+      v.object({
+        notify: v.boolean(),
+        autoResolve: v.boolean(),
+        escalate: v.boolean(),
+      })
+    ),
+    enabled: v.optional(v.boolean()),
+    updatedAt: v.optional(v.number()),
+    triggeredCount: v.optional(v.number()),
     lastTriggered: v.optional(v.number()),
   })
-    .index('by_enabled', ['enabled'])
-    .index('by_name', ['name']),
+    .index('by_type_triggered', ['alertType', 'triggeredAt'])
+    .index('by_severity_unresolved', ['severity', 'resolvedAt'])
+    .index('by_triggered_at', ['triggeredAt'])
+    .index('by_acknowledged', ['acknowledgedAt'])
+    .index('by_resolved', ['resolvedAt'])
+    .index('by_escalation_level', ['escalationLevel'])
+    .index('by_enabled', ['enabled']) // Legacy index
+    .index('by_name', ['name']), // Legacy index
 
   // Alert History (Story AI-Migration.4)
   alertHistory: defineTable({
@@ -1137,6 +1160,65 @@ export default defineSchema({
     .index('by_type', ['type'])
     .index('by_created_at', ['createdAt'])
     .index('by_read', ['read']),
+
+  // Alerting Configuration (Story AI-Migration.6)
+  alertingConfig: defineTable({
+    alertType: v.string(), // 'success_rate', 'cost_budget', 'health_check', 'processing_time'
+    thresholds: v.object({
+      warning: v.optional(v.number()),
+      critical: v.optional(v.number()),
+      emergency: v.optional(v.number()),
+    }),
+    recipients: v.array(v.string()), // Email addresses or user IDs
+    enabled: v.boolean(),
+    lastTriggered: v.optional(v.number()),
+    createdBy: v.id('users'),
+    updatedAt: v.number(),
+    deliveryChannels: v.object({
+      email: v.boolean(),
+      dashboard: v.boolean(),
+      webhook: v.optional(v.string()), // Webhook URL if enabled
+    }),
+    escalationRules: v.optional(
+      v.object({
+        escalateAfter: v.number(), // Minutes before escalation
+        escalationRecipients: v.array(v.string()),
+        maxEscalations: v.number(),
+      })
+    ),
+  })
+    .index('by_type', ['alertType'])
+    .index('by_enabled', ['enabled'])
+    .index('by_created_by', ['createdBy']),
+
+  // Budget Tracking (Story AI-Migration.6)
+  budgetTracking: defineTable({
+    timeWindow: v.string(), // 'daily', 'weekly', 'monthly'
+    budgetLimit: v.number(), // Budget limit in USD
+    currentSpend: v.number(), // Current spending in USD
+    projectedSpend: v.number(), // Projected spending based on current rate
+    alertThreshold: v.number(), // Percentage (0.8 = 80%)
+    windowStart: v.number(), // Start of the time window (Unix timestamp)
+    windowEnd: v.number(), // End of the time window (Unix timestamp)
+    lastUpdated: v.number(),
+    service: v.optional(v.string()), // Service-specific budget ('gemini', 'convex', 'all')
+    costBreakdown: v.optional(
+      v.object({
+        aiAnalysis: v.number(),
+        storage: v.number(),
+        bandwidth: v.number(),
+        other: v.number(),
+      })
+    ),
+    budgetUtilization: v.number(), // Percentage of budget used (0-1)
+    daysRemaining: v.optional(v.number()), // Days left in budget period
+    burnRate: v.number(), // Current daily burn rate in USD
+    forecastAccuracy: v.optional(v.number()), // Accuracy of previous forecasts (0-1)
+  })
+    .index('by_window_start', ['timeWindow', 'windowStart'])
+    .index('by_service_window', ['service', 'timeWindow', 'windowStart'])
+    .index('by_utilization', ['budgetUtilization'])
+    .index('by_last_updated', ['lastUpdated']),
 
   // System Monitoring Tables (Story AI-Migration.5)
 
@@ -1266,4 +1348,121 @@ export default defineSchema({
     .index('by_action_timestamp', ['action', 'timestamp'])
     .index('by_timestamp', ['timestamp'])
     .index('by_entity_type_timestamp', ['entityType', 'timestamp']),
+
+  // Health Check Results (Story AI-Migration.6)
+  healthCheckResults: defineTable({
+    service: v.string(), // Service name (e.g., 'gemini_2_5_flash_lite', 'convex_database')
+    serviceType: v.union(
+      v.literal('ai_service'),
+      v.literal('database'),
+      v.literal('queue'),
+      v.literal('external_dependency'),
+      v.literal('circuit_breaker')
+    ),
+    status: v.union(
+      v.literal('healthy'),
+      v.literal('degraded'),
+      v.literal('unhealthy'),
+      v.literal('unknown')
+    ),
+    responseTime: v.number(), // Health check response time in ms
+    message: v.string(), // Human-readable status message
+    details: v.any(), // Service-specific health details
+    checkedAt: v.number(), // When the health check was performed
+  })
+    .index('by_service_time', ['service', 'checkedAt'])
+    .index('by_service_type_time', ['serviceType', 'checkedAt'])
+    .index('by_status_time', ['status', 'checkedAt'])
+    .index('by_service_status', ['service', 'status']),
+
+  // System Health Aggregation (Story AI-Migration.6)
+  systemHealth: defineTable({
+    overallStatus: v.union(
+      v.literal('healthy'),
+      v.literal('degraded'),
+      v.literal('unhealthy'),
+      v.literal('unknown')
+    ),
+    healthScore: v.number(), // 0-100 overall health score
+    servicesSummary: v.object({
+      total: v.number(),
+      healthy: v.number(),
+      degraded: v.number(),
+      unhealthy: v.number(),
+    }),
+    checkedAt: v.number(), // When the system health was calculated
+    checkDuration: v.number(), // How long the health check took in ms
+  })
+    .index('by_checked_at', ['checkedAt'])
+    .index('by_status_time', ['overallStatus', 'checkedAt']),
+
+  // Health Check Scheduling (Story AI-Migration.6)
+  healthCheckSchedule: defineTable({
+    intervalMinutes: v.number(), // How often to run health checks
+    nextScheduledAt: v.number(), // When the next health check should run
+    isActive: v.boolean(), // Whether this schedule is currently active
+    createdAt: v.number(),
+  })
+    .index('by_active_next', ['isActive', 'nextScheduledAt'])
+    .index('by_created_at', ['createdAt']),
+
+  // Failure Detection System (Story AI-Migration.6 AC-5)
+  failureDetections: defineTable({
+    pattern: v.union(
+      v.literal('error_spike'),
+      v.literal('performance_degradation'),
+      v.literal('cascade_failure'),
+      v.literal('resource_exhaustion'),
+      v.literal('dependency_failure')
+    ),
+    severity: v.union(
+      v.literal('low'),
+      v.literal('medium'),
+      v.literal('high'),
+      v.literal('critical')
+    ),
+    confidence: v.number(), // 0-1 confidence score
+    status: v.union(
+      v.literal('active'),
+      v.literal('investigating'),
+      v.literal('resolved'),
+      v.literal('suppressed')
+    ),
+    affectedServices: v.array(v.string()),
+    correlatedFailures: v.array(v.string()),
+    rootCauseAnalysis: v.object({
+      primaryCause: v.string(),
+      contributingFactors: v.array(v.string()),
+      timeline: v.array(
+        v.object({
+          timestamp: v.number(),
+          event: v.string(),
+          service: v.string(),
+        })
+      ),
+    }),
+    recommendations: v.array(
+      v.object({
+        action: v.string(),
+        priority: v.union(
+          v.literal('immediate'),
+          v.literal('high'),
+          v.literal('medium'),
+          v.literal('low')
+        ),
+        estimatedImpact: v.string(),
+      })
+    ),
+    detectedAt: v.number(),
+    investigationStarted: v.boolean(),
+    resolvedAt: v.optional(v.number()),
+    resolution: v.optional(v.string()),
+    resolutionNotes: v.optional(v.string()),
+    resolvedBy: v.optional(v.string()), // User ID who resolved
+    metadata: v.optional(v.any()), // Additional detection metadata
+  })
+    .index('by_pattern_status', ['pattern', 'status'])
+    .index('by_severity_detected', ['severity', 'detectedAt'])
+    .index('by_status_detected', ['status', 'detectedAt'])
+    .index('by_detected_at', ['detectedAt']),
 })

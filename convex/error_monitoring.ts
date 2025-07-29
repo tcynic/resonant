@@ -283,8 +283,25 @@ export const createMonitoringAlert = mutation({
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert('monitoringAlerts', {
-      ...args,
-      createdAt: Date.now(),
+      // New schema fields
+      alertType: 'error_monitoring',
+      severity: 'warning',
+      message: args.description,
+      triggeredAt: Date.now(),
+      escalationLevel: 0,
+      autoResolved: false,
+      notificationsSent: [],
+      conditions: {
+        threshold: args.conditions.errorCount || 0,
+        actualValue: 0,
+        timeWindow: `${args.conditions.timeWindow}ms`,
+        service: args.conditions.service,
+      },
+      // Legacy compatibility fields
+      name: args.name,
+      description: args.description,
+      actions: args.actions,
+      enabled: args.enabled,
       updatedAt: Date.now(),
       triggeredCount: 0,
       lastTriggered: undefined,
@@ -312,12 +329,12 @@ export const checkMonitoringAlerts = internalMutation({
 
         // Update alert status
         await ctx.db.patch(alert._id, {
-          triggeredCount: alert.triggeredCount + 1,
+          triggeredCount: (alert.triggeredCount || 0) + 1,
           lastTriggered: Date.now(),
         })
 
         // Execute alert actions
-        if (alert.actions.notify) {
+        if (alert.actions?.notify) {
           await createNotification(ctx, alert, triggered)
         }
       }

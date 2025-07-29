@@ -5,7 +5,7 @@
 **Epic ID**: EPIC-AI-MIGRATION  
 **Title**: Migrate AI Analysis from Client-Side to HTTP Actions Architecture  
 **Priority**: P0 (Critical - Fixes 25% failure rate)  
-**Status**: In Progress (3 of 7 stories completed)  
+**Status**: In Progress (5 of 7 stories completed)  
 **Business Value**: High - Reduces AI analysis failure rate from 25% to <5%
 
 ## Problem Statement
@@ -146,7 +146,8 @@ Based on the architecture document at `docs/architecture-update1.md`, migrate to
 - [ ] Implement automated failure detection and reporting
 
 **Story Points:** 8  
-**Sprint:** 4
+**Sprint:** 4  
+**Story File:** [AI-Migration.6.monitoring-observability.md](AI-Migration.6.monitoring-observability.md)
 
 ### Story 7: Legacy System Migration & Cleanup
 
