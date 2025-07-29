@@ -142,7 +142,7 @@ export const getQueueStats = mutation({
       ? ctx.db
           .query('aiAnalysis')
           .withIndex('by_user_status', q =>
-            q.eq('userId', args.userId).eq('status', 'processing')
+            q.eq('userId', args.userId!).eq('status', 'processing')
           )
       : ctx.db
           .query('aiAnalysis')

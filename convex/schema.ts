@@ -184,6 +184,104 @@ export default defineSchema({
     deadLetterTimestamp: v.optional(v.number()), // When moved to dead letter queue
     deadLetterCategory: v.optional(v.string()), // Category of dead letter failure
     deadLetterMetadata: v.optional(v.any()), // Enhanced metadata for investigation
+
+    // Circuit Breaker Integration (Story AI-Migration.4)
+    circuitBreakerState: v.optional(
+      v.object({
+        service: v.string(), // Service identifier (e.g., 'gemini_2_5_flash_lite')
+        state: v.union(
+          // Circuit breaker state at time of processing
+          v.literal('closed'),
+          v.literal('open'),
+          v.literal('half_open')
+        ),
+        failureCount: v.number(), // Failures at time of processing
+        lastReset: v.optional(v.number()), // Last circuit breaker reset timestamp
+      })
+    ),
+
+    // Enhanced Error Classification (extends existing lastErrorMessage)
+    lastErrorType: v.optional(
+      v.union(
+        v.literal('network'),
+        v.literal('rate_limit'),
+        v.literal('timeout'),
+        v.literal('validation'),
+        v.literal('service_error'),
+        v.literal('authentication')
+      )
+    ),
+
+    // Retry History (enhances existing processingAttempts)
+    retryHistory: v.optional(
+      v.array(
+        v.object({
+          attempt: v.number(),
+          timestamp: v.number(),
+          delayMs: v.number(),
+          errorType: v.string(),
+          errorMessage: v.string(),
+          circuitBreakerState: v.string(),
+        })
+      )
+    ),
+
+    // Fallback Analysis Results (Story AI-Migration.4)
+    fallbackUsed: v.optional(v.boolean()),
+    fallbackConfidence: v.optional(v.number()), // 0-1 confidence score
+    fallbackMethod: v.optional(v.string()), // 'keyword_sentiment', 'rule_based', etc.
+    fallbackMetadata: v.optional(
+      v.object({
+        trigger: v.string(), // Why fallback was used
+        qualityScore: v.number(), // Quality assessment score
+        confidence: v.number(), // Combined confidence score
+        processingTime: v.number(), // Processing time in ms
+        patternInsights: v.array(v.string()), // Pattern analysis insights
+        recommendations: v.array(v.string()), // Actionable recommendations
+        keywordsMatched: v.optional(v.array(v.string())), // For backwards compatibility
+        rulesFired: v.optional(v.array(v.string())), // For backwards compatibility
+        processingTimeMs: v.optional(v.number()), // For backwards compatibility
+      })
+    ),
+
+    // Recovery and Upgrade Tracking
+    recoveryAttempted: v.optional(v.boolean()),
+    upgradedFromFallback: v.optional(v.boolean()), // True if this result replaced a fallback
+    originalFallbackId: v.optional(v.id('aiAnalysis')), // Reference to original fallback result
+    recoveryTimestamp: v.optional(v.number()),
+
+    // Fallback Upgrade Management (Story AI-Migration.4)
+    upgradeInProgress: v.optional(v.boolean()), // True if upgrade to AI analysis is in progress
+    upgradeRequestedAt: v.optional(v.number()), // When upgrade was requested
+    upgradeReason: v.optional(v.string()), // Why upgrade was requested
+    comparisonId: v.optional(v.id('fallbackComparisons')), // Reference to comparison record
+    aiComparisonAvailable: v.optional(v.boolean()), // True if comparison with AI exists
+    upgradeRecommendation: v.optional(
+      v.object({
+        shouldUpgrade: v.boolean(),
+        confidence: v.number(),
+        reason: v.string(),
+        urgency: v.union(
+          v.literal('low'),
+          v.literal('medium'),
+          v.literal('high')
+        ),
+        estimatedImprovement: v.number(),
+      })
+    ),
+
+    // Enhanced Error Context (builds on existing fields)
+    errorContext: v.optional(
+      v.object({
+        httpActionId: v.optional(v.string()), // From existing field
+        requestId: v.optional(v.string()),
+        serviceEndpoint: v.optional(v.string()),
+        totalRetryTime: v.optional(v.number()), // Total time spent in retries
+        finalAttemptDelay: v.optional(v.number()),
+        escalationPath: v.optional(v.array(v.string())), // Priority escalation history
+      })
+    ),
+
     status: v.union(
       v.literal('processing'),
       v.literal('completed'),
@@ -642,4 +740,379 @@ export default defineSchema({
     ),
     lastUpdated: v.number(),
   }).index('by_user', ['userId']),
+
+  // Circuit breaker status cache (for fast lookups) - Story AI-Migration.4
+  circuitBreakerStatus: defineTable({
+    service: v.string(),
+    isOpen: v.boolean(),
+    failureCount: v.number(),
+    lastFailure: v.optional(v.number()),
+    nextAttemptTime: v.optional(v.number()),
+    updatedAt: v.number(),
+  }).index('by_service', ['service']),
+
+  // Error rate tracking (for analytics) - Story AI-Migration.4
+  errorMetrics: defineTable({
+    service: v.string(),
+    timeWindow: v.number(), // Hour bucket for aggregation
+    errorCount: v.number(),
+    successCount: v.number(),
+    avgProcessingTime: v.optional(v.number()),
+    costImpact: v.optional(v.number()),
+  }).index('by_service_time', ['service', 'timeWindow']),
+
+  // Fallback Analysis Comparisons (Story AI-Migration.4)
+  fallbackComparisons: defineTable({
+    fallbackAnalysisId: v.id('aiAnalysis'),
+    aiAnalysisId: v.id('aiAnalysis'),
+    comparisonResults: v.object({
+      sentimentAgreement: v.object({
+        agreement: v.boolean(),
+        aiSentiment: v.union(
+          v.literal('positive'),
+          v.literal('negative'),
+          v.literal('neutral')
+        ),
+        fallbackSentiment: v.union(
+          v.literal('positive'),
+          v.literal('negative'),
+          v.literal('neutral')
+        ),
+        confidenceDelta: v.number(),
+        scoreDistance: v.number(),
+      }),
+      qualityComparison: v.object({
+        aiQuality: v.number(),
+        fallbackQuality: v.number(),
+        qualityAdvantage: v.union(
+          v.literal('ai'),
+          v.literal('fallback'),
+          v.literal('similar')
+        ),
+        confidenceReliability: v.number(),
+      }),
+      patternConsistency: v.object({
+        keywordOverlap: v.number(),
+        themeAlignment: v.number(),
+        insightSimilarity: v.number(),
+        contradictions: v.array(v.string()),
+      }),
+      performance: v.object({
+        aiProcessingTime: v.number(),
+        fallbackProcessingTime: v.number(),
+        costComparison: v.object({
+          aiCost: v.number(),
+          fallbackCost: v.number(),
+          costSavings: v.number(),
+        }),
+        speedAdvantage: v.union(v.literal('ai'), v.literal('fallback')),
+      }),
+      upgradeRecommendation: v.object({
+        shouldUpgrade: v.boolean(),
+        confidence: v.number(),
+        reason: v.string(),
+        urgency: v.union(
+          v.literal('low'),
+          v.literal('medium'),
+          v.literal('high')
+        ),
+        estimatedImprovement: v.number(),
+      }),
+      comparisonMetadata: v.object({
+        comparisonMethod: v.string(),
+        processingTime: v.number(),
+        analysisVersion: v.string(),
+        timestamp: v.number(),
+      }),
+    }),
+    createdAt: v.number(),
+  })
+    .index('by_fallback_analysis', ['fallbackAnalysisId'])
+    .index('by_ai_analysis', ['aiAnalysisId'])
+    .index('by_created_at', ['createdAt']),
+
+  // Structured Error Logs (Story AI-Migration.4)
+  errorLogs: defineTable({
+    errorMessage: v.string(),
+    errorCode: v.optional(v.string()),
+    stackTrace: v.optional(v.string()),
+    context: v.object({
+      userId: v.optional(v.string()),
+      entryId: v.optional(v.string()),
+      analysisId: v.optional(v.string()),
+      service: v.string(),
+      operation: v.string(),
+      userAgent: v.optional(v.string()),
+      clientVersion: v.optional(v.string()),
+      sessionId: v.optional(v.string()),
+      requestId: v.optional(v.string()),
+      environment: v.union(
+        v.literal('development'),
+        v.literal('production'),
+        v.literal('staging')
+      ),
+      timestamp: v.number(),
+    }),
+    classification: v.object({
+      category: v.union(
+        v.literal('network'),
+        v.literal('authentication'),
+        v.literal('validation'),
+        v.literal('service_error'),
+        v.literal('rate_limit'),
+        v.literal('timeout'),
+        v.literal('circuit_breaker'),
+        v.literal('fallback'),
+        v.literal('unknown')
+      ),
+      severity: v.union(
+        v.literal('low'),
+        v.literal('medium'),
+        v.literal('high'),
+        v.literal('critical')
+      ),
+      retryable: v.boolean(),
+      circuitBreakerImpact: v.boolean(),
+      fallbackEligible: v.boolean(),
+      userImpact: v.union(
+        v.literal('none'),
+        v.literal('minor'),
+        v.literal('major'),
+        v.literal('blocking')
+      ),
+      businessImpact: v.union(
+        v.literal('none'),
+        v.literal('low'),
+        v.literal('medium'),
+        v.literal('high')
+      ),
+      tags: v.array(v.string()),
+    }),
+    metadata: v.object({
+      duration: v.optional(v.number()),
+      retryCount: v.optional(v.number()),
+      circuitBreakerState: v.optional(v.string()),
+      fallbackUsed: v.optional(v.boolean()),
+      fallbackMethod: v.optional(v.string()),
+      recoveryAction: v.optional(v.string()),
+      correlationId: v.optional(v.string()),
+      parentErrorId: v.optional(v.string()),
+      errorChain: v.optional(v.array(v.string())),
+    }),
+    resolution: v.optional(
+      v.object({
+        resolved: v.boolean(),
+        resolvedAt: v.optional(v.number()),
+        resolvedBy: v.optional(
+          v.union(
+            v.literal('auto_recovery'),
+            v.literal('manual_intervention'),
+            v.literal('retry'),
+            v.literal('fallback')
+          )
+        ),
+        resolvedAction: v.optional(v.string()),
+        notes: v.optional(v.string()),
+      })
+    ),
+    aggregationKey: v.string(),
+    fingerprint: v.string(),
+  })
+    .index('by_service', ['context.service'])
+    .index('by_category', ['classification.category'])
+    .index('by_severity', ['classification.severity'])
+    .index('by_timestamp', ['context.timestamp'])
+    .index('by_fingerprint', ['fingerprint'])
+    .index('by_aggregation_key', ['aggregationKey']),
+
+  // Error Aggregates (Story AI-Migration.4)
+  errorAggregates: defineTable({
+    timeWindow: v.number(),
+    service: v.string(),
+    category: v.string(),
+    count: v.number(),
+    severity: v.union(
+      v.literal('low'),
+      v.literal('medium'),
+      v.literal('high'),
+      v.literal('critical')
+    ),
+    lastSeen: v.number(),
+    fingerprints: v.array(v.string()),
+    aggregationKeys: v.array(v.string()),
+    sampleErrorIds: v.array(v.string()),
+    userImpactCounts: v.object({
+      none: v.number(),
+      minor: v.number(),
+      major: v.number(),
+      blocking: v.number(),
+    }),
+    businessImpactCounts: v.object({
+      none: v.number(),
+      low: v.number(),
+      medium: v.number(),
+      high: v.number(),
+    }),
+  })
+    .index('by_time_service_category', ['timeWindow', 'service', 'category'])
+    .index('by_service', ['service'])
+    .index('by_last_seen', ['lastSeen']),
+
+  // Recovery Workflows (Story AI-Migration.4)
+  recoveryWorkflows: defineTable({
+    service: v.string(),
+    phase: v.union(
+      v.literal('detection'),
+      v.literal('validation'),
+      v.literal('gradual_recovery'),
+      v.literal('full_recovery'),
+      v.literal('monitoring'),
+      v.literal('failed')
+    ),
+    startedAt: v.number(),
+    lastUpdate: v.number(),
+    progress: v.number(),
+    steps: v.array(
+      v.object({
+        name: v.string(),
+        description: v.string(),
+        status: v.union(
+          v.literal('pending'),
+          v.literal('in_progress'),
+          v.literal('completed'),
+          v.literal('failed'),
+          v.literal('skipped')
+        ),
+        startedAt: v.optional(v.number()),
+        completedAt: v.optional(v.number()),
+        duration: v.optional(v.number()),
+        data: v.optional(v.any()),
+        error: v.optional(v.string()),
+        retryCount: v.number(),
+        maxRetries: v.number(),
+      })
+    ),
+    currentStepIndex: v.number(),
+    estimatedTimeRemaining: v.optional(v.number()),
+    autoRecoveryEnabled: v.boolean(),
+  })
+    .index('by_service', ['service'])
+    .index('by_phase', ['phase'])
+    .index('by_started_at', ['startedAt']),
+
+  // Service Health Checks (Story AI-Migration.4)
+  serviceHealthChecks: defineTable({
+    service: v.string(),
+    timestamp: v.number(),
+    success: v.boolean(),
+    responseTime: v.number(),
+    error: v.optional(v.string()),
+    data: v.optional(v.any()),
+    checkType: v.union(
+      v.literal('ping'),
+      v.literal('api_call'),
+      v.literal('circuit_breaker_test'),
+      v.literal('custom')
+    ),
+  })
+    .index('by_service', ['service'])
+    .index('by_timestamp', ['timestamp'])
+    .index('by_service_timestamp', ['service', 'timestamp']),
+
+  // Recovery Orchestration State (Story AI-Migration.4)
+  recoveryOrchestrationState: defineTable({
+    sessionId: v.string(),
+    status: v.union(
+      v.literal('planning'),
+      v.literal('executing'),
+      v.literal('completed'),
+      v.literal('failed')
+    ),
+    startedAt: v.number(),
+    lastUpdate: v.number(),
+    config: v.object({
+      enabled: v.boolean(),
+      maxConcurrentRecoveries: v.number(),
+      serviceDelay: v.number(),
+      dependencyAware: v.boolean(),
+      autoRecovery: v.boolean(),
+      notificationThreshold: v.union(
+        v.literal('all'),
+        v.literal('critical'),
+        v.literal('none')
+      ),
+      recoveryTimeout: v.number(),
+    }),
+    plannedServices: v.array(v.string()),
+    completedServices: v.array(v.string()),
+    failedServices: v.array(v.string()),
+    currentPhase: v.string(),
+    estimatedCompletion: v.optional(v.number()),
+    progress: v.number(),
+    recoveryPlan: v.optional(v.any()),
+    completedAt: v.optional(v.number()),
+    error: v.optional(v.string()),
+  })
+    .index('by_session', ['sessionId'])
+    .index('by_status', ['status'])
+    .index('by_started_at', ['startedAt']),
+
+  // Monitoring Alerts (Story AI-Migration.4)
+  monitoringAlerts: defineTable({
+    name: v.string(),
+    description: v.string(),
+    conditions: v.object({
+      errorCount: v.optional(v.number()),
+      errorRate: v.optional(v.number()),
+      category: v.optional(v.string()),
+      severity: v.optional(v.string()),
+      service: v.optional(v.string()),
+      timeWindow: v.number(),
+    }),
+    actions: v.object({
+      notify: v.boolean(),
+      autoResolve: v.boolean(),
+      escalate: v.boolean(),
+    }),
+    enabled: v.boolean(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    triggeredCount: v.number(),
+    lastTriggered: v.optional(v.number()),
+  })
+    .index('by_enabled', ['enabled'])
+    .index('by_name', ['name']),
+
+  // Alert History (Story AI-Migration.4)
+  alertHistory: defineTable({
+    alertId: v.id('monitoringAlerts'),
+    triggeredAt: v.number(),
+    resolvedAt: v.optional(v.number()),
+    severity: v.union(
+      v.literal('info'),
+      v.literal('warning'),
+      v.literal('critical')
+    ),
+    message: v.string(),
+    data: v.optional(v.any()),
+    acknowledged: v.boolean(),
+    acknowledgedBy: v.optional(v.string()),
+    acknowledgedAt: v.optional(v.number()),
+  })
+    .index('by_alert', ['alertId'])
+    .index('by_triggered_at', ['triggeredAt'])
+    .index('by_severity', ['severity']),
+
+  // Notifications (Story AI-Migration.4)
+  notifications: defineTable({
+    type: v.string(),
+    title: v.string(),
+    message: v.string(),
+    data: v.optional(v.any()),
+    createdAt: v.number(),
+    read: v.boolean(),
+  })
+    .index('by_type', ['type'])
+    .index('by_created_at', ['createdAt'])
+    .index('by_read', ['read']),
 })

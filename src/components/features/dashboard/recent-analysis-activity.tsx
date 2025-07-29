@@ -146,7 +146,7 @@ export function RecentAnalysisActivity({
                     )}
                   </div>
                   <span className="text-xs text-gray-500 flex-shrink-0">
-                    {formatTimeAgo(analysis.completedAt || analysis.createdAt)}
+                    {formatTimeAgo(analysis.createdAt)}
                   </span>
                 </div>
 

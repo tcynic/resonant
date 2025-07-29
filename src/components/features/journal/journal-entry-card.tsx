@@ -3,6 +3,7 @@
 import React from 'react'
 import Image from 'next/image'
 import { JournalEntry, Relationship, MoodType } from '@/lib/types'
+import { Id } from '@/convex/_generated/dataModel'
 import Button from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { AIAnalysisStatus } from './ai-analysis-status'
@@ -125,7 +126,7 @@ export default function JournalEntryCard({
 
         {/* AI Analysis Status */}
         <AIAnalysisStatus
-          entryId={entry._id}
+          entryId={entry._id as Id<'journalEntries'>}
           compact={true}
           showProgress={true}
         />

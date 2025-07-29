@@ -101,7 +101,7 @@ export const useSearchJournalEntries = (
   userId?: string,
   query?: string,
   filters?: SearchFilters,
-  _page: number = 1,
+  _page: number = 1, // TODO: Implement pagination
   limit: number = 20
 ) => {
   const results = useQuery(

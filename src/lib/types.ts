@@ -48,6 +48,22 @@ export type MoodType =
   | 'confused'
   | 'grateful'
 
+// AI Analysis types
+export interface AIAnalysisStatus {
+  _id: string
+  entryId: string  
+  userId: string
+  status: 'processing' | 'completed' | 'failed'
+  queuePosition?: number
+  estimatedCompletionTime?: number
+  processingStartedAt?: number
+  processingAttempts?: number
+  lastErrorMessage?: string
+  priority?: 'normal' | 'high' | 'urgent'
+  createdAt: number
+  statusUpdatedAt?: number
+}
+
 // Journal Entry types
 export interface JournalEntry {
   _id: string

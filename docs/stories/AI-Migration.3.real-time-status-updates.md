@@ -709,8 +709,9 @@ describe('AIAnalysisStatus', () => {
 ### File List
 
 **New Files Created:**
+
 - `src/hooks/use-ai-analysis-status.ts` - Real-time AI analysis status management hook
-- `src/hooks/use-processing-progress.ts` - Progress calculation and ETA management hook  
+- `src/hooks/use-processing-progress.ts` - Progress calculation and ETA management hook
 - `src/components/features/journal/ai-analysis-status.tsx` - Main AI analysis status display component
 - `src/components/features/journal/processing-progress.tsx` - Real-time progress indicator with ETA display
 - `src/components/features/journal/analysis-error-handler.tsx` - Error categorization and retry UI component
@@ -720,6 +721,7 @@ describe('AIAnalysisStatus', () => {
 - `src/components/features/journal/__tests__/analysis-error-handler.test.tsx` - Component tests for error handling
 
 **Modified Files:**
+
 - `convex/aiAnalysis.ts` - Added real-time status queries (`getStatusWithQueue`, `getUserActiveProcessing`, `getProcessingStats`) and ETA calculation logic
 - `src/components/features/journal/journal-entry-card.tsx` - Integrated AIAnalysisStatus component with compact display mode
 

@@ -22,6 +22,8 @@ jest.mock('next/link', () => {
 
 import { useQuery } from 'convex/react'
 
+const mockUseQuery = useQuery as jest.MockedFunction<typeof useQuery>
+
 describe('RecentAnalysisActivity', () => {
   const mockUserId = 'user-123' as Id<'users'>
 
@@ -52,7 +54,7 @@ describe('RecentAnalysisActivity', () => {
       },
     ]
 
-    useQuery.mockReturnValue(mockAnalyses)
+    mockUseQuery.mockReturnValue(mockAnalyses)
 
     render(<RecentAnalysisActivity userId={mockUserId} />)
 
@@ -64,7 +66,7 @@ describe('RecentAnalysisActivity', () => {
   })
 
   test('should show empty state when no analyses', () => {
-    useQuery.mockReturnValue([])
+    mockUseQuery.mockReturnValue([])
 
     render(<RecentAnalysisActivity userId={mockUserId} />)
 
@@ -88,7 +90,7 @@ describe('RecentAnalysisActivity', () => {
       },
     ]
 
-    useQuery.mockReturnValue(mockAnalyses)
+    mockUseQuery.mockReturnValue(mockAnalyses)
 
     render(<RecentAnalysisActivity userId={mockUserId} />)
 
@@ -117,7 +119,7 @@ describe('RecentAnalysisActivity', () => {
       },
     ]
 
-    useQuery.mockReturnValue(mockAnalyses)
+    mockUseQuery.mockReturnValue(mockAnalyses)
 
     render(<RecentAnalysisActivity userId={mockUserId} />)
 
@@ -128,7 +130,7 @@ describe('RecentAnalysisActivity', () => {
   })
 
   test('should handle null data gracefully', () => {
-    useQuery.mockReturnValue(null)
+    mockUseQuery.mockReturnValue(null)
 
     render(<RecentAnalysisActivity userId={mockUserId} />)
 
@@ -146,7 +148,7 @@ describe('RecentAnalysisActivity', () => {
       },
     ]
 
-    useQuery.mockReturnValue(mockAnalyses)
+    mockUseQuery.mockReturnValue(mockAnalyses)
 
     render(<RecentAnalysisActivity userId={mockUserId} />)
 

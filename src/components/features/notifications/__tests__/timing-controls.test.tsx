@@ -221,7 +221,7 @@ describe('TimingControls', () => {
   it('handles edge case timezones correctly', () => {
     // Mock a timezone that might not format nicely
     const originalIntl = global.Intl
-    global.Intl = {
+    global.Intl = ({
       ...originalIntl,
       DateTimeFormat: jest.fn(() => ({
         resolvedOptions: jest.fn(() => ({
@@ -231,7 +231,7 @@ describe('TimingControls', () => {
           throw new Error('Formatting error')
         }),
       })),
-    } as typeof global.Intl
+    }) as unknown as typeof global.Intl
 
     render(<TimingControls {...mockProps} />)
 

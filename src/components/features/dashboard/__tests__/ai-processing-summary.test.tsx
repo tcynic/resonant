@@ -10,6 +10,8 @@ jest.mock('convex/react', () => ({
 
 import { useQuery } from 'convex/react'
 
+const mockUseQuery = useQuery as jest.MockedFunction<typeof useQuery>
+
 describe('AIProcessingSummary', () => {
   const mockUserId = 'user-123' as Id<'users'>
 
@@ -18,7 +20,7 @@ describe('AIProcessingSummary', () => {
   })
 
   test('should display processing statistics', () => {
-    useQuery
+    mockUseQuery
       .mockReturnValueOnce([]) // getUserActiveProcessing
       .mockReturnValueOnce({
         // getProcessingStats
@@ -46,7 +48,7 @@ describe('AIProcessingSummary', () => {
       },
     ]
 
-    useQuery
+    mockUseQuery
       .mockReturnValueOnce(mockActiveProcessing) // getUserActiveProcessing
       .mockReturnValueOnce({
         // getProcessingStats
@@ -64,7 +66,7 @@ describe('AIProcessingSummary', () => {
   })
 
   test('should show empty state when no processing', () => {
-    useQuery
+    mockUseQuery
       .mockReturnValueOnce([]) // getUserActiveProcessing
       .mockReturnValueOnce({
         // getProcessingStats
@@ -83,7 +85,7 @@ describe('AIProcessingSummary', () => {
   })
 
   test('should show failed analyses alert', () => {
-    useQuery
+    mockUseQuery
       .mockReturnValueOnce([]) // getUserActiveProcessing
       .mockReturnValueOnce({
         // getProcessingStats
@@ -100,7 +102,7 @@ describe('AIProcessingSummary', () => {
   })
 
   test('should handle null data gracefully', () => {
-    useQuery.mockReturnValue(null)
+    mockUseQuery.mockReturnValue(null)
 
     const { container } = render(<AIProcessingSummary userId={mockUserId} />)
 

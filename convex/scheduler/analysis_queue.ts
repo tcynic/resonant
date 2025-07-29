@@ -17,11 +17,17 @@ import {
   QueueCircuitBreaker,
   shouldTripCircuitBreaker,
   isRecoverableError,
+  getCircuitBreakerHealthStatus,
+  canExecuteRequest,
 } from '../utils/circuit_breaker'
 import {
   calculateRetryStrategy,
   createRetryContext,
 } from '../utils/retry_strategy'
+import {
+  shouldUseFallbackAnalysis,
+  handleFallbackInPipeline,
+} from '../fallback/integration'
 
 /**
  * Enqueue an analysis request with priority-based processing
@@ -140,11 +146,10 @@ export const enqueueAnalysis = internalMutation({
     // Schedule HTTP Action processing
     await ctx.scheduler.runAfter(
       scheduledDelay,
-      internal.ai_processing.analyzeJournalEntry,
+      internal.aiAnalysis.scheduleHttpAnalysis,
       {
         entryId,
         userId,
-        analysisId,
         priority: finalPriority,
       }
     )
@@ -215,7 +220,7 @@ export const dequeueAnalysis = internalQuery({
 })
 
 /**
- * Requeue analysis for failed processing retry
+ * Enhanced requeue analysis with circuit breaker awareness and recovery workflows
  */
 export const requeueAnalysis = internalMutation({
   args: {
@@ -226,15 +231,51 @@ export const requeueAnalysis = internalMutation({
     ),
     error: v.string(),
     isTransientError: v.optional(v.boolean()),
+    delayMs: v.optional(v.number()),
+    errorClassification: v.optional(
+      v.object({
+        category: v.string(),
+        retryable: v.boolean(),
+        circuitBreakerImpact: v.boolean(),
+        fallbackEligible: v.boolean(),
+      })
+    ),
+    circuitBreakerState: v.optional(
+      v.object({
+        service: v.string(),
+        state: v.union(
+          v.literal('closed'),
+          v.literal('open'),
+          v.literal('half_open')
+        ),
+        failureCount: v.number(),
+        lastReset: v.optional(v.number()),
+      })
+    ),
   },
   handler: async (
     ctx,
-    { analysisId, retryCount, priority, error, isTransientError = true }
+    {
+      analysisId,
+      retryCount,
+      priority,
+      error,
+      isTransientError = true,
+      delayMs,
+      errorClassification,
+      circuitBreakerState,
+    }
   ) => {
     const analysis = await ctx.db.get(analysisId)
     if (!analysis) {
       throw new Error(`Analysis ${analysisId} not found`)
     }
+
+    // Check circuit breaker status for enhanced decision making
+    const currentCircuitStatus = await getCircuitBreakerHealthStatus(
+      ctx,
+      'gemini_2_5_flash_lite'
+    )
 
     // Create retry context for advanced strategy calculation
     const retryContext = createRetryContext(
@@ -244,17 +285,59 @@ export const requeueAnalysis = internalMutation({
         processingAttempts: retryCount,
         queuedAt: analysis.queuedAt,
         createdAt: analysis.createdAt,
+        circuitBreakerState:
+          circuitBreakerState?.state ||
+          (currentCircuitStatus.isHealthy ? 'closed' : 'open'),
       },
       error
     )
 
-    // Calculate optimal retry strategy using advanced logic
+    // Calculate optimal retry strategy using advanced logic with circuit breaker awareness
     const retryDecision = calculateRetryStrategy(retryContext)
+
+    // Consider fallback analysis for failed items when circuit breaker is open or error is fallback eligible
+    const shouldConsiderFallback =
+      !currentCircuitStatus.isHealthy ||
+      (errorClassification?.fallbackEligible && retryCount >= 1) ||
+      (errorClassification?.category === 'service_error' && retryCount >= 2)
+
+    if (shouldConsiderFallback && !retryDecision.shouldRetry) {
+      // Check if fallback analysis should be used instead of dead letter queue
+      const fallbackDecision = await shouldUseFallbackAnalysis(
+        ctx,
+        analysis.entryId,
+        analysis.userId,
+        `Requeue failed: ${error}`,
+        retryCount
+      )
+
+      if (fallbackDecision.useFallback) {
+        // Process with fallback analysis instead of moving to dead letter queue
+        const fallbackResult = await handleFallbackInPipeline(ctx, {
+          entryId: analysis.entryId,
+          userId: analysis.userId,
+          journalContent: '', // Will be fetched in fallback pipeline
+          relationshipContext: undefined,
+          retryCount,
+          originalError: error,
+          })
+
+        return {
+          status: 'fallback_processed',
+          analysisId: fallbackResult.analysisId,
+          fallbackUsed: true,
+          fallbackReason: fallbackDecision.reason,
+          circuitBreakerState: fallbackDecision.circuitBreakerState,
+          retryCount,
+          originalError: error,
+        }
+      }
+    }
 
     // Check if we should retry based on advanced strategy
     if (!retryDecision.shouldRetry) {
       // Move to dead letter queue based on strategy recommendation
-      await ctx.runMutation(internal.scheduler.moveToDeadLetterQueue, {
+      await ctx.runMutation(internal.scheduler.queue_overflow.moveToDeadLetterQueue, {
         analysisId,
         reason:
           retryDecision.escalationReason ||
@@ -278,23 +361,31 @@ export const requeueAnalysis = internalMutation({
         retryCount,
         error:
           retryDecision.escalationReason || 'Maximum retry attempts exceeded',
-        analysisId,
         shouldTripCircuit: retryDecision.errorClassification.shouldTripCircuit,
         errorClassification: retryDecision.errorClassification,
       }
     }
 
-    // Use strategy-determined priority and backoff delay
+    // Use strategy-determined priority and backoff delay, or provided values
     const upgradedPriority = retryDecision.newPriority
-    const backoffDelay = retryDecision.backoffDelayMs
+    const backoffDelay = delayMs || retryDecision.backoffDelayMs
 
-    // Update processing attempts and error information with advanced context
+    // Update processing attempts and error information with enhanced context
     await ctx.db.patch(analysisId, {
       processingAttempts: retryCount,
-      lastErrorMessage: `${error} (error_type: ${retryDecision.errorClassification.type}, circuit_eligible: ${retryDecision.errorClassification.shouldTripCircuit})`,
+      lastErrorMessage: `${error} (error_type: ${errorClassification?.category || retryDecision.errorClassification.type}, circuit_state: ${circuitBreakerState?.state || (currentCircuitStatus.isHealthy ? 'closed' : 'open')})`,
+      lastErrorType:
+        (errorClassification?.category === 'validation' || errorClassification?.category === 'network' || errorClassification?.category === 'rate_limit' || errorClassification?.category === 'timeout' || errorClassification?.category === 'service_error' || errorClassification?.category === 'authentication' ? errorClassification.category : undefined),
       processingStartedAt: undefined, // Reset processing started time
       priority: upgradedPriority,
       queuedAt: Date.now(), // Reset queue time for proper aging
+      // Store circuit breaker state metadata
+      circuitBreakerState: circuitBreakerState || {
+        service: 'gemini_2_5_flash_lite',
+        state: currentCircuitStatus.isHealthy ? 'closed' : 'open',
+        failureCount: currentCircuitStatus.metrics?.errorCount24h || 0,
+        lastReset: currentCircuitStatus.metrics?.lastFailureTime,
+      },
     })
 
     // Reschedule with strategy-calculated backoff delay using HTTP Actions
@@ -335,13 +426,18 @@ export const requeueAnalysis = internalMutation({
 })
 
 /**
- * Get comprehensive queue status for real-time UI updates including failure information
+ * Get comprehensive queue status for real-time UI updates including circuit breaker and fallback information
  */
 export const getQueueStatus = query({
   args: {
     userId: v.id('users'),
   },
   handler: async (ctx, { userId }) => {
+    // Get current circuit breaker status for user display
+    const circuitBreakerStatus = await getCircuitBreakerHealthStatus(
+      ctx,
+      'gemini_2_5_flash_lite'
+    )
     // Get user's processing queue items
     const userQueueItems = await ctx.db
       .query('aiAnalysis')
@@ -421,6 +517,7 @@ export const getQueueStatus = query({
           currentWaitTime: Date.now() - (item.queuedAt || item.createdAt),
           processingAttempts: item.processingAttempts || 0,
           lastErrorMessage: item.lastErrorMessage,
+          lastErrorType: item.lastErrorType,
           retryStatus: {
             isRetry,
             hasErrors,
@@ -429,6 +526,25 @@ export const getQueueStatus = query({
             estimatedNextRetry: isRetry
               ? Date.now() + Math.pow(2, item.processingAttempts || 0) * 1000
               : null,
+          },
+          // Enhanced with circuit breaker and fallback information
+          circuitBreakerInfo: {
+            currentState: circuitBreakerStatus.isHealthy ? 'closed' : 'open',
+            itemState: item.circuitBreakerState?.state || 'unknown',
+            canExecute: circuitBreakerStatus.isHealthy,
+            failureCount: circuitBreakerStatus.metrics?.errorCount24h || 0,
+            lastUpdate: circuitBreakerStatus.metrics?.lastFailureTime,
+          },
+          fallbackInfo: {
+            usedFallback: item.fallbackUsed || false,
+            fallbackEligible:
+              item.lastErrorType === 'service_error' ||
+              item.lastErrorType === 'rate_limit',
+            fallbackConfidence: item.fallbackConfidence,
+            fallbackMethod: item.fallbackMethod,
+            canUseFallback:
+              !circuitBreakerStatus.isHealthy ||
+              (item.processingAttempts || 0) >= 2,
           },
           healthIndicators: {
             priority: item.priority || 'normal',
@@ -439,6 +555,10 @@ export const getQueueStatus = query({
               ? Date.now() - item.processingStartedAt >
                 PRIORITY_CRITERIA[item.priority || 'normal'].slaTarget
               : false,
+            circuitBreakerImpact: !circuitBreakerStatus.isHealthy,
+            fallbackAvailable:
+              !circuitBreakerStatus.isHealthy ||
+              (item.processingAttempts || 0) >= 1,
           },
         }
       })
@@ -515,6 +635,54 @@ export const getQueueStatus = query({
         isHealthy: capacityUtilization < 80 && averageWaitTime < 120000, // Less than 2 minutes
         needsAttention:
           failureAnalysis.filter(f => !f.isRecoverable).length > 0,
+      },
+      // Enhanced with circuit breaker and fallback status
+      systemStatus: {
+        circuitBreaker: {
+          isHealthy: circuitBreakerStatus.isHealthy,
+          status: circuitBreakerStatus.status,
+          errorCount24h: circuitBreakerStatus.metrics?.errorCount24h || 0,
+          successCount24h: circuitBreakerStatus.metrics?.successCount24h || 0,
+          failureRate: circuitBreakerStatus.metrics?.failureRate || 0,
+          lastFailureTime: circuitBreakerStatus.metrics?.lastFailureTime,
+          recommendations: circuitBreakerStatus.recommendations || [],
+          alerts: circuitBreakerStatus.alerts || [],
+        },
+        fallbackAnalysis: {
+          available: true,
+          recentFallbacks: recentCompletions.filter(c => c.fallbackUsed).length,
+          avgFallbackConfidence:
+            recentCompletions
+              .filter(c => c.fallbackUsed && c.fallbackConfidence)
+              .reduce((sum, c) => sum + (c.fallbackConfidence || 0), 0) /
+            Math.max(1, recentCompletions.filter(c => c.fallbackUsed).length),
+          fallbackSuccessRate:
+            (recentCompletions.filter(c => c.fallbackUsed).length /
+              Math.max(
+                1,
+                recentFailures.filter(f => (f as any).autoRequeueEligible).length +
+                  recentCompletions.filter(c => c.fallbackUsed).length
+              )) *
+            100,
+        },
+        recovery: {
+          autoRecoveryActive:
+            !circuitBreakerStatus.isHealthy &&
+            circuitBreakerStatus.status !== 'critical',
+          recoveryProcessingItems: queueStatusItems.filter(
+            item => item.retryStatus.isRetry
+          ).length,
+          estimatedRecoveryTime: !circuitBreakerStatus.isHealthy
+            ? Math.max(
+                ...(circuitBreakerStatus.alerts?.map(
+                  a => (a as any).estimatedRecoveryTime || 300000
+                ) || [300000])
+              )
+            : null,
+          fallbackItemsEligibleForUpgrade: recentCompletions.filter(
+            c => c.fallbackUsed && (c.fallbackConfidence || 0) < 0.7
+          ).length,
+        },
       },
       timestamp: Date.now(),
     }
@@ -659,16 +827,15 @@ export const getFailureNotifications = query({
 /**
  * Internal wrapper for checkQueueCapacity from queue-overflow.ts
  */
-export const checkQueueCapacityInternal = internalQuery({
+export const checkQueueCapacityInternal: any = internalQuery({
   args: {
     priority: v.optional(
       v.union(v.literal('normal'), v.literal('high'), v.literal('urgent'))
     ),
   },
-  handler: async (ctx, args) => {
-    // Import and call the function from queue-overflow module
-    const { checkQueueCapacity } = await import('./queue_overflow')
-    return await checkQueueCapacity(ctx, args)
+  handler: async (ctx: any, args: any): Promise<any> => {
+    // Call the function from queue-overflow module via scheduler
+    return await ctx.runQuery(internal.scheduler.queue_overflow.checkQueueCapacity, args)
   },
 })
 
@@ -959,11 +1126,10 @@ export const processQueueWithWeights = internalMutation({
         const delay = PRIORITY_CRITERIA[upgradedPriority].delay
         await ctx.scheduler.runAfter(
           delay,
-          internal.ai_processing.analyzeJournalEntry,
+          internal.aiAnalysis.scheduleHttpAnalysis,
           {
             entryId: item.entryId,
             userId: item.userId,
-            analysisId: item._id,
             priority: upgradedPriority,
           }
         )
@@ -1061,11 +1227,10 @@ export const autoRequeueTransientFailures = internalMutation({
             // Schedule retry with calculated backoff
             await ctx.scheduler.runAfter(
               retryDecision.backoffDelayMs,
-              internal.ai_processing.analyzeJournalEntry,
+              internal.aiAnalysis.scheduleHttpAnalysis,
               {
                 entryId: analysis.entryId,
                 userId: analysis.userId,
-                analysisId: analysis._id,
                 priority: retryDecision.newPriority,
               }
             )

@@ -10,12 +10,12 @@ import { internal } from '../_generated/api'
  * Manual function to automatically requeue transient failures
  * Can be called manually or triggered by external scheduler
  */
-export const triggerAutoRequeue = internalMutation({
+export const triggerAutoRequeue: any = internalMutation({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx: any): Promise<any> => {
     // Call the auto-requeue function with default parameters
     return await ctx.runMutation(
-      internal.scheduler.autoRequeueTransientFailures,
+      internal.scheduler.analysis_queue.autoRequeueTransientFailures,
       {
         maxAge: 30 * 60 * 1000, // Check failures from last 30 minutes
         batchSize: 20, // Process up to 20 items per run
@@ -28,10 +28,10 @@ export const triggerAutoRequeue = internalMutation({
  * Manual function to upgrade aging requests
  * Can be called manually or triggered by external scheduler
  */
-export const triggerPriorityUpgrade = internalMutation({
+export const triggerPriorityUpgrade: any = internalMutation({
   args: {},
-  handler: async ctx => {
-    return await ctx.runMutation(internal.scheduler.upgradeAgingRequests, {})
+  handler: async (ctx: any): Promise<any> => {
+    return await ctx.runMutation(internal.scheduler.analysis_queue.upgradeAgingRequests, {})
   },
 })
 
@@ -39,10 +39,10 @@ export const triggerPriorityUpgrade = internalMutation({
  * Manual function to purge expired queue items
  * Can be called manually or triggered by external scheduler
  */
-export const triggerQueueCleanup = internalMutation({
+export const triggerQueueCleanup: any = internalMutation({
   args: {},
-  handler: async ctx => {
-    return await ctx.runMutation(internal.scheduler.purgeExpiredQueue, {
+  handler: async (ctx: any): Promise<any> => {
+    return await ctx.runMutation(internal.scheduler.analysis_queue.purgeExpiredQueue, {
       maxAgeMs: 24 * 60 * 60 * 1000, // 24 hours
       dryRun: false,
     })
@@ -53,11 +53,11 @@ export const triggerQueueCleanup = internalMutation({
  * Manual trigger for emergency auto-requeue
  * Can be called by admins when system issues are resolved
  */
-export const emergencyAutoRequeue = internalMutation({
-  handler: async ctx => {
+export const emergencyAutoRequeue: any = internalMutation({
+  handler: async (ctx: any): Promise<any> => {
     // Run auto-requeue with extended parameters for emergency situations
-    const result = await ctx.runMutation(
-      internal.scheduler.autoRequeueTransientFailures,
+    const result: any = await ctx.runMutation(
+      internal.scheduler.analysis_queue.autoRequeueTransientFailures,
       {
         maxAge: 2 * 60 * 60 * 1000, // Check failures from last 2 hours
         batchSize: 50, // Process more items in emergency
@@ -65,8 +65,8 @@ export const emergencyAutoRequeue = internalMutation({
     )
 
     // Also purge very old items to free up queue space
-    const purgeResult = await ctx.runMutation(
-      internal.scheduler.purgeExpiredQueue,
+    const purgeResult: any = await ctx.runMutation(
+      internal.scheduler.analysis_queue.purgeExpiredQueue,
       {
         maxAgeMs: 6 * 60 * 60 * 1000, // 6 hours for emergency cleanup
         dryRun: false,

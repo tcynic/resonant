@@ -88,7 +88,7 @@ export const createEntry = mutation({
           // Use queue-based processing with priority assessment
           await ctx.scheduler.runAfter(
             1000, // Small delay to allow entry to be fully committed
-            internal.scheduler.enqueueAnalysis,
+            internal.scheduler.analysis_queue.enqueueAnalysis,
             {
               entryId,
               userId: args.userId,

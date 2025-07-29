@@ -1,10 +1,11 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useUser } from '@clerk/nextjs'
+import type { UserResource } from '@clerk/types'
 import { useQuery, useMutation } from 'convex/react'
-import { NotificationProvider } from '../../../providers/notification-provider'
+import { NotificationProvider } from '../../../../../components/providers/notification-provider'
 import { ReminderSettings } from '../../reminder-settings'
-import { useBrowserNotifications } from '../../../../hooks/notifications/use-browser-notifications'
+import { useBrowserNotifications } from '../../../../../hooks/notifications/use-browser-notifications'
 
 // Mock all dependencies
 jest.mock('@clerk/nextjs')
@@ -24,7 +25,9 @@ const mockUser = {
   id: 'clerk_user_123',
   firstName: 'John',
   lastName: 'Doe',
-}
+  fullName: 'John Doe',
+  getFullName: () => 'John Doe'
+} as unknown as UserResource
 
 const mockUserData = {
   _id: 'user_123',
@@ -61,7 +64,9 @@ const mockBrowserNotifications = {
   handleNotificationClick: jest.fn(),
 }
 
-const mockUpdateReminderSettings = jest.fn()
+const mockUpdateReminderSettings = Object.assign(jest.fn(), {
+  withOptimisticUpdate: jest.fn()
+})
 
 // Wrapper component for testing
 function TestWrapper({ children }: { children: React.ReactNode }) {
@@ -70,7 +75,7 @@ function TestWrapper({ children }: { children: React.ReactNode }) {
 
 describe('Notification System Integration', () => {
   beforeEach(() => {
-    mockUseUser.mockReturnValue({ user: mockUser, isLoaded: true })
+    mockUseUser.mockReturnValue({ user: mockUser, isLoaded: true, isSignedIn: true })
     mockUseQuery
       .mockReturnValueOnce(mockUserData) // getUserByClerkId
       .mockReturnValueOnce({

@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useUser } from '@clerk/nextjs'
+import type { UserResource } from '@clerk/types'
 import { useQuery, useMutation } from 'convex/react'
 import { ReminderSettings } from '../reminder-settings'
 
@@ -16,7 +17,9 @@ const mockUser = {
   id: 'clerk_user_123',
   firstName: 'John',
   lastName: 'Doe',
-}
+  fullName: 'John Doe',
+  getFullName: () => 'John Doe'
+} as unknown as UserResource
 
 const mockUserData = {
   _id: 'user_123',
@@ -50,10 +53,12 @@ const mockReminderAnalytics = {
 }
 
 describe('ReminderSettings', () => {
-  const mockUpdateReminderSettings = jest.fn()
+  const mockUpdateReminderSettings = Object.assign(jest.fn(), {
+    withOptimisticUpdate: jest.fn()
+  })
 
   beforeEach(() => {
-    mockUseUser.mockReturnValue({ user: mockUser, isLoaded: true })
+    mockUseUser.mockReturnValue({ user: mockUser, isLoaded: true, isSignedIn: true })
     mockUseQuery
       .mockReturnValueOnce(mockUserData) // getUserByClerkId
       .mockReturnValueOnce(mockReminderAnalytics) // getUserReminderAnalytics
@@ -280,7 +285,7 @@ describe('ReminderSettings', () => {
   })
 
   it('shows loading state when user data is not available', () => {
-    mockUseUser.mockReturnValue({ user: null, isLoaded: false })
+    mockUseUser.mockReturnValue({ user: null, isLoaded: true, isSignedIn: false })
     mockUseQuery.mockReturnValue(null)
 
     render(<ReminderSettings />)

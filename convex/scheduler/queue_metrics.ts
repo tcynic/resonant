@@ -4,6 +4,7 @@
  */
 
 import { internalQuery, internalMutation, query } from '../_generated/server'
+import { internal } from '../_generated/api'
 import { v } from 'convex/values'
 import {
   QUEUE_CONFIG,
@@ -16,8 +17,8 @@ import { getPriorityValue, isWithinSla } from '../utils/priority_assessment'
  * Public query for real-time queue dashboard (admin access)
  */
 export const getQueueDashboardPublic = query({
-  handler: async ctx => {
-    return await getQueueDashboard(ctx)
+  handler: async (ctx): Promise<unknown> => {
+    return await ctx.runQuery(internal.scheduler.queue_metrics.getQueueDashboard, {})
   },
 })
 
@@ -365,44 +366,47 @@ export const exportQueueMetrics = internalQuery({
       v.union(v.literal('prometheus'), v.literal('json'), v.literal('csv'))
     ),
   },
-  handler: async (ctx, { format = 'json' }) => {
-    const dashboard = await getQueueDashboard(ctx, {})
-    const health = await getQueueHealth(ctx, {})
+  handler: async (ctx, { format = 'json' }): Promise<unknown> => {
+    const dashboard: unknown = await ctx.runQuery(internal.scheduler.queue_metrics.getQueueDashboard, {})
+    const health: unknown = await ctx.runQuery(internal.scheduler.queue_metrics.getQueueHealth, {})
 
-    const metrics = {
+    const dashboardData = dashboard as any
+    const healthData = health as any
+    
+    const metrics: Record<string, unknown> = {
       // Basic queue metrics
-      queue_total_items: dashboard.totalQueued,
-      queue_capacity_utilization_percent: dashboard.capacityUtilization,
-      queue_average_wait_time_ms: dashboard.averageWaitTime,
-      queue_max_wait_time_ms: dashboard.maxWaitTime,
+      queue_total_items: dashboardData.totalQueued,
+      queue_capacity_utilization_percent: dashboardData.capacityUtilization,
+      queue_average_wait_time_ms: dashboardData.averageWaitTime,
+      queue_max_wait_time_ms: dashboardData.maxWaitTime,
 
       // Processing metrics
-      queue_active_processing: dashboard.activeProcessing,
-      queue_waiting_count: dashboard.waitingInQueue,
+      queue_active_processing: dashboardData.activeProcessing,
+      queue_waiting_count: dashboardData.waitingInQueue,
 
       // Priority breakdown
-      queue_urgent_count: dashboard.priorityBreakdown.urgent || 0,
-      queue_high_count: dashboard.priorityBreakdown.high || 0,
-      queue_normal_count: dashboard.priorityBreakdown.normal || 0,
+      queue_urgent_count: dashboardData.priorityBreakdown.urgent || 0,
+      queue_high_count: dashboardData.priorityBreakdown.high || 0,
+      queue_normal_count: dashboardData.priorityBreakdown.normal || 0,
 
       // Performance (24h)
-      queue_throughput_per_hour: dashboard.performance24h.throughputPerHour,
-      queue_success_rate_percent: dashboard.performance24h.successRate,
+      queue_throughput_per_hour: dashboardData.performance24h.throughputPerHour,
+      queue_success_rate_percent: dashboardData.performance24h.successRate,
       queue_average_processing_time_ms:
-        dashboard.performance24h.averageProcessingTime,
+        dashboardData.performance24h.averageProcessingTime,
 
       // Health
-      queue_health_score: health.score,
-      queue_alert_count: health.alerts.length,
-      queue_sla_violations: health.slaViolations.length,
+      queue_health_score: healthData.score,
+      queue_alert_count: healthData.alerts.length,
+      queue_sla_violations: healthData.slaViolations.length,
 
       // SLA compliance
       queue_sla_urgent_compliance_percent:
-        dashboard.slaCompliance.urgent.complianceRate,
+        dashboardData.slaCompliance.urgent.complianceRate,
       queue_sla_high_compliance_percent:
-        dashboard.slaCompliance.high.complianceRate,
+        dashboardData.slaCompliance.high.complianceRate,
       queue_sla_normal_compliance_percent:
-        dashboard.slaCompliance.normal.complianceRate,
+        dashboardData.slaCompliance.normal.complianceRate,
     }
 
     if (format === 'prometheus') {
@@ -411,7 +415,7 @@ export const exportQueueMetrics = internalQuery({
         data: Object.entries(metrics)
           .map(([key, value]) => `${key} ${value}`)
           .join('\n'),
-        timestamp: dashboard.timestamp,
+        timestamp: dashboardData.timestamp,
       }
     }
 
@@ -421,7 +425,7 @@ export const exportQueueMetrics = internalQuery({
       return {
         format: 'csv',
         data: `${headers}\n${values}`,
-        timestamp: dashboard.timestamp,
+        timestamp: dashboardData.timestamp,
       }
     }
 
@@ -429,7 +433,7 @@ export const exportQueueMetrics = internalQuery({
     return {
       format: 'json',
       data: metrics,
-      timestamp: dashboard.timestamp,
+      timestamp: dashboardData.timestamp,
     }
   },
 })
@@ -438,28 +442,31 @@ export const exportQueueMetrics = internalQuery({
  * Store queue metrics snapshot for historical analysis
  */
 export const recordMetricsSnapshot = internalMutation({
-  handler: async ctx => {
-    const dashboard = await getQueueDashboard(ctx, {})
-    const health = await getQueueHealth(ctx, {})
+  handler: async (ctx): Promise<unknown> => {
+    const dashboard: unknown = await ctx.runQuery(internal.scheduler.queue_metrics.getQueueDashboard, {})
+    const health: unknown = await ctx.runQuery(internal.scheduler.queue_metrics.getQueueHealth, {})
 
+    const dashboardData = dashboard as any
+    const healthData = health as any
+    
     // Store snapshot in a metrics table (would need to be added to schema)
     // For now, return the snapshot data that could be stored
     return {
       snapshot: {
-        timestamp: dashboard.timestamp,
+        timestamp: dashboardData.timestamp,
         queueMetrics: {
-          totalQueued: dashboard.totalQueued,
-          capacityUtilization: dashboard.capacityUtilization,
-          averageWaitTime: dashboard.averageWaitTime,
-          maxWaitTime: dashboard.maxWaitTime,
-          priorityBreakdown: dashboard.priorityBreakdown,
+          totalQueued: dashboardData.totalQueued,
+          capacityUtilization: dashboardData.capacityUtilization,
+          averageWaitTime: dashboardData.averageWaitTime,
+          maxWaitTime: dashboardData.maxWaitTime,
+          priorityBreakdown: dashboardData.priorityBreakdown,
         },
-        performance: dashboard.performance24h,
+        performance: dashboardData.performance24h,
         health: {
-          status: health.status,
-          score: health.score,
-          alertCount: health.alerts.length,
-          slaViolations: health.slaViolations.length,
+          status: healthData.status,
+          score: healthData.score,
+          alertCount: healthData.alerts.length,
+          slaViolations: healthData.slaViolations.length,
         },
       },
       stored: false, // Would be true if we had metrics storage table
@@ -630,7 +637,7 @@ function findSlaViolations(queueItems: any[]) {
 
   for (const item of queueItems) {
     const priority = item.priority || 'normal'
-    const slaTarget = PRIORITY_CRITERIA[priority].slaTarget
+    const slaTarget = (PRIORITY_CRITERIA as any)[priority]?.slaTarget || 300000
     const currentWaitTime = now - (item.queuedAt || item.createdAt)
 
     if (currentWaitTime > slaTarget) {
@@ -759,7 +766,7 @@ function analyzeErrors(failedItems: any[]) {
   )
 
   const topErrors = Object.entries(errorCounts)
-    .sort(([, a], [, b]) => b - a)
+    .sort(([, a], [, b]) => (b as number) - (a as number))
     .slice(0, 5)
     .map(([error, count]) => ({ error, count }))
 
@@ -842,10 +849,10 @@ function generateUserBreakdown(items: any[]) {
   return Object.entries(userStats)
     .map(([userId, stats]) => ({
       userId,
-      ...stats,
+      ...(stats as any),
       successRate:
-        stats.total > 0
-          ? (stats.completed / (stats.completed + stats.failed)) * 100
+        (stats as any).total > 0
+          ? ((stats as any).completed / ((stats as any).completed + (stats as any).failed)) * 100
           : 100,
     }))
     .sort((a, b) => b.total - a.total)

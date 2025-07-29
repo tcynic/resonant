@@ -65,7 +65,7 @@ export const queueAnalysis = mutation({
     const priority =
       args.priority === 'low' ? 'normal' : args.priority || 'normal' // Convert legacy 'low' to 'normal'
 
-    await ctx.scheduler.runAfter(100, internal.scheduler.enqueueAnalysis, {
+    await ctx.scheduler.runAfter(100, internal.scheduler.analysis_queue.enqueueAnalysis, {
       entryId: args.entryId,
       userId: entry.userId,
       priority: priority as 'normal' | 'high' | 'urgent',
@@ -228,7 +228,7 @@ export const reprocessStuckEntries = mutation({
 
         if (stuck.reason === 'no_analysis') {
           // Use new queue-based processing
-          await ctx.scheduler.runAfter(0, internal.scheduler.enqueueAnalysis, {
+          await ctx.scheduler.runAfter(0, internal.scheduler.analysis_queue.enqueueAnalysis, {
             entryId: stuck.entryId,
             userId: entry.userId,
             priority: 'normal',
@@ -247,7 +247,7 @@ export const reprocessStuckEntries = mutation({
             })
           }
           // Use queue-based reprocessing
-          await ctx.scheduler.runAfter(0, internal.scheduler.enqueueAnalysis, {
+          await ctx.scheduler.runAfter(0, internal.scheduler.analysis_queue.enqueueAnalysis, {
             entryId: stuck.entryId,
             userId: entry.userId,
             priority: 'high', // Give reprocessing higher priority
@@ -659,11 +659,58 @@ export const analyzeDirectly = mutation({
       'analyzeDirectly is deprecated. Use queueAnalysis instead for better reliability.'
     )
 
-    // Route to queue-based processing for better reliability
-    return await queueAnalysis(ctx, {
+    // Inline the queueAnalysis logic for compatibility
+    const entry = await ctx.db.get(args.entryId)
+    if (!entry) {
+      throw new Error('Journal entry not found')
+    }
+
+    // Check if user has AI analysis enabled (default to true if not set)
+    const user = await ctx.db.get(entry.userId)
+    if (user?.preferences?.aiAnalysisEnabled === false) {
+      return { status: 'skipped', reason: 'AI analysis disabled' }
+    }
+
+    // Check if entry allows AI analysis
+    if (entry.allowAIAnalysis === false) {
+      return { status: 'skipped', reason: 'Entry marked private from AI' }
+    }
+
+    // Check if already analyzed
+    const existingAnalysis = await ctx.db
+      .query('aiAnalysis')
+      .withIndex('by_entry', q => q.eq('entryId', args.entryId))
+      .unique()
+
+    if (existingAnalysis) {
+      return { status: 'skipped', reason: 'Already analyzed' }
+    }
+
+    // Create processing record
+    const analysisId = await ctx.db.insert('aiAnalysis', {
       entryId: args.entryId,
-      priority: args.priority || 'normal',
+      userId: entry.userId,
+      relationshipId: entry.relationshipId,
+      sentimentScore: 0, // Placeholder
+      emotionalKeywords: [],
+      confidenceLevel: 0,
+      reasoning: '',
+      analysisVersion: 'dspy-v1.0',
+      processingTime: 0,
+      status: 'processing',
+      createdAt: Date.now(),
     })
+
+    // Use new queue-based processing with priority assessment
+    const priority = args.priority || 'normal'
+
+    await ctx.scheduler.runAfter(100, internal.scheduler.analysis_queue.enqueueAnalysis, {
+      entryId: args.entryId,
+      userId: entry.userId,
+      priority: priority as 'normal' | 'high' | 'urgent',
+    })
+
+    return { status: 'queued', analysisId }
   },
 })
 
@@ -836,3 +883,200 @@ export const getRecentAnalyses = query({
 })
 
 // performRealAIAnalysis function removed - AI analysis now uses HTTP Actions
+
+/**
+ * Store fallback analysis results (for integrated fallback analysis)
+ */
+export const storeFallbackResult = internalMutation({
+  args: {
+    entryId: v.id('journalEntries'),
+    userId: v.id('users'),
+    relationshipId: v.optional(v.id('relationships')),
+    sentimentScore: v.number(),
+    emotionalKeywords: v.array(v.string()),
+    confidenceLevel: v.number(),
+    reasoning: v.string(),
+    patterns: v.optional(
+      v.object({
+        recurring_themes: v.array(v.string()),
+        emotional_triggers: v.array(v.string()),
+        communication_style: v.string(),
+        relationship_dynamics: v.array(v.string()),
+      })
+    ),
+    metadata: v.object({
+      analysisMethod: v.string(),
+      processingTime: v.number(),
+      fallbackReason: v.string(),
+      qualityScore: v.number(),
+    }),
+    fallbackMetadata: v.object({
+      trigger: v.string(),
+      qualityScore: v.number(),
+      confidence: v.number(),
+      processingTime: v.number(),
+      patternInsights: v.array(v.string()),
+      recommendations: v.array(v.string()),
+    }),
+  },
+  handler: async (ctx, args) => {
+    const analysisId = await ctx.db.insert('aiAnalysis', {
+      entryId: args.entryId,
+      userId: args.userId,
+      relationshipId: args.relationshipId,
+      sentimentScore: args.sentimentScore,
+      emotionalKeywords: args.emotionalKeywords,
+      confidenceLevel: args.confidenceLevel,
+      reasoning: args.reasoning,
+      patterns: args.patterns,
+      status: 'completed',
+      analysisVersion: 'fallback-v1.0',
+      processingTime: args.metadata.processingTime,
+      tokensUsed: 0, // Fallback doesn't use tokens
+      apiCost: 0, // Fallback is free
+      createdAt: Date.now(),
+      fallbackMetadata: args.fallbackMetadata,
+    })
+
+    return analysisId
+  },
+})
+
+/**
+ * Complete fallback analysis for existing queued analysis
+ */
+export const completeFallbackAnalysis = internalMutation({
+  args: {
+    analysisId: v.id('aiAnalysis'),
+    results: v.object({
+      sentimentScore: v.number(),
+      emotionalKeywords: v.array(v.string()),
+      confidenceLevel: v.number(),
+      reasoning: v.string(),
+      patterns: v.optional(
+        v.object({
+          recurring_themes: v.array(v.string()),
+          emotional_triggers: v.array(v.string()),
+          communication_style: v.string(),
+          relationship_dynamics: v.array(v.string()),
+        })
+      ),
+      metadata: v.object({
+        analysisMethod: v.string(),
+        processingTime: v.number(),
+        fallbackReason: v.string(),
+        qualityScore: v.number(),
+      }),
+    }),
+    fallbackMetadata: v.object({
+      trigger: v.string(),
+      qualityScore: v.number(),
+      confidence: v.number(),
+      processingTime: v.number(),
+      patternInsights: v.array(v.string()),
+      recommendations: v.array(v.string()),
+    }),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.analysisId, {
+      sentimentScore: args.results.sentimentScore,
+      emotionalKeywords: args.results.emotionalKeywords,
+      confidenceLevel: args.results.confidenceLevel,
+      reasoning: args.results.reasoning,
+      patterns: args.results.patterns,
+      status: 'completed',
+      analysisVersion: 'fallback-v1.0',
+      processingTime: args.results.metadata.processingTime,
+      tokensUsed: 0,
+      apiCost: 0,
+      fallbackMetadata: args.fallbackMetadata,
+    })
+  },
+})
+
+/**
+ * Mark fallback analysis as low quality
+ */
+export const markFallbackLowQuality = internalMutation({
+  args: {
+    analysisId: v.id('aiAnalysis'),
+    reason: v.string(),
+    confidence: v.number(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.analysisId, {
+      status: 'failed',
+      reasoning: `Fallback analysis quality too low: ${args.reason}`,
+      confidenceLevel: args.confidence,
+      fallbackMetadata: {
+        trigger: 'quality_too_low',
+        qualityScore: args.confidence,
+        confidence: args.confidence,
+        processingTime: 0,
+        patternInsights: [],
+        recommendations: [],
+      },
+    })
+  },
+})
+
+/**
+ * Create failed analysis record
+ */
+export const createFailedAnalysis = internalMutation({
+  args: {
+    entryId: v.id('journalEntries'),
+    userId: v.id('users'),
+    error: v.string(),
+    processingAttempts: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const analysisId = await ctx.db.insert('aiAnalysis', {
+      entryId: args.entryId,
+      userId: args.userId,
+      status: 'failed',
+      reasoning: args.error,
+      processingTime: 0,
+      tokensUsed: 0,
+      apiCost: 0,
+      createdAt: Date.now(),
+      analysisVersion: 'failed',
+      sentimentScore: 0,
+      emotionalKeywords: [],
+      confidenceLevel: 0,
+    })
+
+    return analysisId
+  },
+})
+
+/**
+ * Get recent analyses for fallback pattern matching
+ */
+export const getRecentForFallback = internalQuery({
+  args: {
+    userId: v.id('users'),
+    limit: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const analyses = await ctx.db
+      .query('aiAnalysis')
+      .withIndex('by_user', q => q.eq('userId', args.userId))
+      .filter(q => q.eq(q.field('status'), 'completed'))
+      .order('desc')
+      .take(args.limit)
+
+    // Get the original content for each analysis
+    const analysesWithContent = await Promise.all(
+      analyses.map(async analysis => {
+        const entry = await ctx.db.get(analysis.entryId)
+        return {
+          ...analysis,
+          originalContent: entry?.content,
+        }
+      })
+    )
+
+    return analysesWithContent
+  },
+})

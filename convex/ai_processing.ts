@@ -4,7 +4,7 @@
  */
 
 import { httpAction, internalAction } from './_generated/server'
-import { internal } from './_generated/api'
+import { internal, api } from './_generated/api'
 import { v } from 'convex/values'
 import {
   validateAIRequest,
@@ -15,6 +15,16 @@ import {
   generateRequestLogData,
 } from './utils/ai_validation'
 import { isRecoverableError } from './utils/circuit_breaker'
+import {
+  shouldUseFallbackAnalysis,
+  handleFallbackInPipeline,
+} from './fallback/integration'
+import {
+  calculateRetryStrategy,
+  JitterType,
+  RetryContext,
+} from './utils/retry_strategy'
+import { classifyError } from './utils/error_logger'
 
 // TypeScript interfaces for input/output validation
 export interface AIProcessingRequest {
@@ -78,7 +88,7 @@ export interface GeminiAnalysisResponse {
   }
 }
 
-// Extended interface for store result
+// Extended interface for store result with enhanced error handling
 interface ExtendedStoreResultArgs {
   entryId: string
   userId: string
@@ -110,6 +120,32 @@ interface ExtendedStoreResultArgs {
   tokensUsed: number
   apiCost: number
   status: string
+  // Enhanced error handling fields
+  processingAttempts?: number
+  lastErrorMessage?: string
+  lastErrorType?: string
+  circuitBreakerState?: {
+    service: string
+    state: 'closed' | 'open' | 'half_open'
+    failureCount: number
+    lastReset?: number
+  }
+  retryHistory?: Array<{
+    attempt: number
+    timestamp: number
+    delayMs: number
+    errorType: string
+    errorMessage: string
+    circuitBreakerState: string
+  }>
+  errorContext?: {
+    httpActionId?: string
+    requestId?: string
+    serviceEndpoint?: string
+    totalRetryTime?: number
+    finalAttemptDelay?: number
+    escalationPath?: string[]
+  }
 }
 
 /**
@@ -314,10 +350,142 @@ export const analyzeJournalEntry = httpAction(async (ctx, request) => {
       sentimentHistory,
     }
 
-    // Make external API call to Gemini
-    const geminiResponse = await callGeminiAPI(geminiRequest)
+    // Check if fallback analysis should be used before attempting API call
+    const fallbackDecision = await shouldUseFallbackAnalysis(
+      ctx,
+      entryId,
+      userId,
+      'Pre-API check',
+      retryCount
+    )
 
-    // Store analysis results with pattern detection data
+    if (fallbackDecision.useFallback) {
+      // Use fallback analysis instead of API call
+      const fallbackResult = await handleFallbackInPipeline(ctx, {
+        entryId,
+        userId,
+        journalContent: journalEntry.content,
+        relationshipContext: journalEntry.relationshipName || undefined,
+        retryCount,
+        originalError: fallbackDecision.reason,
+        analysisId: isQueuedRequest ? analysisId : undefined,
+      })
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          analysisId: fallbackResult.analysisId,
+          fallbackUsed: true,
+          fallbackReason: fallbackDecision.reason,
+          circuitBreakerState: fallbackDecision.circuitBreakerState,
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      )
+    }
+
+    // Check circuit breaker status before API call
+    const circuitBreakerStatus = await ctx.runQuery(
+      api.circuit_breaker_queries.getHealthStatus,
+      { service: 'gemini_2_5_flash_lite' }
+    )
+
+    // Make external API call to Gemini with enhanced error handling
+    let geminiResponse: GeminiAnalysisResponse
+    const apiCallStartTime = Date.now()
+    try {
+      // Record circuit breaker state at time of processing
+      const circuitBreakerMetadata = {
+        service: 'gemini_2_5_flash_lite',
+        state: !circuitBreakerStatus.isHealthy ? 'open' : 'closed',
+        failureCount: circuitBreakerStatus.metrics?.errorCount24h || 0,
+        lastReset: circuitBreakerStatus.metrics?.lastFailureTime,
+      }
+
+      geminiResponse = await callGeminiAPI(geminiRequest)
+
+      // Record successful API call in circuit breaker
+      await ctx.runMutation(api.circuit_breaker_queries.recordSuccess, {
+        service: 'gemini_2_5_flash_lite',
+        responseTimeMs: Date.now() - apiCallStartTime,
+      })
+    } catch (apiError) {
+      const apiErrorMessage =
+        apiError instanceof Error ? apiError.message : 'API call failed'
+      const apiProcessingTime = Date.now() - apiCallStartTime
+
+      // Enhanced error classification and circuit breaker handling
+      const errorClassification = classifyError(apiErrorMessage)
+
+      // Record failure in circuit breaker if it should trip
+      if (
+        errorClassification.category === 'service_error' ||
+        errorClassification.category === 'network'
+      ) {
+        await ctx.runMutation(api.circuit_breaker_queries.recordFailure, {
+          service: 'gemini_2_5_flash_lite',
+          errorMessage: apiErrorMessage,
+        })
+      }
+
+      // Store comprehensive error context in analysis record
+      const errorContext = {
+        httpActionId: `ai-processing-${Date.now()}`,
+        requestId: `req-${entryId}-${retryCount}`,
+        serviceEndpoint: 'gemini_2_5_flash_lite',
+        totalRetryTime: apiProcessingTime,
+        finalAttemptDelay:
+          retryCount > 0 ? Math.pow(2, retryCount - 1) * 1000 : 0,
+        escalationPath: [`attempt-${retryCount + 1}`],
+      }
+
+      // Store error information for analysis tracking (simplified for now)
+
+      // Check if we should fallback after API failure
+      const postAPIFallbackDecision = await shouldUseFallbackAnalysis(
+        ctx,
+        entryId,
+        userId,
+        apiErrorMessage,
+        retryCount
+      )
+
+      if (postAPIFallbackDecision.useFallback) {
+        // Use fallback analysis after API failure
+        const fallbackResult = await handleFallbackInPipeline(ctx, {
+          entryId,
+          userId,
+          journalContent: journalEntry.content,
+          relationshipContext: journalEntry.relationshipName || undefined,
+          retryCount,
+          originalError: apiErrorMessage,
+          analysisId: isQueuedRequest ? analysisId : undefined,
+        })
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            analysisId: fallbackResult.analysisId,
+            fallbackUsed: true,
+            fallbackReason: `API failed: ${postAPIFallbackDecision.reason}`,
+            circuitBreakerState: postAPIFallbackDecision.circuitBreakerState,
+            originalError: apiErrorMessage,
+          }),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        )
+      }
+
+      // If not using fallback, re-throw the error for normal retry handling
+      throw apiError
+    }
+
+    // Store analysis results with pattern detection data and enhanced metadata
+    const totalProcessingTime = Date.now() - startTime
     const storeArgs: ExtendedStoreResultArgs = {
       entryId,
       userId,
@@ -330,10 +498,26 @@ export const analyzeJournalEntry = httpAction(async (ctx, request) => {
       emotionalStability: geminiResponse.emotional_stability,
       energyImpact: geminiResponse.energy_impact,
       analysisVersion: geminiResponse.metadata.analysisVersion,
-      processingTime: Date.now() - startTime,
+      processingTime: totalProcessingTime,
       tokensUsed: geminiResponse.metadata.tokensUsed,
       apiCost: geminiResponse.metadata.apiCost,
       status: 'completed',
+      // Enhanced error handling metadata
+      processingAttempts: retryCount + 1,
+      circuitBreakerState: {
+        service: 'gemini_2_5_flash_lite',
+        state: 'closed', // Success means circuit is closed
+        failureCount: 0, // Reset on success
+        lastReset: Date.now(),
+      },
+      errorContext: {
+        httpActionId: `ai-processing-${Date.now()}`,
+        requestId: `req-${entryId}-${retryCount}`,
+        serviceEndpoint: 'gemini_2_5_flash_lite',
+        totalRetryTime: 0, // No retries on success
+        finalAttemptDelay: 0,
+        escalationPath: [`successful-attempt-${retryCount + 1}`],
+      },
     }
 
     let finalAnalysisId: string
@@ -382,39 +566,90 @@ export const analyzeJournalEntry = httpAction(async (ctx, request) => {
     }
 
     const { entryId, userId, retryCount = 0, priority = 'normal' } = requestData
+
+    // Parse and validate request again to get analysisId
+    const rawData = await request.json().catch(() => ({}))
     const analysisId = (rawData as any).analysisId
     const isQueuedRequest = !!analysisId
 
-    // Determine if error is recoverable for automatic requeuing
-    const errorIsRecoverable = isRecoverableError(errorMessage)
-    const shouldAutoRetry = errorIsRecoverable && retryCount < 3
+    // Enhanced error classification and retry decision logic
+    const errorClassification = classifyError(errorMessage)
+    const retryContext: RetryContext = {
+      priority,
+      error: errorMessage,
+      retryCount,
+      originalPriority: priority,
+      totalWaitTime: Date.now() - startTime,
+      analysisId: analysisId || `temp-${Date.now()}`,
+      circuitBreakerState: 'closed',
+    }
+    const retryStrategy = calculateRetryStrategy(retryContext)
+    const isErrorRecoverable = isRecoverableError(errorMessage)
 
-    // Implement intelligent retry logic with automatic requeuing for transient failures
-    if (shouldAutoRetry) {
-      const nextRetryAt = Date.now() + Math.pow(2, retryCount) * 1000 // Exponential backoff
+    // Use simplified retry strategy with enhanced classification
+    const maxRetries =
+      errorClassification.category === 'service_error'
+        ? 3
+        : errorClassification.category === 'rate_limit'
+          ? 5
+          : 2
+    const retryDelay = Math.min(Math.pow(2, retryCount) * 1000, 60000) // Cap at 60 seconds
+    const shouldAutoRetry = isErrorRecoverable && retryCount < maxRetries
+
+    // Get current circuit breaker status for retry decisions
+    const currentCircuitStatus = await ctx.runQuery(
+      api.circuit_breaker_queries.getHealthStatus,
+      { service: 'gemini_2_5_flash_lite' }
+    )
+
+    // Implement intelligent retry logic with enhanced circuit breaker integration
+    if (shouldAutoRetry && currentCircuitStatus.isHealthy) {
+      const nextRetryAt = Date.now() + retryDelay
 
       if (isQueuedRequest) {
         // For queued requests, use intelligent queue-aware retry logic
-        await ctx.runMutation(internal.scheduler.requeueAnalysis, {
+        // Enhanced requeuing with comprehensive error metadata
+        await ctx.runMutation(internal.scheduler.analysis_queue.requeueAnalysis, {
           analysisId,
           retryCount: retryCount + 1,
-          priority, // Will be upgraded by retry strategy if needed
+          priority: retryStrategy.newPriority || priority,
           error: errorMessage,
-          isTransientError: errorIsRecoverable,
+          isTransientError: errorClassification.retryable,
+          delayMs: retryDelay,
+          errorClassification: {
+            category: errorClassification.category,
+            retryable: errorClassification.retryable,
+            circuitBreakerImpact: errorClassification.circuitBreakerImpact,
+            fallbackEligible: errorClassification.fallbackEligible,
+          },
+          circuitBreakerState: {
+            service: 'gemini_2_5_flash_lite',
+            state: !currentCircuitStatus.isHealthy ? 'open' : 'closed',
+            failureCount: currentCircuitStatus.metrics.errorCount24h,
+            lastReset: currentCircuitStatus.metrics.lastFailureTime,
+          },
         })
       } else {
-        // For direct requests, use legacy retry logic with transient error detection
-        if (errorIsRecoverable) {
+        // For direct requests, use enhanced retry logic with circuit breaker awareness
+        if (retryStrategy.shouldRetry && currentCircuitStatus.isHealthy) {
           await ctx.scheduler.runAfter(
-            Math.pow(2, retryCount) * 1000,
+            retryDelay,
             internal.aiAnalysis.retryAnalysisInternal,
-            { entryId, userId, retryCount: retryCount + 1 }
+            {
+              entryId,
+              userId,
+              retryCount: retryCount + 1,
+            }
           )
         } else {
-          // Non-recoverable error - mark as permanently failed immediately
+          // Non-recoverable error or circuit breaker open - mark as permanently failed
+          const failureReason = !currentCircuitStatus.isHealthy
+            ? `Circuit breaker open: ${errorMessage}`
+            : `Non-recoverable error: ${errorMessage}`
+
           await ctx.runMutation(internal.aiAnalysis.markFailed, {
             entryId,
-            error: `Non-recoverable error: ${errorMessage}`,
+            error: failureReason,
             processingAttempts: retryCount + 1,
           })
 
@@ -439,9 +674,19 @@ export const analyzeJournalEntry = httpAction(async (ctx, request) => {
           retryScheduled: true,
           nextRetryAt,
           errorClassification: {
-            isRecoverable: errorIsRecoverable,
+            category: errorClassification.category,
+            retryable: errorClassification.retryable,
+            circuitBreakerImpact: errorClassification.circuitBreakerImpact,
+            fallbackEligible: errorClassification.fallbackEligible,
             automaticRequeue: true,
             retryCount: retryCount + 1,
+            delayMs: retryDelay,
+            escalatedPriority: retryStrategy.newPriority,
+          },
+          circuitBreakerStatus: {
+            isOpen: !currentCircuitStatus.isHealthy,
+            failureCount: currentCircuitStatus.metrics?.errorCount24h || 0,
+            nextRetryAt: currentCircuitStatus.metrics?.lastFailureTime + 60000, // Add 1 minute delay
           },
         }),
         {
@@ -450,24 +695,34 @@ export const analyzeJournalEntry = httpAction(async (ctx, request) => {
         }
       )
     } else {
-      // Final failure - mark as failed
+      // Final failure - mark as failed with enhanced metadata
+      const finalFailureReason = !currentCircuitStatus.isHealthy
+        ? `Circuit breaker open after ${retryCount + 1} attempts`
+        : `Processing failed after ${retryCount + 1} attempts`
+
       if (isQueuedRequest) {
-        // For queued requests, move to dead letter queue
-        await ctx.runMutation(internal.scheduler.moveToDeadLetterQueue, {
+        // For queued requests, move to dead letter queue with comprehensive metadata
+        await ctx.runMutation(internal.scheduler.queue_overflow.moveToDeadLetterQueue, {
           analysisId,
-          reason: `Processing failed after ${retryCount + 1} attempts`,
+          reason: finalFailureReason,
           metadata: {
             originalPriority: priority,
             retryCount: retryCount + 1,
             lastError: errorMessage,
+            errorClassification: {
+              type: errorClassification.category,
+              isRecoverable: errorClassification.retryable,
+              shouldTripCircuit: errorClassification.circuitBreakerImpact,
+              isServiceError: errorClassification.fallbackEligible,
+            },
             totalProcessingTime: Date.now() - startTime,
           },
         })
       } else {
-        // For direct requests, use legacy failure handling
+        // For direct requests, use enhanced failure handling
         await ctx.runMutation(internal.aiAnalysis.markFailed, {
           entryId,
-          error: errorMessage,
+          error: finalFailureReason,
           processingAttempts: retryCount + 1,
         })
       }
@@ -475,7 +730,27 @@ export const analyzeJournalEntry = httpAction(async (ctx, request) => {
       return new Response(
         JSON.stringify({
           success: false,
-          error: `Final failure after ${retryCount + 1} attempts: ${errorMessage}`,
+          error: `${finalFailureReason}: ${errorMessage}`,
+          errorClassification: {
+            category: errorClassification.category,
+            retryable: isErrorRecoverable,
+            fallbackEligible:
+              errorClassification.category === 'service_error' ||
+              errorClassification.category === 'rate_limit',
+            finalFailure: true,
+          },
+          circuitBreakerStatus: {
+            isOpen: !currentCircuitStatus.isHealthy,
+            failureCount: currentCircuitStatus.metrics?.errorCount24h || 0,
+            canRetryAt: Date.now() + retryDelay,
+          },
+          processingMetadata: {
+            totalAttempts: retryCount + 1,
+            totalProcessingTime: Date.now() - startTime,
+            escalationHistory: [
+              `attempt-${retryCount + 1}-${errorClassification}`,
+            ],
+          },
         }),
         {
           status: 500,

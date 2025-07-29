@@ -117,7 +117,12 @@ export function AIProcessingSummary({ userId }: AIProcessingSummaryProps) {
                   {/* Progress Bar */}
                   {analysis.status === 'processing' && (
                     <ProcessingProgress
-                      analysis={analysis as AIAnalysisStatus}
+                      progress={{
+                        phase: 'processing',
+                        progress: analysis.queuePosition ? Math.max(0, 100 - analysis.queuePosition * 10) : 50,
+                        eta: analysis.estimatedCompletionTime,
+                        message: `Processing... ${analysis.queuePosition ? `Position ${analysis.queuePosition} in queue` : 'In progress'}`
+                      }}
                       compact={true}
                     />
                   )}

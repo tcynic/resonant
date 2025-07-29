@@ -148,24 +148,26 @@ export const handleQueueOverflow = internalMutation({
       )
     ),
   },
-  handler: async (ctx, { entryId, userId, priority, strategy }) => {
-    const capacityCheck = await ctx.runQuery(
-      internal.scheduler.checkQueueCapacityInternal,
+  handler: async (ctx, { entryId, userId, priority, strategy }): Promise<unknown> => {
+    const capacityCheck: unknown = await ctx.runQuery(
+      internal.scheduler.queue_overflow.checkQueueCapacity,
       { priority }
     )
 
-    if (!capacityCheck.admission.allowed) {
+    const capacityData = capacityCheck as any
+    
+    if (!capacityData.admission.allowed) {
       // Determine strategy if not provided
       const overflowStrategy =
         strategy ||
-        determineOverflowStrategy(priority, capacityCheck.backpressure.level)
+        determineOverflowStrategy(priority, capacityData.backpressure.level)
 
       return await executeOverflowStrategy(ctx, {
         entryId,
         userId,
         priority,
         strategy: overflowStrategy,
-        capacityInfo: capacityCheck,
+        capacityInfo: capacityData,
       })
     }
 
@@ -173,7 +175,7 @@ export const handleQueueOverflow = internalMutation({
     return {
       status: 'proceed',
       message: 'Queue has available capacity',
-      capacityInfo: capacityCheck,
+      capacityInfo: capacityData,
     }
   },
 })
@@ -186,7 +188,7 @@ export const applyBackpressureThrottling = internalMutation({
     requestCount: v.number(),
     timeWindowMs: v.optional(v.number()),
   },
-  handler: async (ctx, { requestCount, timeWindowMs = 60000 }) => {
+  handler: async (ctx, { requestCount, timeWindowMs = 60000 }): Promise<unknown> => {
     const now = Date.now()
     const windowStart = now - timeWindowMs
 
@@ -197,17 +199,19 @@ export const applyBackpressureThrottling = internalMutation({
       .collect()
 
     const currentRate = recentAdditions.length
-    const capacityCheck = await ctx.runQuery(
-      internal.scheduler.checkQueueCapacityInternal,
+    const capacityCheck: unknown = await ctx.runQuery(
+      internal.scheduler.queue_overflow.checkQueueCapacity,
       {}
     )
 
+    const capacityData = capacityCheck as any
+    
     // Calculate throttling parameters
     const throttlingDecision = calculateThrottling(
       currentRate,
       requestCount,
-      capacityCheck.backpressure.level,
-      capacityCheck.capacity.capacityUtilization
+      capacityData.backpressure.level,
+      capacityData.capacity.capacityUtilization
     )
 
     return {
@@ -215,8 +219,8 @@ export const applyBackpressureThrottling = internalMutation({
       currentRate,
       requestCount,
       timeWindow: timeWindowMs,
-      backpressureLevel: capacityCheck.backpressure.level,
-      capacityUtilization: capacityCheck.capacity.capacityUtilization,
+      backpressureLevel: capacityData.backpressure.level,
+      capacityUtilization: capacityData.capacity.capacityUtilization,
       recommendedDelay: throttlingDecision.delay,
       timestamp: now,
     }
@@ -583,7 +587,7 @@ export const getLoadBalancingRecommendations = internalQuery({
     timestamp: number
   }> => {
     const capacityCheck = await ctx.runQuery(
-      internal.scheduler.checkQueueCapacityInternal,
+      internal.scheduler.queue_overflow.checkQueueCapacity,
       {}
     )
     const now = Date.now()

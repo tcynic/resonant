@@ -81,13 +81,7 @@ export function useOptimizedAIStatus(
   // Reduce subscription frequency for hidden tabs
   const analysis = useQuery(
     api.aiAnalysis.getStatusWithQueue,
-    { entryId },
-    {
-      // Slower polling for background tabs
-      ...(typeof window !== 'undefined' && {
-        optimisticUpdates: isTabVisible,
-      }),
-    }
+    { entryId }
   )
 
   return {
@@ -124,7 +118,7 @@ export function useUserActiveProcessing(userId: Id<'users'>) {
 export function useProcessingStats(userId?: Id<'users'>) {
   const stats = useQuery(
     api.aiAnalysis.getProcessingStats,
-    userId ? { userId } : {}
+    userId ? { userId } : "skip"
   )
 
   return {
