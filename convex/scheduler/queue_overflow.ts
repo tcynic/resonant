@@ -148,14 +148,17 @@ export const handleQueueOverflow = internalMutation({
       )
     ),
   },
-  handler: async (ctx, { entryId, userId, priority, strategy }): Promise<unknown> => {
+  handler: async (
+    ctx,
+    { entryId, userId, priority, strategy }
+  ): Promise<unknown> => {
     const capacityCheck: unknown = await ctx.runQuery(
       internal.scheduler.queue_overflow.checkQueueCapacity,
       { priority }
     )
 
     const capacityData = capacityCheck as any
-    
+
     if (!capacityData.admission.allowed) {
       // Determine strategy if not provided
       const overflowStrategy =
@@ -188,7 +191,10 @@ export const applyBackpressureThrottling = internalMutation({
     requestCount: v.number(),
     timeWindowMs: v.optional(v.number()),
   },
-  handler: async (ctx, { requestCount, timeWindowMs = 60000 }): Promise<unknown> => {
+  handler: async (
+    ctx,
+    { requestCount, timeWindowMs = 60000 }
+  ): Promise<unknown> => {
     const now = Date.now()
     const windowStart = now - timeWindowMs
 
@@ -205,7 +211,7 @@ export const applyBackpressureThrottling = internalMutation({
     )
 
     const capacityData = capacityCheck as any
-    
+
     // Calculate throttling parameters
     const throttlingDecision = calculateThrottling(
       currentRate,

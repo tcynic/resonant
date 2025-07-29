@@ -31,7 +31,10 @@ export const triggerAutoRequeue: any = internalMutation({
 export const triggerPriorityUpgrade: any = internalMutation({
   args: {},
   handler: async (ctx: any): Promise<any> => {
-    return await ctx.runMutation(internal.scheduler.analysis_queue.upgradeAgingRequests, {})
+    return await ctx.runMutation(
+      internal.scheduler.analysis_queue.upgradeAgingRequests,
+      {}
+    )
   },
 })
 
@@ -42,10 +45,13 @@ export const triggerPriorityUpgrade: any = internalMutation({
 export const triggerQueueCleanup: any = internalMutation({
   args: {},
   handler: async (ctx: any): Promise<any> => {
-    return await ctx.runMutation(internal.scheduler.analysis_queue.purgeExpiredQueue, {
-      maxAgeMs: 24 * 60 * 60 * 1000, // 24 hours
-      dryRun: false,
-    })
+    return await ctx.runMutation(
+      internal.scheduler.analysis_queue.purgeExpiredQueue,
+      {
+        maxAgeMs: 24 * 60 * 60 * 1000, // 24 hours
+        dryRun: false,
+      }
+    )
   },
 })
 

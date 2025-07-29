@@ -51,7 +51,7 @@ export type MoodType =
 // AI Analysis types
 export interface AIAnalysisStatus {
   _id: string
-  entryId: string  
+  entryId: string
   userId: string
   status: 'processing' | 'completed' | 'failed'
   queuePosition?: number

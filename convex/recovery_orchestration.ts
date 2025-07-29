@@ -196,10 +196,14 @@ export const startOrchestredSystemRecovery = mutation({
     })
 
     // Start execution
-    await ctx.scheduler.runAfter(0, internal.recovery_orchestration.executeOrchestrationPlan, {
-      orchestrationId,
-      recoveryPlan
-    })
+    await ctx.scheduler.runAfter(
+      0,
+      internal.recovery_orchestration.executeOrchestrationPlan,
+      {
+        orchestrationId,
+        recoveryPlan,
+      }
+    )
 
     return {
       orchestrationId,
@@ -410,10 +414,13 @@ async function executeParallelServiceRecovery(
 ) {
   const recoveryPromises = services.map(async service => {
     try {
-      const workflowResult = await ctx.runMutation(internal.service_recovery.initiateRecoveryWorkflow, {
-        service,
-        autoRecovery: true,
-      })
+      const workflowResult = await ctx.runMutation(
+        internal.service_recovery.initiateRecoveryWorkflow,
+        {
+          service,
+          autoRecovery: true,
+        }
+      )
 
       if (workflowResult.created) {
         // Monitor workflow progress
@@ -450,10 +457,13 @@ async function executeSequentialServiceRecovery(
 ) {
   for (const service of services) {
     try {
-      const workflowResult = await ctx.runMutation(internal.service_recovery.initiateRecoveryWorkflow, {
-        service,
-        autoRecovery: true,
-      })
+      const workflowResult = await ctx.runMutation(
+        internal.service_recovery.initiateRecoveryWorkflow,
+        {
+          service,
+          autoRecovery: true,
+        }
+      )
 
       if (workflowResult.created) {
         await monitorRecoveryWorkflow(

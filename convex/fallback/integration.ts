@@ -100,7 +100,10 @@ export async function executeFallbackAnalysis(
   } = options
 
   // Get circuit breaker state for context
-  const circuitBreakerState = await getCircuitBreakerStatus(ctx, 'gemini_2_5_flash_lite')
+  const circuitBreakerState = await getCircuitBreakerStatus(
+    ctx,
+    'gemini_2_5_flash_lite'
+  )
 
   // Perform core fallback analysis
   const fallbackAnalysis = analyzeSentimentFallback(
@@ -147,7 +150,10 @@ export async function executeFallbackAnalysis(
     patternRecommendations,
     integration: {
       fallbackTrigger,
-      circuitBreakerState: circuitBreakerState.status as 'closed' | 'open' | 'half_open',
+      circuitBreakerState: circuitBreakerState.status as
+        | 'closed'
+        | 'open'
+        | 'half_open',
       qualityAssessment,
       processingTime,
       confidence: combinedConfidence,
@@ -205,7 +211,10 @@ export async function handleFallbackInPipeline(
     .filter(Boolean)
 
   // Determine fallback trigger based on context
-  const circuitBreakerState = await getCircuitBreakerStatus(ctx, 'gemini_2_5_flash_lite')
+  const circuitBreakerState = await getCircuitBreakerStatus(
+    ctx,
+    'gemini_2_5_flash_lite'
+  )
   let fallbackTrigger:
     | 'circuit_breaker_open'
     | 'retry_exhausted'
@@ -325,7 +334,10 @@ export async function shouldUseFallbackAnalysis(
   retryRecommendation?: any
 }> {
   // Get circuit breaker state
-  const circuitBreakerState = await getCircuitBreakerStatus(ctx, 'gemini_2_5_flash_lite')
+  const circuitBreakerState = await getCircuitBreakerStatus(
+    ctx,
+    'gemini_2_5_flash_lite'
+  )
 
   // Create retry context for analysis
   const mockAnalysis = {

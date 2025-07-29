@@ -7,7 +7,6 @@ import { Card, CardHeader, CardContent } from '@/components/ui/card'
 import { ProcessingProgress } from '../journal/processing-progress'
 import { AnalysisErrorHandler } from '../journal/analysis-error-handler'
 import { useMutation } from 'convex/react'
-import { AIAnalysisStatus } from '@/lib/types'
 
 interface AIProcessingSummaryProps {
   userId: Id<'users'>
@@ -119,9 +118,11 @@ export function AIProcessingSummary({ userId }: AIProcessingSummaryProps) {
                     <ProcessingProgress
                       progress={{
                         phase: 'processing',
-                        progress: analysis.queuePosition ? Math.max(0, 100 - analysis.queuePosition * 10) : 50,
+                        progress: analysis.queuePosition
+                          ? Math.max(0, 100 - analysis.queuePosition * 10)
+                          : 50,
                         eta: analysis.estimatedCompletionTime,
-                        message: `Processing... ${analysis.queuePosition ? `Position ${analysis.queuePosition} in queue` : 'In progress'}`
+                        message: `Processing... ${analysis.queuePosition ? `Position ${analysis.queuePosition} in queue` : 'In progress'}`,
                       }}
                       compact={true}
                     />

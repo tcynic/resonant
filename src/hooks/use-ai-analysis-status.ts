@@ -3,7 +3,6 @@
 import { useQuery } from 'convex/react'
 import { api } from '@/convex/_generated/api'
 import { Id } from '@/convex/_generated/dataModel'
-import { useState, useEffect } from 'react'
 
 interface AIAnalysisStatus {
   _id: Id<'aiAnalysis'>
@@ -60,29 +59,8 @@ export function useAIAnalysisStatus(
 export function useOptimizedAIStatus(
   entryId: Id<'journalEntries'>
 ): UseAIAnalysisStatusReturn {
-  const [isTabVisible, setIsTabVisible] = useState(
-    typeof document !== 'undefined'
-      ? document.visibilityState === 'visible'
-      : true
-  )
-
-  useEffect(() => {
-    if (typeof document === 'undefined') return
-
-    const handleVisibilityChange = () => {
-      setIsTabVisible(document.visibilityState === 'visible')
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    return () =>
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-  }, [])
-
-  // Reduce subscription frequency for hidden tabs
-  const analysis = useQuery(
-    api.aiAnalysis.getStatusWithQueue,
-    { entryId }
-  )
+  // TODO: Implement tab visibility optimization to reduce subscription frequency for hidden tabs
+  const analysis = useQuery(api.aiAnalysis.getStatusWithQueue, { entryId })
 
   return {
     status: analysis?.status,
@@ -118,7 +96,7 @@ export function useUserActiveProcessing(userId: Id<'users'>) {
 export function useProcessingStats(userId?: Id<'users'>) {
   const stats = useQuery(
     api.aiAnalysis.getProcessingStats,
-    userId ? { userId } : "skip"
+    userId ? { userId } : 'skip'
   )
 
   return {

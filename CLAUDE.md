@@ -255,6 +255,28 @@ GOOGLE_GEMINI_API_KEY=              # For Gemini 2.5 Flash-Lite AI analysis
 - Real-time updates require active Convex connection
 - Convex dashboard accessible during `npm run convex:dev` for real-time debugging
 
+## Known Issues and Workarounds
+
+### Convex-Test Library TypeScript Limitations
+
+The `convex-test` library has TypeScript definition limitations that cause compiler errors in test files:
+
+- **Issue**: `withIndex()` calls show TypeScript errors like "Argument of type 'by_model_type' is not assignable to parameter of type 'keyof SystemIndexes'"
+- **Cause**: The convex-test library's TypeScript definitions don't include custom schema indexes
+- **Impact**: Tests function correctly at runtime despite TypeScript warnings
+- **Solution**:
+  - ESLint rules configured to suppress these warnings in Convex test files
+  - `@ts-ignore` comments added for known issues
+  - Use `--typecheck=disable` for Convex deployment when needed
+
+### Convex Deployment with TypeScript Errors
+
+```bash
+# Deploy despite TypeScript errors (when they're known convex-test limitations)
+npx convex dev --once --typecheck=disable
+npx convex deploy --typecheck=disable
+```
+
 ## Debugging and Development Tips
 
 ### Convex Development

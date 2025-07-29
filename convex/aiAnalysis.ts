@@ -65,11 +65,15 @@ export const queueAnalysis = mutation({
     const priority =
       args.priority === 'low' ? 'normal' : args.priority || 'normal' // Convert legacy 'low' to 'normal'
 
-    await ctx.scheduler.runAfter(100, internal.scheduler.analysis_queue.enqueueAnalysis, {
-      entryId: args.entryId,
-      userId: entry.userId,
-      priority: priority as 'normal' | 'high' | 'urgent',
-    })
+    await ctx.scheduler.runAfter(
+      100,
+      internal.scheduler.analysis_queue.enqueueAnalysis,
+      {
+        entryId: args.entryId,
+        userId: entry.userId,
+        priority: priority as 'normal' | 'high' | 'urgent',
+      }
+    )
 
     return { status: 'queued', analysisId }
   },
@@ -228,11 +232,15 @@ export const reprocessStuckEntries = mutation({
 
         if (stuck.reason === 'no_analysis') {
           // Use new queue-based processing
-          await ctx.scheduler.runAfter(0, internal.scheduler.analysis_queue.enqueueAnalysis, {
-            entryId: stuck.entryId,
-            userId: entry.userId,
-            priority: 'normal',
-          })
+          await ctx.scheduler.runAfter(
+            0,
+            internal.scheduler.analysis_queue.enqueueAnalysis,
+            {
+              entryId: stuck.entryId,
+              userId: entry.userId,
+              priority: 'normal',
+            }
+          )
           reprocessed.push({ ...stuck, action: 'queued_for_analysis' })
         } else if (
           stuck.reason === 'stuck_processing' ||
@@ -247,11 +255,15 @@ export const reprocessStuckEntries = mutation({
             })
           }
           // Use queue-based reprocessing
-          await ctx.scheduler.runAfter(0, internal.scheduler.analysis_queue.enqueueAnalysis, {
-            entryId: stuck.entryId,
-            userId: entry.userId,
-            priority: 'high', // Give reprocessing higher priority
-          })
+          await ctx.scheduler.runAfter(
+            0,
+            internal.scheduler.analysis_queue.enqueueAnalysis,
+            {
+              entryId: stuck.entryId,
+              userId: entry.userId,
+              priority: 'high', // Give reprocessing higher priority
+            }
+          )
           reprocessed.push({ ...stuck, action: 'requeued_for_analysis' })
         }
       } catch (error) {
@@ -704,11 +716,15 @@ export const analyzeDirectly = mutation({
     // Use new queue-based processing with priority assessment
     const priority = args.priority || 'normal'
 
-    await ctx.scheduler.runAfter(100, internal.scheduler.analysis_queue.enqueueAnalysis, {
-      entryId: args.entryId,
-      userId: entry.userId,
-      priority: priority as 'normal' | 'high' | 'urgent',
-    })
+    await ctx.scheduler.runAfter(
+      100,
+      internal.scheduler.analysis_queue.enqueueAnalysis,
+      {
+        entryId: args.entryId,
+        userId: entry.userId,
+        priority: priority as 'normal' | 'high' | 'urgent',
+      }
+    )
 
     return { status: 'queued', analysisId }
   },

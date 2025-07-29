@@ -18,7 +18,10 @@ import { getPriorityValue, isWithinSla } from '../utils/priority_assessment'
  */
 export const getQueueDashboardPublic = query({
   handler: async (ctx): Promise<unknown> => {
-    return await ctx.runQuery(internal.scheduler.queue_metrics.getQueueDashboard, {})
+    return await ctx.runQuery(
+      internal.scheduler.queue_metrics.getQueueDashboard,
+      {}
+    )
   },
 })
 
@@ -367,12 +370,18 @@ export const exportQueueMetrics = internalQuery({
     ),
   },
   handler: async (ctx, { format = 'json' }): Promise<unknown> => {
-    const dashboard: unknown = await ctx.runQuery(internal.scheduler.queue_metrics.getQueueDashboard, {})
-    const health: unknown = await ctx.runQuery(internal.scheduler.queue_metrics.getQueueHealth, {})
+    const dashboard: unknown = await ctx.runQuery(
+      internal.scheduler.queue_metrics.getQueueDashboard,
+      {}
+    )
+    const health: unknown = await ctx.runQuery(
+      internal.scheduler.queue_metrics.getQueueHealth,
+      {}
+    )
 
     const dashboardData = dashboard as any
     const healthData = health as any
-    
+
     const metrics: Record<string, unknown> = {
       // Basic queue metrics
       queue_total_items: dashboardData.totalQueued,
@@ -443,12 +452,18 @@ export const exportQueueMetrics = internalQuery({
  */
 export const recordMetricsSnapshot = internalMutation({
   handler: async (ctx): Promise<unknown> => {
-    const dashboard: unknown = await ctx.runQuery(internal.scheduler.queue_metrics.getQueueDashboard, {})
-    const health: unknown = await ctx.runQuery(internal.scheduler.queue_metrics.getQueueHealth, {})
+    const dashboard: unknown = await ctx.runQuery(
+      internal.scheduler.queue_metrics.getQueueDashboard,
+      {}
+    )
+    const health: unknown = await ctx.runQuery(
+      internal.scheduler.queue_metrics.getQueueHealth,
+      {}
+    )
 
     const dashboardData = dashboard as any
     const healthData = health as any
-    
+
     // Store snapshot in a metrics table (would need to be added to schema)
     // For now, return the snapshot data that could be stored
     return {
@@ -852,7 +867,9 @@ function generateUserBreakdown(items: any[]) {
       ...(stats as any),
       successRate:
         (stats as any).total > 0
-          ? ((stats as any).completed / ((stats as any).completed + (stats as any).failed)) * 100
+          ? ((stats as any).completed /
+              ((stats as any).completed + (stats as any).failed)) *
+            100
           : 100,
     }))
     .sort((a, b) => b.total - a.total)

@@ -760,28 +760,37 @@ export async function getErrorContext(
     .query('errorLogs')
     .filter(q => {
       const filters = []
-      
+
       // Only add correlation ID filter if metadata exists
       if (error.metadata?.correlationId) {
-        filters.push(q.eq(q.field('metadata.correlationId'), error.metadata.correlationId))
+        filters.push(
+          q.eq(q.field('metadata.correlationId'), error.metadata.correlationId)
+        )
       }
-      
+
       // Only add fingerprint filter if fingerprint exists
       if (error.fingerprint) {
         filters.push(q.eq(q.field('fingerprint'), error.fingerprint))
       }
-      
+
       // Only add context filter if context exists
       if (error.context?.userId && error.context?.timestamp) {
-        filters.push(q.and(
-          q.eq(q.field('context.userId'), error.context.userId),
-          q.gte(q.field('context.timestamp'), error.context.timestamp - 60000), // Within 1 minute
-          q.lte(q.field('context.timestamp'), error.context.timestamp + 60000)
-        ))
+        filters.push(
+          q.and(
+            q.eq(q.field('context.userId'), error.context.userId),
+            q.gte(
+              q.field('context.timestamp'),
+              error.context.timestamp - 60000
+            ), // Within 1 minute
+            q.lte(q.field('context.timestamp'), error.context.timestamp + 60000)
+          )
+        )
       }
-      
+
       // If no filters, return a filter that matches nothing (use impossible creation time)
-      return filters.length > 0 ? q.or(...filters) : q.eq(q.field('_creationTime'), -1)
+      return filters.length > 0
+        ? q.or(...filters)
+        : q.eq(q.field('_creationTime'), -1)
     })
     .collect()
 

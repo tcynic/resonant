@@ -342,11 +342,15 @@ export const requestFallbackUpgrade = mutation({
 
     // Enqueue AI analysis with appropriate priority
     const priority = args.priority || 'normal'
-    await ctx.scheduler.runAfter(0, internal.scheduler.analysis_queue.enqueueAnalysis, {
-      entryId: fallbackAnalysis.entryId,
-      userId: fallbackAnalysis.userId,
-      priority,
-    })
+    await ctx.scheduler.runAfter(
+      0,
+      internal.scheduler.analysis_queue.enqueueAnalysis,
+      {
+        entryId: fallbackAnalysis.entryId,
+        userId: fallbackAnalysis.userId,
+        priority,
+      }
+    )
 
     return {
       success: true,
@@ -390,7 +394,8 @@ export const getFallbackUpgradeQueue = query({
         entryId: analysis.entryId,
         requestedAt: analysis.upgradeRequestedAt,
         reason: analysis.upgradeReason,
-        estimatedCompletion: (analysis.upgradeRequestedAt || Date.now()) + 120000, // 2 minutes default
+        estimatedCompletion:
+          (analysis.upgradeRequestedAt || Date.now()) + 120000, // 2 minutes default
       })),
       recentCompletions: recentCompletions.map(analysis => ({
         id: analysis._id,

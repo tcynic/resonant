@@ -208,10 +208,13 @@ export const triggerServiceHealthCheck = internalMutation({
       checkResult
     )
     if (shouldTriggerRecovery) {
-      await ctx.runMutation(internal.service_recovery.initiateRecoveryWorkflow, {
-        service: args.service,
-        autoRecovery: true
-      })
+      await ctx.runMutation(
+        internal.service_recovery.initiateRecoveryWorkflow,
+        {
+          service: args.service,
+          autoRecovery: true,
+        }
+      )
     }
 
     // Check if service has recovered
@@ -222,7 +225,7 @@ export const triggerServiceHealthCheck = internalMutation({
     )
     if (hasRecovered) {
       await ctx.runMutation(internal.service_recovery.markServiceRecovered, {
-        service: args.service
+        service: args.service,
       })
     }
 
@@ -650,7 +653,9 @@ async function evaluateRecoveryTrigger(
     .order('desc')
     .take(5)
 
-  const failureCount = recentChecks.filter((check: any) => !check.success).length
+  const failureCount = recentChecks.filter(
+    (check: any) => !check.success
+  ).length
   const healthCheck = DEFAULT_HEALTH_CHECKS.find(hc => hc.service === service)
 
   return failureCount >= (healthCheck?.failureThreshold || 2)

@@ -26,7 +26,7 @@ const mockUser = {
   firstName: 'John',
   lastName: 'Doe',
   fullName: 'John Doe',
-  getFullName: () => 'John Doe'
+  getFullName: () => 'John Doe',
 } as unknown as UserResource
 
 const mockUserData = {
@@ -65,7 +65,7 @@ const mockBrowserNotifications = {
 }
 
 const mockUpdateReminderSettings = Object.assign(jest.fn(), {
-  withOptimisticUpdate: jest.fn()
+  withOptimisticUpdate: jest.fn(),
 })
 
 // Wrapper component for testing
@@ -75,7 +75,11 @@ function TestWrapper({ children }: { children: React.ReactNode }) {
 
 describe('Notification System Integration', () => {
   beforeEach(() => {
-    mockUseUser.mockReturnValue({ user: mockUser, isLoaded: true, isSignedIn: true })
+    mockUseUser.mockReturnValue({
+      user: mockUser,
+      isLoaded: true,
+      isSignedIn: true,
+    })
     mockUseQuery
       .mockReturnValueOnce(mockUserData) // getUserByClerkId
       .mockReturnValueOnce({

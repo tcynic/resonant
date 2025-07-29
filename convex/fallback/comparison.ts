@@ -232,7 +232,7 @@ export async function generateFallbackQualityMetrics(
     .filter((q: any) => q.eq(q.field('analysisVersion'), 'fallback-v1.0'))
     .collect()
 
-  // Get AI analyses for comparison  
+  // Get AI analyses for comparison
   const aiAnalyses = await ctx.db
     .query('aiAnalysis')
     .filter((q: any) => q.gte(q.field('createdAt'), startTime))

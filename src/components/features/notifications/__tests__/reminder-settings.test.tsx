@@ -18,7 +18,7 @@ const mockUser = {
   firstName: 'John',
   lastName: 'Doe',
   fullName: 'John Doe',
-  getFullName: () => 'John Doe'
+  getFullName: () => 'John Doe',
 } as unknown as UserResource
 
 const mockUserData = {
@@ -54,11 +54,15 @@ const mockReminderAnalytics = {
 
 describe('ReminderSettings', () => {
   const mockUpdateReminderSettings = Object.assign(jest.fn(), {
-    withOptimisticUpdate: jest.fn()
+    withOptimisticUpdate: jest.fn(),
   })
 
   beforeEach(() => {
-    mockUseUser.mockReturnValue({ user: mockUser, isLoaded: true, isSignedIn: true })
+    mockUseUser.mockReturnValue({
+      user: mockUser,
+      isLoaded: true,
+      isSignedIn: true,
+    })
     mockUseQuery
       .mockReturnValueOnce(mockUserData) // getUserByClerkId
       .mockReturnValueOnce(mockReminderAnalytics) // getUserReminderAnalytics
@@ -285,7 +289,11 @@ describe('ReminderSettings', () => {
   })
 
   it('shows loading state when user data is not available', () => {
-    mockUseUser.mockReturnValue({ user: null, isLoaded: true, isSignedIn: false })
+    mockUseUser.mockReturnValue({
+      user: null,
+      isLoaded: true,
+      isSignedIn: false,
+    })
     mockUseQuery.mockReturnValue(null)
 
     render(<ReminderSettings />)

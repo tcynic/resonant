@@ -320,7 +320,7 @@ export const requeueAnalysis = internalMutation({
           relationshipContext: undefined,
           retryCount,
           originalError: error,
-          })
+        })
 
         return {
           status: 'fallback_processed',
@@ -337,24 +337,27 @@ export const requeueAnalysis = internalMutation({
     // Check if we should retry based on advanced strategy
     if (!retryDecision.shouldRetry) {
       // Move to dead letter queue based on strategy recommendation
-      await ctx.runMutation(internal.scheduler.queue_overflow.moveToDeadLetterQueue, {
-        analysisId,
-        reason:
-          retryDecision.escalationReason ||
-          'Retry strategy determined no retry should occur',
-        metadata: {
-          originalPriority: analysis.priority,
-          retryCount,
-          lastError: error,
-          totalProcessingTime:
-            Date.now() - (analysis.queuedAt || analysis.createdAt),
-          errorClassification: retryDecision.errorClassification,
-          retryDecision: {
-            maxRetries: retryDecision.maxRetries,
-            escalationReason: retryDecision.escalationReason,
+      await ctx.runMutation(
+        internal.scheduler.queue_overflow.moveToDeadLetterQueue,
+        {
+          analysisId,
+          reason:
+            retryDecision.escalationReason ||
+            'Retry strategy determined no retry should occur',
+          metadata: {
+            originalPriority: analysis.priority,
+            retryCount,
+            lastError: error,
+            totalProcessingTime:
+              Date.now() - (analysis.queuedAt || analysis.createdAt),
+            errorClassification: retryDecision.errorClassification,
+            retryDecision: {
+              maxRetries: retryDecision.maxRetries,
+              escalationReason: retryDecision.escalationReason,
+            },
           },
-        },
-      })
+        }
+      )
 
       return {
         status: 'moved_to_dead_letter_queue',
@@ -375,7 +378,14 @@ export const requeueAnalysis = internalMutation({
       processingAttempts: retryCount,
       lastErrorMessage: `${error} (error_type: ${errorClassification?.category || retryDecision.errorClassification.type}, circuit_state: ${circuitBreakerState?.state || (currentCircuitStatus.isHealthy ? 'closed' : 'open')})`,
       lastErrorType:
-        (errorClassification?.category === 'validation' || errorClassification?.category === 'network' || errorClassification?.category === 'rate_limit' || errorClassification?.category === 'timeout' || errorClassification?.category === 'service_error' || errorClassification?.category === 'authentication' ? errorClassification.category : undefined),
+        errorClassification?.category === 'validation' ||
+        errorClassification?.category === 'network' ||
+        errorClassification?.category === 'rate_limit' ||
+        errorClassification?.category === 'timeout' ||
+        errorClassification?.category === 'service_error' ||
+        errorClassification?.category === 'authentication'
+          ? errorClassification.category
+          : undefined,
       processingStartedAt: undefined, // Reset processing started time
       priority: upgradedPriority,
       queuedAt: Date.now(), // Reset queue time for proper aging
@@ -660,8 +670,8 @@ export const getQueueStatus = query({
             (recentCompletions.filter(c => c.fallbackUsed).length /
               Math.max(
                 1,
-                recentFailures.filter(f => (f as any).autoRequeueEligible).length +
-                  recentCompletions.filter(c => c.fallbackUsed).length
+                recentFailures.filter(f => (f as any).autoRequeueEligible)
+                  .length + recentCompletions.filter(c => c.fallbackUsed).length
               )) *
             100,
         },
@@ -835,7 +845,10 @@ export const checkQueueCapacityInternal: any = internalQuery({
   },
   handler: async (ctx: any, args: any): Promise<any> => {
     // Call the function from queue-overflow module via scheduler
-    return await ctx.runQuery(internal.scheduler.queue_overflow.checkQueueCapacity, args)
+    return await ctx.runQuery(
+      internal.scheduler.queue_overflow.checkQueueCapacity,
+      args
+    )
   },
 })
 

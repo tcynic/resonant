@@ -167,6 +167,15 @@ export default defineSchema({
     processingAttempts: v.optional(v.number()), // For HTTP Actions retry tracking
     lastErrorMessage: v.optional(v.string()), // For debugging HTTP Action failures
     httpActionId: v.optional(v.string()), // For request tracking
+
+    // Enhanced Processing Metadata (Story AI-Migration.5)
+    modelType: v.optional(v.string()), // 'gemini_2_5_flash_lite', 'gpt_4', etc.
+    modelVersion: v.optional(v.string()), // Specific model version tracking
+    requestTokens: v.optional(v.number()), // Input tokens for detailed usage
+    responseTokens: v.optional(v.number()), // Output tokens for detailed usage
+    cachingUsed: v.optional(v.boolean()), // Whether response was cached
+    batchProcessed: v.optional(v.boolean()), // Whether part of batch processing
+    regionProcessed: v.optional(v.string()), // Geographic region for processing
     // Queue Management Fields
     priority: v.optional(
       v.union(v.literal('normal'), v.literal('high'), v.literal('urgent'))
@@ -299,7 +308,20 @@ export default defineSchema({
     .index('by_status_priority', ['status', 'priority'])
     .index('by_queue_position', ['queuePosition'])
     .index('by_processing_started', ['processingStartedAt'])
-    .index('by_user_status', ['userId', 'status']),
+    .index('by_user_status', ['userId', 'status'])
+    // Enhanced indexes for new metadata fields (Story AI-Migration.5)
+    .index('by_model_type', ['modelType'])
+    .index('by_cost_date', ['apiCost', 'createdAt'])
+    .index('by_user_model_date', ['userId', 'modelType', 'createdAt'])
+    .index('by_processing_time', ['processingTime'])
+    .index('by_token_usage', ['tokensUsed'])
+    .index('by_model_type_cost', ['modelType', 'apiCost'])
+    .index('by_user_cost_date', ['userId', 'apiCost', 'createdAt'])
+    .index('by_region_model_time', [
+      'regionProcessed',
+      'modelType',
+      'createdAt',
+    ]),
 
   // Relationship Health Scores - Enhanced for comprehensive tracking
   healthScores: defineTable({
@@ -1115,4 +1137,133 @@ export default defineSchema({
     .index('by_type', ['type'])
     .index('by_created_at', ['createdAt'])
     .index('by_read', ['read']),
+
+  // System Monitoring Tables (Story AI-Migration.5)
+
+  // System-wide application logs (new table)
+  systemLogs: defineTable({
+    level: v.union(
+      v.literal('debug'),
+      v.literal('info'),
+      v.literal('warn'),
+      v.literal('error')
+    ),
+    message: v.string(),
+    service: v.string(), // Service that generated the log
+    metadata: v.optional(v.any()), // Additional context data
+    timestamp: v.number(),
+    userId: v.optional(v.id('users')), // Associated user if applicable
+    sessionId: v.optional(v.string()), // Session tracking
+    requestId: v.optional(v.string()), // Request correlation ID
+    environment: v.optional(
+      v.union(
+        v.literal('development'),
+        v.literal('staging'),
+        v.literal('production')
+      )
+    ),
+  })
+    .index('by_level_timestamp', ['level', 'timestamp'])
+    .index('by_service_timestamp', ['service', 'timestamp'])
+    .index('by_user_timestamp', ['userId', 'timestamp'])
+    .index('by_timestamp', ['timestamp'])
+    .index('by_environment_level_timestamp', [
+      'environment',
+      'level',
+      'timestamp',
+    ]),
+
+  // API usage tracking for cost monitoring (new table)
+  apiUsage: defineTable({
+    service: v.string(), // 'gemini_2_5_flash_lite', 'convex', 'clerk', etc.
+    endpoint: v.string(), // API endpoint called
+    method: v.string(), // HTTP method or operation type
+    userId: v.optional(v.id('users')), // User making the request
+    requestCount: v.number(), // Number of requests in this time window
+    tokenUsage: v.optional(v.number()), // Total tokens used
+    cost: v.optional(v.number()), // Cost in USD
+    timeWindow: v.number(), // Hour bucket for aggregation (Unix timestamp)
+    avgResponseTime: v.number(), // Average response time in ms
+    errorCount: v.number(), // Number of failed requests
+    successCount: v.number(), // Number of successful requests
+    maxResponseTime: v.optional(v.number()), // Peak response time
+    minResponseTime: v.optional(v.number()), // Fastest response time
+    dataTransferBytes: v.optional(v.number()), // Bytes transferred
+  })
+    .index('by_service_time', ['service', 'timeWindow'])
+    .index('by_user_service_time', ['userId', 'service', 'timeWindow'])
+    .index('by_cost', ['cost'])
+    .index('by_error_rate', ['errorCount', 'successCount'])
+    .index('by_time_window', ['timeWindow'])
+    .index('by_service_cost_time', ['service', 'cost', 'timeWindow']),
+
+  // System performance tracking (new table)
+  performanceMetrics: defineTable({
+    metricType: v.union(
+      v.literal('response_time'),
+      v.literal('throughput'),
+      v.literal('error_rate'),
+      v.literal('memory_usage'),
+      v.literal('cpu_usage'),
+      v.literal('database_connections'),
+      v.literal('queue_depth')
+    ),
+    service: v.string(), // Service being measured
+    value: v.number(), // Metric value
+    unit: v.string(), // 'ms', 'requests/sec', 'percentage', 'bytes', etc.
+    timestamp: v.number(),
+    timeWindow: v.number(), // Aggregation window (5min, 15min, 1hour, etc.)
+    tags: v.optional(v.array(v.string())), // Additional categorization
+    metadata: v.optional(
+      v.object({
+        region: v.optional(v.string()),
+        version: v.optional(v.string()),
+        environment: v.optional(v.string()),
+        threshold: v.optional(v.number()), // Performance threshold if applicable
+        anomaly: v.optional(v.boolean()), // Whether this is an anomalous reading
+        recordsScanned: v.optional(v.number()), // For database query efficiency
+        recordsReturned: v.optional(v.number()), // For database query efficiency
+      })
+    ),
+  })
+    .index('by_service_type_time', ['service', 'metricType', 'timestamp'])
+    .index('by_type_timestamp', ['metricType', 'timestamp'])
+    .index('by_time_window', ['timeWindow'])
+    .index('by_service_timestamp', ['service', 'timestamp']),
+
+  // Data change tracking (new table)
+  auditTrail: defineTable({
+    entityType: v.string(), // 'users', 'journalEntries', 'aiAnalysis', etc.
+    entityId: v.string(), // ID of the changed entity
+    action: v.union(
+      v.literal('create'),
+      v.literal('update'),
+      v.literal('delete'),
+      v.literal('read') // For sensitive data access tracking
+    ),
+    userId: v.optional(v.id('users')), // User who made the change
+    sessionId: v.optional(v.string()), // Session tracking
+    timestamp: v.number(),
+    changes: v.optional(
+      v.object({
+        before: v.optional(v.any()), // Previous state (for updates/deletes)
+        after: v.optional(v.any()), // New state (for creates/updates)
+        fieldChanges: v.optional(v.array(v.string())), // List of changed fields
+      })
+    ),
+    metadata: v.optional(
+      v.object({
+        reason: v.optional(v.string()), // Reason for the change
+        source: v.optional(v.string()), // 'web', 'api', 'scheduled_job', etc.
+        ipAddress: v.optional(v.string()), // Client IP if available
+        userAgent: v.optional(v.string()), // Client user agent
+        requestId: v.optional(v.string()), // Request correlation ID
+      })
+    ),
+  })
+    .index('by_entity_type_id', ['entityType', 'entityId'])
+    .index('by_user_timestamp', ['userId', 'timestamp'])
+    .index('by_action_timestamp', ['action', 'timestamp'])
+    .index('by_timestamp', ['timestamp'])
+    .index('by_entity_type_timestamp', ['entityType', 'timestamp']),
 })

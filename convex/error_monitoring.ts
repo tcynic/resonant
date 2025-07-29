@@ -248,7 +248,7 @@ export const getErrorDetails = query({
           category: error.classification.category,
           message: error.errorMessage,
           classification: error.classification,
-          context: error.context
+          context: error.context,
         }),
         recurrencePattern: await analyzeRecurrencePattern(
           ctx,
@@ -349,7 +349,7 @@ export const getMonitoringAlertHistory = query({
 
     if (args.timeRange) {
       query = query.filter(
-        (q) =>
+        q =>
           q.gte(q.field('triggeredAt'), args.timeRange!.start) &&
           q.lte(q.field('triggeredAt'), args.timeRange!.end)
       )
@@ -524,15 +524,17 @@ async function getAffectedUsersCount(
     )
     .collect()
 
-  const uniqueUsers = new Set(errors.map((e: any) => e.context.userId).filter(Boolean))
+  const uniqueUsers = new Set(
+    errors.map((e: any) => e.context.userId).filter(Boolean)
+  )
   return uniqueUsers.size
 }
 
 function calculateBusinessImpact(error: {
   category: string
   message: string
-  classification?: {businessImpact?: string}
-  context?: {endpoint?: string, userId?: string}
+  classification?: { businessImpact?: string }
+  context?: { endpoint?: string; userId?: string }
 }): {
   severity: string
   estimatedRevenueLoss: number
@@ -584,10 +586,13 @@ async function analyzeRecurrencePattern(
   }
 
   const timestamps = errors.map((e: any) => e.context.timestamp).sort()
-  const intervals = timestamps.slice(1).map((t: any, i: any) => t - timestamps[i])
+  const intervals = timestamps
+    .slice(1)
+    .map((t: any, i: any) => t - timestamps[i])
 
   const avgInterval =
-    intervals.reduce((sum: number, interval: number) => sum + interval, 0) / intervals.length
+    intervals.reduce((sum: number, interval: number) => sum + interval, 0) /
+    intervals.length
 
   let frequency = 'irregular'
   if (avgInterval < 60000)

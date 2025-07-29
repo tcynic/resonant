@@ -609,26 +609,29 @@ export const analyzeJournalEntry = httpAction(async (ctx, request) => {
       if (isQueuedRequest) {
         // For queued requests, use intelligent queue-aware retry logic
         // Enhanced requeuing with comprehensive error metadata
-        await ctx.runMutation(internal.scheduler.analysis_queue.requeueAnalysis, {
-          analysisId,
-          retryCount: retryCount + 1,
-          priority: retryStrategy.newPriority || priority,
-          error: errorMessage,
-          isTransientError: errorClassification.retryable,
-          delayMs: retryDelay,
-          errorClassification: {
-            category: errorClassification.category,
-            retryable: errorClassification.retryable,
-            circuitBreakerImpact: errorClassification.circuitBreakerImpact,
-            fallbackEligible: errorClassification.fallbackEligible,
-          },
-          circuitBreakerState: {
-            service: 'gemini_2_5_flash_lite',
-            state: !currentCircuitStatus.isHealthy ? 'open' : 'closed',
-            failureCount: currentCircuitStatus.metrics.errorCount24h,
-            lastReset: currentCircuitStatus.metrics.lastFailureTime,
-          },
-        })
+        await ctx.runMutation(
+          internal.scheduler.analysis_queue.requeueAnalysis,
+          {
+            analysisId,
+            retryCount: retryCount + 1,
+            priority: retryStrategy.newPriority || priority,
+            error: errorMessage,
+            isTransientError: errorClassification.retryable,
+            delayMs: retryDelay,
+            errorClassification: {
+              category: errorClassification.category,
+              retryable: errorClassification.retryable,
+              circuitBreakerImpact: errorClassification.circuitBreakerImpact,
+              fallbackEligible: errorClassification.fallbackEligible,
+            },
+            circuitBreakerState: {
+              service: 'gemini_2_5_flash_lite',
+              state: !currentCircuitStatus.isHealthy ? 'open' : 'closed',
+              failureCount: currentCircuitStatus.metrics.errorCount24h,
+              lastReset: currentCircuitStatus.metrics.lastFailureTime,
+            },
+          }
+        )
       } else {
         // For direct requests, use enhanced retry logic with circuit breaker awareness
         if (retryStrategy.shouldRetry && currentCircuitStatus.isHealthy) {
@@ -702,22 +705,25 @@ export const analyzeJournalEntry = httpAction(async (ctx, request) => {
 
       if (isQueuedRequest) {
         // For queued requests, move to dead letter queue with comprehensive metadata
-        await ctx.runMutation(internal.scheduler.queue_overflow.moveToDeadLetterQueue, {
-          analysisId,
-          reason: finalFailureReason,
-          metadata: {
-            originalPriority: priority,
-            retryCount: retryCount + 1,
-            lastError: errorMessage,
-            errorClassification: {
-              type: errorClassification.category,
-              isRecoverable: errorClassification.retryable,
-              shouldTripCircuit: errorClassification.circuitBreakerImpact,
-              isServiceError: errorClassification.fallbackEligible,
+        await ctx.runMutation(
+          internal.scheduler.queue_overflow.moveToDeadLetterQueue,
+          {
+            analysisId,
+            reason: finalFailureReason,
+            metadata: {
+              originalPriority: priority,
+              retryCount: retryCount + 1,
+              lastError: errorMessage,
+              errorClassification: {
+                type: errorClassification.category,
+                isRecoverable: errorClassification.retryable,
+                shouldTripCircuit: errorClassification.circuitBreakerImpact,
+                isServiceError: errorClassification.fallbackEligible,
+              },
+              totalProcessingTime: Date.now() - startTime,
             },
-            totalProcessingTime: Date.now() - startTime,
-          },
-        })
+          }
+        )
       } else {
         // For direct requests, use enhanced failure handling
         await ctx.runMutation(internal.aiAnalysis.markFailed, {
