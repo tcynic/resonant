@@ -1,10 +1,6 @@
 {
   "version": 2,
   "framework": "nextjs",
-  "buildCommand": "npm run vercel-build",
-  "outputDirectory": ".next",
-  "installCommand": "npm ci",
-  "devCommand": "npm run dev",
   "regions": ["iad1"],
   "functions": {
     "app/api/**/*.{js,ts}": {
