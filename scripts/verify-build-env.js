@@ -10,16 +10,24 @@ console.log('🔍 Verifying build-time environment variables...\n')
 // Check for NEXT_PUBLIC_CONVEX_URL
 const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
 console.log('Environment variables:')
-console.log(`  NEXT_PUBLIC_CONVEX_URL: ${convexUrl ? '✅ ' + convexUrl : '❌ NOT SET'}`)
+console.log(
+  `  NEXT_PUBLIC_CONVEX_URL: ${convexUrl ? '✅ ' + convexUrl : '❌ NOT SET'}`
+)
 
 // Check other critical env vars
 const clerkPublishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 const clerkSecretKey = process.env.CLERK_SECRET_KEY
 const geminiApiKey = process.env.GOOGLE_GEMINI_API_KEY
 
-console.log(`  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${clerkPublishableKey ? '✅ ' + clerkPublishableKey.substring(0, 10) + '...' : '❌ NOT SET'}`)
-console.log(`  CLERK_SECRET_KEY: ${clerkSecretKey ? '✅ ' + clerkSecretKey.substring(0, 10) + '...' : '❌ NOT SET'}`)
-console.log(`  GOOGLE_GEMINI_API_KEY: ${geminiApiKey ? '✅ ' + geminiApiKey.substring(0, 10) + '...' : '❌ NOT SET'}`)
+console.log(
+  `  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${clerkPublishableKey ? '✅ ' + clerkPublishableKey.substring(0, 10) + '...' : '❌ NOT SET'}`
+)
+console.log(
+  `  CLERK_SECRET_KEY: ${clerkSecretKey ? '✅ ' + clerkSecretKey.substring(0, 10) + '...' : '❌ NOT SET'}`
+)
+console.log(
+  `  GOOGLE_GEMINI_API_KEY: ${geminiApiKey ? '✅ ' + geminiApiKey.substring(0, 10) + '...' : '❌ NOT SET'}`
+)
 
 console.log('\n📊 Build environment info:')
 console.log(`  NODE_ENV: ${process.env.NODE_ENV}`)
@@ -32,7 +40,9 @@ if (!convexUrl) {
   console.error('\n❌ CRITICAL ERROR: NEXT_PUBLIC_CONVEX_URL is not set!')
   console.error('This will cause the application to fail at runtime.')
   console.error('\nTo fix this:')
-  console.error('1. In Vercel Dashboard: Go to Project Settings > Environment Variables')
+  console.error(
+    '1. In Vercel Dashboard: Go to Project Settings > Environment Variables'
+  )
   console.error('2. Add NEXT_PUBLIC_CONVEX_URL with your production Convex URL')
   console.error('3. Redeploy to rebuild with the environment variable')
   process.exit(1)

@@ -427,7 +427,9 @@ export const getActiveAlerts = query({
     }
 
     const orderedQuery = query.order('desc')
-    const limitedQuery = args.limit ? orderedQuery.take(args.limit) : orderedQuery
+    const limitedQuery = args.limit
+      ? orderedQuery.take(args.limit)
+      : orderedQuery
 
     const alerts = await (limitedQuery as any).collect()
 

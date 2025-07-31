@@ -32,7 +32,9 @@ export const legacyCleanupMigration = mutation({
           }
 
           // Convert legacy status to new format
-          const convertLegacyStatus = (status: string): 'processing' | 'completed' | 'failed' => {
+          const convertLegacyStatus = (
+            status: string
+          ): 'processing' | 'completed' | 'failed' => {
             switch (status) {
               case 'completed':
                 return 'completed'

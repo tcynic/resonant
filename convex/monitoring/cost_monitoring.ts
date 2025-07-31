@@ -391,7 +391,8 @@ export const updateBudgetTracking = internalMutation({
     }
     const category = args.costCategory || 'other'
     if (category in costBreakdown) {
-      costBreakdown[category as keyof typeof costBreakdown] += args.additionalCost
+      costBreakdown[category as keyof typeof costBreakdown] +=
+        args.additionalCost
     }
 
     // Calculate new burn rate

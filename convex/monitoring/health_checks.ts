@@ -956,7 +956,12 @@ export const processHealthCheckAlerts = internalMutation({
             notificationsSent: [],
             conditions: {
               threshold: result.status === 'unhealthy' ? 1.0 : 0.5,
-              actualValue: result.status === 'unhealthy' ? 2.0 : result.status === 'degraded' ? 1.0 : 0.0,
+              actualValue:
+                result.status === 'unhealthy'
+                  ? 2.0
+                  : result.status === 'degraded'
+                    ? 1.0
+                    : 0.0,
               timeWindow: 'current',
               service: result.service,
             },

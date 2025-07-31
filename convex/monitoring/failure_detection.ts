@@ -304,7 +304,9 @@ async function detectPerformanceDegradation(
     if (serviceMetrics.length < 5) continue
 
     // Sort by timestamp
-    const sortedMetrics = serviceMetrics.sort((a, b) => a.timestamp - b.timestamp)
+    const sortedMetrics = serviceMetrics.sort(
+      (a, b) => a.timestamp - b.timestamp
+    )
     const recentMetrics = sortedMetrics.slice(-3) // Last 3 data points
     const baselineMetrics = sortedMetrics.slice(0, -3) // All except last 3
 
@@ -736,7 +738,8 @@ export const triggerFailureAlert = internalMutation({
       notificationsSent: [],
       conditions: {
         threshold: 1.0, // Default threshold for failure detection
-        actualValue: args.severity === 'critical' ? 3 : args.severity === 'high' ? 2 : 1,
+        actualValue:
+          args.severity === 'critical' ? 3 : args.severity === 'high' ? 2 : 1,
         timeWindow: '30m',
         service: args.affectedServices.join(','),
       },

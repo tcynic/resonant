@@ -193,14 +193,14 @@ export async function handleFallbackInPipeline(
   if (!entry) {
     throw new Error('Journal entry not found for fallback analysis')
   }
-  
+
   // Get relationship name if available
   let relationshipName: string | null = null
   if (entry.relationshipId) {
     const relationship = await ctx.db.get(entry.relationshipId)
     relationshipName = relationship?.name || relationship?.initials || null
   }
-  
+
   const journalEntry = {
     content: entry.content,
     mood: entry.mood,
@@ -261,20 +261,24 @@ export async function handleFallbackInPipeline(
     if (analysisRequest.analysisId) {
       // Update existing analysis record
       // @ts-ignore - TypeScript compiler limitation with Convex internal API types
-      await ctx.runMutation(internal.aiAnalysis.completeFallbackAnalysis as any, {
-        analysisId: analysisRequest.analysisId,
-        results: fallbackResults.standardizedResults,
-        fallbackMetadata: {
-          trigger: fallbackTrigger,
-          qualityScore:
-            fallbackResults.integration.qualityAssessment.qualityScore,
-          confidence: fallbackResults.integration.confidence,
-          processingTime: fallbackResults.integration.processingTime,
-          patternInsights: fallbackResults.patternAnalysis.relationshipInsights,
-          recommendations:
-            fallbackResults.patternRecommendations.actionableInsights,
-        },
-      })
+      await ctx.runMutation(
+        internal.aiAnalysis.completeFallbackAnalysis as any,
+        {
+          analysisId: analysisRequest.analysisId,
+          results: fallbackResults.standardizedResults,
+          fallbackMetadata: {
+            trigger: fallbackTrigger,
+            qualityScore:
+              fallbackResults.integration.qualityAssessment.qualityScore,
+            confidence: fallbackResults.integration.confidence,
+            processingTime: fallbackResults.integration.processingTime,
+            patternInsights:
+              fallbackResults.patternAnalysis.relationshipInsights,
+            recommendations:
+              fallbackResults.patternRecommendations.actionableInsights,
+          },
+        }
+      )
       analysisId = analysisRequest.analysisId
     } else {
       // Create new analysis record

@@ -144,7 +144,10 @@ export function HealthCheckDashboard() {
   // Group services by type for better organization
   const servicesByType =
     systemHealth.serviceDetails?.reduce(
-      (acc: any, service: any) => {
+      (
+        acc: Record<string, unknown[]>,
+        service: { serviceType: string; [key: string]: unknown }
+      ) => {
         if (!acc[service.serviceType]) {
           acc[service.serviceType] = []
         }
@@ -182,10 +185,12 @@ export function HealthCheckDashboard() {
             onChange={e => setSelectedService(e.target.value)}
             options={[
               { value: 'all', label: 'All Services' },
-              ...(systemHealth.serviceDetails?.map((service: any) => ({
-                value: service.service,
-                label: service.service,
-              })) || []),
+              ...(systemHealth.serviceDetails?.map(
+                (service: { service: string; [key: string]: unknown }) => ({
+                  value: service.service,
+                  label: service.service,
+                })
+              ) || []),
             ]}
             className="w-40"
           />
@@ -288,7 +293,7 @@ export function HealthCheckDashboard() {
         {/* Services Tab */}
         <TabsContent value="services" className="space-y-6">
           {Object.entries(servicesByType).map(
-            ([serviceType, services]: [string, any]) => (
+            ([serviceType, services]: [string, unknown[]]) => (
               <Card key={serviceType}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -391,18 +396,24 @@ export function HealthCheckDashboard() {
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart
-                        data={healthHistory.results.map((result: any) => ({
-                          timestamp: result.checkedAt,
-                          healthScore:
-                            result.status === 'healthy'
-                              ? 100
-                              : result.status === 'degraded'
-                                ? 60
-                                : result.status === 'unhealthy'
-                                  ? 20
-                                  : 50,
-                          responseTime: result.responseTime,
-                        }))}
+                        data={healthHistory.results.map(
+                          (result: {
+                            checkedAt: string
+                            status: string
+                            [key: string]: unknown
+                          }) => ({
+                            timestamp: result.checkedAt,
+                            healthScore:
+                              result.status === 'healthy'
+                                ? 100
+                                : result.status === 'degraded'
+                                  ? 60
+                                  : result.status === 'unhealthy'
+                                    ? 20
+                                    : 50,
+                            responseTime: result.responseTime,
+                          })
+                        )}
                       >
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis
@@ -443,42 +454,53 @@ export function HealthCheckDashboard() {
                       {healthHistory.results
                         .slice(-20)
                         .reverse()
-                        .map((result: any, index: number) => {
-                          const StatusIcon =
-                            STATUS_ICONS[result.status as HealthStatus]
-                          return (
-                            <div
-                              key={index}
-                              className="flex items-center justify-between p-2 border rounded"
-                            >
-                              <div className="flex items-center gap-3">
-                                <StatusIcon
-                                  className={`w-4 h-4 ${
-                                    result.status === 'healthy'
-                                      ? 'text-green-500'
-                                      : result.status === 'degraded'
-                                        ? 'text-yellow-500'
-                                        : result.status === 'unhealthy'
-                                          ? 'text-red-500'
-                                          : 'text-gray-500'
-                                  }`}
-                                />
-                                <div>
-                                  <div className="font-medium">
-                                    {result.service}
-                                  </div>
-                                  <div className="text-sm text-gray-600">
-                                    {result.message}
+                        .map(
+                          (
+                            result: {
+                              status: string
+                              checkedAt: string
+                              [key: string]: unknown
+                            },
+                            index: number
+                          ) => {
+                            const StatusIcon =
+                              STATUS_ICONS[result.status as HealthStatus]
+                            return (
+                              <div
+                                key={index}
+                                className="flex items-center justify-between p-2 border rounded"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <StatusIcon
+                                    className={`w-4 h-4 ${
+                                      result.status === 'healthy'
+                                        ? 'text-green-500'
+                                        : result.status === 'degraded'
+                                          ? 'text-yellow-500'
+                                          : result.status === 'unhealthy'
+                                            ? 'text-red-500'
+                                            : 'text-gray-500'
+                                    }`}
+                                  />
+                                  <div>
+                                    <div className="font-medium">
+                                      {result.service}
+                                    </div>
+                                    <div className="text-sm text-gray-600">
+                                      {result.message}
+                                    </div>
                                   </div>
                                 </div>
+                                <div className="text-right text-sm text-gray-500">
+                                  <div>
+                                    {formatLastChecked(result.checkedAt)}
+                                  </div>
+                                  <div>{result.responseTime}ms</div>
+                                </div>
                               </div>
-                              <div className="text-right text-sm text-gray-500">
-                                <div>{formatLastChecked(result.checkedAt)}</div>
-                                <div>{result.responseTime}ms</div>
-                              </div>
-                            </div>
-                          )
-                        })}
+                            )
+                          }
+                        )}
                     </div>
                   </div>
                 </div>

@@ -1,11 +1,13 @@
 # Build Environment Variable Verification Guide
 
 ## Issue Summary
+
 The production deployment is failing because `NEXT_PUBLIC_CONVEX_URL` is not available at build time, even though it may be set in the Vercel dashboard.
 
 ## Root Cause Analysis
 
 Your `convex.ts` file has this logic:
+
 ```typescript
 const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
 
@@ -18,6 +20,7 @@ if (!convexUrl && typeof window !== 'undefined') {
 ```
 
 This error is being thrown at **runtime** (client-side), which means:
+
 1. The build completed successfully (the variable isn't required at build time)
 2. The browser is trying to initialize the Convex client
 3. The environment variable is not available in the browser
@@ -25,6 +28,7 @@ This error is being thrown at **runtime** (client-side), which means:
 ## Verification Steps
 
 ### Step 1: Test Local Environment
+
 ```bash
 npm run test:build-env
 ```
@@ -62,18 +66,21 @@ npm run test:build-env
 ## Fix Steps
 
 ### Option 1: Re-add Environment Variable
+
 1. Delete the existing `NEXT_PUBLIC_CONVEX_URL` variable in Vercel
 2. Add it again with the correct value: `https://modest-warbler-488.convex.cloud`
 3. Ensure it's checked for **Production** environment
 4. Trigger a new deployment
 
 ### Option 2: Manual Deployment Trigger
+
 1. Go to Vercel Dashboard → Your Project → Deployments
 2. Click "..." menu on latest deployment
 3. Click "Redeploy"
 4. Select "Use existing Build Cache" = **NO** (important!)
 
 ### Option 3: Force Deployment via CLI
+
 ```bash
 # Install Vercel CLI if not already installed
 npm i -g vercel
@@ -88,6 +95,7 @@ vercel --prod --force
 
 1. **Check build logs** for the environment verification output
 2. **Test the live site** with Playwright MCP:
+
    ```bash
    # In Claude Code, run:
    await mcp__playwright__browser_navigate({ url: 'https://becomeresonant.app' })

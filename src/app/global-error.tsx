@@ -38,7 +38,8 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
                 Application Error
               </h1>
               <p className="mt-2 text-sm text-gray-600">
-                A critical error occurred. Please refresh the page or contact support if the problem persists.
+                A critical error occurred. Please refresh the page or contact
+                support if the problem persists.
               </p>
               {process.env.NODE_ENV === 'development' && (
                 <details className="mt-4 text-left">
@@ -59,7 +60,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
                   Try again
                 </button>
                 <button
-                  onClick={() => window.location.href = '/'}
+                  onClick={() => (window.location.href = '/')}
                   className="w-full px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
                 >
                   Go to homepage

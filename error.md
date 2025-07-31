@@ -136,6 +136,7 @@ The custom build process addresses all the TypeScript validation issues that wer
 ```
 
 This uses the custom build script that:
+
 - Handles Convex stub files properly
 - Uses production-optimized TypeScript configuration
 - Provides better error handling and logging
@@ -154,11 +155,13 @@ This uses the custom build script that:
 To deploy to Vercel with the fixed configuration:
 
 1. **Verify local build validation**:
+
    ```bash
    npm run validate:vercel
    ```
 
 2. **Test build process locally**:
+
    ```bash
    npm run vercel-build
    ```

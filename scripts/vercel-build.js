@@ -52,9 +52,12 @@ try {
 // Step 3: Install TypeScript types if needed
 console.log('📦 Ensuring TypeScript dependencies...')
 try {
-  execSync('npm install @types/node@20 @types/react@19 @types/react-dom@19 typescript@5 --no-save', {
-    stdio: 'inherit',
-  })
+  execSync(
+    'npm install @types/node@20 @types/react@19 @types/react-dom@19 typescript@5 --no-save',
+    {
+      stdio: 'inherit',
+    }
+  )
   console.log('✅ TypeScript dependencies installed')
 } catch (error) {
   console.log('⚠️  Could not install TypeScript dependencies, continuing...')

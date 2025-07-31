@@ -179,7 +179,9 @@ export function useChartPreferences() {
 
   const preferences = useQuery(
     api.insights?.getChartPreferences || null,
-    user?.id && api.insights?.getChartPreferences ? { userId: user.id as Id<'users'> } : 'skip'
+    user?.id && api.insights?.getChartPreferences
+      ? { userId: user.id as Id<'users'> }
+      : 'skip'
   )
 
   const isLoading = preferences === undefined

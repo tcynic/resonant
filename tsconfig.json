@@ -37,7 +37,7 @@
     "convex/_generated/**/*.js"
   ],
   "exclude": [
-    "node_modules", 
+    "node_modules",
     ".next",
     "convex/**/*.ts",
     "!convex/_generated/**/*.ts",

@@ -313,179 +313,191 @@ export function FailureAnalysisDashboard() {
             </Card>
           ) : (
             <div className="space-y-4">
-              {activeFailures.map((failure: any) => {
-                const PatternIcon =
-                  PATTERN_ICONS[failure.pattern as FailurePattern]
-                const StatusIcon = STATUS_ICONS[failure.status as FailureStatus]
+              {activeFailures.map(
+                (failure: {
+                  _id: string
+                  pattern: string
+                  status: string
+                  [key: string]: unknown
+                }) => {
+                  const PatternIcon =
+                    PATTERN_ICONS[failure.pattern as FailurePattern]
+                  const StatusIcon =
+                    STATUS_ICONS[failure.status as FailureStatus]
 
-                return (
-                  <Card
-                    key={failure._id}
-                    className="border-l-4"
-                    style={{
-                      borderLeftColor:
-                        PATTERN_COLORS[failure.pattern as FailurePattern],
-                    }}
-                  >
-                    <CardContent className="p-6">
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="flex items-center gap-3">
-                          <PatternIcon
-                            className="w-6 h-6"
-                            style={{
-                              color:
-                                PATTERN_COLORS[
-                                  failure.pattern as FailurePattern
-                                ],
-                            }}
-                          />
-                          <div>
-                            <h3 className="font-semibold text-lg">
-                              {getPatternDisplayName(failure.pattern)}
-                            </h3>
-                            <p className="text-sm text-gray-600">
-                              Detected {formatDuration(failure.duration)} ago
-                            </p>
+                  return (
+                    <Card
+                      key={failure._id}
+                      className="border-l-4"
+                      style={{
+                        borderLeftColor:
+                          PATTERN_COLORS[failure.pattern as FailurePattern],
+                      }}
+                    >
+                      <CardContent className="p-6">
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="flex items-center gap-3">
+                            <PatternIcon
+                              className="w-6 h-6"
+                              style={{
+                                color:
+                                  PATTERN_COLORS[
+                                    failure.pattern as FailurePattern
+                                  ],
+                              }}
+                            />
+                            <div>
+                              <h3 className="font-semibold text-lg">
+                                {getPatternDisplayName(failure.pattern)}
+                              </h3>
+                              <p className="text-sm text-gray-600">
+                                Detected {formatDuration(failure.duration)} ago
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              variant={
+                                failure.severity === 'critical'
+                                  ? 'destructive'
+                                  : failure.severity === 'high'
+                                    ? 'secondary'
+                                    : 'default'
+                              }
+                            >
+                              {failure.severity}
+                            </Badge>
+                            <Badge
+                              variant="secondary"
+                              className="flex items-center gap-1"
+                            >
+                              <StatusIcon className="w-3 h-3" />
+                              {failure.status}
+                            </Badge>
+                            <Badge variant="secondary">
+                              {Math.round(failure.confidence * 100)}% confidence
+                            </Badge>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
-                          <Badge
-                            variant={
-                              failure.severity === 'critical'
-                                ? 'destructive'
-                                : failure.severity === 'high'
-                                  ? 'secondary'
-                                  : 'default'
-                            }
-                          >
-                            {failure.severity}
-                          </Badge>
-                          <Badge
-                            variant="secondary"
-                            className="flex items-center gap-1"
-                          >
-                            <StatusIcon className="w-3 h-3" />
-                            {failure.status}
-                          </Badge>
-                          <Badge variant="secondary">
-                            {Math.round(failure.confidence * 100)}% confidence
-                          </Badge>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Root Cause Analysis */}
-                        <div>
-                          <h4 className="font-semibold mb-2 flex items-center gap-2">
-                            <Target className="w-4 h-4" />
-                            Root Cause Analysis
-                          </h4>
-                          <div className="space-y-2">
-                            <p className="text-sm font-medium text-gray-800">
-                              {failure.rootCauseAnalysis.primaryCause}
-                            </p>
-                            <div className="text-sm text-gray-600">
-                              <p className="font-medium">
-                                Contributing Factors:
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {/* Root Cause Analysis */}
+                          <div>
+                            <h4 className="font-semibold mb-2 flex items-center gap-2">
+                              <Target className="w-4 h-4" />
+                              Root Cause Analysis
+                            </h4>
+                            <div className="space-y-2">
+                              <p className="text-sm font-medium text-gray-800">
+                                {failure.rootCauseAnalysis.primaryCause}
                               </p>
-                              <ul className="list-disc list-inside space-y-1 ml-2">
-                                {failure.rootCauseAnalysis.contributingFactors.map(
-                                  (factor: string, index: number) => (
-                                    <li key={index}>{factor}</li>
-                                  )
-                                )}
-                              </ul>
+                              <div className="text-sm text-gray-600">
+                                <p className="font-medium">
+                                  Contributing Factors:
+                                </p>
+                                <ul className="list-disc list-inside space-y-1 ml-2">
+                                  {failure.rootCauseAnalysis.contributingFactors.map(
+                                    (factor: string, index: number) => (
+                                      <li key={index}>{factor}</li>
+                                    )
+                                  )}
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Recommendations */}
+                          <div>
+                            <h4 className="font-semibold mb-2 flex items-center gap-2">
+                              <Lightbulb className="w-4 h-4" />
+                              Recommendations
+                            </h4>
+                            <div className="space-y-2">
+                              {failure.recommendations.slice(0, 3).map(
+                                (
+                                  rec: {
+                                    action: string
+                                    priority: string
+                                    estimatedImpact: string
+                                  },
+                                  index: number
+                                ) => (
+                                  <div
+                                    key={index}
+                                    className="border rounded p-2"
+                                  >
+                                    <div className="flex justify-between items-start mb-1">
+                                      <p className="text-sm font-medium">
+                                        {rec.action}
+                                      </p>
+                                      <Badge
+                                        variant={
+                                          rec.priority === 'immediate'
+                                            ? 'destructive'
+                                            : rec.priority === 'high'
+                                              ? 'secondary'
+                                              : 'secondary'
+                                        }
+                                        className="text-xs"
+                                      >
+                                        {rec.priority}
+                                      </Badge>
+                                    </div>
+                                    <p className="text-xs text-gray-600">
+                                      {rec.estimatedImpact}
+                                    </p>
+                                  </div>
+                                )
+                              )}
                             </div>
                           </div>
                         </div>
 
-                        {/* Recommendations */}
-                        <div>
-                          <h4 className="font-semibold mb-2 flex items-center gap-2">
-                            <Lightbulb className="w-4 h-4" />
-                            Recommendations
+                        {/* Affected Services */}
+                        <div className="mt-4">
+                          <h4 className="font-semibold mb-2">
+                            Affected Services ({failure.affectedServices.length}
+                            )
                           </h4>
-                          <div className="space-y-2">
-                            {failure.recommendations.slice(0, 3).map(
-                              (
-                                rec: {
-                                  action: string
-                                  priority: string
-                                  estimatedImpact: string
-                                },
-                                index: number
-                              ) => (
-                                <div key={index} className="border rounded p-2">
-                                  <div className="flex justify-between items-start mb-1">
-                                    <p className="text-sm font-medium">
-                                      {rec.action}
-                                    </p>
-                                    <Badge
-                                      variant={
-                                        rec.priority === 'immediate'
-                                          ? 'destructive'
-                                          : rec.priority === 'high'
-                                            ? 'secondary'
-                                            : 'secondary'
-                                      }
-                                      className="text-xs"
-                                    >
-                                      {rec.priority}
-                                    </Badge>
-                                  </div>
-                                  <p className="text-xs text-gray-600">
-                                    {rec.estimatedImpact}
-                                  </p>
-                                </div>
-                              )
-                            )}
+                          <div className="flex flex-wrap gap-2">
+                            {failure.affectedServices.map((service: string) => (
+                              <Badge key={service} variant="secondary">
+                                {service}
+                              </Badge>
+                            ))}
                           </div>
                         </div>
-                      </div>
 
-                      {/* Affected Services */}
-                      <div className="mt-4">
-                        <h4 className="font-semibold mb-2">
-                          Affected Services ({failure.affectedServices.length})
-                        </h4>
-                        <div className="flex flex-wrap gap-2">
-                          {failure.affectedServices.map((service: string) => (
-                            <Badge key={service} variant="secondary">
-                              {service}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Actions */}
-                      {failure.status === 'active' && (
-                        <div className="mt-4 pt-4 border-t flex gap-2">
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => setSelectedFailure(failure)}
-                          >
-                            <Eye className="w-4 h-4 mr-2" />
-                            View Details
-                          </Button>
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedFailure(failure)
-                              setResolutionDialog(true)
-                            }}
-                          >
-                            <MessageSquare className="w-4 h-4 mr-2" />
-                            Resolve Failure
-                          </Button>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                )
-              })}
+                        {/* Actions */}
+                        {failure.status === 'active' && (
+                          <div className="mt-4 pt-4 border-t flex gap-2">
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => setSelectedFailure(failure)}
+                            >
+                              <Eye className="w-4 h-4 mr-2" />
+                              View Details
+                            </Button>
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedFailure(failure)
+                                setResolutionDialog(true)
+                              }}
+                            >
+                              <MessageSquare className="w-4 h-4 mr-2" />
+                              Resolve Failure
+                            </Button>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )
+                }
+              )}
             </div>
           )}
         </TabsContent>
@@ -592,16 +604,18 @@ export function FailureAnalysisDashboard() {
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart
-                  data={failureAnalytics.patterns.trends.map((trend: any) => ({
-                    ...trend,
-                    patternName: getPatternDisplayName(
-                      trend.pattern as FailurePattern
-                    ),
-                    time: new Date(trend.timestamp).toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    }),
-                  }))}
+                  data={failureAnalytics.patterns.trends.map(
+                    (trend: { pattern: string; [key: string]: unknown }) => ({
+                      ...trend,
+                      patternName: getPatternDisplayName(
+                        trend.pattern as FailurePattern
+                      ),
+                      time: new Date(trend.timestamp).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      }),
+                    })
+                  )}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="time" />
@@ -634,57 +648,59 @@ export function FailureAnalysisDashboard() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {failureAnalytics.serviceImpact.map((service: any) => (
-                    <div
-                      key={service.service}
-                      className="border rounded-lg p-4"
-                    >
-                      <div className="flex justify-between items-center mb-3">
-                        <h3 className="font-semibold text-lg">
-                          {service.service}
-                        </h3>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="destructive">
-                            {service.failureCount} failures
-                          </Badge>
-                          <Badge variant="secondary">
-                            {service.mostCommonSeverity} severity
-                          </Badge>
+                  {failureAnalytics.serviceImpact.map(
+                    (service: { service: string; [key: string]: unknown }) => (
+                      <div
+                        key={service.service}
+                        className="border rounded-lg p-4"
+                      >
+                        <div className="flex justify-between items-center mb-3">
+                          <h3 className="font-semibold text-lg">
+                            {service.service}
+                          </h3>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="destructive">
+                              {service.failureCount} failures
+                            </Badge>
+                            <Badge variant="secondary">
+                              {service.mostCommonSeverity} severity
+                            </Badge>
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-600">
-                            Most Common Pattern:
-                          </span>
-                          <span className="ml-2 font-medium">
-                            {getPatternDisplayName(
-                              service.mostCommonPattern as FailurePattern
-                            )}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">Impact Level:</span>
-                          <span
-                            className={`ml-2 font-medium ${
-                              service.failureCount >= 10
-                                ? 'text-red-600'
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="text-gray-600">
+                              Most Common Pattern:
+                            </span>
+                            <span className="ml-2 font-medium">
+                              {getPatternDisplayName(
+                                service.mostCommonPattern as FailurePattern
+                              )}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">Impact Level:</span>
+                            <span
+                              className={`ml-2 font-medium ${
+                                service.failureCount >= 10
+                                  ? 'text-red-600'
+                                  : service.failureCount >= 5
+                                    ? 'text-orange-600'
+                                    : 'text-blue-600'
+                              }`}
+                            >
+                              {service.failureCount >= 10
+                                ? 'High'
                                 : service.failureCount >= 5
-                                  ? 'text-orange-600'
-                                  : 'text-blue-600'
-                            }`}
-                          >
-                            {service.failureCount >= 10
-                              ? 'High'
-                              : service.failureCount >= 5
-                                ? 'Medium'
-                                : 'Low'}
-                          </span>
+                                  ? 'Medium'
+                                  : 'Low'}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  )}
                 </div>
               )}
             </CardContent>
