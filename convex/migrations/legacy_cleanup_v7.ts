@@ -32,7 +32,7 @@ export const legacyCleanupMigration = mutation({
           }
 
           // Convert legacy status to new format
-          const convertLegacyStatus = (status: string) => {
+          const convertLegacyStatus = (status: string): 'processing' | 'completed' | 'failed' => {
             switch (status) {
               case 'completed':
                 return 'completed'
@@ -392,3 +392,6 @@ export const testMigratedData = query({
     return testResults
   },
 })
+
+// Default export for test compatibility
+export default legacyCleanupMigration

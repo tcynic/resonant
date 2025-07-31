@@ -90,7 +90,7 @@ export const retryFailedAnalyses = mutation({
       .filter(q => q.lt(q.field('processingAttempts'), maxRetries))
       .take(10) // Limit to 10 at a time to prevent overload
 
-    const requeued = []
+    const requeued: any[] = []
     for (const analysis of failedAnalyses) {
       try {
         // Update the analysis record with new priority and reset status

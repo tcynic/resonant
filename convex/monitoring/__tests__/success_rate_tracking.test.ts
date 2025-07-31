@@ -26,17 +26,19 @@ describe('Success Rate Tracking System', () => {
   let t: any
 
   beforeEach(async () => {
-    t = convexTest(schema, modules)
+    t = convexTest(schema, modules as any)
   })
 
   describe('calculateSuccessRate', () => {
     test('should calculate correct success rate with completed analyses', async () => {
       // Create test user
-      const userId = await t.mutation('users:create', {
-        name: 'Test User',
-        email: 'test@example.com',
-        clerkId: 'test_user_123',
-        createdAt: Date.now(),
+      const userId = await t.run(async (ctx: any) => {
+        return await ctx.db.insert('users', {
+          name: 'Test User',
+          email: 'test@example.com',
+          clerkId: 'test_user_123',
+          createdAt: Date.now(),
+        })
       })
 
       const now = Date.now()
@@ -47,7 +49,8 @@ describe('Success Rate Tracking System', () => {
       for (let i = 0; i < 8; i++) {
         // @ts-ignore - convex-test TypeScript limitations
         analyses.push(
-          await t.run(async ctx => {
+          // @ts-ignore - convex-test TypeScript limitations
+          await t.run(async (ctx: any) => {
             return await ctx.db.insert('aiAnalysis', {
               entryId: 'test_entry_' + i,
               userId,
@@ -68,7 +71,8 @@ describe('Success Rate Tracking System', () => {
       for (let i = 0; i < 2; i++) {
         // @ts-ignore - convex-test TypeScript limitations
         analyses.push(
-          await t.run(async ctx => {
+          // @ts-ignore - convex-test TypeScript limitations
+          await t.run(async (ctx: any) => {
             return await ctx.db.insert('aiAnalysis', {
               entryId: 'test_entry_failed_' + i,
               userId,
@@ -86,7 +90,7 @@ describe('Success Rate Tracking System', () => {
       }
 
       // Test success rate calculation
-      const result = await t.query('calculateSuccessRate', { timeWindow: '1h' })
+      const result = await t.query(calculateSuccessRate, { timeWindow: '1h' })
 
       expect(result.metrics.successRate).toBe(0.8) // 8/10 = 80%
       expect(result.metrics.totalCount).toBe(10)
@@ -96,7 +100,7 @@ describe('Success Rate Tracking System', () => {
     })
 
     test('should handle empty dataset gracefully', async () => {
-      const result = await t.query('calculateSuccessRate', { timeWindow: '1h' })
+      const result = await t.query(calculateSuccessRate, { timeWindow: '1h' })
 
       expect(result.metrics.successRate).toBe(1.0) // Default to 100% when no data
       expect(result.metrics.totalCount).toBe(0)
@@ -104,11 +108,13 @@ describe('Success Rate Tracking System', () => {
     })
 
     test('should filter by service correctly', async () => {
-      const userId = await t.mutation('users:create', {
-        name: 'Test User',
-        email: 'test@example.com',
-        clerkId: 'test_user_123',
-        createdAt: Date.now(),
+      const userId = await t.run(async (ctx: any) => {
+        return await ctx.db.insert('users', {
+          name: 'Test User',
+          email: 'test@example.com',
+          clerkId: 'test_user_123',
+          createdAt: Date.now(),
+        })
       })
 
       const now = Date.now()
@@ -143,7 +149,7 @@ describe('Success Rate Tracking System', () => {
       })
 
       // Test filtering by Gemini service
-      const geminiResult = await t.query('calculateSuccessRate', {
+      const geminiResult = await t.query(calculateSuccessRate, {
         timeWindow: '1h',
         service: 'gemini_2_5_flash_lite',
       })
@@ -153,7 +159,7 @@ describe('Success Rate Tracking System', () => {
       expect(geminiResult.metrics.successRate).toBe(1.0)
 
       // Test filtering by fallback service
-      const fallbackResult = await t.query('calculateSuccessRate', {
+      const fallbackResult = await t.query(calculateSuccessRate, {
         timeWindow: '1h',
         service: 'fallback_analysis',
       })
@@ -166,11 +172,13 @@ describe('Success Rate Tracking System', () => {
 
   describe('getRealTimeSuccessRate', () => {
     test('should return metrics for multiple time windows', async () => {
-      const userId = await t.mutation('users:create', {
-        name: 'Test User',
-        email: 'test@example.com',
-        clerkId: 'test_user_123',
-        createdAt: Date.now(),
+      const userId = await t.run(async (ctx: any) => {
+        return await ctx.db.insert('users', {
+          name: 'Test User',
+          email: 'test@example.com',
+          clerkId: 'test_user_123',
+          createdAt: Date.now(),
+        })
       })
 
       const now = Date.now()
@@ -192,7 +200,7 @@ describe('Success Rate Tracking System', () => {
         })
       })
 
-      const result = await t.query('getRealTimeSuccessRate', {})
+      const result = await t.query(getRealTimeSuccessRate, {})
 
       expect(result.metrics).toHaveLength(3) // 1h, 6h, 24h
       expect(result.metrics[0].timeWindow).toBe('1h')
@@ -267,7 +275,7 @@ describe('Success Rate Tracking System', () => {
           const isSuccessful = isHighSuccessDay ? i < 9 : i < 2 // 90% vs 20% success
 
           // @ts-ignore - convex-test TypeScript limitations
-          await t.run(async ctx => {
+          await t.run(async (ctx: any) => {
             await ctx.db.insert('aiAnalysis', {
               entryId: `volatile_entry_${day}_${i}`,
               userId,
@@ -495,7 +503,7 @@ describe('Success Rate Tracking System', () => {
           const isSuccessful = i < successfulAnalyses
 
           // @ts-ignore - convex-test TypeScript limitations
-          await t.run(async ctx => {
+          await t.run(async (ctx: any) => {
             await ctx.db.insert('aiAnalysis', {
               entryId: `threshold_test_${testCase.successRate}_${i}`,
               userId,

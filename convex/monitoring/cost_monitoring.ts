@@ -124,7 +124,7 @@ export const getCostMetrics = query({
       })
     )
 
-    let projections = null
+    let projections: any = null
     if (args.includeProjections) {
       projections = await calculateCostProjections(
         ctx,
@@ -349,7 +349,7 @@ export const updateBudgetTracking = internalMutation({
         now
       )
 
-      budgetRecord = await ctx.db.insert('budgetTracking', {
+      const budgetRecordId = await ctx.db.insert('budgetTracking', {
         timeWindow: args.timeWindow,
         budgetLimit: getDefaultBudgetLimit(args.timeWindow),
         currentSpend: 0,
@@ -368,10 +368,14 @@ export const updateBudgetTracking = internalMutation({
           other: 0,
         },
       })
-      budgetRecord = await ctx.db.get(budgetRecord)!
+      budgetRecord = await ctx.db.get(budgetRecordId)!
     }
 
     // Update costs
+    if (!budgetRecord) {
+      throw new Error('Budget record not found after creation')
+    }
+
     const newCurrentSpend = budgetRecord.currentSpend + args.additionalCost
     const newUtilization =
       budgetRecord.budgetLimit > 0
@@ -379,9 +383,16 @@ export const updateBudgetTracking = internalMutation({
         : 0
 
     // Update cost breakdown
-    const costBreakdown = { ...budgetRecord.costBreakdown }
+    const costBreakdown = {
+      aiAnalysis: budgetRecord.costBreakdown?.aiAnalysis || 0,
+      storage: budgetRecord.costBreakdown?.storage || 0,
+      bandwidth: budgetRecord.costBreakdown?.bandwidth || 0,
+      other: budgetRecord.costBreakdown?.other || 0,
+    }
     const category = args.costCategory || 'other'
-    costBreakdown[category as keyof typeof costBreakdown] += args.additionalCost
+    if (category in costBreakdown) {
+      costBreakdown[category as keyof typeof costBreakdown] += args.additionalCost
+    }
 
     // Calculate new burn rate
     const elapsedTime = now - budgetRecord.windowStart
@@ -543,7 +554,7 @@ export const getCostOptimizationRecommendations = query({
       .filter(q => q.gte(q.field('createdAt'), startTime))
       .collect()
 
-    const recommendations = []
+    const recommendations: any[] = []
 
     // Analyze service efficiency
     const serviceStats = new Map<

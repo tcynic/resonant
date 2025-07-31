@@ -443,7 +443,7 @@ export const getForAnalysis = internalQuery({
     }
 
     // Get relationship name if available
-    let relationshipName = null
+    let relationshipName: string | null = null
     if (entry.relationshipId) {
       const relationship = await ctx.db.get(entry.relationshipId)
       relationshipName = relationship?.name || relationship?.initials || null

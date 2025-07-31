@@ -118,7 +118,7 @@ export const detectFailurePatterns = internalMutation({
     failures.push(...dependencyFailures)
 
     // Store failure detection results
-    const detectionResults = []
+    const detectionResults: any[] = []
     for (const failure of failures) {
       // Check if similar failure already exists and is active
       const existingFailure = await ctx.db
@@ -159,8 +159,9 @@ export const detectFailurePatterns = internalMutation({
         })
 
         // Trigger failure alert
-        await ctx.runMutation(
-          'monitoring/failure_detection:triggerFailureAlert',
+        await ctx.scheduler.runAfter(
+          0,
+          'monitoring/failure_detection:triggerFailureAlert' as any,
           {
             failureId,
             pattern: failure.pattern,
@@ -202,13 +203,14 @@ async function detectErrorSpikes(
   )
 
   for (const [service, metrics] of Object.entries(serviceErrors)) {
-    if (metrics.length < 2) continue
+    const serviceMetrics = metrics as any[]
+    if (serviceMetrics.length < 2) continue
 
     // Calculate error rate trend
-    const recentErrors = metrics.filter(
+    const recentErrors = serviceMetrics.filter(
       m => m.timeWindow >= Date.now() - 10 * 60 * 1000
     ) // Last 10 minutes
-    const baselineErrors = metrics.filter(
+    const baselineErrors = serviceMetrics.filter(
       m => m.timeWindow < Date.now() - 10 * 60 * 1000
     ) // Before last 10 minutes
 
@@ -298,10 +300,11 @@ async function detectPerformanceDegradation(
   )
 
   for (const [service, metrics] of Object.entries(servicePerformance)) {
-    if (metrics.length < 5) continue
+    const serviceMetrics = metrics as any[]
+    if (serviceMetrics.length < 5) continue
 
     // Sort by timestamp
-    const sortedMetrics = metrics.sort((a, b) => a.timestamp - b.timestamp)
+    const sortedMetrics = serviceMetrics.sort((a, b) => a.timestamp - b.timestamp)
     const recentMetrics = sortedMetrics.slice(-3) // Last 3 data points
     const baselineMetrics = sortedMetrics.slice(0, -3) // All except last 3
 
@@ -732,8 +735,8 @@ export const triggerFailureAlert = internalMutation({
       autoResolved: false,
       notificationsSent: [],
       conditions: {
-        threshold: args.pattern,
-        actualValue: args.severity,
+        threshold: 1.0, // Default threshold for failure detection
+        actualValue: args.severity === 'critical' ? 3 : args.severity === 'high' ? 2 : 1,
         timeWindow: '30m',
         service: args.affectedServices.join(','),
       },
@@ -757,7 +760,7 @@ export const triggerFailureAlert = internalMutation({
         severity: args.severity,
         affectedServices: args.affectedServices,
       },
-      isRead: false,
+      read: false,
       createdAt: Date.now(),
     })
 

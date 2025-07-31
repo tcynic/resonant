@@ -779,7 +779,7 @@ function generateOrchestrationRecommendations(
   metrics: any,
   activeWorkflows: any[]
 ): string[] {
-  const recommendations = []
+  const recommendations: string[] = []
 
   if (metrics.failedRecoveries > metrics.successfulRecoveries) {
     recommendations.push(

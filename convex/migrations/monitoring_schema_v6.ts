@@ -266,12 +266,12 @@ export const validateMonitoringMigration = internalMutation({
       alertingConfig: {
         exists: false,
         count: 0,
-        sampleRecord: null,
+        sampleRecord: null as any,
       },
       budgetTracking: {
         exists: false,
         count: 0,
-        sampleRecord: null,
+        sampleRecord: null as any,
       },
       monitoringAlerts: {
         exists: false,

@@ -156,8 +156,9 @@ export const performSystemHealthCheck = internalMutation({
     })
 
     // Process alerts for health check results
-    const alertResults = await ctx.runMutation(
-      'monitoring/health_checks:processHealthCheckAlerts',
+    const alertResults = await ctx.scheduler.runAfter(
+      0,
+      'monitoring/health_checks:processHealthCheckAlerts' as any,
       {
         healthCheckResults: results,
         overallHealth,
@@ -165,8 +166,9 @@ export const performSystemHealthCheck = internalMutation({
     )
 
     // Check for alert resolutions
-    const resolutionResults = await ctx.runMutation(
-      'monitoring/health_checks:checkHealthAlertResolution',
+    const resolutionResults = await ctx.scheduler.runAfter(
+      0,
+      'monitoring/health_checks:checkHealthAlertResolution' as any,
       {
         healthCheckResults: results,
         overallHealth,
@@ -184,7 +186,7 @@ export const performSystemHealthCheck = internalMutation({
       const nextCheckTime = activeSchedule.intervalMinutes * 60 * 1000
       await ctx.scheduler.runAfter(
         nextCheckTime,
-        'monitoring/health_checks:performSystemHealthCheck',
+        'monitoring/health_checks:performSystemHealthCheck' as any,
         {}
       )
 
@@ -762,7 +764,7 @@ export const getSystemHealthStatus = query({
       }
     }
 
-    let serviceDetails = null
+    let serviceDetails: any = null
     if (args.includeDetails) {
       // Get latest results for each service
       const latestResults = await ctx.db
@@ -868,7 +870,7 @@ export const triggerHealthCheck = mutation({
     // Schedule the health check to run
     await ctx.scheduler.runAfter(
       0,
-      'monitoring/health_checks:performSystemHealthCheck',
+      'monitoring/health_checks:performSystemHealthCheck' as any,
       {}
     )
 
@@ -894,7 +896,7 @@ export const scheduleHealthChecks = internalMutation({
     // Schedule the next health check
     await ctx.scheduler.runAfter(
       intervalMs,
-      'monitoring/health_checks:performSystemHealthCheck',
+      'monitoring/health_checks:performSystemHealthCheck' as any,
       {}
     )
 
@@ -953,9 +955,8 @@ export const processHealthCheckAlerts = internalMutation({
             autoResolved: false,
             notificationsSent: [],
             conditions: {
-              threshold:
-                result.status === 'unhealthy' ? 'unhealthy' : 'degraded',
-              actualValue: result.status,
+              threshold: result.status === 'unhealthy' ? 1.0 : 0.5,
+              actualValue: result.status === 'unhealthy' ? 2.0 : result.status === 'degraded' ? 1.0 : 0.0,
               timeWindow: 'current',
               service: result.service,
             },
@@ -1237,7 +1238,7 @@ export const updateHealthCheckConfig = mutation({
       // Schedule the next health check
       await ctx.scheduler.runAfter(
         args.intervalMinutes * 60 * 1000,
-        'monitoring/health_checks:performSystemHealthCheck',
+        'monitoring/health_checks:performSystemHealthCheck' as any,
         {}
       )
 

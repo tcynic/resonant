@@ -64,11 +64,7 @@ describe('Legacy System Migration & Cleanup', () => {
       })
 
       // Run migration
-      const migrationResult = await t.run(async ctx => {
-        // Import and run the migration
-        const migration = await import('../legacy_cleanup_v7')
-        return await migration.default({ db: ctx.db }, { dryRun: false })
-      })
+      const migrationResult = await t.mutation(api.migrations.legacy_cleanup_v7.legacyCleanupMigration, { dryRun: false })
 
       // Verify migration results
       expect(migrationResult.processed).toBe(1)
@@ -134,10 +130,7 @@ describe('Legacy System Migration & Cleanup', () => {
       })
 
       // Run migration
-      const migrationResult = await t.run(async ctx => {
-        const migration = await import('../legacy_cleanup_v7')
-        return await migration.default({ db: ctx.db }, { dryRun: false })
-      })
+      const migrationResult = await t.mutation(api.migrations.legacy_cleanup_v7.legacyCleanupMigration, { dryRun: false })
 
       // Should skip the already migrated record
       expect(migrationResult.processed).toBe(1)
@@ -180,10 +173,7 @@ describe('Legacy System Migration & Cleanup', () => {
       })
 
       // Run dry run migration
-      const migrationResult = await t.run(async ctx => {
-        const migration = await import('../legacy_cleanup_v7')
-        return await migration.default({ db: ctx.db }, { dryRun: true })
-      })
+      const migrationResult = await t.mutation(api.migrations.legacy_cleanup_v7.legacyCleanupMigration, { dryRun: true })
 
       // Should report migration but not actually change data
       expect(migrationResult.processed).toBe(1)
@@ -243,10 +233,7 @@ describe('Legacy System Migration & Cleanup', () => {
       })
 
       // Validate migration
-      const validationResult = await t.run(async ctx => {
-        const migration = await import('../legacy_cleanup_v7')
-        return await migration.validateMigration({ db: ctx.db })
-      })
+      const validationResult = await t.mutation(api.migrations.legacy_cleanup_v7.validateMigration, {})
 
       expect(validationResult.totalRecords).toBe(1)
       expect(validationResult.migratedRecords).toBe(1)
@@ -292,10 +279,7 @@ describe('Legacy System Migration & Cleanup', () => {
       })
 
       // Validate migration
-      const validationResult = await t.run(async ctx => {
-        const migration = await import('../legacy_cleanup_v7')
-        return await migration.validateMigration({ db: ctx.db })
-      })
+      const validationResult = await t.mutation(api.migrations.legacy_cleanup_v7.validateMigration, {})
 
       expect(validationResult.integrity).toBe(false)
       expect(validationResult.issues.length).toBeGreaterThan(0)
@@ -346,13 +330,7 @@ describe('Legacy System Migration & Cleanup', () => {
       })
 
       // Run rollback
-      const rollbackResult = await t.run(async ctx => {
-        const migration = await import('../legacy_cleanup_v7')
-        return await migration.rollbackMigration(
-          { db: ctx.db },
-          { dryRun: false }
-        )
-      })
+      const rollbackResult = await t.mutation(api.migrations.legacy_cleanup_v7.rollbackMigration, { dryRun: false })
 
       expect(rollbackResult.processed).toBe(1)
       expect(rollbackResult.rolledBack).toBe(1)
@@ -404,13 +382,7 @@ describe('Legacy System Migration & Cleanup', () => {
       })
 
       // Run dry run rollback
-      const rollbackResult = await t.run(async ctx => {
-        const migration = await import('../legacy_cleanup_v7')
-        return await migration.rollbackMigration(
-          { db: ctx.db },
-          { dryRun: true }
-        )
-      })
+      const rollbackResult = await t.mutation(api.migrations.legacy_cleanup_v7.rollbackMigration, { dryRun: true })
 
       expect(rollbackResult.processed).toBe(1)
       expect(rollbackResult.rolledBack).toBe(1)
@@ -471,10 +443,7 @@ describe('Legacy System Migration & Cleanup', () => {
       // Measure migration performance
       const startTime = Date.now()
 
-      const migrationResult = await t.run(async ctx => {
-        const migration = await import('../legacy_cleanup_v7')
-        return await migration.default({ db: ctx.db }, { dryRun: false })
-      })
+      const migrationResult = await t.mutation(api.migrations.legacy_cleanup_v7.legacyCleanupMigration, { dryRun: false })
 
       const endTime = Date.now()
       const migrationTime = endTime - startTime

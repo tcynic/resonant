@@ -73,7 +73,7 @@ export const getSystemHealthMetrics = query({
       .collect()
 
     const healthyCircuits = circuitBreakerStatuses.filter(
-      cb => cb.state === 'closed'
+      cb => !cb.isOpen
     ).length
     const totalCircuits = circuitBreakerStatuses.length
 

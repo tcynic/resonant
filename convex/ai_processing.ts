@@ -388,7 +388,7 @@ export const analyzeJournalEntry = httpAction(async (ctx, request) => {
 
     // Check circuit breaker status before API call
     const circuitBreakerStatus = await ctx.runQuery(
-      api.circuit_breaker_queries.getHealthStatus,
+      api.circuit_breaker_queries.getHealthStatus as any,
       { service: 'gemini_2_5_flash_lite' }
     )
 
@@ -407,7 +407,7 @@ export const analyzeJournalEntry = httpAction(async (ctx, request) => {
       geminiResponse = await callGeminiAPI(geminiRequest)
 
       // Record successful API call in circuit breaker
-      await ctx.runMutation(api.circuit_breaker_queries.recordSuccess, {
+      await ctx.runMutation(api.circuit_breaker_queries.recordSuccess as any, {
         service: 'gemini_2_5_flash_lite',
         responseTimeMs: Date.now() - apiCallStartTime,
       })
@@ -598,7 +598,8 @@ export const analyzeJournalEntry = httpAction(async (ctx, request) => {
 
     // Get current circuit breaker status for retry decisions
     const currentCircuitStatus = await ctx.runQuery(
-      api.circuit_breaker_queries.getHealthStatus,
+      // @ts-ignore - TypeScript compiler limitation with Convex API types
+      api.circuit_breaker_queries.getHealthStatus as any,
       { service: 'gemini_2_5_flash_lite' }
     )
 

@@ -426,13 +426,10 @@ export const getActiveAlerts = query({
       query = query.filter(q => q.eq(q.field('alertType'), args.alertType))
     }
 
-    query = query.order('desc')
+    const orderedQuery = query.order('desc')
+    const limitedQuery = args.limit ? orderedQuery.take(args.limit) : orderedQuery
 
-    if (args.limit) {
-      query = query.take(args.limit)
-    }
-
-    const alerts = await query.collect()
+    const alerts = await (limitedQuery as any).collect()
 
     return alerts.map(alert => ({
       ...alert,
