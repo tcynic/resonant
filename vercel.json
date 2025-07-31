@@ -1,16 +1,16 @@
 {
   "version": 2,
   "framework": "nextjs",
-  "buildCommand": "npm run build",
+  "buildCommand": "npm run vercel-build",
   "outputDirectory": ".next",
   "installCommand": "npm ci",
   "devCommand": "npm run dev",
   "regions": ["iad1"],
   "functions": {
-    "src/app/api/**/*.ts": {
+    "app/api/**/*.{js,ts}": {
       "maxDuration": 30
     },
-    "src/app/api/webhooks/**/*.ts": {
+    "app/api/webhooks/**/*.{js,ts}": {
       "maxDuration": 10
     }
   },
