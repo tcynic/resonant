@@ -1,17 +1,27 @@
 {
   "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "noErrorTruncation": false
+  },
   "include": [
     "next-env.d.ts",
     "src/**/*.ts",
     "src/**/*.tsx",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "convex/_generated/**/*.ts",
+    "convex/_generated/**/*.js"
   ],
   "exclude": [
     "node_modules",
     ".next",
-    "convex/**/*",
+    "convex/*.ts",
+    "convex/**/*.ts",
+    "!convex/_generated/**/*.ts",
+    "!convex/_generated/**/*.js",
     "**/*.test.ts",
     "**/*.test.tsx",
-    "**/__tests__/**/*"
+    "**/__tests__/**/*",
+    "src/app/api/webhooks/clerk/route.ts"
   ]
 }

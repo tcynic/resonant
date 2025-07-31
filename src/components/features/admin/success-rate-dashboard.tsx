@@ -30,12 +30,18 @@ import {
 type TimeWindow = '1h' | '6h' | '24h' | '7d' | '30d'
 
 interface TrendSummary {
-  trend: 'improving' | 'declining' | 'stable'
+  trend?: 'improving' | 'declining' | 'stable'
+  averageSuccessRate?: number
+  minSuccessRate?: number
+  maxSuccessRate?: number
+  totalAnalyses?: unknown
   [key: string]: unknown
 }
 
 interface TrendData {
   summary: TrendSummary
+  trendData?: unknown[]
+  patterns?: unknown[]
   [key: string]: unknown
 }
 

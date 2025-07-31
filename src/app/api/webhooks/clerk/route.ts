@@ -77,7 +77,7 @@ export async function POST(req: Request) {
         }
 
         // Create user in Convex using the public mutation
-        await convex.mutation(api.users.createUser, userData)
+        await convex.mutation(api.users.createUser, userData as any)
 
         console.log('User created successfully in Convex:', userData.clerkId)
         break
@@ -98,7 +98,7 @@ export async function POST(req: Request) {
         }
 
         // Update user in Convex using internal mutation
-        await convex.mutation(api.users.updateUserFromClerk, userData)
+        await convex.mutation(api.users.updateUserFromClerk, userData as any)
 
         console.log('User updated successfully in Convex:', userData.clerkId)
         break
@@ -110,7 +110,7 @@ export async function POST(req: Request) {
         // Delete user from Convex using internal mutation
         await convex.mutation(api.users.deleteUserByClerkId, {
           clerkId: evt.data.id!,
-        })
+        } as any)
 
         console.log('User deleted successfully from Convex:', evt.data.id)
         break
