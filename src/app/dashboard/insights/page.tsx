@@ -1,8 +1,7 @@
 'use client'
 
-// Force dynamic rendering to avoid build-time API issues
+// Force dynamic rendering to avoid build-time API issues with Convex stubs
 export const dynamic = 'force-dynamic'
-export const revalidate = 0
 
 import React, { useState, useRef } from 'react'
 import {
