@@ -133,7 +133,7 @@ jobs:
   e2e-tests:
     name: E2E Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     needs: integration-tests
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
@@ -150,17 +150,66 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Setup test environment
+        run: |
+          cp .env.local.template .env.test
+          echo "NEXT_PUBLIC_CONVEX_URL=${{ secrets.CONVEX_URL_STAGING || 'https://test.convex.cloud' }}" >> .env.test
+          echo "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.CLERK_PUBLISHABLE_KEY_STAGING || 'pk_test_placeholder' }}" >> .env.test
+          echo "CLERK_SECRET_KEY=${{ secrets.CLERK_SECRET_KEY_STAGING || 'sk_test_placeholder' }}" >> .env.test
+          echo "PLAYWRIGHT_BASE_URL=http://localhost:3000" >> .env.test
+          echo "PLAYWRIGHT_HEADLESS=true" >> .env.test
+          echo "CI=true" >> .env.test
+
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: Build application
+        run: npm run build
+
+      - name: Start development servers
+        run: |
+          # Start Convex development server in background
+          npm run convex:dev &
+          CONVEX_PID=$!
+          echo "CONVEX_PID=$CONVEX_PID" >> $GITHUB_ENV
+
+          # Start Next.js development server in background
+          npm run dev &
+          NEXT_PID=$!
+          echo "NEXT_PID=$NEXT_PID" >> $GITHUB_ENV
+
+          # Wait for services to be ready
+          node scripts/wait-for-services.js
 
       - name: Run E2E tests
-        run: npm run test:e2e
+        run: npx playwright test
         env:
           NEXT_PUBLIC_CONVEX_URL: ${{ secrets.CONVEX_URL_STAGING || 'https://test.convex.cloud' }}
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY_STAGING || 'pk_test_placeholder' }}
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY_STAGING || 'sk_test_placeholder' }}
+          PLAYWRIGHT_BASE_URL: http://localhost:3000
+          CI: true
+
+      - name: Stop development servers
+        if: always()
+        run: |
+          # Clean up background processes
+          if [ ! -z "$CONVEX_PID" ]; then
+            kill $CONVEX_PID || true
+          fi
+          if [ ! -z "$NEXT_PID" ]; then
+            kill $NEXT_PID || true
+          fi
 
       - name: Upload E2E test results
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+
+      - name: Upload E2E test artifacts on failure
         uses: actions/upload-artifact@v4
         if: failure()
         with:

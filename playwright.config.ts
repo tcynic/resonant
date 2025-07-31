@@ -20,11 +20,13 @@ export default defineConfig({
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
 
-  /* Use default worker count on CI, limit locally for stability */
-  workers: process.env.CI ? undefined : 1,
+  /* Opt out of parallel tests on CI for stability */
+  workers: process.env.CI ? 1 : undefined,
 
-  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: [['line'], ['json', { outputFile: 'test-results/results.json' }]],
+  /* Reporter to use. GitHub reporter for CI annotations, list for local */
+  reporter: process.env.CI
+    ? [['github'], ['json', { outputFile: 'test-results/results.json' }]]
+    : [['list'], ['json', { outputFile: 'test-results/results.json' }]],
 
   /* Shared settings for all tests */
   use: {
@@ -47,33 +49,40 @@ export default defineConfig({
     ignoreHTTPSErrors: true,
   },
 
-  /* Configure projects for major browsers */
-  projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
+  /* Configure projects - only Chromium on CI for efficiency */
+  projects: process.env.CI
+    ? [
+        {
+          name: 'chromium',
+          use: { ...devices['Desktop Chrome'] },
+        },
+      ]
+    : [
+        {
+          name: 'chromium',
+          use: { ...devices['Desktop Chrome'] },
+        },
 
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
+        {
+          name: 'firefox',
+          use: { ...devices['Desktop Firefox'] },
+        },
 
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
+        {
+          name: 'webkit',
+          use: { ...devices['Desktop Safari'] },
+        },
 
-    /* Test against mobile viewports. */
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: { ...devices['Pixel 5'] },
-    // },
-    // {
-    //   name: 'Mobile Safari',
-    //   use: { ...devices['iPhone 12'] },
-    // },
-  ],
+        /* Test against mobile viewports. */
+        // {
+        //   name: 'Mobile Chrome',
+        //   use: { ...devices['Pixel 5'] },
+        // },
+        // {
+        //   name: 'Mobile Safari',
+        //   use: { ...devices['iPhone 12'] },
+        // },
+      ],
 
   /* Test output directories */
   outputDir: 'test-results/',
@@ -90,11 +99,13 @@ export default defineConfig({
   globalSetup: require.resolve('./tests/setup/global-setup.ts'),
   globalTeardown: require.resolve('./tests/setup/global-teardown.ts'),
 
-  /* Run your local dev server before starting the tests */
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120000,
-  },
+  /* Web server configuration - disabled on CI (managed externally) */
+  webServer: process.env.CI
+    ? undefined
+    : {
+        command: 'npm run dev',
+        url: 'http://localhost:3000',
+        reuseExistingServer: true,
+        timeout: 120000,
+      },
 })
