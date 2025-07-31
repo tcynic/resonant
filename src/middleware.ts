@@ -6,6 +6,8 @@ const isPublicRoute = createRouteMatcher([
   '/sign-up(.*)',
   '/',
   '/test-journal-demo',
+  '/api/webhooks/clerk', // Allow Clerk webhooks to bypass auth
+  '/api/debug-env', // Temporary debug endpoint
 ])
 
 export default clerkMiddleware(async (auth, req) => {
