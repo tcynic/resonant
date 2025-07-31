@@ -174,16 +174,20 @@ export function SuccessRateDashboard() {
               <div>
                 <p className="text-sm text-gray-600">Trend</p>
                 <p className="text-lg font-semibold">
-                  {(trendData as unknown as TrendData).summary.trend === 'improving'
+                  {(trendData as unknown as TrendData).summary.trend ===
+                  'improving'
                     ? '↗️ Improving'
-                    : (trendData as unknown as TrendData).summary.trend === 'declining'
+                    : (trendData as unknown as TrendData).summary.trend ===
+                        'declining'
                       ? '↘️ Declining'
                       : '→ Stable'}
                 </p>
               </div>
-              {(trendData as unknown as TrendData).summary.trend === 'improving' ? (
+              {(trendData as unknown as TrendData).summary.trend ===
+              'improving' ? (
                 <TrendingUp className="w-6 h-6 text-green-500" />
-              ) : (trendData as unknown as TrendData).summary.trend === 'declining' ? (
+              ) : (trendData as unknown as TrendData).summary.trend ===
+                'declining' ? (
                 <TrendingDown className="w-6 h-6 text-red-500" />
               ) : (
                 <Activity className="w-6 h-6 text-gray-500" />
@@ -396,32 +400,34 @@ export function SuccessRateDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {(trendData as unknown as TrendData).patterns?.map((pattern: any, index: number) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between p-3 border rounded-lg"
-                >
-                  <div>
-                    <div className="font-semibold capitalize">
-                      {(pattern as any).type?.replace('_', ' ') || 'Unknown'}
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      {(pattern as any).description || 'No description'}
-                    </div>
-                  </div>
-                  <Badge
-                    variant={
-                      (pattern as any).severity === 'high'
-                        ? 'destructive'
-                        : (pattern as any).severity === 'medium'
-                          ? 'secondary'
-                          : 'default'
-                    }
+              {(trendData as unknown as TrendData).patterns?.map(
+                (pattern: any, index: number) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 border rounded-lg"
                   >
-                    {(pattern as any).severity || 'low'}
-                  </Badge>
-                </div>
-              ))}
+                    <div>
+                      <div className="font-semibold capitalize">
+                        {(pattern as any).type?.replace('_', ' ') || 'Unknown'}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {(pattern as any).description || 'No description'}
+                      </div>
+                    </div>
+                    <Badge
+                      variant={
+                        (pattern as any).severity === 'high'
+                          ? 'destructive'
+                          : (pattern as any).severity === 'medium'
+                            ? 'secondary'
+                            : 'default'
+                      }
+                    >
+                      {(pattern as any).severity || 'low'}
+                    </Badge>
+                  </div>
+                )
+              )}
             </div>
           </CardContent>
         </Card>
