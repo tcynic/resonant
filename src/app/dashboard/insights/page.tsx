@@ -1,5 +1,9 @@
 'use client'
 
+// Force dynamic rendering to avoid build-time API issues
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 import React, { useState, useRef } from 'react'
 import {
   Card,
@@ -260,13 +264,19 @@ export default function InsightsPage() {
             <div className="h-80">
               <RelationshipComparisonChart
                 ref={comparisonChartRef}
-                data={comparisonData.data.map(item => ({
-                  relationshipId: item.relationshipId,
-                  name: item.relationshipName,
-                  type: 'friend' as const, // Default type since we don't have it from comparison data
-                  data: [{ x: Date.now(), y: item.value }],
-                  averageScore: item.value,
-                }))}
+                data={comparisonData.data.map(
+                  (item: {
+                    relationshipId: string
+                    relationshipName: string
+                    value: number
+                  }) => ({
+                    relationshipId: item.relationshipId,
+                    name: item.relationshipName,
+                    type: 'friend' as const, // Default type since we don't have it from comparison data
+                    data: [{ x: Date.now(), y: item.value }],
+                    averageScore: item.value,
+                  })
+                )}
                 isLoading={comparisonData.isLoading}
                 error={
                   comparisonData.hasError

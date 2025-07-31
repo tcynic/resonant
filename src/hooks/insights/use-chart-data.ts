@@ -46,8 +46,8 @@ export function useChartData(
 
   // Real-time subscription to trend data
   const trendData = useQuery(
-    api.insights.getTrendData,
-    user?.id
+    api.insights?.getTrendData || null,
+    user?.id && api.insights?.getTrendData
       ? {
           userId: user.id as Id<'users'>,
           relationshipIds:
@@ -145,8 +145,8 @@ export function useRelationshipComparisonData(
 
   // Real-time subscription to comparison data
   const comparisonData = useQuery(
-    api.insights.getRelationshipComparison,
-    user?.id && ids.length > 0
+    api.insights?.getRelationshipComparison || null,
+    user?.id && ids.length > 0 && api.insights?.getRelationshipComparison
       ? {
           userId: user.id as Id<'users'>,
           relationshipIds: ids,
@@ -178,8 +178,8 @@ export function useChartPreferences() {
   const { user } = useUser()
 
   const preferences = useQuery(
-    api.insights.getChartPreferences,
-    user?.id ? { userId: user.id as Id<'users'> } : 'skip'
+    api.insights?.getChartPreferences || null,
+    user?.id && api.insights?.getChartPreferences ? { userId: user.id as Id<'users'> } : 'skip'
   )
 
   const isLoading = preferences === undefined
