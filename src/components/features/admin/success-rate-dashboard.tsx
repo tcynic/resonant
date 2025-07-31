@@ -41,7 +41,38 @@ interface TrendSummary {
 interface TrendData {
   summary: TrendSummary
   trendData?: unknown[]
-  patterns?: unknown[]
+  patterns?: PatternData[]
+  [key: string]: unknown
+}
+
+interface PatternData {
+  type?: string
+  description?: string
+  severity?: 'high' | 'medium' | 'low' | 'critical'
+  [key: string]: unknown
+}
+
+interface ServiceData {
+  service: string
+  totalAnalyses: number
+  successRate: number
+  performance: {
+    reliability: string
+  }
+  avgProcessingTime: number
+  avgCost: number
+  fallbackRate: number
+  [key: string]: unknown
+}
+
+interface MetricData {
+  timeWindow: string
+  successRate: number
+  alert: {
+    level: string
+  }
+  totalCount: number
+  successCount: number
   [key: string]: unknown
 }
 
@@ -54,8 +85,8 @@ export function SuccessRateDashboard() {
   // Query success rate data
   const successRateData = useQuery(
     api.monitoring.success_rate_tracking.getRealTimeSuccessRate,
-    {} as any
-  ) as any
+    {} as unknown
+  ) as unknown
 
   const trendData = useQuery(
     api.monitoring.success_rate_tracking.getSuccessRateTrends,
@@ -66,23 +97,24 @@ export function SuccessRateDashboard() {
         timeWindow === '1h' || timeWindow === '24h'
           ? ('hourly' as const)
           : ('daily' as const),
-    } as any
-  ) as any
+    } as unknown
+  ) as unknown
 
   const serviceComparison = useQuery(
     api.monitoring.success_rate_tracking.compareSuccessRatesAcrossServices,
     {
       timeWindow,
-    } as any
-  ) as any
+    } as unknown
+  ) as unknown
 
   if (!successRateData || !trendData || !serviceComparison) {
     return <DashboardSkeleton />
   }
 
   const currentMetric =
-    successRateData.metrics.find((m: any) => m.timeWindow === timeWindow) ||
-    successRateData.metrics[0]
+    (successRateData as { metrics: MetricData[] }).metrics.find(
+      (m: MetricData) => m.timeWindow === timeWindow
+    ) || (successRateData as { metrics: MetricData[] }).metrics[0]
 
   return (
     <div className="w-full max-w-7xl mx-auto p-6 space-y-6">
@@ -303,7 +335,9 @@ export function SuccessRateDashboard() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {serviceComparison.comparison.map((service: any) => (
+            {(
+              serviceComparison as { comparison: ServiceData[] }
+            ).comparison.map((service: ServiceData) => (
               <div key={service.service} className="border rounded-lg p-4">
                 <div className="flex justify-between items-center mb-3">
                   <div>
@@ -390,7 +424,7 @@ export function SuccessRateDashboard() {
       </Card>
 
       {/* Pattern Analysis */}
-      {((trendData as unknown as TrendData).patterns as any)?.length > 0 && (
+      {(trendData as unknown as TrendData).patterns?.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -401,29 +435,29 @@ export function SuccessRateDashboard() {
           <CardContent>
             <div className="space-y-3">
               {(trendData as unknown as TrendData).patterns?.map(
-                (pattern: any, index: number) => (
+                (pattern: PatternData, index: number) => (
                   <div
                     key={index}
                     className="flex items-center justify-between p-3 border rounded-lg"
                   >
                     <div>
                       <div className="font-semibold capitalize">
-                        {(pattern as any).type?.replace('_', ' ') || 'Unknown'}
+                        {pattern.type?.replace('_', ' ') || 'Unknown'}
                       </div>
                       <div className="text-sm text-gray-600">
-                        {(pattern as any).description || 'No description'}
+                        {pattern.description || 'No description'}
                       </div>
                     </div>
                     <Badge
                       variant={
-                        (pattern as any).severity === 'high'
+                        pattern.severity === 'high'
                           ? 'destructive'
-                          : (pattern as any).severity === 'medium'
+                          : pattern.severity === 'medium'
                             ? 'secondary'
                             : 'default'
                       }
                     >
-                      {(pattern as any).severity || 'low'}
+                      {pattern.severity || 'low'}
                     </Badge>
                   </div>
                 )
