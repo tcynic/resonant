@@ -4,9 +4,15 @@ import { WebhookEvent } from '@clerk/nextjs/server'
 import { api } from '../../../../../convex/_generated/api'
 import { ConvexHttpClient } from 'convex/browser'
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
-
 export async function POST(req: Request) {
+  // Initialize Convex client inside the request handler to ensure env vars are available
+  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
+  if (!convexUrl) {
+    console.error('NEXT_PUBLIC_CONVEX_URL is not configured')
+    return new Response('Server configuration error', { status: 500 })
+  }
+  
+  const convex = new ConvexHttpClient(convexUrl)
   // You can find this in the Clerk Dashboard -> Webhooks -> choose the webhook
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET
 
