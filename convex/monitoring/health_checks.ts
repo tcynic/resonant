@@ -926,7 +926,7 @@ export const processHealthCheckAlerts = internalMutation({
     }),
   },
   handler: async (ctx, args) => {
-    const alertsTriggered = []
+    const alertsTriggered: any[] = []
 
     // Check for service-specific alerts
     for (const result of args.healthCheckResults) {
@@ -1045,7 +1045,7 @@ export const checkHealthAlertResolution = internalMutation({
     }),
   },
   handler: async (ctx, args) => {
-    const resolvedAlerts = []
+    const resolvedAlerts: any[] = []
 
     // Check service-specific alerts for resolution
     const activeHealthAlerts = await ctx.db
@@ -1211,7 +1211,7 @@ export const updateHealthCheckConfig = mutation({
       throw new Error('User not found')
     }
 
-    const updates = []
+    const updates: any[] = []
 
     // Update schedule if provided
     if (args.intervalMinutes) {

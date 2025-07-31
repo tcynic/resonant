@@ -214,7 +214,7 @@ export const getRealTimeSuccessRate = query({
 
     // Get success rates for multiple time windows
     const timeWindows = ['1h', '6h', '24h'] as const
-    const metrics = []
+    const metrics: any[] = []
 
     for (const window of timeWindows) {
       const windowMs = TIME_WINDOWS[window]
@@ -293,7 +293,7 @@ export const getSuccessRateTrends = query({
       granularity === 'hourly' ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000
     const intervals = Math.ceil(windowMs / intervalMs)
 
-    const trendData = []
+    const trendData: any[] = []
 
     for (let i = 0; i < intervals; i++) {
       const intervalStart = startTime + i * intervalMs
@@ -355,7 +355,7 @@ function detectSuccessRatePatterns(
     return []
   }
 
-  const patterns = []
+  const patterns: any[] = []
 
   // Detect downward trends
   let consecutiveDeclines = 0

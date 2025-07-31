@@ -41,7 +41,7 @@ export const generateInsights = internalMutation({
     )
 
     // Store insights in database
-    const insertedInsights = []
+    const insertedInsights: any[] = []
     for (const insight of insights) {
       const insightId = await ctx.db.insert('insights', {
         ...insight,
@@ -342,7 +342,7 @@ export const getRelationshipComparison = query({
     ),
   },
   handler: async (ctx, args) => {
-    const comparisonData = []
+    const comparisonData: any[] = []
 
     for (const relationshipId of args.relationshipIds) {
       const relationship = await ctx.db.get(relationshipId)
@@ -438,7 +438,7 @@ async function generateVariousInsights(
   relationshipId: Id<'relationships'> | undefined,
   analyses: any[]
 ) {
-  const insights = []
+  const insights: any[] = []
 
   // Pattern recognition insights
   const patterns = detectPatterns(analyses)

@@ -795,7 +795,7 @@ function generateHistoricalTrend(
   days: number
 ) {
   // Generate realistic historical trend data points
-  const dataPoints = []
+  const dataPoints: any[] = []
   const intervalsPerDay = 1 // One data point per day
   const totalPoints = Math.min(days * intervalsPerDay, 90) // Max 90 points
 

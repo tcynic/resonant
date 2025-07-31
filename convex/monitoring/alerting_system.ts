@@ -197,7 +197,7 @@ export const processAlert = internalMutation({
  * Schedule notifications for an alert
  */
 async function scheduleNotifications(ctx: any, alertId: string, config: any) {
-  const notifications = []
+  const notifications: any[] = []
 
   // Email notification
   if (config.deliveryChannels.email) {
@@ -526,7 +526,7 @@ export const checkAlertEscalation = internalMutation({
   args: {},
   handler: async ctx => {
     const now = Date.now()
-    const escalationCandidates = []
+    const escalationCandidates: any[] = []
 
     // Get unacknowledged alerts
     const unacknowledgedAlerts = await ctx.db
@@ -608,7 +608,7 @@ export const checkAutoResolution = internalMutation({
     service: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const resolvedAlerts = []
+    const resolvedAlerts: any[] = []
 
     // Find active alerts of this type that might be resolved
     let query = ctx.db

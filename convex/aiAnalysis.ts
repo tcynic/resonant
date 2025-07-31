@@ -237,7 +237,7 @@ export const reprocessStuckEntries = mutation({
             internal.scheduler.analysis_queue.enqueueAnalysis,
             {
               entryId: stuck.entryId,
-              userId: entry.userId,
+              userId: (entry as any).userId,
               priority: 'normal',
             }
           )
@@ -260,7 +260,7 @@ export const reprocessStuckEntries = mutation({
             internal.scheduler.analysis_queue.enqueueAnalysis,
             {
               entryId: stuck.entryId,
-              userId: entry.userId,
+              userId: (entry as any).userId,
               priority: 'high', // Give reprocessing higher priority
             }
           )

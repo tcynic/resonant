@@ -576,7 +576,7 @@ function generateQueueAlerts(
   successRate: number,
   maxWaitTime: number
 ) {
-  const alerts = []
+  const alerts: any[] = []
 
   if (capacityUtilization > 95) {
     alerts.push({
@@ -647,7 +647,7 @@ function generateQueueAlerts(
 }
 
 function findSlaViolations(queueItems: any[]) {
-  const violations = []
+  const violations: any[] = []
   const now = Date.now()
 
   for (const item of queueItems) {
@@ -677,7 +677,7 @@ function generateRecommendations(
   successRate: number,
   slaViolationCount: number
 ) {
-  const recommendations = []
+  const recommendations: any[] = []
 
   if (capacityUtilization > 80) {
     recommendations.push({
@@ -817,7 +817,7 @@ function categorizeError(errorMessage: string): string {
 function generateThroughputTimeline(items: any[], timeRangeHours: number) {
   const now = Date.now()
   const hourMs = 60 * 60 * 1000
-  const timeline = []
+  const timeline: any[] = []
 
   for (let i = timeRangeHours - 1; i >= 0; i--) {
     const hourStart = now - (i + 1) * hourMs

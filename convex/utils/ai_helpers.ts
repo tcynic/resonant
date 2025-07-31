@@ -297,7 +297,7 @@ export function createBatchSchedule(
   const batches = Math.ceil(itemCount / batchSize)
   const minDelayBetweenBatches = (60000 / rateLimitPerMinute) * batchSize // Ensure rate limit compliance
 
-  const schedule = []
+  const schedule: any[] = []
 
   for (let i = 0; i < batches; i++) {
     const remainingItems = itemCount - i * batchSize

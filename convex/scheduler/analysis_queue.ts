@@ -979,7 +979,7 @@ export const purgeExpiredQueue = internalMutation({
     }
 
     let purgedCount = 0
-    const purgedDetails = []
+    const purgedDetails: any[] = []
 
     for (const item of uniqueExpiredItems) {
       const age = Date.now() - item.createdAt
@@ -1117,7 +1117,7 @@ export const processQueueWithWeights = internalMutation({
       .sort((a, b) => b.weight - a.weight)
       .slice(0, Math.min(availableCapacity, maxBatchSize))
 
-    const processedItems = []
+    const processedItems: any[] = []
 
     // Process each item
     for (const item of itemsToProcess) {
@@ -1200,8 +1200,8 @@ export const autoRequeueTransientFailures = internalMutation({
       }
     }
 
-    const requeuedItems = []
-    const skippedItems = []
+    const requeuedItems: any[] = []
+    const skippedItems: any[] = []
 
     // Process failed items up to batch size
     for (const analysis of failedAnalyses.slice(0, batchSize)) {
@@ -1317,7 +1317,7 @@ export const upgradeAgingRequests = internalMutation({
       .filter(q => q.eq(q.field('processingStartedAt'), undefined))
       .collect()
 
-    const upgradedItems = []
+    const upgradedItems: any[] = []
 
     for (const item of agingItems) {
       const currentPriority = item.priority || 'normal'

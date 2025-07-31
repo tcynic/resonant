@@ -499,8 +499,8 @@ export const recoverFromDeadLetterQueue = internalMutation({
     ),
   },
   handler: async (ctx, { analysisIds, newPriority = 'high' }) => {
-    const recoveredItems = []
-    const failedRecoveries = []
+    const recoveredItems: any[] = []
+    const failedRecoveries: any[] = []
 
     for (const analysisId of analysisIds) {
       try {
@@ -995,7 +995,7 @@ function generateLoadBalancingRecommendations(
   capacityInfo: any,
   loadAnalysis: any
 ) {
-  const recommendations = []
+  const recommendations: any[] = []
 
   // Capacity recommendations
   if (capacityInfo.capacity.capacityUtilization > 85) {

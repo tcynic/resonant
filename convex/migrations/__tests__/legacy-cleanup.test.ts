@@ -1,8 +1,8 @@
 import { convexTest } from 'convex-test'
 import { describe, it, expect, beforeEach } from '@jest/globals'
-import { api } from '../_generated/api'
-import schema from '../schema'
-import { Id } from '../_generated/dataModel'
+import { api } from '../../_generated/api'
+import schema from '../../schema'
+import { Id } from '../../_generated/dataModel'
 
 describe('Legacy System Migration & Cleanup', () => {
   let t: ReturnType<typeof convexTest>
@@ -66,7 +66,7 @@ describe('Legacy System Migration & Cleanup', () => {
       // Run migration
       const migrationResult = await t.run(async ctx => {
         // Import and run the migration
-        const migration = await import('../migrations/legacy_cleanup_v7')
+        const migration = await import('../legacy_cleanup_v7')
         return await migration.default({ db: ctx.db }, { dryRun: false })
       })
 
@@ -135,7 +135,7 @@ describe('Legacy System Migration & Cleanup', () => {
 
       // Run migration
       const migrationResult = await t.run(async ctx => {
-        const migration = await import('../migrations/legacy_cleanup_v7')
+        const migration = await import('../legacy_cleanup_v7')
         return await migration.default({ db: ctx.db }, { dryRun: false })
       })
 
@@ -181,7 +181,7 @@ describe('Legacy System Migration & Cleanup', () => {
 
       // Run dry run migration
       const migrationResult = await t.run(async ctx => {
-        const migration = await import('../migrations/legacy_cleanup_v7')
+        const migration = await import('../legacy_cleanup_v7')
         return await migration.default({ db: ctx.db }, { dryRun: true })
       })
 
@@ -244,7 +244,7 @@ describe('Legacy System Migration & Cleanup', () => {
 
       // Validate migration
       const validationResult = await t.run(async ctx => {
-        const migration = await import('../migrations/legacy_cleanup_v7')
+        const migration = await import('../legacy_cleanup_v7')
         return await migration.validateMigration({ db: ctx.db })
       })
 
@@ -293,7 +293,7 @@ describe('Legacy System Migration & Cleanup', () => {
 
       // Validate migration
       const validationResult = await t.run(async ctx => {
-        const migration = await import('../migrations/legacy_cleanup_v7')
+        const migration = await import('../legacy_cleanup_v7')
         return await migration.validateMigration({ db: ctx.db })
       })
 
@@ -347,7 +347,7 @@ describe('Legacy System Migration & Cleanup', () => {
 
       // Run rollback
       const rollbackResult = await t.run(async ctx => {
-        const migration = await import('../migrations/legacy_cleanup_v7')
+        const migration = await import('../legacy_cleanup_v7')
         return await migration.rollbackMigration(
           { db: ctx.db },
           { dryRun: false }
@@ -405,7 +405,7 @@ describe('Legacy System Migration & Cleanup', () => {
 
       // Run dry run rollback
       const rollbackResult = await t.run(async ctx => {
-        const migration = await import('../migrations/legacy_cleanup_v7')
+        const migration = await import('../legacy_cleanup_v7')
         return await migration.rollbackMigration(
           { db: ctx.db },
           { dryRun: true }
@@ -472,7 +472,7 @@ describe('Legacy System Migration & Cleanup', () => {
       const startTime = Date.now()
 
       const migrationResult = await t.run(async ctx => {
-        const migration = await import('../migrations/legacy_cleanup_v7')
+        const migration = await import('../legacy_cleanup_v7')
         return await migration.default({ db: ctx.db }, { dryRun: false })
       })
 

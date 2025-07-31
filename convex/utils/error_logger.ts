@@ -759,7 +759,7 @@ export async function getErrorContext(
   const relatedErrors = await ctx.db
     .query('errorLogs')
     .filter(q => {
-      const filters = []
+      const filters: any[] = []
 
       // Only add correlation ID filter if metadata exists
       if (error.metadata?.correlationId) {

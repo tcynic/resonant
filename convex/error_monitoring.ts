@@ -77,7 +77,7 @@ export const getErrorMonitoringDashboard = query({
     )
 
     // Generate alerts
-    const alerts = []
+    const alerts: any[] = []
 
     // Critical error alerts
     if (criticalErrors > 0) {
@@ -320,7 +320,7 @@ export const checkMonitoringAlerts = internalMutation({
       .filter(q => q.eq(q.field('enabled'), true))
       .collect()
 
-    const triggeredAlerts = []
+    const triggeredAlerts: any[] = []
 
     for (const alert of alerts) {
       const triggered = await evaluateAlert(ctx, alert)
@@ -714,7 +714,7 @@ function generateRecommendations(
   patterns: any,
   circuitBreakerHealth: any[]
 ): string[] {
-  const recommendations = []
+  const recommendations: any[] = []
 
   // Error pattern recommendations
   if (patterns.categoryBreakdown.length > 0) {
