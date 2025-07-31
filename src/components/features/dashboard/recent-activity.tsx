@@ -93,11 +93,11 @@ function ActivityItemComponent({ activity }: ActivityItemComponentProps) {
             alt={activity.relationship.name}
             width={40}
             height={40}
-            className="w-10 h-10 rounded-full object-cover"
+            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover"
           />
         ) : (
-          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-            <span className="text-sm font-medium text-gray-600">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-200 flex items-center justify-center">
+            <span className="text-xs sm:text-sm font-medium text-gray-600">
               {activity.relationship?.name?.charAt(0).toUpperCase() || '?'}
             </span>
           </div>
@@ -106,40 +106,45 @@ function ActivityItemComponent({ activity }: ActivityItemComponentProps) {
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between mb-1">
-          <div className="flex items-center space-x-2">
-            <h4 className="text-sm font-medium text-gray-900">
-              {activity.relationship?.name || 'Unknown Relationship'}
-            </h4>
-            <span className="text-xs text-gray-500 capitalize">
-              {activity.relationship?.type}
-            </span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <SentimentBadge
-              score={activity.analysisStatus.sentimentScore}
-              emotions={activity.analysisStatus.emotions}
-              confidence={activity.analysisStatus.confidence}
-            />
-            <span className="text-xs text-gray-500">
-              {formatTimeAgo(activity.createdAt)}
-            </span>
+        {/* Mobile-first header with stacked layout */}
+        <div className="space-y-2 sm:space-y-1">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
+            <div className="flex items-center space-x-2 min-w-0">
+              <h4 className="text-sm font-medium text-gray-900 truncate">
+                {activity.relationship?.name || 'Unknown Relationship'}
+              </h4>
+              <span className="text-xs text-gray-500 capitalize flex-shrink-0">
+                {activity.relationship?.type}
+              </span>
+            </div>
+            <div className="flex items-center justify-between sm:justify-end space-x-2">
+              <SentimentBadge
+                score={activity.analysisStatus.sentimentScore}
+                emotions={activity.analysisStatus.emotions}
+                confidence={activity.analysisStatus.confidence}
+              />
+              <span className="text-xs text-gray-500 flex-shrink-0">
+                {formatTimeAgo(activity.createdAt)}
+              </span>
+            </div>
           </div>
         </div>
 
         {/* Entry Preview */}
-        <p className="text-sm text-gray-700 mb-2">{activity.preview}</p>
+        <p className="text-sm text-gray-700 mb-2 line-clamp-2 sm:line-clamp-3">
+          {activity.preview}
+        </p>
 
-        {/* Tags and Mood */}
-        <div className="flex items-center space-x-4 text-xs">
+        {/* Tags and Mood - Mobile-optimized layout */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs">
           {activity.mood && (
-            <span className="inline-flex items-center px-2 py-1 rounded-full bg-purple-100 text-purple-800">
+            <span className="inline-flex items-center px-2 py-1 rounded-full bg-purple-100 text-purple-800 w-fit">
               {activity.mood}
             </span>
           )}
           {activity.tags && activity.tags.length > 0 && (
-            <div className="flex space-x-1">
-              {activity.tags.slice(0, 3).map((tag, index) => (
+            <div className="flex flex-wrap gap-1">
+              {activity.tags.slice(0, 2).map((tag, index) => (
                 <span
                   key={index}
                   className="inline-flex items-center px-2 py-1 rounded-full bg-gray-100 text-gray-700"
@@ -147,20 +152,20 @@ function ActivityItemComponent({ activity }: ActivityItemComponentProps) {
                   #{tag}
                 </span>
               ))}
-              {activity.tags.length > 3 && (
-                <span className="text-gray-500">
-                  +{activity.tags.length - 3} more
+              {activity.tags.length > 2 && (
+                <span className="text-gray-500 px-1 py-1">
+                  +{activity.tags.length - 2} more
                 </span>
               )}
             </div>
           )}
         </div>
 
-        {/* Emotions Display */}
+        {/* Emotions Display - Hide on mobile to save space */}
         {activity.analysisStatus.emotions.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-1">
+          <div className="mt-2 hidden sm:flex flex-wrap gap-1">
             {activity.analysisStatus.emotions
-              .slice(0, 4)
+              .slice(0, 3)
               .map((emotion, index) => (
                 <span
                   key={index}
@@ -169,61 +174,63 @@ function ActivityItemComponent({ activity }: ActivityItemComponentProps) {
                   {emotion}
                 </span>
               ))}
-            {activity.analysisStatus.emotions.length > 4 && (
+            {activity.analysisStatus.emotions.length > 3 && (
               <span className="text-xs text-gray-500">
-                +{activity.analysisStatus.emotions.length - 4} more
+                +{activity.analysisStatus.emotions.length - 3} more
               </span>
             )}
           </div>
         )}
       </div>
 
-      {/* Quick Actions */}
-      <div className="flex-shrink-0 flex items-center space-x-1">
-        <Link
-          href={`/journal/${activity._id}`}
-          className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-          aria-label="View entry"
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+      {/* Quick Actions - Mobile optimized */}
+      <div className="flex-shrink-0 flex items-start pt-1">
+        <div className="flex flex-col sm:flex-row space-y-1 sm:space-y-0 sm:space-x-1">
+          <Link
+            href={`/journal/${activity._id}`}
+            className="p-1.5 sm:p-1 text-gray-400 hover:text-gray-600 transition-colors rounded"
+            aria-label="View entry"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-            />
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-            />
-          </svg>
-        </Link>
-        <Link
-          href={`/journal/${activity._id}/edit`}
-          className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-          aria-label="Edit entry"
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+              />
+            </svg>
+          </Link>
+          <Link
+            href={`/journal/${activity._id}/edit`}
+            className="p-1.5 sm:p-1 text-gray-400 hover:text-gray-600 transition-colors rounded"
+            aria-label="Edit entry"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-            />
-          </svg>
-        </Link>
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+              />
+            </svg>
+          </Link>
+        </div>
       </div>
     </div>
   )
@@ -296,16 +303,16 @@ export default function RecentActivity({
           ))}
         </div>
 
-        {/* Footer with Quick Actions */}
-        <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
-          <div className="flex items-center justify-between">
-            <div className="text-xs text-gray-500">
+        {/* Footer with Quick Actions - Mobile optimized */}
+        <div className="px-4 sm:px-6 py-4 bg-gray-50 border-t border-gray-100">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+            <div className="text-xs text-gray-500 text-center sm:text-left">
               Showing {activities.length} of {totalCount} recent entries
             </div>
-            <div className="flex space-x-2">
+            <div className="flex flex-row justify-center sm:justify-end space-x-2">
               <Link
                 href="/journal/new"
-                className="inline-flex items-center px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700 transition-colors"
+                className="inline-flex items-center px-3 py-2 sm:py-1 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700 transition-colors"
               >
                 <svg
                   className="w-3 h-3 mr-1"
@@ -325,7 +332,7 @@ export default function RecentActivity({
               {showViewAll && (
                 <Link
                   href="/journal"
-                  className="inline-flex items-center px-3 py-1 border border-gray-300 text-gray-700 text-xs font-medium rounded-md hover:bg-gray-50 transition-colors"
+                  className="inline-flex items-center px-3 py-2 sm:py-1 border border-gray-300 text-gray-700 text-xs font-medium rounded-md hover:bg-gray-50 transition-colors"
                 >
                   View History
                 </Link>

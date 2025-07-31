@@ -113,7 +113,9 @@ export function CostMonitoringDashboard() {
     return <DashboardSkeleton />
   }
 
-  const utilizationPercent = budgetStatus.utilization?.percent ? budgetStatus.utilization.percent * 100 : 0
+  const utilizationPercent = budgetStatus.utilization?.percent
+    ? budgetStatus.utilization.percent * 100
+    : 0
   const projectedOverage = budgetStatus.projections?.projectedOverage ?? 0
 
   return (
@@ -195,7 +197,9 @@ export function CostMonitoringDashboard() {
               <div>
                 <p className="text-sm text-gray-600">Projected Spend</p>
                 <p className="text-3xl font-bold text-purple-600">
-                  ${budgetStatus.projections?.projectedSpend?.toFixed(2) ?? '0.00'}
+                  $
+                  {budgetStatus.projections?.projectedSpend?.toFixed(2) ??
+                    '0.00'}
                 </p>
               </div>
               <div className="text-right">
@@ -300,10 +304,7 @@ export function CostMonitoringDashboard() {
                   dataKey="cost"
                 >
                   {costMetrics.breakdown.map(
-                    (
-                      entry: CostBreakdownEntry,
-                      index: number
-                    ) => (
+                    (entry: CostBreakdownEntry, index: number) => (
                       <Cell
                         key={`cell-${index}`}
                         fill={COLORS[index % COLORS.length]}
@@ -329,33 +330,31 @@ export function CostMonitoringDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {costMetrics.breakdown.map(
-                (service: CostBreakdownEntry) => (
-                  <div key={service.service} className="border rounded-lg p-3">
-                    <div className="flex justify-between items-center mb-2">
-                      <h4 className="font-semibold">{service.service}</h4>
-                      <Badge variant="secondary">
-                        {service.efficiency.requestsPerDollar.toFixed(1)} req/$
-                      </Badge>
-                    </div>
+              {costMetrics.breakdown.map((service: CostBreakdownEntry) => (
+                <div key={service.service} className="border rounded-lg p-3">
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-semibold">{service.service}</h4>
+                    <Badge variant="secondary">
+                      {service.efficiency.requestsPerDollar.toFixed(1)} req/$
+                    </Badge>
+                  </div>
 
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-gray-600">Cost/Request:</span>
-                        <span className="ml-1 font-semibold">
-                          ${service.avgCostPerRequest.toFixed(4)}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-gray-600">Cost/Token:</span>
-                        <span className="ml-1 font-semibold">
-                          ${service.avgCostPerToken.toFixed(6)}
-                        </span>
-                      </div>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-600">Cost/Request:</span>
+                      <span className="ml-1 font-semibold">
+                        ${service.avgCostPerRequest.toFixed(4)}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Cost/Token:</span>
+                      <span className="ml-1 font-semibold">
+                        ${service.avgCostPerToken.toFixed(6)}
+                      </span>
                     </div>
                   </div>
-                )
-              )}
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>

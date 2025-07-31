@@ -172,10 +172,7 @@ export function HealthCheckDashboard() {
   // Group services by type for better organization
   const servicesByType =
     systemHealth.serviceDetails?.reduce(
-      (
-        acc: Record<string, ServiceDetail[]>,
-        service: ServiceDetail
-      ) => {
+      (acc: Record<string, ServiceDetail[]>, service: ServiceDetail) => {
         if (!acc[service.serviceType]) {
           acc[service.serviceType] = []
         }
@@ -262,7 +259,10 @@ export function HealthCheckDashboard() {
                 <span>Health Score</span>
                 <span>{systemHealth.healthScore}% healthy</span>
               </div>
-              <Progress value={systemHealth?.healthScore ?? 0} className="h-3" />
+              <Progress
+                value={systemHealth?.healthScore ?? 0}
+                className="h-3"
+              />
             </div>
 
             {/* Services Summary */}
@@ -504,18 +504,24 @@ export function HealthCheckDashboard() {
                                   />
                                   <div>
                                     <div className="font-medium">
-                                      {(result.service as string) ?? 'Unknown Service'}
+                                      {(result.service as string) ??
+                                        'Unknown Service'}
                                     </div>
                                     <div className="text-sm text-gray-600">
-                                      {(result.message as string) ?? 'No message'}
+                                      {(result.message as string) ??
+                                        'No message'}
                                     </div>
                                   </div>
                                 </div>
                                 <div className="text-right text-sm text-gray-500">
                                   <div>
-                                    {formatLastChecked(result.checkedAt as number)}
+                                    {formatLastChecked(
+                                      result.checkedAt as number
+                                    )}
                                   </div>
-                                  <div>{(result.responseTime as number) ?? 0}ms</div>
+                                  <div>
+                                    {(result.responseTime as number) ?? 0}ms
+                                  </div>
                                 </div>
                               </div>
                             )

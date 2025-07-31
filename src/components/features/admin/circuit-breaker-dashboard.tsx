@@ -477,7 +477,14 @@ export function CircuitBreakerDashboard() {
               <h3 className="font-medium mb-2">Service Alerts</h3>
               <div className="space-y-2">
                 {healthStatus.alerts.map(
-                  (alert: { level: "critical" | "warning" | "info"; message: string; timestamp: number }, index: number) => (
+                  (
+                    alert: {
+                      level: 'critical' | 'warning' | 'info'
+                      message: string
+                      timestamp: number
+                    },
+                    index: number
+                  ) => (
                     <div
                       key={index}
                       className={`p-3 rounded border ${getAlertLevelColor(alert.level)}`}

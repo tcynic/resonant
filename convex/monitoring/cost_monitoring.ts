@@ -184,7 +184,10 @@ async function calculateCostProjections(
     .filter((q: any) => q.lt(q.field('createdAt'), prevEndTime))
     .collect()
 
-  const prevCost = prevAnalyses.reduce((sum: number, a: any) => sum + (a.apiCost || 0), 0)
+  const prevCost = prevAnalyses.reduce(
+    (sum: number, a: any) => sum + (a.apiCost || 0),
+    0
+  )
   const costTrend =
     prevCost > 0 ? ((currentCost - prevCost) / prevCost) * 100 : 0
 

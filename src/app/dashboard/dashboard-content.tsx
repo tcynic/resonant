@@ -58,25 +58,25 @@ function DashboardHeader({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
+    <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
             {isClient ? safeTimeFormatting.getGreeting() : 'Hello'},{' '}
             {user?.firstName || 'there'}!
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-gray-600 mt-1 text-sm sm:text-base">
             Here&apos;s how your relationships are doing today
           </p>
         </div>
-        <div className="flex items-center space-x-4">
-          <div className="text-right">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+          <div className="text-left sm:text-right">
             <p className="text-sm text-gray-500">
               {stats
                 ? `Updated ${safeTimeFormatting.formatLastUpdated(stats.lastUpdated)}`
                 : 'Loading...'}
             </p>
-            <div className="flex items-center justify-end space-x-2 mt-1">
+            <div className="flex items-center sm:justify-end space-x-2 mt-1">
               <ConnectionStatus />
               <RealTimeIndicator
                 isLoading={isLoading}
@@ -87,7 +87,7 @@ function DashboardHeader({
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50"
+            className="flex items-center justify-center space-x-2 px-3 py-2 text-sm text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50 w-full sm:w-auto"
           >
             <svg
               className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`}
@@ -428,8 +428,8 @@ export default function DashboardContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-8">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="min-h-screen bg-gray-50 px-3 sm:px-4 py-6 sm:py-8">
+      <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
         {/* Header */}
         <DashboardHeader
           user={user ? { firstName: user.firstName || undefined } : null}
@@ -441,7 +441,7 @@ export default function DashboardContent() {
         <StatsGrid stats={dashboardStats} />
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           {/* Health Score Cards */}
           <div className="lg:col-span-2 space-y-6">
             <div className="flex items-center justify-between mb-4">
@@ -455,12 +455,12 @@ export default function DashboardContent() {
 
             <ErrorBoundary
               fallback={
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
                   <NetworkErrorFallback onRetry={() => safeWindow.reload()} />
                 </div>
               }
             >
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
                 {dashboardData.relationships.map(
                   (relationship: RelationshipWithScore) => (
                     <HealthScoreCard
@@ -476,7 +476,7 @@ export default function DashboardContent() {
           </div>
 
           {/* Recent Activity */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             <ErrorBoundary
               fallback={
                 <NetworkErrorFallback onRetry={() => safeWindow.reload()} />
@@ -537,17 +537,19 @@ export default function DashboardContent() {
             </h3>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               <Link
                 href="/journal/new"
-                className="flex items-center p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                className="flex items-center p-3 sm:p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
               >
-                <span className="text-2xl mr-3">📝</span>
-                <div>
-                  <h4 className="font-medium text-gray-900">
+                <span className="text-xl sm:text-2xl mr-3 flex-shrink-0">
+                  📝
+                </span>
+                <div className="min-w-0">
+                  <h4 className="font-medium text-gray-900 text-sm sm:text-base">
                     New Journal Entry
                   </h4>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-xs sm:text-sm text-gray-600">
                     Reflect on your relationships
                   </p>
                 </div>
@@ -555,14 +557,16 @@ export default function DashboardContent() {
 
               <Link
                 href="/relationships/new"
-                className="flex items-center p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors"
+                className="flex items-center p-3 sm:p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors"
               >
-                <span className="text-2xl mr-3">💝</span>
-                <div>
-                  <h4 className="font-medium text-gray-900">
+                <span className="text-xl sm:text-2xl mr-3 flex-shrink-0">
+                  💝
+                </span>
+                <div className="min-w-0">
+                  <h4 className="font-medium text-gray-900 text-sm sm:text-base">
                     Add Relationship
                   </h4>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-xs sm:text-sm text-gray-600">
                     Track a new relationship
                   </p>
                 </div>
@@ -570,12 +574,18 @@ export default function DashboardContent() {
 
               <Link
                 href="/journal"
-                className="flex items-center p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors"
+                className="flex items-center p-3 sm:p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors sm:col-span-2 lg:col-span-1"
               >
-                <span className="text-2xl mr-3">📊</span>
-                <div>
-                  <h4 className="font-medium text-gray-900">View History</h4>
-                  <p className="text-sm text-gray-600">Browse past entries</p>
+                <span className="text-xl sm:text-2xl mr-3 flex-shrink-0">
+                  📊
+                </span>
+                <div className="min-w-0">
+                  <h4 className="font-medium text-gray-900 text-sm sm:text-base">
+                    View History
+                  </h4>
+                  <p className="text-xs sm:text-sm text-gray-600">
+                    Browse past entries
+                  </p>
                 </div>
               </Link>
             </div>

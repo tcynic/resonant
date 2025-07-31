@@ -44,9 +44,12 @@ export function SuccessRateDashboard() {
   const trendData = useQuery(
     api.monitoring.success_rate_tracking.getSuccessRateTrends,
     {
-      timeWindow: timeWindow === '1h' ? '24h' : timeWindow as '30d' | '7d' | '24h',
+      timeWindow:
+        timeWindow === '1h' ? '24h' : (timeWindow as '30d' | '7d' | '24h'),
       granularity:
-        timeWindow === '1h' || timeWindow === '24h' ? ('hourly' as const) : ('daily' as const),
+        timeWindow === '1h' || timeWindow === '24h'
+          ? ('hourly' as const)
+          : ('daily' as const),
     }
   )
 

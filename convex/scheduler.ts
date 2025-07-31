@@ -29,11 +29,15 @@ export const requeueAnalysis = mutation({
     })
 
     // Schedule direct processing for analysis
-    await ctx.scheduler.runAfter(0, internal.aiAnalysis.processAnalysisDirectly, {
-      entryId: analysis.entryId,
-      userId: analysis.userId,
-      priority: args.priority || 'high',
-    })
+    await ctx.scheduler.runAfter(
+      0,
+      internal.aiAnalysis.processAnalysisDirectly,
+      {
+        entryId: analysis.entryId,
+        userId: analysis.userId,
+        priority: args.priority || 'high',
+      }
+    )
 
     return {
       status: 'requeued',

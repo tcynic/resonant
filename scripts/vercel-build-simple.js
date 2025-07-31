@@ -35,7 +35,7 @@ try {
   convexCodegenSuccess = true
 } catch (error) {
   console.log('⚠️ Convex codegen failed, falling back to stub files...')
-  
+
   // Fallback: Set up stub files
   try {
     const generatedDir = path.join(__dirname, '..', 'convex', '_generated')

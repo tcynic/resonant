@@ -539,7 +539,15 @@ export const retryAnalysisInternal = internalAction({
     userId: v.string(),
     retryCount: v.number(),
   },
-  handler: async (ctx, args): Promise<{ success: boolean; analysisId?: string; error?: string; method?: string }> => {
+  handler: async (
+    ctx,
+    args
+  ): Promise<{
+    success: boolean
+    analysisId?: string
+    error?: string
+    method?: string
+  }> => {
     // Redirect to direct processing instead of HTTP Actions
     return await ctx.runAction(internal.aiAnalysis.processAnalysisDirectly, {
       entryId: args.entryId,
@@ -559,10 +567,10 @@ export const processAnalysisDirectly = internalAction({
   handler: async (ctx, args) => {
     try {
       // Get the journal entry via runQuery since actions don't have direct db access
-      const entry = await ctx.runQuery(internal.journalEntries.getForAnalysis, { 
-        entryId: args.entryId
+      const entry = await ctx.runQuery(internal.journalEntries.getForAnalysis, {
+        entryId: args.entryId,
       })
-      
+
       if (!entry) {
         throw new Error('Journal entry not found')
       }
@@ -575,14 +583,19 @@ export const processAnalysisDirectly = internalAction({
       })
 
       // Use fallback analysis pipeline to avoid HTTP Action circular dependency
-      const { handleFallbackInPipeline } = await import('./fallback/integration')
+      const { handleFallbackInPipeline } = await import(
+        './fallback/integration'
+      )
       const fallbackResult = await handleFallbackInPipeline(ctx, {
         entryId: args.entryId,
         userId: args.userId,
         journalContent: entry.content,
-        relationshipContext: entry.relationshipId ? 'relationship_context' : undefined,
+        relationshipContext: entry.relationshipId
+          ? 'relationship_context'
+          : undefined,
         retryCount: 0,
-        originalError: 'Direct processing via fallback (avoiding HTTP Action circular dependency)',
+        originalError:
+          'Direct processing via fallback (avoiding HTTP Action circular dependency)',
       })
 
       return {
@@ -592,11 +605,12 @@ export const processAnalysisDirectly = internalAction({
       }
     } catch (error) {
       console.error('Direct analysis processing failed:', error)
-      
+
       // Mark as failed
       await ctx.runMutation(internal.aiAnalysis.markFailed, {
         entryId: args.entryId,
-        error: error instanceof Error ? error.message : 'Direct processing failed',
+        error:
+          error instanceof Error ? error.message : 'Direct processing failed',
       })
 
       return {
