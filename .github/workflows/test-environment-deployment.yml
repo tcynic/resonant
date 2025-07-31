@@ -46,13 +46,10 @@ jobs:
           echo "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.CLERK_PUBLISHABLE_KEY_TEST }}" >> .env.local
           echo "CLERK_SECRET_KEY=${{ secrets.CLERK_SECRET_KEY_TEST }}" >> .env.local
 
-      - name: Install Convex CLI
-        run: npm install -g convex@latest
-
       - name: Generate Convex TypeScript files
         run: |
           echo "Generating Convex TypeScript definitions..."
-          npx convex codegen
+          npm run convex:codegen-optional
 
       - name: Setup test data in Convex
         run: |
