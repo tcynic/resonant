@@ -44,9 +44,9 @@ export function SuccessRateDashboard() {
   const trendData = useQuery(
     api.monitoring.success_rate_tracking.getSuccessRateTrends,
     {
-      timeWindow,
+      timeWindow: timeWindow === '1h' ? '24h' : timeWindow as '30d' | '7d' | '24h',
       granularity:
-        timeWindow === '1h' ? 'minute' : timeWindow === '24h' ? 'hour' : 'day',
+        timeWindow === '1h' || timeWindow === '24h' ? ('hourly' as const) : ('daily' as const),
     }
   )
 
@@ -155,16 +155,16 @@ export function SuccessRateDashboard() {
               <div>
                 <p className="text-sm text-gray-600">Trend</p>
                 <p className="text-lg font-semibold">
-                  {trendData.summary.trend === 'improving'
+                  {(trendData.summary as any).trend === 'improving'
                     ? '↗️ Improving'
-                    : trendData.summary.trend === 'declining'
+                    : (trendData.summary as any).trend === 'declining'
                       ? '↘️ Declining'
                       : '→ Stable'}
                 </p>
               </div>
-              {trendData.summary.trend === 'improving' ? (
+              {(trendData.summary as any).trend === 'improving' ? (
                 <TrendingUp className="w-6 h-6 text-green-500" />
-              ) : trendData.summary.trend === 'declining' ? (
+              ) : (trendData.summary as any).trend === 'declining' ? (
                 <TrendingDown className="w-6 h-6 text-red-500" />
               ) : (
                 <Activity className="w-6 h-6 text-gray-500" />
@@ -286,7 +286,7 @@ export function SuccessRateDashboard() {
                   <div>
                     <h4 className="font-semibold">{service.service}</h4>
                     <p className="text-sm text-gray-600">
-                      {service.totalRequests} requests
+                      {service.totalAnalyses} requests
                     </p>
                   </div>
                   <div className="text-right">
@@ -325,13 +325,13 @@ export function SuccessRateDashboard() {
                   <div>
                     <span className="text-gray-600">Avg Processing:</span>
                     <span className="ml-1 font-semibold">
-                      {Math.round(service.averageProcessingTime)}ms
+                      {Math.round(service.avgProcessingTime)}ms
                     </span>
                   </div>
                   <div>
                     <span className="text-gray-600">Cost/Request:</span>
                     <span className="ml-1 font-semibold">
-                      ${service.costPerRequest.toFixed(4)}
+                      ${service.avgCost.toFixed(4)}
                     </span>
                   </div>
                   <div>

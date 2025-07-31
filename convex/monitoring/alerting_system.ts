@@ -433,7 +433,7 @@ export const getActiveAlerts = query({
 
     const alerts = await (limitedQuery as any).collect()
 
-    return alerts.map(alert => ({
+    return alerts.map((alert: any) => ({
       ...alert,
       age: Date.now() - alert.triggeredAt,
       isEscalated: alert.escalationLevel > 0,

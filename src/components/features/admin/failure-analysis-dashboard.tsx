@@ -8,6 +8,42 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '@/convex/_generated/api'
+import { Id } from '@/convex/_generated/dataModel'
+
+// Type definitions for failure analysis data
+interface FailureDetection {
+  _id: Id<'failureDetections'>
+  pattern: FailurePattern
+  status: FailureStatus
+  confidence: number
+  severity: 'low' | 'medium' | 'high' | 'critical'
+  rootCauseAnalysis: {
+    primaryCause: string
+    contributingFactors: string[]
+  }
+  recommendations: Array<{
+    action: string
+    priority: 'immediate' | 'high' | 'medium' | 'low'
+    estimatedImpact: string
+  }>
+  affectedServices: string[]
+  detectedAt: number
+  resolvedAt?: number
+  duration: number
+}
+
+interface ServiceHealth {
+  service: string
+  failureCount: number
+  mostCommonSeverity: string
+  mostCommonPattern: string
+}
+
+interface FailureTrend {
+  pattern: FailurePattern
+  timestamp: number
+  severity: 'high' | 'medium' | 'low' | 'critical'
+}
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -98,7 +134,7 @@ export function FailureAnalysisDashboard() {
   const [timeWindow, setTimeWindow] = useState<TimeWindow>('7d')
   const [severityFilter, setSeverityFilter] = useState<string>('all')
   const [selectedFailure, setSelectedFailure] = useState<{
-    _id: string
+    _id: Id<'failureDetections'>
     pattern: FailurePattern
     status: FailureStatus
     rootCauseAnalysis: {
@@ -314,16 +350,10 @@ export function FailureAnalysisDashboard() {
           ) : (
             <div className="space-y-4">
               {activeFailures.map(
-                (failure: {
-                  _id: string
-                  pattern: string
-                  status: string
-                  [key: string]: unknown
-                }) => {
-                  const PatternIcon =
-                    PATTERN_ICONS[failure.pattern as FailurePattern]
-                  const StatusIcon =
-                    STATUS_ICONS[failure.status as FailureStatus]
+                (failure: FailureDetection) => {
+                  const PatternIcon = PATTERN_ICONS[failure.pattern]
+                  const confidence = failure.confidence
+                  const StatusIcon = STATUS_ICONS[failure.status]
 
                   return (
                     <Card
@@ -605,11 +635,9 @@ export function FailureAnalysisDashboard() {
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart
                   data={failureAnalytics.patterns.trends.map(
-                    (trend: { pattern: string; [key: string]: unknown }) => ({
+                    (trend: FailureTrend) => ({
                       ...trend,
-                      patternName: getPatternDisplayName(
-                        trend.pattern as FailurePattern
-                      ),
+                      patternName: getPatternDisplayName(trend.pattern),
                       time: new Date(trend.timestamp).toLocaleTimeString([], {
                         hour: '2-digit',
                         minute: '2-digit',
@@ -649,7 +677,7 @@ export function FailureAnalysisDashboard() {
               ) : (
                 <div className="space-y-4">
                   {failureAnalytics.serviceImpact.map(
-                    (service: { service: string; [key: string]: unknown }) => (
+                    (service: ServiceHealth) => (
                       <div
                         key={service.service}
                         className="border rounded-lg p-4"

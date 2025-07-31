@@ -8,6 +8,34 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '@/convex/_generated/api'
+
+// Type definitions for health check data
+interface SystemHealth {
+  healthScore: number
+  status: HealthStatus
+  lastChecked: number
+  servicesSummary: {
+    healthy: number
+    degraded: number
+    unhealthy: number
+    total: number
+  }
+  servicesByType: Record<string, ServiceDetail[]>
+  serviceDetails: ServiceDetail[]
+}
+
+interface ServiceDetail {
+  service: string
+  serviceType: string
+  status: HealthStatus
+  message: string
+  responseTime: number
+  checkedAt: number
+  details: {
+    endpoint: string
+    version: string
+  }
+}
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -84,7 +112,7 @@ export function HealthCheckDashboard() {
     {
       includeDetails: true,
     }
-  )
+  ) as SystemHealth | undefined
 
   // Query health check history
   const healthHistory = useQuery(
@@ -145,8 +173,8 @@ export function HealthCheckDashboard() {
   const servicesByType =
     systemHealth.serviceDetails?.reduce(
       (
-        acc: Record<string, unknown[]>,
-        service: { serviceType: string; [key: string]: unknown }
+        acc: Record<string, ServiceDetail[]>,
+        service: ServiceDetail
       ) => {
         if (!acc[service.serviceType]) {
           acc[service.serviceType] = []
@@ -154,18 +182,7 @@ export function HealthCheckDashboard() {
         acc[service.serviceType].push(service)
         return acc
       },
-      {} as Record<
-        ServiceType,
-        {
-          service: string
-          serviceType: ServiceType
-          status: HealthStatus
-          message: string
-          responseTime: number
-          checkedAt: number
-          details?: Record<string, unknown>
-        }[]
-      >
+      {} as Record<string, ServiceDetail[]>
     ) || {}
 
   return (
@@ -186,7 +203,7 @@ export function HealthCheckDashboard() {
             options={[
               { value: 'all', label: 'All Services' },
               ...(systemHealth.serviceDetails?.map(
-                (service: { service: string; [key: string]: unknown }) => ({
+                (service: ServiceDetail) => ({
                   value: service.service,
                   label: service.service,
                 })
@@ -245,35 +262,35 @@ export function HealthCheckDashboard() {
                 <span>Health Score</span>
                 <span>{systemHealth.healthScore}% healthy</span>
               </div>
-              <Progress value={systemHealth.healthScore} className="h-3" />
+              <Progress value={systemHealth?.healthScore ?? 0} className="h-3" />
             </div>
 
             {/* Services Summary */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center p-3 bg-green-50 rounded-lg">
                 <div className="text-2xl font-bold text-green-600">
-                  {systemHealth.servicesSummary.healthy}
+                  {systemHealth?.servicesSummary?.healthy ?? 0}
                 </div>
                 <div className="text-sm text-green-600">Healthy</div>
               </div>
 
               <div className="text-center p-3 bg-yellow-50 rounded-lg">
                 <div className="text-2xl font-bold text-yellow-600">
-                  {systemHealth.servicesSummary.degraded}
+                  {systemHealth?.servicesSummary?.degraded ?? 0}
                 </div>
                 <div className="text-sm text-yellow-600">Degraded</div>
               </div>
 
               <div className="text-center p-3 bg-red-50 rounded-lg">
                 <div className="text-2xl font-bold text-red-600">
-                  {systemHealth.servicesSummary.unhealthy}
+                  {systemHealth?.servicesSummary?.unhealthy ?? 0}
                 </div>
                 <div className="text-sm text-red-600">Unhealthy</div>
               </div>
 
               <div className="text-center p-3 bg-gray-50 rounded-lg">
                 <div className="text-2xl font-bold text-gray-600">
-                  {systemHealth.servicesSummary.total}
+                  {systemHealth?.servicesSummary?.total ?? 0}
                 </div>
                 <div className="text-sm text-gray-600">Total Services</div>
               </div>
@@ -293,7 +310,7 @@ export function HealthCheckDashboard() {
         {/* Services Tab */}
         <TabsContent value="services" className="space-y-6">
           {Object.entries(servicesByType).map(
-            ([serviceType, services]: [string, unknown[]]) => (
+            ([serviceType, services]: [string, ServiceDetail[]]) => (
               <Card key={serviceType}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -309,12 +326,11 @@ export function HealthCheckDashboard() {
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {services.map(service => {
-                      const StatusIcon =
-                        STATUS_ICONS[service.status as HealthStatus]
+                      const StatusIcon = STATUS_ICONS[service.status]
                       return (
                         <div
                           key={service.service}
-                          className={`p-4 border rounded-lg ${STATUS_COLORS[service.status as HealthStatus]}`}
+                          className={`p-4 border rounded-lg ${STATUS_COLORS[service.status]}`}
                         >
                           <div className="flex items-center justify-between mb-2">
                             <h4 className="font-semibold">{service.service}</h4>
@@ -356,7 +372,7 @@ export function HealthCheckDashboard() {
                                             ? key.includes('Rate') ||
                                               key.includes('Percentage')
                                               ? `${(value * 100).toFixed(1)}%`
-                                              : value.toFixed(2)
+                                              : (value as number).toFixed(2)
                                             : String(value)}
                                         </span>
                                       </div>
@@ -398,8 +414,9 @@ export function HealthCheckDashboard() {
                       <AreaChart
                         data={healthHistory.results.map(
                           (result: {
-                            checkedAt: string
+                            checkedAt: number
                             status: string
+                            responseTime?: number
                             [key: string]: unknown
                           }) => ({
                             timestamp: result.checkedAt,
@@ -458,7 +475,10 @@ export function HealthCheckDashboard() {
                           (
                             result: {
                               status: string
-                              checkedAt: string
+                              checkedAt: number
+                              service?: string
+                              message?: string
+                              responseTime?: number
                               [key: string]: unknown
                             },
                             index: number
@@ -484,18 +504,18 @@ export function HealthCheckDashboard() {
                                   />
                                   <div>
                                     <div className="font-medium">
-                                      {result.service}
+                                      {(result.service as string) ?? 'Unknown Service'}
                                     </div>
                                     <div className="text-sm text-gray-600">
-                                      {result.message}
+                                      {(result.message as string) ?? 'No message'}
                                     </div>
                                   </div>
                                 </div>
                                 <div className="text-right text-sm text-gray-500">
                                   <div>
-                                    {formatLastChecked(result.checkedAt)}
+                                    {formatLastChecked(result.checkedAt as number)}
                                   </div>
-                                  <div>{result.responseTime}ms</div>
+                                  <div>{(result.responseTime as number) ?? 0}ms</div>
                                 </div>
                               </div>
                             )

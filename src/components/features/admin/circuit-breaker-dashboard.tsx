@@ -55,9 +55,7 @@ export function CircuitBreakerDashboard() {
   ) // Last hour
 
   // Query circuit breaker data
-  const statuses = useQuery(api.circuit_breaker_queries.getAllStatuses) as
-    | CircuitBreakerStatus[]
-    | undefined
+  const statuses = useQuery(api.circuit_breaker_queries.getAllStatuses)
   const alerts = useQuery(api.circuit_breaker_queries.getAlerts, {
     since: alertsSince,
   }) as CircuitBreakerAlert[] | undefined
@@ -479,7 +477,7 @@ export function CircuitBreakerDashboard() {
               <h3 className="font-medium mb-2">Service Alerts</h3>
               <div className="space-y-2">
                 {healthStatus.alerts.map(
-                  (alert: CircuitBreakerAlert, index: number) => (
+                  (alert: { level: "critical" | "warning" | "info"; message: string; timestamp: number }, index: number) => (
                     <div
                       key={index}
                       className={`p-3 rounded border ${getAlertLevelColor(alert.level)}`}

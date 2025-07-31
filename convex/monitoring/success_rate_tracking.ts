@@ -47,7 +47,7 @@ export const calculateSuccessRate = query({
     // Build query filters
     let query = ctx.db
       .query('aiAnalysis')
-      .filter(q => q.gte(q.field('createdAt'), startTime))
+      .filter((q: any) => q.gte(q.field('createdAt'), startTime))
 
     if (args.service) {
       query = query.filter((q: any) => q.eq(q.field('modelType'), args.service))
@@ -150,7 +150,7 @@ export const calculateSuccessRate = query({
 async function getSuccessRateByService(ctx: any, startTime: number) {
   const analyses = await ctx.db
     .query('aiAnalysis')
-    .filter(q => q.gte(q.field('createdAt'), startTime))
+    .filter((q: any) => q.gte(q.field('createdAt'), startTime))
     .collect()
 
   const serviceStats = new Map<string, { total: number; success: number }>()
@@ -179,7 +179,7 @@ async function getSuccessRateByService(ctx: any, startTime: number) {
 async function getSuccessRateByModelType(ctx: any, startTime: number) {
   const analyses = await ctx.db
     .query('aiAnalysis')
-    .filter(q => q.gte(q.field('createdAt'), startTime))
+    .filter((q: any) => q.gte(q.field('createdAt'), startTime))
     .collect()
 
   const modelStats = new Map<string, { total: number; success: number }>()
@@ -222,7 +222,7 @@ export const getRealTimeSuccessRate = query({
 
       const analyses = await ctx.db
         .query('aiAnalysis')
-        .filter(q => q.gte(q.field('createdAt'), startTime))
+        .filter((q: any) => q.gte(q.field('createdAt'), startTime))
         .collect()
 
       const totalCount = analyses.length
@@ -435,7 +435,7 @@ export const checkSuccessRateAlerts = internalMutation({
     // Calculate current success rate
     const analyses = await ctx.db
       .query('aiAnalysis')
-      .filter(q => q.gte(q.field('createdAt'), startTime))
+      .filter((q: any) => q.gte(q.field('createdAt'), startTime))
       .collect()
 
     const totalCount = analyses.length
@@ -532,7 +532,7 @@ export const compareSuccessRatesAcrossServices = query({
 
     const analyses = await ctx.db
       .query('aiAnalysis')
-      .filter(q => q.gte(q.field('createdAt'), startTime))
+      .filter((q: any) => q.gte(q.field('createdAt'), startTime))
       .collect()
 
     // Group by model type and service

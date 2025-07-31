@@ -8,6 +8,44 @@
 import React, { useState } from 'react'
 import { useQuery } from 'convex/react'
 import { api } from '@/convex/_generated/api'
+
+// Type definitions for cost monitoring data
+interface CostBreakdownEntry {
+  service: string
+  cost: number
+  requests: number
+  tokens: number
+  avgCostPerRequest: number
+  avgCostPerToken: number
+  avgResponseTime: number
+  efficiency: {
+    costPerSecond: number
+    requestsPerDollar: number
+  }
+}
+
+interface CostMetrics {
+  timeWindow: string
+  totalCost: number
+  breakdown: CostBreakdownEntry[]
+  projections?: {
+    projectedTotalCost: number
+    projectedAdditionalCost: number
+    burnRate: number
+    dailyBurnRate: number
+    trend: {
+      direction: 'increasing' | 'decreasing' | 'stable'
+      percentageChange: number
+      comparedToPrevious: number
+    }
+    anomalies: {
+      hasCostSpike: boolean
+      recentAvgCost: number
+      overallAvgCost: number
+      spikeMultiplier: number
+    }
+  }
+}
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 // TODO: Implement button actions for cost monitoring dashboard
@@ -53,7 +91,7 @@ export function CostMonitoringDashboard() {
   const costMetrics = useQuery(api.monitoring.cost_monitoring.getCostMetrics, {
     timeWindow,
     includeProjections,
-  })
+  }) as CostMetrics | undefined
 
   // Query budget status
   const budgetStatus = useQuery(
@@ -75,8 +113,8 @@ export function CostMonitoringDashboard() {
     return <DashboardSkeleton />
   }
 
-  const utilizationPercent = budgetStatus.utilization.percent * 100
-  const projectedOverage = budgetStatus.projections.projectedOverage
+  const utilizationPercent = budgetStatus.utilization?.percent ? budgetStatus.utilization.percent * 100 : 0
+  const projectedOverage = budgetStatus.projections?.projectedOverage ?? 0
 
   return (
     <div className="w-full max-w-7xl mx-auto p-6 space-y-6">
@@ -111,14 +149,14 @@ export function CostMonitoringDashboard() {
               <div>
                 <p className="text-sm text-gray-600">Current Spend</p>
                 <p className="text-3xl font-bold text-blue-600">
-                  ${budgetStatus.currentSpend.toFixed(2)}
+                  ${budgetStatus.currentSpend?.toFixed(2) ?? '0.00'}
                 </p>
               </div>
               <DollarSign className="w-8 h-8 text-blue-500" />
             </div>
             <div className="mt-2">
               <p className="text-sm text-gray-500">
-                of ${budgetStatus.budgetLimit.toFixed(2)} budget
+                of ${budgetStatus.budgetLimit?.toFixed(2) ?? '0.00'} budget
               </p>
             </div>
           </CardContent>
@@ -138,14 +176,14 @@ export function CostMonitoringDashboard() {
             <div className="mt-2">
               <Badge
                 variant={
-                  budgetStatus.utilization.alertLevel === 'normal'
+                  budgetStatus.utilization?.alertLevel === 'normal'
                     ? 'default'
-                    : budgetStatus.utilization.alertLevel === 'warning'
+                    : budgetStatus.utilization?.alertLevel === 'warning'
                       ? 'secondary'
                       : 'destructive'
                 }
               >
-                {budgetStatus.utilization.alertLevel}
+                {budgetStatus.utilization?.alertLevel ?? 'unknown'}
               </Badge>
             </div>
           </CardContent>
@@ -157,11 +195,11 @@ export function CostMonitoringDashboard() {
               <div>
                 <p className="text-sm text-gray-600">Projected Spend</p>
                 <p className="text-3xl font-bold text-purple-600">
-                  ${budgetStatus.projections.projectedSpend.toFixed(2)}
+                  ${budgetStatus.projections?.projectedSpend?.toFixed(2) ?? '0.00'}
                 </p>
               </div>
               <div className="text-right">
-                {budgetStatus.projections.willExceedBudget ? (
+                {budgetStatus.projections?.willExceedBudget ? (
                   <AlertTriangle className="w-8 h-8 text-red-500" />
                 ) : (
                   <TrendingUp className="w-8 h-8 text-green-500" />
@@ -184,14 +222,14 @@ export function CostMonitoringDashboard() {
               <div>
                 <p className="text-sm text-gray-600">Burn Rate</p>
                 <p className="text-3xl font-bold text-orange-600">
-                  ${budgetStatus.projections.burnRate.toFixed(2)}
+                  ${budgetStatus.projections?.burnRate?.toFixed(2) ?? '0.00'}
                 </p>
               </div>
               <div className="text-sm text-gray-500">per day</div>
             </div>
             <div className="mt-2">
               <p className="text-sm text-gray-500">
-                {budgetStatus.timeRemaining.days} days remaining
+                {budgetStatus.timeRemaining?.days ?? 0} days remaining
               </p>
             </div>
           </CardContent>
@@ -208,8 +246,8 @@ export function CostMonitoringDashboard() {
             <div className="flex justify-between items-center">
               <span className="text-sm font-medium">Current Usage</span>
               <span className="text-sm text-gray-600">
-                ${budgetStatus.currentSpend.toFixed(2)} / $
-                {budgetStatus.budgetLimit.toFixed(2)}
+                ${budgetStatus.currentSpend?.toFixed(2) ?? '0.00'} / $
+                {budgetStatus.budgetLimit?.toFixed(2) ?? '0.00'}
               </span>
             </div>
 
@@ -263,14 +301,7 @@ export function CostMonitoringDashboard() {
                 >
                   {costMetrics.breakdown.map(
                     (
-                      entry: {
-                        service: string
-                        cost: number
-                        percentage: number
-                        efficiency?: number
-                        avgCostPerRequest?: number
-                        avgCostPerToken?: number
-                      },
+                      entry: CostBreakdownEntry,
                       index: number
                     ) => (
                       <Cell
@@ -299,19 +330,12 @@ export function CostMonitoringDashboard() {
           <CardContent>
             <div className="space-y-4">
               {costMetrics.breakdown.map(
-                (service: {
-                  service: string
-                  cost: number
-                  percentage: number
-                  efficiency?: number
-                  avgCostPerRequest?: number
-                  avgCostPerToken?: number
-                }) => (
+                (service: CostBreakdownEntry) => (
                   <div key={service.service} className="border rounded-lg p-3">
                     <div className="flex justify-between items-center mb-2">
                       <h4 className="font-semibold">{service.service}</h4>
                       <Badge variant="secondary">
-                        {service.efficiency?.toFixed(1) || 0} req/$
+                        {service.efficiency.requestsPerDollar.toFixed(1)} req/$
                       </Badge>
                     </div>
 
@@ -319,13 +343,13 @@ export function CostMonitoringDashboard() {
                       <div>
                         <span className="text-gray-600">Cost/Request:</span>
                         <span className="ml-1 font-semibold">
-                          ${service.avgCostPerRequest?.toFixed(4) || '0.0000'}
+                          ${service.avgCostPerRequest.toFixed(4)}
                         </span>
                       </div>
                       <div>
                         <span className="text-gray-600">Cost/Token:</span>
                         <span className="ml-1 font-semibold">
-                          ${service.avgCostPerToken?.toFixed(6) || '0.000000'}
+                          ${service.avgCostPerToken.toFixed(6)}
                         </span>
                       </div>
                     </div>

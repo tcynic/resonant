@@ -895,14 +895,14 @@ export const getFailureAnalytics = query({
           service,
           failureCount: data.count,
           mostCommonSeverity: data.severities.sort(
-            (a, b) =>
-              data.severities.filter(s => s === b).length -
-              data.severities.filter(s => s === a).length
+            (a: any, b: any) =>
+              data.severities.filter((s: any) => s === b).length -
+              data.severities.filter((s: any) => s === a).length
           )[0],
           mostCommonPattern: data.patterns.sort(
-            (a, b) =>
-              data.patterns.filter(p => p === b).length -
-              data.patterns.filter(p => p === a).length
+            (a: any, b: any) =>
+              data.patterns.filter((p: any) => p === b).length -
+              data.patterns.filter((p: any) => p === a).length
           )[0],
         }))
         .sort((a, b) => b.failureCount - a.failureCount)

@@ -481,13 +481,13 @@ async function calculateSuccessRateTrend(ctx: any, timeWindow: string) {
 
   const currentSuccessRate =
     currentAnalyses.length > 0
-      ? currentAnalyses.filter(a => a.status === 'completed').length /
+      ? currentAnalyses.filter((a: any) => a.status === 'completed').length /
         currentAnalyses.length
       : 1.0
 
   const previousSuccessRate =
     previousAnalyses.length > 0
-      ? previousAnalyses.filter(a => a.status === 'completed').length /
+      ? previousAnalyses.filter((a: any) => a.status === 'completed').length /
         previousAnalyses.length
       : 1.0
 
@@ -531,11 +531,11 @@ async function calculateCostTrend(ctx: any, timeWindow: string) {
   ])
 
   const currentCost = currentAnalyses.reduce(
-    (sum, a) => sum + (a.apiCost || 0),
+    (sum: number, a: any) => sum + (a.apiCost || 0),
     0
   )
   const previousCost = previousAnalyses.reduce(
-    (sum, a) => sum + (a.apiCost || 0),
+    (sum: number, a: any) => sum + (a.apiCost || 0),
     0
   )
 

@@ -67,7 +67,7 @@ export const queueAnalysis = mutation({
 
     await ctx.scheduler.runAfter(
       100,
-      internal.scheduler.analysis_queue.enqueueAnalysis,
+      internal.scheduler.analysis_queue.enqueueAnalysis as any,
       {
         entryId: args.entryId,
         userId: entry.userId,
