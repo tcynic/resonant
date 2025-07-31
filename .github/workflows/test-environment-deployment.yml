@@ -1,10 +1,7 @@
 name: Test Environment Deployment
 
 on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
+  # Only run on manual trigger or when labeled
   workflow_dispatch:
     inputs:
       environment:
@@ -15,6 +12,9 @@ on:
         options:
           - test
           - staging
+  pull_request:
+    types: [labeled]
+    # Only run if PR is labeled with 'deploy-test-env'
 
 env:
   NODE_VERSION: '20'
@@ -24,6 +24,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.environment || 'test' }}
     timeout-minutes: 15
+    # Only run if manually triggered or PR has the deploy-test-env label
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'deploy-test-env')
 
     steps:
       - name: Checkout repository
