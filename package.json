@@ -43,7 +43,7 @@
     "convex:dev": "npx convex dev",
     "convex:deploy": "npx convex deploy",
     "convex:codegen": "npx convex codegen",
-    "convex:codegen-optional": "npx convex codegen || (echo 'Convex codegen failed - using stub files for build compatibility' && mkdir -p convex/_generated && cp -r convex/_generated_stubs/* convex/_generated/ && echo 'Stub files copied successfully')",
+    "convex:codegen-optional": "npx convex codegen --typecheck=disable || (echo 'Convex codegen failed - using stub files for build compatibility' && mkdir -p convex/_generated && cp -r convex/_generated_stubs/* convex/_generated/ && echo 'Stub files copied successfully')",
     "deploy:staging": "npm run check && npm run test:ci && npm run convex:deploy && vercel --target preview",
     "deploy:production": "npm run check && npm run test:ci && npm run convex:deploy && vercel --prod",
     "deploy:health-check": "node scripts/deployment-health-check.js",

@@ -32,7 +32,15 @@
     "next-env.d.ts",
     "src/**/*.ts",
     "src/**/*.tsx",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "convex/_generated/**/*.ts",
+    "convex/_generated/**/*.js"
   ],
-  "exclude": ["node_modules", ".next", "convex/**/*"]
+  "exclude": [
+    "node_modules", 
+    ".next",
+    "convex/**/*.ts",
+    "!convex/_generated/**/*.ts",
+    "!convex/_generated/**/*.js"
+  ]
 }
