@@ -351,7 +351,6 @@ export function FailureAnalysisDashboard() {
             <div className="space-y-4">
               {activeFailures.map((failure: FailureDetection) => {
                 const PatternIcon = PATTERN_ICONS[failure.pattern]
-                const confidence = failure.confidence
                 const StatusIcon = STATUS_ICONS[failure.status]
 
                 return (

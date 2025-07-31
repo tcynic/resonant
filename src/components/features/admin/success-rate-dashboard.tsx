@@ -29,6 +29,16 @@ import {
 
 type TimeWindow = '1h' | '6h' | '24h' | '7d' | '30d'
 
+interface TrendSummary {
+  trend: 'improving' | 'declining' | 'stable'
+  [key: string]: unknown
+}
+
+interface TrendData {
+  summary: TrendSummary
+  [key: string]: unknown
+}
+
 export function SuccessRateDashboard() {
   const [timeWindow, setTimeWindow] = useState<TimeWindow>('24h')
   // TODO: Implement service filtering functionality
@@ -158,16 +168,16 @@ export function SuccessRateDashboard() {
               <div>
                 <p className="text-sm text-gray-600">Trend</p>
                 <p className="text-lg font-semibold">
-                  {(trendData.summary as any).trend === 'improving'
+                  {(trendData as TrendData).summary.trend === 'improving'
                     ? '↗️ Improving'
-                    : (trendData.summary as any).trend === 'declining'
+                    : (trendData as TrendData).summary.trend === 'declining'
                       ? '↘️ Declining'
                       : '→ Stable'}
                 </p>
               </div>
-              {(trendData.summary as any).trend === 'improving' ? (
+              {(trendData as TrendData).summary.trend === 'improving' ? (
                 <TrendingUp className="w-6 h-6 text-green-500" />
-              ) : (trendData.summary as any).trend === 'declining' ? (
+              ) : (trendData as TrendData).summary.trend === 'declining' ? (
                 <TrendingDown className="w-6 h-6 text-red-500" />
               ) : (
                 <Activity className="w-6 h-6 text-gray-500" />

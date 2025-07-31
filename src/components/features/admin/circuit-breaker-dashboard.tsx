@@ -21,16 +21,6 @@ import {
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
-interface CircuitBreakerStatus {
-  service: string
-  status: 'open' | 'closed' | 'half-open'
-  isHealthy: boolean
-  failureCount: number
-  lastFailure?: number
-  nextAttemptTime?: number
-  updatedAt: number
-}
-
 interface CircuitBreakerAlert {
   level: 'info' | 'warning' | 'critical'
   message: string

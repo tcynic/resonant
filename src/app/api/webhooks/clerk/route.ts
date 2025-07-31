@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     console.error('NEXT_PUBLIC_CONVEX_URL is not configured')
     return new Response('Server configuration error', { status: 500 })
   }
-  
+
   const convex = new ConvexHttpClient(convexUrl)
   // You can find this in the Clerk Dashboard -> Webhooks -> choose the webhook
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET
