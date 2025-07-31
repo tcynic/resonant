@@ -23,26 +23,39 @@ try {
   process.exit(1)
 }
 
-// Step 1: Ensure Convex stub files are in place
-console.log('📦 Setting up Convex stub files...')
+// Step 1: Try to generate proper Convex API files, fallback to stubs
+console.log('📦 Attempting to generate Convex API files...')
+let convexCodegenSuccess = false
 try {
-  const generatedDir = path.join(__dirname, '..', 'convex', '_generated')
-  if (!fs.existsSync(generatedDir)) {
-    fs.mkdirSync(generatedDir, { recursive: true })
-  }
-
-  const stubsDir = path.join(__dirname, '..', 'convex', '_generated_stubs')
-  if (fs.existsSync(stubsDir)) {
-    const files = fs.readdirSync(stubsDir)
-    files.forEach(file => {
-      const sourcePath = path.join(stubsDir, file)
-      const destPath = path.join(generatedDir, file)
-      fs.copyFileSync(sourcePath, destPath)
-    })
-    console.log('✅ Convex stub files copied successfully')
-  }
+  execSync('npx convex codegen --typecheck=disable', {
+    stdio: 'inherit',
+    env: process.env,
+  })
+  console.log('✅ Convex API files generated successfully')
+  convexCodegenSuccess = true
 } catch (error) {
-  console.error('❌ Error setting up Convex stub files:', error.message)
+  console.log('⚠️ Convex codegen failed, falling back to stub files...')
+  
+  // Fallback: Set up stub files
+  try {
+    const generatedDir = path.join(__dirname, '..', 'convex', '_generated')
+    if (!fs.existsSync(generatedDir)) {
+      fs.mkdirSync(generatedDir, { recursive: true })
+    }
+
+    const stubsDir = path.join(__dirname, '..', 'convex', '_generated_stubs')
+    if (fs.existsSync(stubsDir)) {
+      const files = fs.readdirSync(stubsDir)
+      files.forEach(file => {
+        const sourcePath = path.join(stubsDir, file)
+        const destPath = path.join(generatedDir, file)
+        fs.copyFileSync(sourcePath, destPath)
+      })
+      console.log('✅ Convex stub files copied successfully')
+    }
+  } catch (stubError) {
+    console.error('❌ Error setting up Convex stub files:', stubError.message)
+  }
 }
 
 // Step 2: Run Next.js build directly (skip prebuild)
