@@ -545,7 +545,7 @@ export const recoverFromDeadLetterQueue = internalMutation({
         // Use HTTP Actions for processing
         await ctx.scheduler.runAfter(
           delay,
-          internal.aiAnalysis.scheduleHttpAnalysis,
+          internal.aiAnalysis.processAnalysisDirectly,
           {
             entryId: analysis.entryId as string,
             userId: analysis.userId as string,

@@ -8,7 +8,7 @@ import {
 } from './_generated/server'
 import { v } from 'convex/values'
 import { Id } from './_generated/dataModel'
-import { internal } from './_generated/api'
+import { internal, api } from './_generated/api'
 // NOTE: AI analysis now uses HTTP Actions instead of client-side bridge
 
 // Queue journal entry for AI analysis (Epic 2)
@@ -67,7 +67,7 @@ export const queueAnalysis = mutation({
 
     await ctx.scheduler.runAfter(
       100,
-      internal.scheduler.analysis_queue.enqueueAnalysis as any,
+      internal.scheduler.analysis_queue.enqueueAnalysis,
       {
         entryId: args.entryId,
         userId: entry.userId,
@@ -230,6 +230,12 @@ export const reprocessStuckEntries = mutation({
           continue
         }
 
+        // Type guard to ensure entry is a journal entry
+        if (!('userId' in entry)) {
+          reprocessed.push({ ...stuck, action: 'failed_invalid_entry_type' })
+          continue
+        }
+
         if (stuck.reason === 'no_analysis') {
           // Use new queue-based processing
           await ctx.scheduler.runAfter(
@@ -237,7 +243,7 @@ export const reprocessStuckEntries = mutation({
             internal.scheduler.analysis_queue.enqueueAnalysis,
             {
               entryId: stuck.entryId,
-              userId: (entry as any).userId,
+              userId: entry.userId!,
               priority: 'normal',
             }
           )
@@ -260,7 +266,7 @@ export const reprocessStuckEntries = mutation({
             internal.scheduler.analysis_queue.enqueueAnalysis,
             {
               entryId: stuck.entryId,
-              userId: (entry as any).userId,
+              userId: entry.userId!,
               priority: 'high', // Give reprocessing higher priority
             }
           )
@@ -525,80 +531,78 @@ export const markFailed = internalMutation({
   },
 })
 
-// Internal action for retry scheduling
+// DEPRECATED: Internal action for retry scheduling - replaced by direct processing
+// This function previously created circular dependencies by calling HTTP Actions from internal functions
 export const retryAnalysisInternal = internalAction({
   args: {
     entryId: v.string(),
     userId: v.string(),
     retryCount: v.number(),
   },
-  handler: async (ctx, args) => {
-    // Make HTTP request to own HTTP Action endpoint
-    const response = await fetch(`${process.env.CONVEX_SITE_URL}/ai/analyze`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        entryId: args.entryId,
-        userId: args.userId,
-        retryCount: args.retryCount,
-      }),
+  handler: async (ctx, args): Promise<{ success: boolean; analysisId?: string; error?: string; method?: string }> => {
+    // Redirect to direct processing instead of HTTP Actions
+    return await ctx.runAction(internal.aiAnalysis.processAnalysisDirectly, {
+      entryId: args.entryId,
+      userId: args.userId,
+      priority: 'high', // Retries get higher priority
     })
-
-    const result = await response.json()
-    return result
   },
 })
 
-// Internal action to schedule HTTP Action-based AI analysis
-export const scheduleHttpAnalysis = internalAction({
+// Internal action for direct AI analysis processing (replaces HTTP Action circular dependency)
+export const processAnalysisDirectly = internalAction({
   args: {
-    entryId: v.string(),
-    userId: v.string(),
+    entryId: v.union(v.string(), v.id('journalEntries')),
+    userId: v.union(v.string(), v.id('users')),
     priority: v.string(),
   },
   handler: async (ctx, args) => {
-    // Make HTTP request to our HTTP Action endpoint for AI analysis
-    const siteUrl = process.env.CONVEX_SITE_URL
-    if (!siteUrl) {
-      throw new Error('CONVEX_SITE_URL environment variable not set')
-    }
-
     try {
-      const response = await fetch(`${siteUrl}/ai/analyze`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // TODO: Add proper authentication header when Clerk integration is complete
-          Authorization: `Bearer ${args.userId}`, // Simplified for now
-        },
-        body: JSON.stringify({
-          entryId: args.entryId,
-          userId: args.userId,
-          retryCount: 0,
-          priority: args.priority,
-        }),
+      // Get the journal entry via runQuery since actions don't have direct db access
+      const entry = await ctx.runQuery(internal.journalEntries.getForAnalysis, { 
+        entryId: args.entryId
       })
-
-      const result = await response.json()
-
-      if (!response.ok) {
-        console.error('HTTP Action AI analysis failed:', result)
-        // Mark as failed in database
-        await ctx.runMutation(internal.aiAnalysis.markFailed, {
-          entryId: args.entryId,
-          error: result.error || 'HTTP Action request failed',
-        })
+      
+      if (!entry) {
+        throw new Error('Journal entry not found')
       }
 
-      return result
+      // Mark analysis as processing
+      await ctx.runMutation(internal.aiAnalysis.updateStatus, {
+        entryId: args.entryId,
+        status: 'processing',
+        processingAttempts: 1,
+      })
+
+      // Use fallback analysis pipeline to avoid HTTP Action circular dependency
+      const { handleFallbackInPipeline } = await import('./fallback/integration')
+      const fallbackResult = await handleFallbackInPipeline(ctx, {
+        entryId: args.entryId,
+        userId: args.userId,
+        journalContent: entry.content,
+        relationshipContext: entry.relationshipId ? 'relationship_context' : undefined,
+        retryCount: 0,
+        originalError: 'Direct processing via fallback (avoiding HTTP Action circular dependency)',
+      })
+
+      return {
+        success: true,
+        analysisId: fallbackResult.analysisId,
+        method: 'fallback_direct_processing',
+      }
     } catch (error) {
-      console.error('Failed to call HTTP Action for AI analysis:', error)
-      // Mark as failed in database
+      console.error('Direct analysis processing failed:', error)
+      
+      // Mark as failed
       await ctx.runMutation(internal.aiAnalysis.markFailed, {
         entryId: args.entryId,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : 'Direct processing failed',
       })
-      throw error
+
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      }
     }
   },
 })

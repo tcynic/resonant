@@ -28,8 +28,8 @@ export const requeueAnalysis = mutation({
       processingStartedAt: undefined, // Reset processing start time
     })
 
-    // Schedule the HTTP Action for analysis
-    await ctx.scheduler.runAfter(0, internal.aiAnalysis.scheduleHttpAnalysis, {
+    // Schedule direct processing for analysis
+    await ctx.scheduler.runAfter(0, internal.aiAnalysis.processAnalysisDirectly, {
       entryId: analysis.entryId,
       userId: analysis.userId,
       priority: args.priority || 'high',
@@ -106,7 +106,7 @@ export const retryFailedAnalyses = mutation({
         // Schedule the HTTP Action for analysis
         await ctx.scheduler.runAfter(
           0,
-          internal.aiAnalysis.scheduleHttpAnalysis,
+          internal.aiAnalysis.processAnalysisDirectly,
           {
             entryId: analysis.entryId,
             userId: analysis.userId,

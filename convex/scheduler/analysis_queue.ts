@@ -143,10 +143,10 @@ export const enqueueAnalysis = internalMutation({
     // Calculate priority-based delay
     const scheduledDelay = delay || PRIORITY_CRITERIA[finalPriority].delay
 
-    // Schedule HTTP Action processing
+    // Schedule direct internal processing (not HTTP Actions)
     await ctx.scheduler.runAfter(
       scheduledDelay,
-      internal.aiAnalysis.scheduleHttpAnalysis,
+      internal.aiAnalysis.processAnalysisDirectly,
       {
         entryId,
         userId,
@@ -398,10 +398,10 @@ export const requeueAnalysis = internalMutation({
       },
     })
 
-    // Reschedule with strategy-calculated backoff delay using HTTP Actions
+    // Reschedule with strategy-calculated backoff delay using direct processing
     await ctx.scheduler.runAfter(
       backoffDelay,
-      internal.aiAnalysis.scheduleHttpAnalysis,
+      internal.aiAnalysis.processAnalysisDirectly,
       {
         entryId: analysis.entryId as string,
         userId: analysis.userId as string,
@@ -1139,7 +1139,7 @@ export const processQueueWithWeights = internalMutation({
         const delay = PRIORITY_CRITERIA[upgradedPriority].delay
         await ctx.scheduler.runAfter(
           delay,
-          internal.aiAnalysis.scheduleHttpAnalysis,
+          internal.aiAnalysis.processAnalysisDirectly,
           {
             entryId: item.entryId,
             userId: item.userId,
@@ -1240,7 +1240,7 @@ export const autoRequeueTransientFailures = internalMutation({
             // Schedule retry with calculated backoff
             await ctx.scheduler.runAfter(
               retryDecision.backoffDelayMs,
-              internal.aiAnalysis.scheduleHttpAnalysis,
+              internal.aiAnalysis.processAnalysisDirectly,
               {
                 entryId: analysis.entryId,
                 userId: analysis.userId,
