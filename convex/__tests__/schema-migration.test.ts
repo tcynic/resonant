@@ -170,7 +170,7 @@ describe('Schema Migration Tests', () => {
 
       const result = await t.run(async ctx => {
         // Insert multiple records (some migrated, some not)
-        const recordIds = []
+        const recordIds: any[] = []
         for (let i = 0; i < 20; i++) {
           const isEnhanced = i % 2 === 0 // Every other record is enhanced
 
@@ -562,7 +562,7 @@ describe('Schema Migration Tests', () => {
         })
 
         // Insert records to test existing indexes
-        const analysisIds = []
+        const analysisIds: any[] = []
         for (let i = 0; i < 5; i++) {
           const id = await ctx.db.insert('aiAnalysis', {
             entryId,

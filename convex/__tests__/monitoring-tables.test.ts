@@ -76,10 +76,10 @@ describe('System Monitoring Tables Tests', () => {
 
     test('should support all log levels', async () => {
       const logLevels = ['debug', 'info', 'warn', 'error'] as const
-      const logIds = []
+      const logIds: any[] = []
 
       const result = await t.run(async ctx => {
-        const newLogIds = []
+        const newLogIds: any[] = []
         for (const level of logLevels) {
           const logId = await ctx.db.insert('systemLogs', {
             level,
@@ -100,8 +100,8 @@ describe('System Monitoring Tables Tests', () => {
         return { logIds: newLogIds, errorLogs }
       })
 
-      const { logIds, errorLogs } = result
-      expect(logIds).toHaveLength(4)
+      const { logIds: resultLogIds, errorLogs } = result
+      expect(resultLogIds).toHaveLength(4)
 
       expect(errorLogs).toHaveLength(1)
       expect(errorLogs[0].level).toBe('error')
@@ -471,10 +471,10 @@ describe('System Monitoring Tables Tests', () => {
 
     test('should support all audit actions', async () => {
       const actions = ['create', 'update', 'delete', 'read'] as const
-      const auditIds = []
+      const auditIds: any[] = []
 
       const result = await t.run(async ctx => {
-        const newAuditIds = []
+        const newAuditIds: any[] = []
         for (const action of actions) {
           const auditId = await ctx.db.insert('auditTrail', {
             entityType: 'users',
@@ -504,8 +504,8 @@ describe('System Monitoring Tables Tests', () => {
         return { auditIds: newAuditIds, updateActions }
       })
 
-      const { auditIds, updateActions } = result
-      expect(auditIds).toHaveLength(4)
+      const { auditIds: resultAuditIds, updateActions } = result
+      expect(resultAuditIds).toHaveLength(4)
 
       expect(updateActions).toHaveLength(1)
     })

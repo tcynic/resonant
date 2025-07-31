@@ -119,7 +119,7 @@ export const getFilteredJournalEntries = query({
 
     // Apply filters
     query = query.filter((q: any) => {
-      let filters = []
+      let filters: any[] = []
 
       // Date range filter
       if (args.startDate) {

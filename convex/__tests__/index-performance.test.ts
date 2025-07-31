@@ -44,7 +44,7 @@ describe('Index Performance and Load Testing', () => {
         })
 
         // Create multiple journal entries
-        const newEntryIds = []
+        const newEntryIds: any[] = []
         for (let i = 0; i < 10; i++) {
           const entryId = await ctx.db.insert('journalEntries', {
             userId: newUserId,
@@ -69,7 +69,7 @@ describe('Index Performance and Load Testing', () => {
       const result = await t.run(async ctx => {
         // Insert large dataset
         const insertStart = Date.now()
-        const insertPromises = []
+        const insertPromises: any[] = []
 
         for (let i = 0; i < RECORD_COUNT; i++) {
           const modelType = models[i % models.length]
@@ -297,7 +297,7 @@ describe('Index Performance and Load Testing', () => {
       const result = await t.run(async ctx => {
         // Insert high volume of logs
         const insertStart = Date.now()
-        const logPromises = []
+        const logPromises: any[] = []
 
         for (let i = 0; i < LOG_COUNT; i++) {
           const service = services[i % services.length]
@@ -350,7 +350,7 @@ describe('Index Performance and Load Testing', () => {
         'claude_3',
         'convex_api',
       ]
-      const timeWindows = []
+      const timeWindows: any[] = []
 
       // Generate hourly time windows for the last week
       const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
@@ -507,7 +507,7 @@ describe('Index Performance and Load Testing', () => {
         })
 
         // Insert base data
-        const recordIds = []
+        const recordIds: any[] = []
         for (let i = 0; i < 100; i++) {
           const recordId = await ctx.db.insert('aiAnalysis', {
             entryId,
@@ -593,7 +593,7 @@ describe('Index Performance and Load Testing', () => {
 
         // Simulate mixed read/write workload
         const mixedStart = Date.now()
-        const operations = []
+        const operations: any[] = []
 
         // Add write operations
         for (let i = 0; i < 20; i++) {

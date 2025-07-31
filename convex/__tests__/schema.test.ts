@@ -328,7 +328,7 @@ describe('Enhanced Database Schema Validation', () => {
           'error_rate',
           'memory_usage',
         ]
-        const metricIds = []
+        const metricIds: any[] = []
 
         for (const metricType of metricTypes) {
           const metricId = await ctx.db.insert('performanceMetrics', {
@@ -427,7 +427,7 @@ describe('Enhanced Database Schema Validation', () => {
         })
 
         // Insert multiple analysis records for performance testing
-        const analysisPromises = []
+        const analysisPromises: any[] = []
         for (let i = 0; i < 50; i++) {
           analysisPromises.push(
             ctx.db.insert('aiAnalysis', {

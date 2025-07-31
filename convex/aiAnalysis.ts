@@ -170,7 +170,7 @@ export const reprocessStuckEntries = mutation({
       : await ctx.db.query('journalEntries').collect()
 
     // Find entries that don't have completed analysis
-    const stuckEntries = []
+    const stuckEntries: any[] = []
 
     for (const entry of entries) {
       // Skip private entries that shouldn't be analyzed
@@ -220,7 +220,7 @@ export const reprocessStuckEntries = mutation({
     }
 
     // Actually reprocess the stuck entries
-    const reprocessed = []
+    const reprocessed: any[] = []
     for (const stuck of stuckEntries) {
       try {
         // Get the journal entry to access userId
