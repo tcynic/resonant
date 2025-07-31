@@ -93,6 +93,7 @@ describe('System Monitoring Tables Tests', () => {
         // Test querying by log level
         const errorLogs = await ctx.db
           .query('systemLogs')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_level_timestamp', (q: any) => q.eq('level', 'error'))
           .collect()
 
@@ -123,6 +124,7 @@ describe('System Monitoring Tables Tests', () => {
         // Query by service
         const authLogs = await ctx.db
           .query('systemLogs')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_service_timestamp', (q: any) =>
             q.eq('service', 'auth')
           )
@@ -131,6 +133,7 @@ describe('System Monitoring Tables Tests', () => {
         // Query by timestamp range
         const recentLogs = await ctx.db
           .query('systemLogs')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_timestamp', (q: any) => q.gte('timestamp', baseTime))
           .collect()
 
@@ -240,6 +243,7 @@ describe('System Monitoring Tables Tests', () => {
         // Query by time window
         const window1Usage = await ctx.db
           .query('apiUsage')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_time_window', (q: any) =>
             q.eq('timeWindow', hourWindow1)
           )
@@ -282,6 +286,7 @@ describe('System Monitoring Tables Tests', () => {
         // Query expensive services
         const expensiveServices = await ctx.db
           .query('apiUsage')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_cost', (q: any) => q.gte('cost', 0.05))
           .collect()
 
@@ -490,6 +495,7 @@ describe('System Monitoring Tables Tests', () => {
         // Query by action type
         const updateActions = await ctx.db
           .query('auditTrail')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_action_timestamp', (q: any) =>
             q.eq('action', 'update')
           )
@@ -525,6 +531,7 @@ describe('System Monitoring Tables Tests', () => {
         // Query by entity type and ID
         const userAudits = await ctx.db
           .query('auditTrail')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_entity_type_id', (q: any) =>
             q.eq('entityType', 'users').eq('entityId', 'user_1')
           )

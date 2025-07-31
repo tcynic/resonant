@@ -10,6 +10,7 @@ import {
 } from '@/hooks/convex/use-journal-entries'
 import { useCurrentUser } from '@/hooks/convex/use-users'
 import { useRelationships } from '@/hooks/use-relationships'
+import type { JournalEntry } from '@/lib/types'
 
 export default function JournalEntryViewPage() {
   const router = useRouter()
@@ -37,11 +38,11 @@ export default function JournalEntryViewPage() {
     if (!journalEntry || !journalEntry.relationshipId) return []
     return journalEntries
       .filter(
-        entry =>
+        (entry: JournalEntry) =>
           entry._id !== journalEntry._id &&
           entry.relationshipId === journalEntry.relationshipId
       )
-      .sort((a, b) => b.createdAt - a.createdAt)
+      .sort((a: JournalEntry, b: JournalEntry) => b.createdAt - a.createdAt)
   }, [journalEntry, journalEntries])
 
   const handleEdit = () => {

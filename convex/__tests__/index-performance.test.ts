@@ -106,6 +106,7 @@ describe('Index Performance and Load Testing', () => {
         const queryStart = Date.now()
         const geminiRecords = await ctx.db
           .query('aiAnalysis')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_model_type', (q: any) =>
             q.eq('modelType', 'gemini_2_5_flash_lite')
           )
@@ -158,6 +159,7 @@ describe('Index Performance and Load Testing', () => {
         const queryStart = Date.now()
         const userGeminiRecords = await ctx.db
           .query('aiAnalysis')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_user_model_date', (q: any) =>
             q.eq('userId', userId).eq('modelType', 'gemini_2_5_flash_lite')
           )
@@ -206,6 +208,7 @@ describe('Index Performance and Load Testing', () => {
         const queryStart = Date.now()
         const expensiveAnalyses = await ctx.db
           .query('aiAnalysis')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_cost_date', (q: any) => q.gte('apiCost', 0.05))
           .collect()
         const queryTime = Date.now() - queryStart
@@ -257,6 +260,7 @@ describe('Index Performance and Load Testing', () => {
         const queryStart = Date.now()
         const highTokenAnalyses = await ctx.db
           .query('aiAnalysis')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_token_usage', (q: any) => q.gte('tokensUsed', 500))
           .collect()
         const queryTime = Date.now() - queryStart
@@ -321,6 +325,7 @@ describe('Index Performance and Load Testing', () => {
         const queryStart = Date.now()
         const errorLogs = await ctx.db
           .query('systemLogs')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_level_timestamp', (q: any) => q.eq('level', 'error'))
           .collect()
         const queryTime = Date.now() - queryStart
@@ -380,6 +385,7 @@ describe('Index Performance and Load Testing', () => {
         const queryStart = Date.now()
         const geminiUsage = await ctx.db
           .query('apiUsage')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_service_time', (q: any) =>
             q.eq('service', 'gemini_2_5_flash_lite')
           )
@@ -402,6 +408,7 @@ describe('Index Performance and Load Testing', () => {
         const costQueryStart = Date.now()
         const expensiveUsage = await ctx.db
           .query('apiUsage')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_cost', (q: any) => q.gte('cost', 0.1))
           .collect()
         const costQueryTime = Date.now() - costQueryStart
@@ -462,6 +469,7 @@ describe('Index Performance and Load Testing', () => {
         const queryStart = Date.now()
         const responseTimeMetrics = await ctx.db
           .query('performanceMetrics')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_service_type_time', (q: any) =>
             q.eq('service', 'api_gateway').eq('metricType', 'response_time')
           )
@@ -522,26 +530,31 @@ describe('Index Performance and Load Testing', () => {
         const queries = [
           ctx.db
             .query('aiAnalysis')
+            // @ts-expect-error - convex-test library TypeScript definition limitations
             .withIndex('by_user', (q: any) => q.eq('userId', userId))
             .collect(),
           ctx.db
             .query('aiAnalysis')
+            // @ts-expect-error - convex-test library TypeScript definition limitations
             .withIndex('by_model_type', (q: any) =>
               q.eq('modelType', 'gemini_2_5_flash_lite')
             )
             .collect(),
           ctx.db
             .query('aiAnalysis')
+            // @ts-expect-error - convex-test library TypeScript definition limitations
             .withIndex('by_status', (q: any) => q.eq('status', 'completed'))
             .collect(),
           ctx.db
             .query('aiAnalysis')
+            // @ts-expect-error - convex-test library TypeScript definition limitations
             .withIndex('by_user_model_date', (q: any) =>
               q.eq('userId', userId).eq('modelType', 'gpt_4')
             )
             .collect(),
           ctx.db
             .query('aiAnalysis')
+            // @ts-expect-error - convex-test library TypeScript definition limitations
             .withIndex('by_processing_time', (q: any) =>
               q.gte('processingTime', 1000)
             )
@@ -605,12 +618,14 @@ describe('Index Performance and Load Testing', () => {
         operations.push(
           ctx.db
             .query('aiAnalysis')
+            // @ts-expect-error - convex-test library TypeScript definition limitations
             .withIndex('by_user', (q: any) => q.eq('userId', userId))
             .collect()
         )
         operations.push(
           ctx.db
             .query('systemLogs')
+            // @ts-expect-error - convex-test library TypeScript definition limitations
             .withIndex('by_service_timestamp', (q: any) =>
               q.eq('service', 'test')
             )
@@ -746,6 +761,7 @@ describe('Index Performance and Load Testing', () => {
         const indexedStart = Date.now()
         const indexedResults = await ctx.db
           .query('aiAnalysis')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_model_type', (q: any) =>
             q.eq('modelType', 'gemini_2_5_flash_lite')
           )

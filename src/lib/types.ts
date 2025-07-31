@@ -459,3 +459,15 @@ export interface MarkInsightActedOnArgs {
   insightId: string
   feedback?: string
 }
+
+// Navigation types (exported from layout components)
+export type {
+  NavigationState,
+  NavigationAction,
+  NavigationContextType,
+  BreadcrumbItem,
+  RecentItem,
+  NavigationPreferences,
+  NotificationCount,
+  AppShellProps,
+} from '../components/layout/types'

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { ConvexClerkProvider } from '@/components/providers/convex-clerk-provider'
+import LayoutWrapper from '@/components/layout/LayoutWrapper'
 import './globals.css'
 
 const geistSans = Geist({
@@ -29,7 +30,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ConvexClerkProvider>{children}</ConvexClerkProvider>
+        <ConvexClerkProvider>
+          <LayoutWrapper>{children}</LayoutWrapper>
+        </ConvexClerkProvider>
       </body>
     </html>
   )

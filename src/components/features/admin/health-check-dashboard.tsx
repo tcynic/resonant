@@ -11,13 +11,7 @@ import { api } from '@/convex/_generated/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import Select from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Progress } from '@/components/ui/progress'
 import {
@@ -126,13 +120,13 @@ export function HealthCheckDashboard() {
   const getStatusBadgeVariant = (status: HealthStatus) => {
     switch (status) {
       case 'healthy':
-        return 'default'
+        return 'success'
       case 'degraded':
-        return 'secondary'
+        return 'warning'
       case 'unhealthy':
         return 'destructive'
       default:
-        return 'outline'
+        return 'secondary'
     }
   }
 
@@ -150,7 +144,7 @@ export function HealthCheckDashboard() {
   // Group services by type for better organization
   const servicesByType =
     systemHealth.serviceDetails?.reduce(
-      (acc, service) => {
+      (acc: any, service: any) => {
         if (!acc[service.serviceType]) {
           acc[service.serviceType] = []
         }
@@ -183,33 +177,29 @@ export function HealthCheckDashboard() {
         </div>
 
         <div className="flex items-center gap-4">
-          <Select value={selectedService} onValueChange={setSelectedService}>
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Services</SelectItem>
-              {systemHealth.serviceDetails?.map(service => (
-                <SelectItem key={service.service} value={service.service}>
-                  {service.service}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Select
+            value={selectedService}
+            onChange={e => setSelectedService(e.target.value)}
+            options={[
+              { value: 'all', label: 'All Services' },
+              ...(systemHealth.serviceDetails?.map((service: any) => ({
+                value: service.service,
+                label: service.service,
+              })) || []),
+            ]}
+            className="w-40"
+          />
 
           <Select
             value={timeWindow}
-            onValueChange={(value: TimeWindow) => setTimeWindow(value)}
-          >
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1h">1 Hour</SelectItem>
-              <SelectItem value="24h">24 Hours</SelectItem>
-              <SelectItem value="7d">7 Days</SelectItem>
-            </SelectContent>
-          </Select>
+            onChange={e => setTimeWindow(e.target.value as TimeWindow)}
+            options={[
+              { value: '1h', label: '1 Hour' },
+              { value: '24h', label: '24 Hours' },
+              { value: '7d', label: '7 Days' },
+            ]}
+            className="w-32"
+          />
 
           <Button onClick={handleRefresh} disabled={refreshing} size="sm">
             <RefreshCw
@@ -297,83 +287,87 @@ export function HealthCheckDashboard() {
 
         {/* Services Tab */}
         <TabsContent value="services" className="space-y-6">
-          {Object.entries(servicesByType).map(([serviceType, services]) => (
-            <Card key={serviceType}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  {React.createElement(
-                    SERVICE_ICONS[serviceType as ServiceType],
-                    {
-                      className: 'w-5 h-5',
-                    }
-                  )}
-                  {serviceType.replace('_', ' ').toUpperCase()} Services
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {services.map(service => {
-                    const StatusIcon =
-                      STATUS_ICONS[service.status as HealthStatus]
-                    return (
-                      <div
-                        key={service.service}
-                        className={`p-4 border rounded-lg ${STATUS_COLORS[service.status as HealthStatus]}`}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-semibold">{service.service}</h4>
-                          <StatusIcon className="w-5 h-5" />
-                        </div>
-
-                        <p className="text-sm mb-2">{service.message}</p>
-
-                        <div className="text-xs space-y-1">
-                          <div className="flex justify-between">
-                            <span>Response Time:</span>
-                            <span>{service.responseTime}ms</span>
+          {Object.entries(servicesByType).map(
+            ([serviceType, services]: [string, any]) => (
+              <Card key={serviceType}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    {React.createElement(
+                      SERVICE_ICONS[serviceType as ServiceType],
+                      {
+                        className: 'w-5 h-5',
+                      }
+                    )}
+                    {serviceType.replace('_', ' ').toUpperCase()} Services
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {services.map(service => {
+                      const StatusIcon =
+                        STATUS_ICONS[service.status as HealthStatus]
+                      return (
+                        <div
+                          key={service.service}
+                          className={`p-4 border rounded-lg ${STATUS_COLORS[service.status as HealthStatus]}`}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-semibold">{service.service}</h4>
+                            <StatusIcon className="w-5 h-5" />
                           </div>
-                          <div className="flex justify-between">
-                            <span>Last Check:</span>
-                            <span>{formatLastChecked(service.checkedAt)}</span>
-                          </div>
-                        </div>
 
-                        {/* Service-specific details */}
-                        {service.details &&
-                          Object.keys(service.details).length > 0 && (
-                            <details className="mt-2">
-                              <summary className="text-xs cursor-pointer">
-                                Details
-                              </summary>
-                              <div className="mt-1 text-xs">
-                                {Object.entries(service.details).map(
-                                  ([key, value]) => (
-                                    <div
-                                      key={key}
-                                      className="flex justify-between"
-                                    >
-                                      <span>{key}:</span>
-                                      <span>
-                                        {typeof value === 'number'
-                                          ? key.includes('Rate') ||
-                                            key.includes('Percentage')
-                                            ? `${(value * 100).toFixed(1)}%`
-                                            : value.toFixed(2)
-                                          : String(value)}
-                                      </span>
-                                    </div>
-                                  )
-                                )}
-                              </div>
-                            </details>
-                          )}
-                      </div>
-                    )
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                          <p className="text-sm mb-2">{service.message}</p>
+
+                          <div className="text-xs space-y-1">
+                            <div className="flex justify-between">
+                              <span>Response Time:</span>
+                              <span>{service.responseTime}ms</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Last Check:</span>
+                              <span>
+                                {formatLastChecked(service.checkedAt)}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Service-specific details */}
+                          {service.details &&
+                            Object.keys(service.details).length > 0 && (
+                              <details className="mt-2">
+                                <summary className="text-xs cursor-pointer">
+                                  Details
+                                </summary>
+                                <div className="mt-1 text-xs">
+                                  {Object.entries(service.details).map(
+                                    ([key, value]) => (
+                                      <div
+                                        key={key}
+                                        className="flex justify-between"
+                                      >
+                                        <span>{key}:</span>
+                                        <span>
+                                          {typeof value === 'number'
+                                            ? key.includes('Rate') ||
+                                              key.includes('Percentage')
+                                              ? `${(value * 100).toFixed(1)}%`
+                                              : value.toFixed(2)
+                                            : String(value)}
+                                        </span>
+                                      </div>
+                                    )
+                                  )}
+                                </div>
+                              </details>
+                            )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          )}
         </TabsContent>
 
         {/* History Tab */}
@@ -397,7 +391,7 @@ export function HealthCheckDashboard() {
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart
-                        data={healthHistory.results.map(result => ({
+                        data={healthHistory.results.map((result: any) => ({
                           timestamp: result.checkedAt,
                           healthScore:
                             result.status === 'healthy'
@@ -449,7 +443,7 @@ export function HealthCheckDashboard() {
                       {healthHistory.results
                         .slice(-20)
                         .reverse()
-                        .map((result, index) => {
+                        .map((result: any, index: number) => {
                           const StatusIcon =
                             STATUS_ICONS[result.status as HealthStatus]
                           return (

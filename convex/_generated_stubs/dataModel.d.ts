@@ -4,3 +4,11 @@ export type Id<T extends string> = string
 export interface DataModel {
   [key: string]: any
 }
+export type TableNames =
+  | 'users'
+  | 'relationships'
+  | 'journalEntries'
+  | 'aiAnalysis'
+  | 'healthScores'
+  | 'insights'
+  | 'userFeatureFlags'

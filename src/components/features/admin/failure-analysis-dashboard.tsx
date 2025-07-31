@@ -11,23 +11,10 @@ import { api } from '@/convex/_generated/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import Select from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  // TODO: Implement failure resolution dialogs
-  // DialogTrigger,
-} from '@/components/ui/dialog'
-import { Textarea } from '@/components/ui/textarea'
+import Dialog from '@/components/ui/dialog'
+import Textarea from '@/components/ui/textarea'
 import {
   AlertTriangle,
   TrendingUp,
@@ -196,32 +183,29 @@ export function FailureAnalysisDashboard() {
         </div>
 
         <div className="flex items-center gap-4">
-          <Select value={severityFilter} onValueChange={setSeverityFilter}>
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Severities</SelectItem>
-              <SelectItem value="critical">Critical</SelectItem>
-              <SelectItem value="high">High</SelectItem>
-              <SelectItem value="medium">Medium</SelectItem>
-              <SelectItem value="low">Low</SelectItem>
-            </SelectContent>
-          </Select>
+          <Select
+            value={severityFilter}
+            onChange={e => setSeverityFilter(e.target.value)}
+            options={[
+              { value: 'all', label: 'All Severities' },
+              { value: 'critical', label: 'Critical' },
+              { value: 'high', label: 'High' },
+              { value: 'medium', label: 'Medium' },
+              { value: 'low', label: 'Low' },
+            ]}
+            className="w-40"
+          />
 
           <Select
             value={timeWindow}
-            onValueChange={(value: TimeWindow) => setTimeWindow(value)}
-          >
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="24h">24 Hours</SelectItem>
-              <SelectItem value="7d">7 Days</SelectItem>
-              <SelectItem value="30d">30 Days</SelectItem>
-            </SelectContent>
-          </Select>
+            onChange={e => setTimeWindow(e.target.value as TimeWindow)}
+            options={[
+              { value: '24h', label: '24 Hours' },
+              { value: '7d', label: '7 Days' },
+              { value: '30d', label: '30 Days' },
+            ]}
+            className="w-32"
+          />
         </div>
       </div>
 
@@ -329,7 +313,7 @@ export function FailureAnalysisDashboard() {
             </Card>
           ) : (
             <div className="space-y-4">
-              {activeFailures.map(failure => {
+              {activeFailures.map((failure: any) => {
                 const PatternIcon =
                   PATTERN_ICONS[failure.pattern as FailurePattern]
                 const StatusIcon = STATUS_ICONS[failure.status as FailureStatus]
@@ -378,13 +362,13 @@ export function FailureAnalysisDashboard() {
                             {failure.severity}
                           </Badge>
                           <Badge
-                            variant="outline"
+                            variant="secondary"
                             className="flex items-center gap-1"
                           >
                             <StatusIcon className="w-3 h-3" />
                             {failure.status}
                           </Badge>
-                          <Badge variant="outline">
+                          <Badge variant="secondary">
                             {Math.round(failure.confidence * 100)}% confidence
                           </Badge>
                         </div>
@@ -443,7 +427,7 @@ export function FailureAnalysisDashboard() {
                                           ? 'destructive'
                                           : rec.priority === 'high'
                                             ? 'secondary'
-                                            : 'outline'
+                                            : 'secondary'
                                       }
                                       className="text-xs"
                                     >
@@ -467,7 +451,7 @@ export function FailureAnalysisDashboard() {
                         </h4>
                         <div className="flex flex-wrap gap-2">
                           {failure.affectedServices.map((service: string) => (
-                            <Badge key={service} variant="outline">
+                            <Badge key={service} variant="secondary">
                               {service}
                             </Badge>
                           ))}
@@ -478,7 +462,7 @@ export function FailureAnalysisDashboard() {
                       {failure.status === 'active' && (
                         <div className="mt-4 pt-4 border-t flex gap-2">
                           <Button
-                            variant="outline"
+                            variant="secondary"
                             size="sm"
                             onClick={() => setSelectedFailure(failure)}
                           >
@@ -486,7 +470,7 @@ export function FailureAnalysisDashboard() {
                             View Details
                           </Button>
                           <Button
-                            variant="default"
+                            variant="primary"
                             size="sm"
                             onClick={() => {
                               setSelectedFailure(failure)
@@ -557,7 +541,7 @@ export function FailureAnalysisDashboard() {
               <CardContent>
                 <div className="space-y-3">
                   {Object.entries(failureAnalytics.patterns.severity).map(
-                    ([severity, count]) => (
+                    ([severity, count]: [string, unknown]) => (
                       <div
                         key={severity}
                         className="flex items-center justify-between"
@@ -579,11 +563,14 @@ export function FailureAnalysisDashboard() {
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-2xl font-bold">{count}</span>
+                          <span className="text-2xl font-bold">
+                            {count as number}
+                          </span>
                           <span className="text-sm text-gray-600">
                             (
                             {(
-                              (count / failureAnalytics.summary.totalFailures) *
+                              ((count as number) /
+                                failureAnalytics.summary.totalFailures) *
                               100
                             ).toFixed(1)}
                             %)
@@ -605,7 +592,7 @@ export function FailureAnalysisDashboard() {
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart
-                  data={failureAnalytics.patterns.trends.map(trend => ({
+                  data={failureAnalytics.patterns.trends.map((trend: any) => ({
                     ...trend,
                     patternName: getPatternDisplayName(
                       trend.pattern as FailurePattern
@@ -647,7 +634,7 @@ export function FailureAnalysisDashboard() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {failureAnalytics.serviceImpact.map(service => (
+                  {failureAnalytics.serviceImpact.map((service: any) => (
                     <div
                       key={service.service}
                       className="border rounded-lg p-4"
@@ -660,7 +647,7 @@ export function FailureAnalysisDashboard() {
                           <Badge variant="destructive">
                             {service.failureCount} failures
                           </Badge>
-                          <Badge variant="outline">
+                          <Badge variant="secondary">
                             {service.mostCommonSeverity} severity
                           </Badge>
                         </div>
@@ -793,64 +780,65 @@ export function FailureAnalysisDashboard() {
       </Tabs>
 
       {/* Resolution Dialog */}
-      <Dialog open={resolutionDialog} onOpenChange={setResolutionDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Resolve Failure Detection</DialogTitle>
-          </DialogHeader>
-
-          {selectedFailure && (
-            <div className="space-y-4">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h4 className="font-semibold mb-2">
-                  {getPatternDisplayName(selectedFailure.pattern)}
-                </h4>
-                <p className="text-sm text-gray-600">
-                  {selectedFailure.rootCauseAnalysis.primaryCause}
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Resolution Summary *
-                </label>
-                <Textarea
-                  value={resolution}
-                  onChange={e => setResolution(e.target.value)}
-                  placeholder="Describe how this failure was resolved..."
-                  className="min-h-24"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Additional Notes (Optional)
-                </label>
-                <Textarea
-                  value={resolutionNotes}
-                  onChange={e => setResolutionNotes(e.target.value)}
-                  placeholder="Any additional context or lessons learned..."
-                  className="min-h-20"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setResolutionDialog(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleResolveFailure}
-                  disabled={!resolution.trim()}
-                >
-                  Resolve Failure
-                </Button>
-              </div>
+      <Dialog
+        isOpen={resolutionDialog}
+        onClose={() => setResolutionDialog(false)}
+        title="Resolve Failure Detection"
+        actions={
+          selectedFailure && (
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="secondary"
+                onClick={() => setResolutionDialog(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleResolveFailure}
+                disabled={!resolution.trim()}
+              >
+                Resolve Failure
+              </Button>
             </div>
-          )}
-        </DialogContent>
+          )
+        }
+      >
+        {selectedFailure && (
+          <div className="space-y-4">
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <h4 className="font-semibold mb-2">
+                {getPatternDisplayName(selectedFailure.pattern)}
+              </h4>
+              <p className="text-sm text-gray-600">
+                {selectedFailure.rootCauseAnalysis.primaryCause}
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Resolution Summary *
+              </label>
+              <Textarea
+                value={resolution}
+                onChange={e => setResolution(e.target.value)}
+                placeholder="Describe how this failure was resolved..."
+                className="min-h-24"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Additional Notes (Optional)
+              </label>
+              <Textarea
+                value={resolutionNotes}
+                onChange={e => setResolutionNotes(e.target.value)}
+                placeholder="Any additional context or lessons learned..."
+                className="min-h-20"
+              />
+            </div>
+          </div>
+        )}
       </Dialog>
     </div>
   )

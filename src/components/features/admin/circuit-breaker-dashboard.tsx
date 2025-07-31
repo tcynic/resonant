@@ -458,15 +458,17 @@ export function CircuitBreakerDashboard() {
             <div className="mb-4">
               <h3 className="font-medium mb-2">Recommendations</h3>
               <ul className="space-y-1">
-                {healthStatus.recommendations.map((rec, index) => (
-                  <li
-                    key={index}
-                    className="text-sm text-gray-700 flex items-start gap-2"
-                  >
-                    <span className="text-blue-500 mt-1">•</span>
-                    {rec}
-                  </li>
-                ))}
+                {healthStatus.recommendations.map(
+                  (rec: string, index: number) => (
+                    <li
+                      key={index}
+                      className="text-sm text-gray-700 flex items-start gap-2"
+                    >
+                      <span className="text-blue-500 mt-1">•</span>
+                      {rec}
+                    </li>
+                  )
+                )}
               </ul>
             </div>
           )}
@@ -476,17 +478,19 @@ export function CircuitBreakerDashboard() {
             <div>
               <h3 className="font-medium mb-2">Service Alerts</h3>
               <div className="space-y-2">
-                {healthStatus.alerts.map((alert, index) => (
-                  <div
-                    key={index}
-                    className={`p-3 rounded border ${getAlertLevelColor(alert.level)}`}
-                  >
-                    <p className="font-medium">{alert.message}</p>
-                    <p className="text-sm opacity-75">
-                      {formatTimestamp(alert.timestamp)}
-                    </p>
-                  </div>
-                ))}
+                {healthStatus.alerts.map(
+                  (alert: CircuitBreakerAlert, index: number) => (
+                    <div
+                      key={index}
+                      className={`p-3 rounded border ${getAlertLevelColor(alert.level)}`}
+                    >
+                      <p className="font-medium">{alert.message}</p>
+                      <p className="text-sm opacity-75">
+                        {formatTimestamp(alert.timestamp)}
+                      </p>
+                    </div>
+                  )
+                )}
               </div>
             </div>
           )}

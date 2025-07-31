@@ -1,10 +1,9 @@
 /**
  * AI Service Bridge for Convex Integration
- * Bridges the AI analysis modules to Convex backend functions
+ * Bridges AI HTTP Actions with legacy Convex functions for compatibility
+ * This is a compatibility layer that will be removed after full migration
  */
 
-import { getRelationshipAnalyzer } from '../../src/lib/ai/analysis'
-import type { SentimentAnalysisResult } from '../../src/lib/ai/gemini-client'
 import { validateAIEnvironment, logAIConfigStatus } from './ai_config'
 
 export interface AnalysisResult {
@@ -25,31 +24,25 @@ export interface AnalysisResult {
   overallConfidence: number
 }
 
-// Initialize the relationship analyzer
-let analyzer: ReturnType<typeof getRelationshipAnalyzer> | null = null
+// Configuration validation for compatibility
 let configValidated = false
 
-function getAnalyzer() {
-  if (!analyzer) {
-    // Validate configuration on first use
-    if (!configValidated) {
-      const validation = logAIConfigStatus()
-      if (!validation.isValid) {
-        console.error('AI Configuration errors:', validation.errors)
-        throw new Error(
-          `AI configuration invalid: ${validation.errors.join(', ')}`
-        )
-      }
-      configValidated = true
+function validateConfig() {
+  if (!configValidated) {
+    const validation = logAIConfigStatus()
+    if (!validation.isValid) {
+      console.error('AI Configuration errors:', validation.errors)
+      throw new Error(
+        `AI configuration invalid: ${validation.errors.join(', ')}`
+      )
     }
-
-    analyzer = getRelationshipAnalyzer()
+    configValidated = true
   }
-  return analyzer
 }
 
 /**
- * Analyze journal entry content with real AI
+ * Legacy compatibility function - redirects to HTTP Actions
+ * @deprecated This function now throws an error to force migration to HTTP Actions
  */
 export async function analyzeJournalEntry(
   content: string,
@@ -61,39 +54,14 @@ export async function analyzeJournalEntry(
     emotions?: string[]
   }>
 ): Promise<AnalysisResult> {
-  const analyzer = getAnalyzer()
+  validateConfig()
 
-  try {
-    // Perform comprehensive AI analysis
-    const result = await analyzer.analyzeJournalEntry(content, sentimentHistory)
-
-    // Map AI analysis results to Convex data format
-    return {
-      sentimentScore: mapSentimentScore(result.sentiment.sentiment_score),
-      emotionalKeywords: result.sentiment.emotions_detected,
-      confidenceLevel: result.sentiment.confidence,
-      reasoning:
-        result.sentiment.explanation ||
-        generateDefaultReasoning(result.sentiment),
-      patterns: {
-        recurring_themes: extractThemes(content, result.energy),
-        emotional_triggers: extractTriggers(content),
-        communication_style: detectCommunicationStyle(content),
-        relationship_dynamics: ['ai_detected_patterns'],
-      },
-      tokensUsed: estimateTokens(content),
-      apiCost: estimateCost(content),
-      energyImpact: result.energy,
-      stabilityAnalysis: result.stability || undefined,
-      overallConfidence:
-        result.metadata?.overall_confidence || result.sentiment.confidence,
-    }
-  } catch (error) {
-    console.error('AI analysis failed:', error)
-    throw new Error(
-      `AI analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-    )
-  }
+  // This function is deprecated and should not be used
+  // All AI analysis should go through HTTP Actions via the queue system
+  throw new Error(
+    'Legacy AI analysis is deprecated. Use HTTP Actions with the queue system instead. ' +
+      'This ensures proper error handling, circuit breaker protection, and monitoring.'
+  )
 }
 
 /**
@@ -106,8 +74,12 @@ function mapSentimentScore(aiScore: number): number {
 
 /**
  * Generate default reasoning when AI doesn't provide explanation
+ * @deprecated Legacy function - kept for compatibility with existing code
  */
-function generateDefaultReasoning(sentiment: SentimentAnalysisResult): string {
+function generateDefaultReasoning(sentiment: {
+  sentiment_score: number
+  emotions_detected: string[]
+}): string {
   const score = sentiment.sentiment_score
   const emotions = sentiment.emotions_detected
 

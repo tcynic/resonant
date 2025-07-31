@@ -201,6 +201,7 @@ describe('Enhanced aiAnalysis Table Tests', () => {
       const geminiAnalyses = await t.run(async ctx => {
         return await ctx.db
           .query('aiAnalysis')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_model_type', (q: any) =>
             q.eq('modelType', 'gemini_2_5_flash_lite')
           )
@@ -217,6 +218,7 @@ describe('Enhanced aiAnalysis Table Tests', () => {
       const expensiveAnalyses = await t.run(async ctx => {
         return await ctx.db
           .query('aiAnalysis')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_cost_date', (q: any) => q.gte('apiCost', 0.03))
           .collect()
       })
@@ -231,6 +233,7 @@ describe('Enhanced aiAnalysis Table Tests', () => {
       const userGptAnalyses = await t.run(async ctx => {
         return await ctx.db
           .query('aiAnalysis')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_user_model_date', (q: any) =>
             q.eq('userId', userId).eq('modelType', 'gpt_4')
           )
@@ -248,6 +251,7 @@ describe('Enhanced aiAnalysis Table Tests', () => {
       const slowAnalyses = await t.run(async ctx => {
         return await ctx.db
           .query('aiAnalysis')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_processing_time', (q: any) =>
             q.gte('processingTime', 2500)
           )
@@ -264,6 +268,7 @@ describe('Enhanced aiAnalysis Table Tests', () => {
       const highTokenAnalyses = await t.run(async ctx => {
         return await ctx.db
           .query('aiAnalysis')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_token_usage', (q: any) => q.gte('tokensUsed', 300))
           .collect()
       })
@@ -373,6 +378,7 @@ describe('Enhanced aiAnalysis Table Tests', () => {
       const allAnalyses = await t.run(async ctx => {
         return await ctx.db
           .query('aiAnalysis')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_user', (q: any) => q.eq('userId', userId))
           .collect()
       })
@@ -447,6 +453,7 @@ describe('Enhanced aiAnalysis Table Tests', () => {
       const midRangeCostAnalyses = await t.run(async ctx => {
         return await ctx.db
           .query('aiAnalysis')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_cost_date', (q: any) =>
             q.gte('apiCost', 0.005).lt('apiCost', 0.015)
           )
@@ -495,6 +502,7 @@ describe('Enhanced aiAnalysis Table Tests', () => {
       const slowAnalyses = await t.run(async ctx => {
         return await ctx.db
           .query('aiAnalysis')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_processing_time', (q: any) =>
             q.gte('processingTime', 2500)
           )

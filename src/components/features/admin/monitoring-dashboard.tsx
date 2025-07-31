@@ -11,13 +11,7 @@ import { api } from '@/convex/_generated/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import Select from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { RefreshCw, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import {
@@ -120,35 +114,29 @@ export function MonitoringDashboard({
         <div className="flex items-center gap-4">
           <Select
             value={timeWindow}
-            onValueChange={(value: TimeWindow) => setTimeWindow(value)}
-          >
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1h">1 Hour</SelectItem>
-              <SelectItem value="6h">6 Hours</SelectItem>
-              <SelectItem value="24h">24 Hours</SelectItem>
-              <SelectItem value="7d">7 Days</SelectItem>
-              <SelectItem value="30d">30 Days</SelectItem>
-            </SelectContent>
-          </Select>
+            onChange={e => setTimeWindow(e.target.value as TimeWindow)}
+            options={[
+              { value: '1h', label: '1 Hour' },
+              { value: '6h', label: '6 Hours' },
+              { value: '24h', label: '24 Hours' },
+              { value: '7d', label: '7 Days' },
+              { value: '30d', label: '30 Days' },
+            ]}
+            className="w-32"
+          />
 
           <Select
             value={refreshInterval.toString()}
-            onValueChange={value => setRefreshInterval(parseInt(value))}
-          >
-            <SelectTrigger className="w-36">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="0">Manual</SelectItem>
-              <SelectItem value="10">10 seconds</SelectItem>
-              <SelectItem value="30">30 seconds</SelectItem>
-              <SelectItem value="60">1 minute</SelectItem>
-              <SelectItem value="300">5 minutes</SelectItem>
-            </SelectContent>
-          </Select>
+            onChange={e => setRefreshInterval(parseInt(e.target.value))}
+            options={[
+              { value: '0', label: 'Manual' },
+              { value: '10', label: '10 seconds' },
+              { value: '30', label: '30 seconds' },
+              { value: '60', label: '1 minute' },
+              { value: '300', label: '5 minutes' },
+            ]}
+            className="w-36"
+          />
 
           <Button onClick={handleRefresh} size="sm">
             <RefreshCw className="w-4 h-4 mr-2" />

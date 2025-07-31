@@ -12,13 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 // TODO: Implement button actions for success rate dashboard
 // import { Button } from '@/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import Select from '@/components/ui/select'
 import { AlertTriangle, TrendingUp, TrendingDown, Activity } from 'lucide-react'
 import {
   // TODO: Implement success rate line charts
@@ -85,19 +79,16 @@ export function SuccessRateDashboard() {
         <div className="flex items-center gap-4">
           <Select
             value={timeWindow}
-            onValueChange={(value: TimeWindow) => setTimeWindow(value)}
-          >
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1h">1 Hour</SelectItem>
-              <SelectItem value="6h">6 Hours</SelectItem>
-              <SelectItem value="24h">24 Hours</SelectItem>
-              <SelectItem value="7d">7 Days</SelectItem>
-              <SelectItem value="30d">30 Days</SelectItem>
-            </SelectContent>
-          </Select>
+            onChange={e => setTimeWindow(e.target.value as TimeWindow)}
+            options={[
+              { value: '1h', label: '1 Hour' },
+              { value: '6h', label: '6 Hours' },
+              { value: '24h', label: '24 Hours' },
+              { value: '7d', label: '7 Days' },
+              { value: '30d', label: '30 Days' },
+            ]}
+            className="w-32"
+          />
         </div>
       </div>
 

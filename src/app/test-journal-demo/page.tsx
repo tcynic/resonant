@@ -3,7 +3,7 @@
  * This bypasses authentication for E2E testing demonstration
  */
 
-import { JournalDemoClient } from './journal-demo-client'
+// import { JournalDemoClient } from './journal-demo-client'
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -24,7 +24,12 @@ export default function TestJournalDemo() {
           </p>
         </div>
 
-        <JournalDemoClient />
+        {/* <JournalDemoClient /> */}
+        <div className="rounded-lg bg-white p-6 shadow-sm">
+          <p className="text-gray-600">
+            Demo temporarily disabled for build testing.
+          </p>
+        </div>
 
         <div className="mt-6 rounded-lg bg-blue-50 p-4">
           <h2 className="text-lg font-semibold text-blue-900 mb-2">

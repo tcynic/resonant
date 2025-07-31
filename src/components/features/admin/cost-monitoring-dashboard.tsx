@@ -12,13 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 // TODO: Implement button actions for cost monitoring dashboard
 // import { Button } from '@/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import Select from '@/components/ui/select'
 import {
   DollarSign,
   TrendingUp,
@@ -98,17 +92,14 @@ export function CostMonitoringDashboard() {
         <div className="flex items-center gap-4">
           <Select
             value={timeWindow}
-            onValueChange={(value: TimeWindow) => setTimeWindow(value)}
-          >
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="daily">Daily</SelectItem>
-              <SelectItem value="weekly">Weekly</SelectItem>
-              <SelectItem value="monthly">Monthly</SelectItem>
-            </SelectContent>
-          </Select>
+            onChange={e => setTimeWindow(e.target.value as TimeWindow)}
+            options={[
+              { value: 'daily', label: 'Daily' },
+              { value: 'weekly', label: 'Weekly' },
+              { value: 'monthly', label: 'Monthly' },
+            ]}
+            className="w-32"
+          />
         </div>
       </div>
 
@@ -270,15 +261,27 @@ export function CostMonitoringDashboard() {
                   fill="#8884d8"
                   dataKey="cost"
                 >
-                  {costMetrics.breakdown.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
-                  ))}
+                  {costMetrics.breakdown.map(
+                    (
+                      entry: {
+                        service: string
+                        cost: number
+                        percentage: number
+                        efficiency?: number
+                        avgCostPerRequest?: number
+                        avgCostPerToken?: number
+                      },
+                      index: number
+                    ) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
+                    )
+                  )}
                 </Pie>
                 <Tooltip
-                  formatter={value => [
+                  formatter={(value: number | string) => [
                     `$${(value as number).toFixed(2)}`,
                     'Cost',
                   ]}
@@ -295,31 +298,40 @@ export function CostMonitoringDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {costMetrics.breakdown.map(service => (
-                <div key={service.service} className="border rounded-lg p-3">
-                  <div className="flex justify-between items-center mb-2">
-                    <h4 className="font-semibold">{service.service}</h4>
-                    <Badge variant="outline">
-                      {service.efficiency.requestsPerDollar.toFixed(1)} req/$
-                    </Badge>
-                  </div>
+              {costMetrics.breakdown.map(
+                (service: {
+                  service: string
+                  cost: number
+                  percentage: number
+                  efficiency?: number
+                  avgCostPerRequest?: number
+                  avgCostPerToken?: number
+                }) => (
+                  <div key={service.service} className="border rounded-lg p-3">
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="font-semibold">{service.service}</h4>
+                      <Badge variant="secondary">
+                        {service.efficiency?.toFixed(1) || 0} req/$
+                      </Badge>
+                    </div>
 
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-600">Cost/Request:</span>
-                      <span className="ml-1 font-semibold">
-                        ${service.avgCostPerRequest.toFixed(4)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-600">Cost/Token:</span>
-                      <span className="ml-1 font-semibold">
-                        ${service.avgCostPerToken.toFixed(6)}
-                      </span>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-600">Cost/Request:</span>
+                        <span className="ml-1 font-semibold">
+                          ${service.avgCostPerRequest?.toFixed(4) || '0.0000'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Cost/Token:</span>
+                        <span className="ml-1 font-semibold">
+                          ${service.avgCostPerToken?.toFixed(6) || '0.000000'}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              )}
             </div>
           </CardContent>
         </Card>
@@ -441,42 +453,58 @@ export function CostMonitoringDashboard() {
                 </div>
               </div>
 
-              {recommendations.recommendations.map((rec, index) => (
-                <div key={index} className="border rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <h4 className="font-semibold">{rec.title}</h4>
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        variant={
-                          rec.priority === 'high'
-                            ? 'destructive'
-                            : rec.priority === 'medium'
-                              ? 'secondary'
-                              : 'default'
-                        }
-                      >
-                        {rec.priority} priority
-                      </Badge>
-                      {rec.potentialSavings > 0 && (
-                        <Badge variant="outline">
-                          ${rec.potentialSavings.toFixed(2)} savings
+              {recommendations.recommendations.map(
+                (
+                  rec: {
+                    title: string
+                    description?: string
+                    priority: string
+                    savings?: number
+                    potentialSavings?: number
+                    suggestion?: string
+                    service?: string
+                  },
+                  index: number
+                ) => (
+                  <div key={index} className="border rounded-lg p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className="font-semibold">{rec.title}</h4>
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant={
+                            rec.priority === 'high'
+                              ? 'destructive'
+                              : rec.priority === 'medium'
+                                ? 'secondary'
+                                : 'default'
+                          }
+                        >
+                          {rec.priority} priority
                         </Badge>
-                      )}
+                        {rec.potentialSavings && rec.potentialSavings > 0 && (
+                          <Badge variant="secondary">
+                            ${rec.potentialSavings?.toFixed(2) || '0.00'}{' '}
+                            savings
+                          </Badge>
+                        )}
+                      </div>
                     </div>
+
+                    <p className="text-sm text-gray-600 mb-2">
+                      {rec.description}
+                    </p>
+                    <p className="text-sm font-medium">{rec.suggestion}</p>
+
+                    {rec.service !== 'all' && (
+                      <div className="mt-2">
+                        <Badge variant="secondary">
+                          Service: {rec.service}
+                        </Badge>
+                      </div>
+                    )}
                   </div>
-
-                  <p className="text-sm text-gray-600 mb-2">
-                    {rec.description}
-                  </p>
-                  <p className="text-sm font-medium">{rec.suggestion}</p>
-
-                  {rec.service !== 'all' && (
-                    <div className="mt-2">
-                      <Badge variant="outline">Service: {rec.service}</Badge>
-                    </div>
-                  )}
-                </div>
-              ))}
+                )
+              )}
             </div>
           )}
         </CardContent>
@@ -497,7 +525,7 @@ function DashboardSkeleton() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {Array.from({ length: 4 }).map((_, i) => (
+        {Array.from({ length: 4 }).map((_: unknown, i: number) => (
           <div key={i} className="h-24 bg-gray-200 animate-pulse rounded" />
         ))}
       </div>

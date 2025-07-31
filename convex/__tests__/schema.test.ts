@@ -165,6 +165,7 @@ describe('Enhanced Database Schema Validation', () => {
         // Test by_model_type index
         const geminiAnalyses = await ctx.db
           .query('aiAnalysis')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_model_type', (q: any) =>
             q.eq('modelType', 'gemini_2_5_flash_lite')
           )
@@ -173,6 +174,7 @@ describe('Enhanced Database Schema Validation', () => {
         // Test by_cost_date index (should be able to filter by cost)
         const costFilteredAnalyses = await ctx.db
           .query('aiAnalysis')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_cost_date', (q: any) => q.eq('apiCost', 0.01))
           .collect()
 
@@ -252,12 +254,14 @@ describe('Enhanced Database Schema Validation', () => {
         // Test by_level_timestamp index
         const errorLogs = await ctx.db
           .query('systemLogs')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_level_timestamp', (q: any) => q.eq('level', 'error'))
           .collect()
 
         // Test by_service_timestamp index
         const serviceALogs = await ctx.db
           .query('systemLogs')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_service_timestamp', (q: any) =>
             q.eq('service', 'service_a')
           )
@@ -347,6 +351,7 @@ describe('Enhanced Database Schema Validation', () => {
         // Test querying by metric type
         const responseTimeMetrics = await ctx.db
           .query('performanceMetrics')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_type_timestamp', (q: any) =>
             q.eq('metricType', 'response_time')
           )
@@ -449,6 +454,7 @@ describe('Enhanced Database Schema Validation', () => {
         const start = Date.now()
         const results = await ctx.db
           .query('aiAnalysis')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_user_model_date', (q: any) =>
             q.eq('userId', userId).eq('modelType', 'gemini_2_5_flash_lite')
           )

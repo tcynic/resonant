@@ -135,6 +135,7 @@ describe('Schema Migration Tests', () => {
         // Should still be queryable by existing indexes
         const userAnalyses = await ctx.db
           .query('aiAnalysis')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_user', (q: any) => q.eq('userId', userId))
           .collect()
 
@@ -208,12 +209,14 @@ describe('Schema Migration Tests', () => {
         // Query by user (should work for all records)
         const userAnalyses = await ctx.db
           .query('aiAnalysis')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_user', (q: any) => q.eq('userId', userId))
           .collect()
 
         // Query by model type (should work for enhanced records)
         const geminiAnalyses = await ctx.db
           .query('aiAnalysis')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_model_type', (q: any) =>
             q.eq('modelType', 'gemini_2_5_flash_lite')
           )
@@ -304,6 +307,7 @@ describe('Schema Migration Tests', () => {
         // Both records should coexist and be queryable
         const allRecords = await ctx.db
           .query('aiAnalysis')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_user', (q: any) => q.eq('userId', userId))
           .collect()
 
@@ -578,12 +582,14 @@ describe('Schema Migration Tests', () => {
         // Test existing indexes still work
         const userAnalyses = await ctx.db
           .query('aiAnalysis')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_user', (q: any) => q.eq('userId', userId))
           .collect()
         expect(userAnalyses).toHaveLength(5)
 
         const completedAnalyses = await ctx.db
           .query('aiAnalysis')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_status', (q: any) => q.eq('status', 'completed'))
           .collect()
 
@@ -634,6 +640,7 @@ describe('Schema Migration Tests', () => {
         // Test new indexes
         const geminiAnalyses = await ctx.db
           .query('aiAnalysis')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_model_type', (q: any) =>
             q.eq('modelType', 'gemini_2_5_flash_lite')
           )
@@ -642,12 +649,14 @@ describe('Schema Migration Tests', () => {
 
         const expensiveAnalyses = await ctx.db
           .query('aiAnalysis')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_cost_date', (q: any) => q.gte('apiCost', 0.02))
           .collect()
         expect(expensiveAnalyses).toHaveLength(2)
 
         const highTokenAnalyses = await ctx.db
           .query('aiAnalysis')
+          // @ts-expect-error - convex-test library TypeScript definition limitations
           .withIndex('by_token_usage', (q: any) => q.gte('tokensUsed', 250))
           .collect()
 

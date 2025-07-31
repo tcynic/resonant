@@ -2,6 +2,7 @@
 
 import React, { memo, useCallback, useMemo, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useUser, SignOutButton } from '@clerk/nextjs'
 import { usePathname } from 'next/navigation'
 import { useNavigation } from './NavigationProvider'
@@ -59,9 +60,11 @@ function UserMenu() {
         className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
       >
         {user.imageUrl ? (
-          <img
+          <Image
             src={user.imageUrl}
             alt={`${user.firstName} ${user.lastName}`}
+            width={32}
+            height={32}
             className="h-8 w-8 rounded-full"
           />
         ) : (
