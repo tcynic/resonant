@@ -85,7 +85,7 @@ describe('SearchBar', () => {
 
     // Type some text to show clear button
     await user.type(searchInput, 'test')
-    
+
     // Advance timers to process debounce
     jest.advanceTimersByTime(300)
 
@@ -115,7 +115,7 @@ describe('SearchBar', () => {
 
     // Type to trigger suggestions
     await user.type(searchInput, 'su')
-    
+
     // Advance timers to process debounce
     jest.advanceTimersByTime(300)
 
@@ -154,7 +154,7 @@ describe('SearchBar', () => {
 
     // Type to show suggestions
     await user.type(searchInput, 'su')
-    
+
     // Advance timers to process debounce
     jest.advanceTimersByTime(300)
 
@@ -194,7 +194,7 @@ describe('SearchBar', () => {
 
     const searchInput = screen.getByRole('searchbox')
     await user.type(searchInput, 'mouse')
-    
+
     // Advance timers to process debounce
     jest.advanceTimersByTime(300)
 
@@ -238,7 +238,7 @@ describe('SearchBar', () => {
 
     const searchInput = screen.getByRole('searchbox')
     await user.type(searchInput, 'tab')
-    
+
     // Advance timers to process debounce
     jest.advanceTimersByTime(300)
 

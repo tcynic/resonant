@@ -125,7 +125,7 @@ describe('useAutoSave', () => {
     })
 
     expect(mockLocalStorage.setItem).not.toHaveBeenCalled()
-    
+
     await waitFor(() => {
       expect(result.current).toBeDefined()
       expect(result.current.saveStatus).toBe('idle')
@@ -218,7 +218,7 @@ describe('useAutoSave', () => {
     })
 
     expect(mockLocalStorage.setItem).not.toHaveBeenCalled()
-    
+
     await waitFor(() => {
       expect(result.current).toBeDefined()
       expect(result.current.saveStatus).toBe('idle')

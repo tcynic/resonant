@@ -39,9 +39,12 @@ describe('useAutoSave', () => {
   describe('auto-save functionality', () => {
     it('should initialize with idle status', () => {
       mockLocalStorage.getItem.mockReturnValue(null)
-      
+
       const { result } = renderHook(() =>
-        useAutoSave({ content: '', relationshipIds: [] }, { key: 'test-entry', enabled: true })
+        useAutoSave(
+          { content: '', relationshipIds: [] },
+          { key: 'test-entry', enabled: true }
+        )
       )
 
       // Initial state before any content is provided
@@ -93,7 +96,10 @@ describe('useAutoSave', () => {
 
     it('should update save status correctly', () => {
       const { result } = renderHook(() =>
-        useAutoSave({ content: '', relationshipIds: [] }, { key: 'test-entry', enabled: true })
+        useAutoSave(
+          { content: '', relationshipIds: [] },
+          { key: 'test-entry', enabled: true }
+        )
       )
 
       // Initially idle with empty content
@@ -104,7 +110,7 @@ describe('useAutoSave', () => {
         ({ data }) => useAutoSave(data, { key: 'test-entry', enabled: true }),
         { initialProps: { data: { content: '', relationshipIds: [] } } }
       )
-      
+
       act(() => {
         rerender({ data: mockData })
         jest.advanceTimersByTime(100)

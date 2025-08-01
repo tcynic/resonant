@@ -96,7 +96,11 @@ export function SearchResults({
         aria-label="Loading search results"
       >
         {[...Array(3)].map((_, i) => (
-          <Card key={i} className="p-4 animate-pulse" data-testid={`loading-card-${i}`}>
+          <Card
+            key={i}
+            className="p-4 animate-pulse"
+            data-testid={`loading-card-${i}`}
+          >
             <div className="flex items-start space-x-3">
               <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
               <div className="flex-1 space-y-2">
