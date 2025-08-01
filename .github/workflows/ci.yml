@@ -8,7 +8,7 @@ on:
     branches: [main, develop]
 
 env:
-  NODE_VERSION: 18
+  NODE_VERSION: 22
   CACHE_KEY_SUFFIX: v1
 
 jobs:
