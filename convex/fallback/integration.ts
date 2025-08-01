@@ -261,46 +261,53 @@ export async function handleFallbackInPipeline(
     if (analysisRequest.analysisId) {
       // Update existing analysis record
       // @ts-ignore - TypeScript compiler limitation with Convex internal API types
+      // Split complex object structure to avoid deep type instantiation
+      const fallbackMetadata = {
+        trigger: fallbackTrigger,
+        qualityScore:
+          fallbackResults.integration.qualityAssessment.qualityScore,
+        confidence: fallbackResults.integration.confidence,
+        processingTime: fallbackResults.integration.processingTime,
+        patternInsights: fallbackResults.patternAnalysis.relationshipInsights,
+        recommendations:
+          fallbackResults.patternRecommendations.actionableInsights,
+      }
+
+      // @ts-ignore - Convex internal API types cause deep instantiation issues
       await ctx.runMutation(
+        // @ts-ignore - Deep type instantiation workaround
         internal.aiAnalysis.completeFallbackAnalysis as any,
         {
           analysisId: analysisRequest.analysisId,
           results: fallbackResults.standardizedResults,
-          fallbackMetadata: {
-            trigger: fallbackTrigger,
-            qualityScore:
-              fallbackResults.integration.qualityAssessment.qualityScore,
-            confidence: fallbackResults.integration.confidence,
-            processingTime: fallbackResults.integration.processingTime,
-            patternInsights:
-              fallbackResults.patternAnalysis.relationshipInsights,
-            recommendations:
-              fallbackResults.patternRecommendations.actionableInsights,
-          },
-        }
+          fallbackMetadata,
+        } as any
       )
       analysisId = analysisRequest.analysisId
     } else {
       // Create new analysis record
+      // Split complex object structure to avoid deep type instantiation
+      const newFallbackMetadata = {
+        trigger: fallbackTrigger,
+        qualityScore:
+          fallbackResults.integration.qualityAssessment.qualityScore,
+        confidence: fallbackResults.integration.confidence,
+        processingTime: fallbackResults.integration.processingTime,
+        patternInsights: fallbackResults.patternAnalysis.relationshipInsights,
+        recommendations:
+          fallbackResults.patternRecommendations.actionableInsights,
+      }
+
+      // @ts-ignore - Convex internal API types cause deep instantiation issues
       analysisId = await ctx.runMutation(
-        internal.aiAnalysis.storeFallbackResult,
+        internal.aiAnalysis.storeFallbackResult as any,
         {
           entryId: analysisRequest.entryId,
           userId: analysisRequest.userId,
           relationshipId: journalEntry.relationshipId,
           ...fallbackResults.standardizedResults,
-          fallbackMetadata: {
-            trigger: fallbackTrigger,
-            qualityScore:
-              fallbackResults.integration.qualityAssessment.qualityScore,
-            confidence: fallbackResults.integration.confidence,
-            processingTime: fallbackResults.integration.processingTime,
-            patternInsights:
-              fallbackResults.patternAnalysis.relationshipInsights,
-            recommendations:
-              fallbackResults.patternRecommendations.actionableInsights,
-          },
-        }
+          fallbackMetadata: newFallbackMetadata,
+        } as any
       )
     }
   } else {

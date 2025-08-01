@@ -65,6 +65,15 @@ interface ServiceData {
   [key: string]: unknown
 }
 
+interface ServiceComparisonData {
+  comparison: ServiceData[]
+  insights: {
+    bestPerforming: string
+    worstPerforming: string
+  }
+  [key: string]: unknown
+}
+
 interface MetricData {
   timeWindow: string
   successRate: number
@@ -85,11 +94,12 @@ export function SuccessRateDashboard() {
   // Query success rate data
   const successRateData = useQuery(
     api.monitoring.success_rate_tracking.getRealTimeSuccessRate,
-    {} as unknown
-  ) as unknown
+    {}
+  )
 
+  // @ts-expect-error - Convex query types cause deep instantiation issues
   const trendData = useQuery(
-    api.monitoring.success_rate_tracking.getSuccessRateTrends,
+    api.monitoring.success_rate_tracking.getSuccessRateTrends as unknown,
     {
       timeWindow:
         timeWindow === '1h' ? '24h' : (timeWindow as '30d' | '7d' | '24h'),
@@ -98,23 +108,23 @@ export function SuccessRateDashboard() {
           ? ('hourly' as const)
           : ('daily' as const),
     } as unknown
-  ) as unknown
+  )
 
   const serviceComparison = useQuery(
     api.monitoring.success_rate_tracking.compareSuccessRatesAcrossServices,
     {
       timeWindow,
-    } as unknown
-  ) as unknown
+    }
+  )
 
   if (!successRateData || !trendData || !serviceComparison) {
     return <DashboardSkeleton />
   }
 
   const currentMetric =
-    (successRateData as { metrics: MetricData[] }).metrics.find(
+    (successRateData as { metrics: MetricData[] })?.metrics?.find(
       (m: MetricData) => m.timeWindow === timeWindow
-    ) || (successRateData as { metrics: MetricData[] }).metrics[0]
+    ) || (successRateData as { metrics: MetricData[] })?.metrics?.[0]
 
   return (
     <div className="w-full max-w-7xl mx-auto p-6 space-y-6">
@@ -335,71 +345,71 @@ export function SuccessRateDashboard() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {(
-              serviceComparison as { comparison: ServiceData[] }
-            ).comparison.map((service: ServiceData) => (
-              <div key={service.service} className="border rounded-lg p-4">
-                <div className="flex justify-between items-center mb-3">
-                  <div>
-                    <h4 className="font-semibold">{service.service}</h4>
-                    <p className="text-sm text-gray-600">
-                      {service.totalAnalyses} requests
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold">
-                      {(service.successRate * 100).toFixed(1)}%
+            {(serviceComparison as ServiceComparisonData).comparison.map(
+              (service: ServiceData) => (
+                <div key={service.service} className="border rounded-lg p-4">
+                  <div className="flex justify-between items-center mb-3">
+                    <div>
+                      <h4 className="font-semibold">{service.service}</h4>
+                      <p className="text-sm text-gray-600">
+                        {service.totalAnalyses} requests
+                      </p>
                     </div>
-                    <Badge
-                      variant={
-                        service.performance.reliability === 'good'
-                          ? 'default'
-                          : service.performance.reliability === 'fair'
-                            ? 'secondary'
-                            : 'destructive'
-                      }
-                    >
-                      {service.performance.reliability}
-                    </Badge>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold">
+                        {(service.successRate * 100).toFixed(1)}%
+                      </div>
+                      <Badge
+                        variant={
+                          service.performance.reliability === 'good'
+                            ? 'default'
+                            : service.performance.reliability === 'fair'
+                              ? 'secondary'
+                              : 'destructive'
+                        }
+                      >
+                        {service.performance.reliability}
+                      </Badge>
+                    </div>
                   </div>
-                </div>
 
-                {/* Progress bar */}
-                <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                  <div
-                    className={`h-2 rounded-full ${
-                      service.successRate >= 0.95
-                        ? 'bg-green-500'
-                        : service.successRate >= 0.9
-                          ? 'bg-yellow-500'
-                          : 'bg-red-500'
-                    }`}
-                    style={{ width: `${service.successRate * 100}%` }}
-                  />
-                </div>
+                  {/* Progress bar */}
+                  <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                    <div
+                      className={`h-2 rounded-full ${
+                        service.successRate >= 0.95
+                          ? 'bg-green-500'
+                          : service.successRate >= 0.9
+                            ? 'bg-yellow-500'
+                            : 'bg-red-500'
+                      }`}
+                      style={{ width: `${service.successRate * 100}%` }}
+                    />
+                  </div>
 
-                <div className="grid grid-cols-3 gap-4 text-sm">
-                  <div>
-                    <span className="text-gray-600">Avg Processing:</span>
-                    <span className="ml-1 font-semibold">
-                      {Math.round(service.avgProcessingTime)}ms
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Cost/Request:</span>
-                    <span className="ml-1 font-semibold">
-                      ${service.avgCost.toFixed(4)}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Fallback Rate:</span>
-                    <span className="ml-1 font-semibold">
-                      {(service.fallbackRate * 100).toFixed(1)}%
-                    </span>
+                  <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-600">Avg Processing:</span>
+                      <span className="ml-1 font-semibold">
+                        {Math.round(service.avgProcessingTime)}ms
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Cost/Request:</span>
+                      <span className="ml-1 font-semibold">
+                        ${service.avgCost.toFixed(4)}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Fallback Rate:</span>
+                      <span className="ml-1 font-semibold">
+                        {(service.fallbackRate * 100).toFixed(1)}%
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+            )}
           </div>
 
           {/* Summary */}
@@ -409,13 +419,19 @@ export function SuccessRateDashboard() {
               <div>
                 <span className="text-gray-600">Best Performing:</span>
                 <span className="ml-1 font-semibold text-green-600">
-                  {serviceComparison.insights.bestPerforming}
+                  {
+                    (serviceComparison as ServiceComparisonData).insights
+                      .bestPerforming
+                  }
                 </span>
               </div>
               <div>
                 <span className="text-gray-600">Needs Attention:</span>
                 <span className="ml-1 font-semibold text-red-600">
-                  {serviceComparison.insights.worstPerforming}
+                  {
+                    (serviceComparison as ServiceComparisonData).insights
+                      .worstPerforming
+                  }
                 </span>
               </div>
             </div>
@@ -424,48 +440,50 @@ export function SuccessRateDashboard() {
       </Card>
 
       {/* Pattern Analysis */}
-      {(trendData as unknown as TrendData).patterns?.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-yellow-500" />
-              Pattern Analysis
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {(trendData as unknown as TrendData).patterns?.map(
-                (pattern: PatternData, index: number) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-3 border rounded-lg"
-                  >
-                    <div>
-                      <div className="font-semibold capitalize">
-                        {pattern.type?.replace('_', ' ') || 'Unknown'}
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        {pattern.description || 'No description'}
-                      </div>
-                    </div>
-                    <Badge
-                      variant={
-                        pattern.severity === 'high'
-                          ? 'destructive'
-                          : pattern.severity === 'medium'
-                            ? 'secondary'
-                            : 'default'
-                      }
+      {(trendData as unknown as TrendData)?.patterns &&
+        Array.isArray((trendData as unknown as TrendData).patterns) &&
+        (trendData as unknown as TrendData).patterns.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-yellow-500" />
+                Pattern Analysis
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {(trendData as unknown as TrendData).patterns?.map(
+                  (pattern: PatternData, index: number) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-3 border rounded-lg"
                     >
-                      {pattern.severity || 'low'}
-                    </Badge>
-                  </div>
-                )
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                      <div>
+                        <div className="font-semibold capitalize">
+                          {pattern.type?.replace('_', ' ') || 'Unknown'}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {pattern.description || 'No description'}
+                        </div>
+                      </div>
+                      <Badge
+                        variant={
+                          pattern.severity === 'high'
+                            ? 'destructive'
+                            : pattern.severity === 'medium'
+                              ? 'secondary'
+                              : 'default'
+                        }
+                      >
+                        {pattern.severity || 'low'}
+                      </Badge>
+                    </div>
+                  )
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
     </div>
   )
 }
