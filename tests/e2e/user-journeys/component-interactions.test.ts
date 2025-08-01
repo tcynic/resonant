@@ -6,22 +6,21 @@
 
 import { test, expect } from '@playwright/test'
 import { getTestUserCredentials } from '../../accounts/test-user-personas'
-import { MCPBrowserHelper } from '../../helpers/mcp-browser-helper'
 
 test.describe('Component Interactions Journey', () => {
-  let mcpHelper: MCPBrowserHelper
-
   test.beforeEach(async ({ page }) => {
-    mcpHelper = new MCPBrowserHelper(page)
+    // No setup needed - using direct Playwright APIs
   })
 
   test('should test mood selector component interactions', async ({ page }) => {
     const { email, password, user } = getTestUserCredentials('activeUser')
 
     await test.step('Setup authenticated session', async () => {
-      await mcpHelper.navigateToSignIn()
-      await mcpHelper.signInUser(email, password)
-      await mcpHelper.waitForAuthentication()
+      await page.goto('/sign-in')
+      await page.getByRole('textbox', { name: 'Email address' }).fill(email)
+      await page.getByRole('textbox', { name: 'Password' }).fill(password)
+      await page.getByRole('button', { name: 'Continue', exact: true }).click()
+      await page.waitForURL('/dashboard')
       await page.goto('/journal/new')
     })
 
@@ -29,11 +28,6 @@ test.describe('Component Interactions Journey', () => {
       // Test hover states
       const happyMood = page.getByRole('button', { name: /happy/i })
 
-      // In actual MCP environment:
-      // await mcp__playwright__browser_hover({
-      //   element: 'happy mood button',
-      //   ref: '[data-testid="mood-happy"]'
-      // })
       await happyMood.hover()
 
       // Verify hover state visual feedback
@@ -114,9 +108,11 @@ test.describe('Component Interactions Journey', () => {
     const { email, password, user } = getTestUserCredentials('powerUser')
 
     await test.step('Setup with power user for extensive tag data', async () => {
-      await mcpHelper.navigateToSignIn()
-      await mcpHelper.signInUser(email, password)
-      await mcpHelper.waitForAuthentication()
+      await page.goto('/sign-in')
+      await page.getByRole('textbox', { name: 'Email address' }).fill(email)
+      await page.getByRole('textbox', { name: 'Password' }).fill(password)
+      await page.getByRole('button', { name: 'Continue', exact: true }).click()
+      await page.waitForURL('/dashboard')
       await page.goto('/journal/new')
     })
 
@@ -231,18 +227,15 @@ test.describe('Component Interactions Journey', () => {
     const { email, password, user } = getTestUserCredentials('activeUser')
 
     await test.step('Setup with user who has relationships', async () => {
-      await mcpHelper.navigateToSignIn()
-      await mcpHelper.signInUser(email, password)
-      await mcpHelper.waitForAuthentication()
+      await page.goto('/sign-in')
+      await page.getByRole('textbox', { name: 'Email address' }).fill(email)
+      await page.getByRole('textbox', { name: 'Password' }).fill(password)
+      await page.getByRole('button', { name: 'Continue', exact: true }).click()
+      await page.waitForURL('/dashboard')
       await page.goto('/journal/new')
     })
 
     await test.step('Test relationship picker opening and display', async () => {
-      // In actual MCP environment:
-      // await mcp__playwright__browser_click({
-      //   element: 'relationship picker button',
-      //   ref: '[data-testid="relationship-picker-btn"]'
-      // })
       await page.getByRole('button', { name: /add relationships/i }).click()
 
       // Should show relationship picker modal/dropdown
@@ -363,9 +356,11 @@ test.describe('Component Interactions Journey', () => {
     const { email, password, user } = getTestUserCredentials('newUser')
 
     await test.step('Complete integrated component workflow', async () => {
-      await mcpHelper.navigateToSignIn()
-      await mcpHelper.signInUser(email, password)
-      await mcpHelper.waitForAuthentication()
+      await page.goto('/sign-in')
+      await page.getByRole('textbox', { name: 'Email address' }).fill(email)
+      await page.getByRole('textbox', { name: 'Password' }).fill(password)
+      await page.getByRole('button', { name: 'Continue', exact: true }).click()
+      await page.waitForURL('/dashboard')
       await page.goto('/journal/new')
     })
 
@@ -444,9 +439,11 @@ test.describe('Component Interactions Journey', () => {
     const { email, password, user } = getTestUserCredentials('edgeCaseUser')
 
     await test.step('Setup for error testing', async () => {
-      await mcpHelper.navigateToSignIn()
-      await mcpHelper.signInUser(email, password)
-      await mcpHelper.waitForAuthentication()
+      await page.goto('/sign-in')
+      await page.getByRole('textbox', { name: 'Email address' }).fill(email)
+      await page.getByRole('textbox', { name: 'Password' }).fill(password)
+      await page.getByRole('button', { name: 'Continue', exact: true }).click()
+      await page.waitForURL('/dashboard')
       await page.goto('/journal/new')
     })
 

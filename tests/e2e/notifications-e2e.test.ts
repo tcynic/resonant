@@ -18,9 +18,10 @@ class NotificationTestHelper {
   async loginTestUser() {
     await this.page.goto('/sign-in')
 
-    await this.page.fill('input[name="email"]', TEST_USER.email)
-    await this.page.fill('input[name="password"]', TEST_USER.password)
-    await this.page.click('button[type="submit"]')
+    // Use proper Clerk form selectors
+    await this.page.getByRole('textbox', { name: 'Email address' }).fill(TEST_USER.email)
+    await this.page.getByRole('textbox', { name: 'Password' }).fill(TEST_USER.password)
+    await this.page.getByRole('button', { name: 'Continue', exact: true }).click()
 
     // Wait for redirect to dashboard
     await this.page.waitForURL(DASHBOARD_URL)

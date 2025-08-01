@@ -235,12 +235,15 @@ describe('SearchPage Integration', () => {
     mockUseQuery.mockImplementation(
       (query: FunctionReference<'query'>, args?: unknown) => {
         if (args === 'skip') return null
-        const queryStr = query.toString()
-        if (queryStr.includes('getUserByClerkId')) return mockUserData
-        if (queryStr.includes('getRelationshipsByUser'))
+        // Mock query name check without using toString
+        const queryName = typeof query === 'object' && query !== null && 'name' in query 
+          ? (query as any).name 
+          : String(query)
+        if (queryName.includes('getUserByClerkId')) return mockUserData
+        if (queryName.includes('getRelationshipsByUser'))
           return mockRelationships
-        if (queryStr.includes('searchJournalEntries')) return mockSearchResults
-        if (queryStr.includes('getSearchSuggestions')) return mockSuggestions
+        if (queryName.includes('searchJournalEntries')) return mockSearchResults
+        if (queryName.includes('getSearchSuggestions')) return mockSuggestions
         return null
       }
     )

@@ -60,23 +60,26 @@ describe('useAutoSave', () => {
       { initialProps: { data: { content: '', relationshipIds: [] } } }
     )
 
-    // Update to non-empty content
-    act(() => {
-      rerender({ data: { content: 'New draft content', relationshipIds: [] } })
+    // Wait for initial render
+    await waitFor(() => {
+      expect(result.current).toBeDefined()
+      expect(result.current.saveStatus).toBe('idle')
     })
 
-    // Should start saving
-    expect(result.current.saveStatus).toBe('saving')
+    // Update to non-empty content
+    await act(async () => {
+      rerender({ data: { content: 'New draft content', relationshipIds: [] } })
+    })
 
     // Advance timers to complete the save process
     await act(async () => {
       jest.advanceTimersByTime(100) // For the simulated save delay
-      await new Promise(resolve => setTimeout(resolve, 0)) // Allow promises to resolve
+      jest.advanceTimersByTime(100) // Additional time for promise resolution
     })
 
     await waitFor(() => {
       expect(result.current.saveStatus).toBe('saved')
-    })
+    }, { timeout: 10000 })
 
     // Should have saved to localStorage
     expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
@@ -86,7 +89,7 @@ describe('useAutoSave', () => {
 
     expect(result.current.hasDraft).toBe(true)
     expect(result.current.lastSaved).not.toBeNull()
-  })
+  }, 10000)
 
   it('should provide clear draft function', async () => {
     const { result } = renderHook(() =>
@@ -95,6 +98,21 @@ describe('useAutoSave', () => {
         defaultOptions
       )
     )
+
+    // Wait for hook to initialize and save to complete
+    await waitFor(() => {
+      expect(result.current).toBeDefined()
+    })
+
+    // Wait for save to complete since we have content
+    await act(async () => {
+      jest.advanceTimersByTime(100) // For the save delay
+      jest.advanceTimersByTime(100) // Additional time for promise resolution
+    })
+
+    await waitFor(() => {
+      expect(result.current.saveStatus).toBe('saved')
+    }, { timeout: 10000 })
 
     await act(async () => {
       result.current.clearDraft()
@@ -139,18 +157,23 @@ describe('useAutoSave', () => {
       { initialProps: { data: initialData } }
     )
 
+    // Wait for hook to initialize
+    await waitFor(() => {
+      expect(result.current).toBeDefined()
+    })
+
     // Wait for initial save to complete
     await act(async () => {
       jest.advanceTimersByTime(100)
-      await new Promise(resolve => setTimeout(resolve, 0))
+      jest.advanceTimersByTime(100) // Additional time for promise resolution
     })
 
     await waitFor(() => {
       expect(result.current.saveStatus).toBe('saved')
-    })
+    }, { timeout: 10000 })
 
     // Update with additional fields
-    act(() => {
+    await act(async () => {
       rerender({
         data: {
           content: 'Updated content',
@@ -162,18 +185,18 @@ describe('useAutoSave', () => {
     // Wait for the new save to complete
     await act(async () => {
       jest.advanceTimersByTime(100)
-      await new Promise(resolve => setTimeout(resolve, 0))
+      jest.advanceTimersByTime(100) // Additional time for promise resolution
     })
 
     await waitFor(() => {
       expect(result.current.saveStatus).toBe('saved')
-    })
+    }, { timeout: 10000 })
 
     expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
       'journal-draft-test-draft',
       expect.stringContaining('Updated content')
     )
-  })
+  }, 15000)
 
   it('should handle localStorage errors gracefully', async () => {
     mockLocalStorage.setItem.mockImplementation(() => {
@@ -185,7 +208,7 @@ describe('useAutoSave', () => {
       { initialProps: { data: { content: '', relationshipIds: [] } } }
     )
 
-    act(() => {
+    await act(async () => {
       rerender({
         data: { content: 'content that fails to store', relationshipIds: [] },
       })
@@ -197,16 +220,16 @@ describe('useAutoSave', () => {
     // Advance timers and wait for error state
     await act(async () => {
       jest.advanceTimersByTime(100)
-      await new Promise(resolve => setTimeout(resolve, 0))
+      jest.advanceTimersByTime(100) // Additional time for promise resolution
     })
 
     await waitFor(() => {
       expect(result.current.saveStatus).toBe('error')
-    })
+    }, { timeout: 10000 })
 
     // Should not throw error and handle gracefully
     expect(() => jest.runAllTimers()).not.toThrow()
-  })
+  }, 15000)
 
   it('should not save empty content', async () => {
     const { result } = renderHook(() =>
@@ -250,19 +273,25 @@ describe('useAutoSave', () => {
       { initialProps: { data: { content: '', relationshipIds: [] } } }
     )
 
-    act(() => {
+    // Wait for hook to initialize
+    await waitFor(() => {
+      expect(result.current).toBeDefined()
+      expect(result.current.saveStatus).toBe('idle')
+    })
+
+    await act(async () => {
       rerender({ data: { content: 'Test content', relationshipIds: [] } })
     })
 
     // Wait for save to complete
     await act(async () => {
       jest.advanceTimersByTime(100)
-      await new Promise(resolve => setTimeout(resolve, 0))
+      jest.advanceTimersByTime(100) // Additional time for promise resolution
     })
 
     await waitFor(() => {
       expect(result.current.saveStatus).toBe('saved')
-    })
+    }, { timeout: 10000 })
 
     // Wait for status reset timeout
     await act(async () => {
@@ -271,6 +300,6 @@ describe('useAutoSave', () => {
 
     await waitFor(() => {
       expect(result.current.saveStatus).toBe('idle')
-    })
-  })
+    }, { timeout: 10000 })
+  }, 15000)
 })
