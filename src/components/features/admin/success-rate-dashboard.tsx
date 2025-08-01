@@ -93,13 +93,13 @@ export function SuccessRateDashboard() {
 
   // Query success rate data
   const successRateData = useQuery(
+    // @ts-expect-error - Convex query types cause deep instantiation issues
     api.monitoring.success_rate_tracking.getRealTimeSuccessRate,
     {}
   )
 
-  // @ts-expect-error - Convex query types cause deep instantiation issues
   const trendData = useQuery(
-    api.monitoring.success_rate_tracking.getSuccessRateTrends as unknown,
+    api.monitoring.success_rate_tracking.getSuccessRateTrends,
     {
       timeWindow:
         timeWindow === '1h' ? '24h' : (timeWindow as '30d' | '7d' | '24h'),
@@ -107,7 +107,7 @@ export function SuccessRateDashboard() {
         timeWindow === '1h' || timeWindow === '24h'
           ? ('hourly' as const)
           : ('daily' as const),
-    } as unknown
+    }
   )
 
   const serviceComparison = useQuery(
@@ -440,50 +440,55 @@ export function SuccessRateDashboard() {
       </Card>
 
       {/* Pattern Analysis */}
-      {(trendData as unknown as TrendData)?.patterns &&
-        Array.isArray((trendData as unknown as TrendData).patterns) &&
-        (trendData as unknown as TrendData).patterns.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-yellow-500" />
-                Pattern Analysis
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {(trendData as unknown as TrendData).patterns?.map(
-                  (pattern: PatternData, index: number) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-3 border rounded-lg"
-                    >
-                      <div>
-                        <div className="font-semibold capitalize">
-                          {pattern.type?.replace('_', ' ') || 'Unknown'}
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          {pattern.description || 'No description'}
-                        </div>
+      {(() => {
+        const data = trendData as unknown as TrendData
+        return (
+          data?.patterns &&
+          Array.isArray(data.patterns) &&
+          data.patterns.length > 0
+        )
+      })() && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-yellow-500" />
+              Pattern Analysis
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {(trendData as unknown as TrendData)?.patterns?.map(
+                (pattern: PatternData, index: number) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 border rounded-lg"
+                  >
+                    <div>
+                      <div className="font-semibold capitalize">
+                        {pattern.type?.replace('_', ' ') || 'Unknown'}
                       </div>
-                      <Badge
-                        variant={
-                          pattern.severity === 'high'
-                            ? 'destructive'
-                            : pattern.severity === 'medium'
-                              ? 'secondary'
-                              : 'default'
-                        }
-                      >
-                        {pattern.severity || 'low'}
-                      </Badge>
+                      <div className="text-sm text-gray-600">
+                        {pattern.description || 'No description'}
+                      </div>
                     </div>
-                  )
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+                    <Badge
+                      variant={
+                        pattern.severity === 'high'
+                          ? 'destructive'
+                          : pattern.severity === 'medium'
+                            ? 'secondary'
+                            : 'default'
+                      }
+                    >
+                      {pattern.severity || 'low'}
+                    </Badge>
+                  </div>
+                )
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
