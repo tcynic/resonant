@@ -60,8 +60,8 @@ jobs:
         run: npm run build
         env:
           NEXT_PUBLIC_CONVEX_URL: ${{ secrets.CONVEX_URL_STAGING || 'https://test.convex.cloud' }}
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY_STAGING || 'pk_test_bGVhcm5pbmdfYW5kX2RldmVsb3BpbmdfaXNfZnVu.y0fI6r3qFf2QjVlJXw8hPJQ' }}
-          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY_STAGING || 'sk_test_placeholder' }}
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY_STAGING || 'pk_test_build_placeholder_key_for_ci_only' }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY_STAGING || 'sk_test_build_placeholder_key_for_ci_only' }}
 
   unit-tests:
     name: Unit Tests
