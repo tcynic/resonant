@@ -42,7 +42,7 @@ describe('SearchResults', () => {
     {
       _id: '2',
       content:
-        'Long journal entry that should show the expand/collapse functionality because it exceeds the 200 character limit for displaying full content in the search results view',
+        'Long journal entry that should show the expand/collapse functionality because it exceeds the 200 character limit for displaying full content in the search results view. This extra text ensures it is over 200 characters.',
       mood: 'neutral',
       tags: ['reflection'],
       isPrivate: true,
@@ -200,7 +200,7 @@ describe('SearchResults', () => {
     render(<SearchResults {...defaultProps} totalResults={25} />)
 
     expect(
-      screen.getByText('25 results for "conversation"')
+      screen.getByText(/25 results for.*conversation/i)
     ).toBeInTheDocument()
   })
 

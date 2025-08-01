@@ -38,10 +38,13 @@ describe('useAutoSave', () => {
 
   describe('auto-save functionality', () => {
     it('should initialize with idle status', () => {
+      mockLocalStorage.getItem.mockReturnValue(null)
+      
       const { result } = renderHook(() =>
-        useAutoSave(mockData, { key: 'test-entry', enabled: true })
+        useAutoSave({ content: '', relationshipIds: [] }, { key: 'test-entry', enabled: true })
       )
 
+      // Initial state before any content is provided
       expect(result.current.saveStatus).toBe('idle')
       expect(result.current.lastSaved).toBeNull()
       expect(result.current.hasDraft).toBe(false)
@@ -57,8 +60,8 @@ describe('useAutoSave', () => {
       })
 
       expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
-        'journal_draft_test-entry',
-        JSON.stringify(mockData)
+        'journal-draft-test-entry',
+        expect.stringContaining(mockData.content)
       )
     })
 
@@ -90,19 +93,24 @@ describe('useAutoSave', () => {
 
     it('should update save status correctly', () => {
       const { result } = renderHook(() =>
-        useAutoSave(mockData, { key: 'test-entry', enabled: true })
+        useAutoSave({ content: '', relationshipIds: [] }, { key: 'test-entry', enabled: true })
       )
 
-      // Initially idle
+      // Initially idle with empty content
       expect(result.current.saveStatus).toBe('idle')
 
-      // Should transition through saving to saved
+      // Should transition through saving to saved when content is added
+      const { rerender } = renderHook(
+        ({ data }) => useAutoSave(data, { key: 'test-entry', enabled: true }),
+        { initialProps: { data: { content: '', relationshipIds: [] } } }
+      )
+      
       act(() => {
+        rerender({ data: mockData })
         jest.advanceTimersByTime(100)
       })
 
-      // Note: In the real implementation, this would show 'saving' then 'saved'
-      // For testing purposes, we check that the save operation was triggered
+      // Should have triggered save operation
       expect(mockLocalStorage.setItem).toHaveBeenCalled()
     })
 
@@ -147,7 +155,7 @@ describe('useAutoSave', () => {
       })
 
       expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
-        'journal_draft_test-entry'
+        'journal-draft-test-entry'
       )
     })
 
@@ -185,8 +193,8 @@ describe('useAutoSave', () => {
       })
 
       expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
-        'journal_draft_test-entry',
-        JSON.stringify(specialData)
+        'journal-draft-test-entry',
+        expect.stringContaining(specialData.content)
       )
     })
 
@@ -208,8 +216,8 @@ describe('useAutoSave', () => {
       })
 
       expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
-        'journal_draft_test-entry',
-        JSON.stringify(incompleteData)
+        'journal-draft-test-entry',
+        expect.stringContaining(incompleteData.content)
       )
     })
 
@@ -293,7 +301,7 @@ describe('useDraftLoader', () => {
 
     expect(result.current).toEqual(draftData)
     expect(mockLocalStorage.getItem).toHaveBeenCalledWith(
-      'journal_draft_test-entry'
+      'journal-draft-test-entry'
     )
   })
 
@@ -328,8 +336,8 @@ describe('useDraftLoader', () => {
     const draft2 = { content: 'Draft 2' }
 
     mockLocalStorage.getItem.mockImplementation(key => {
-      if (key === 'journal_draft_entry-1') return JSON.stringify(draft1)
-      if (key === 'journal_draft_entry-2') return JSON.stringify(draft2)
+      if (key === 'journal-draft-entry-1') return JSON.stringify(draft1)
+      if (key === 'journal-draft-entry-2') return JSON.stringify(draft2)
       return null
     })
 

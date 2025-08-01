@@ -63,9 +63,11 @@ export function SearchResults({
     const date = new Date(timestamp)
     const now = new Date()
     const diffTime = Math.abs(now.getTime() - date.getTime())
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
 
-    if (diffDays === 1) {
+    if (diffDays === 0) {
+      return 'Today'
+    } else if (diffDays === 1) {
       return 'Yesterday'
     } else if (diffDays <= 7) {
       return `${diffDays} days ago`
@@ -94,7 +96,7 @@ export function SearchResults({
         aria-label="Loading search results"
       >
         {[...Array(3)].map((_, i) => (
-          <Card key={i} className="p-4 animate-pulse">
+          <Card key={i} className="p-4 animate-pulse" data-testid={`loading-card-${i}`}>
             <div className="flex items-start space-x-3">
               <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
               <div className="flex-1 space-y-2">

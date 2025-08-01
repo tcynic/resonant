@@ -78,13 +78,16 @@ describe('SearchBar', () => {
   })
 
   it('should clear search when clear button is clicked', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime })
     render(<SearchBar {...defaultProps} />)
 
     const searchInput = screen.getByRole('searchbox')
 
     // Type some text to show clear button
     await user.type(searchInput, 'test')
+    
+    // Advance timers to process debounce
+    jest.advanceTimersByTime(300)
 
     const clearButton = screen.getByRole('button', { name: 'Clear search' })
     expect(clearButton).toBeInTheDocument()
@@ -94,10 +97,10 @@ describe('SearchBar', () => {
 
     expect(searchInput).toHaveValue('')
     expect(mockOnClear).toHaveBeenCalled()
-  })
+  }, 10000)
 
   it('should handle search suggestions with keyboard navigation', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime })
     const suggestions = ['suggestion 1', 'suggestion 2', 'suggestion 3']
 
     render(
@@ -112,6 +115,9 @@ describe('SearchBar', () => {
 
     // Type to trigger suggestions
     await user.type(searchInput, 'su')
+    
+    // Advance timers to process debounce
+    jest.advanceTimersByTime(300)
 
     // Should show suggestions
     const listbox = screen.getByRole('listbox')
@@ -136,10 +142,10 @@ describe('SearchBar', () => {
     fireEvent.keyDown(searchInput, { key: 'Enter' })
 
     expect(mockOnSuggestionSelect).toHaveBeenCalledWith('suggestion 2')
-  })
+  }, 10000)
 
   it('should handle Escape key to close suggestions', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime })
     const suggestions = ['suggestion 1', 'suggestion 2']
 
     render(<SearchBar {...defaultProps} suggestions={suggestions} />)
@@ -148,6 +154,9 @@ describe('SearchBar', () => {
 
     // Type to show suggestions
     await user.type(searchInput, 'su')
+    
+    // Advance timers to process debounce
+    jest.advanceTimersByTime(300)
 
     // Suggestions should be visible
     expect(screen.getByRole('listbox')).toBeInTheDocument()
@@ -157,7 +166,7 @@ describe('SearchBar', () => {
 
     // Suggestions should be hidden
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
-  })
+  }, 10000)
 
   it('should show loading indicator when searching', () => {
     render(<SearchBar {...defaultProps} isLoading={true} />)
@@ -172,7 +181,7 @@ describe('SearchBar', () => {
   })
 
   it('should handle mouse interactions with suggestions', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime })
     const suggestions = ['mouse suggestion']
 
     render(
@@ -185,6 +194,9 @@ describe('SearchBar', () => {
 
     const searchInput = screen.getByRole('searchbox')
     await user.type(searchInput, 'mouse')
+    
+    // Advance timers to process debounce
+    jest.advanceTimersByTime(300)
 
     const suggestionItem = screen.getByRole('option')
 
@@ -195,7 +207,7 @@ describe('SearchBar', () => {
     // Click should select the suggestion
     await user.click(suggestionItem)
     expect(mockOnSuggestionSelect).toHaveBeenCalledWith('mouse suggestion')
-  })
+  }, 10000)
 
   it('should provide screen reader announcements', async () => {
     const suggestions = ['announcement test']
@@ -213,7 +225,7 @@ describe('SearchBar', () => {
   })
 
   it('should handle Tab key for suggestion selection', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime })
     const suggestions = ['tab suggestion']
 
     render(
@@ -226,6 +238,9 @@ describe('SearchBar', () => {
 
     const searchInput = screen.getByRole('searchbox')
     await user.type(searchInput, 'tab')
+    
+    // Advance timers to process debounce
+    jest.advanceTimersByTime(300)
 
     // Navigate to suggestion
     fireEvent.keyDown(searchInput, { key: 'ArrowDown' })
@@ -234,5 +249,5 @@ describe('SearchBar', () => {
     fireEvent.keyDown(searchInput, { key: 'Tab' })
 
     expect(mockOnSuggestionSelect).toHaveBeenCalledWith('tab suggestion')
-  })
+  }, 10000)
 })

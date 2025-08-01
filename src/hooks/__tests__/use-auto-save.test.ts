@@ -47,12 +47,11 @@ describe('useAutoSave', () => {
     )
 
     // Wait for the initial effect to complete
-    await act(async () => {
-      jest.runAllTimers()
+    await waitFor(() => {
+      expect(result.current).toBeDefined()
+      expect(result.current.hasDraft).toBe(false)
+      expect(result.current.lastSaved).toBeNull()
     })
-
-    expect(result.current.hasDraft).toBe(false)
-    expect(result.current.lastSaved).toBeNull()
   })
 
   it('should auto-save when content is provided', async () => {
@@ -126,7 +125,11 @@ describe('useAutoSave', () => {
     })
 
     expect(mockLocalStorage.setItem).not.toHaveBeenCalled()
-    expect(result.current.saveStatus).toBe('idle')
+    
+    await waitFor(() => {
+      expect(result.current).toBeDefined()
+      expect(result.current.saveStatus).toBe('idle')
+    })
   })
 
   it('should handle different content types', async () => {
@@ -215,7 +218,11 @@ describe('useAutoSave', () => {
     })
 
     expect(mockLocalStorage.setItem).not.toHaveBeenCalled()
-    expect(result.current.saveStatus).toBe('idle')
+    
+    await waitFor(() => {
+      expect(result.current).toBeDefined()
+      expect(result.current.saveStatus).toBe('idle')
+    })
   })
 
   it('should detect existing draft on mount', async () => {
@@ -231,11 +238,10 @@ describe('useAutoSave', () => {
     )
 
     // Wait for initial effect to complete
-    await act(async () => {
-      jest.runAllTimers()
+    await waitFor(() => {
+      expect(result.current).toBeDefined()
+      expect(result.current.hasDraft).toBe(true)
     })
-
-    expect(result.current.hasDraft).toBe(true)
   })
 
   it('should reset status to idle after successful save', async () => {
