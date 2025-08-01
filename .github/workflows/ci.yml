@@ -62,6 +62,7 @@ jobs:
           NEXT_PUBLIC_CONVEX_URL: ${{ secrets.CONVEX_URL_STAGING || 'https://test.convex.cloud' }}
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY_STAGING || 'pk_test_build_placeholder_key_for_ci_only' }}
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY_STAGING || 'sk_test_build_placeholder_key_for_ci_only' }}
+          # Using real Clerk keys from GitHub Secrets for proper build validation
 
   unit-tests:
     name: Unit Tests
