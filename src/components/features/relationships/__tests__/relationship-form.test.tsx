@@ -235,7 +235,6 @@ describe('RelationshipForm', () => {
     })
 
     it('does not send unchanged fields in update', async () => {
-      const user = userEvent.setup()
       mockUpdateRelationship.mockResolvedValue(true)
 
       render(<RelationshipForm relationship={mockRelationship} />)
