@@ -2,6 +2,11 @@
 
 Welcome to the comprehensive documentation for Resonant, an AI-powered relationship health journal application.
 
+## 🧭 **Navigation Hub**
+
+- **[📍 Documentation Navigation Index](NAVIGATION-INDEX.md)** - Quick links to all documentation (⭐ **Start here!**)
+- **[📁 Recently Moved Files](NAVIGATION-INDEX.md#-recently-moved-files)** - Find reorganized documentation
+
 ## 📋 Quick Navigation
 
 ### 🚀 **Getting Started**
