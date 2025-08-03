@@ -60,7 +60,6 @@ npm run convex:deploy  # Deploy Convex functions to production
 - **Unit Tests**: Located in `__tests__` directories adjacent to components
 - **Component Tests**: Use React Testing Library with Jest DOM matchers
 - **E2E Tests**: Standard Playwright for automated browser testing
-- **MCP Browser Tests**: Use Playwright MCP for advanced browser automation with Claude Code
 - **Test Pattern**: `ComponentName.test.tsx` for components, `fileName.test.ts` for utilities
 
 ### Test User Personas
@@ -80,7 +79,7 @@ The system includes 4 comprehensive test user personas for thorough testing:
 - **Backend**: Convex (real-time database + serverless functions)
 - **Authentication**: Clerk with Next.js integration
 - **Development**: Turbopack for fast development builds
-- **Testing**: Jest + React Testing Library + Playwright + Playwright MCP
+- **Testing**: Jest + React Testing Library + Playwright
 - **Validation**: Zod schemas for type-safe form and API validation
 - **Charts & Analytics**: Chart.js, Recharts, and date-fns for data visualization
 
@@ -381,44 +380,6 @@ The CI pipeline includes sophisticated error handling:
 - Use existing test patterns when creating new components
 - Component tests focus on user behavior, not implementation details
 
-## MCP Browser Automation Testing
-
-For advanced end-to-end testing with Claude Code:
-
-### Standard MCP Commands
-
-```bash
-# Navigate and interact
-await mcp__playwright__browser_navigate({ url: 'http://localhost:3000' })
-await mcp__playwright__browser_snapshot()
-await mcp__playwright__browser_type({ element: 'email input', ref: "input[type='email']", text: 'test@example.com' })
-await mcp__playwright__browser_click({ element: 'submit button', ref: "button[type='submit']" })
-```
-
-### Test Suite Execution
-
-```javascript
-// Run comprehensive test suite
-const { runAllMCPTests } = require('./tests/e2e/mcp-demo.test.ts')
-await runAllMCPTests()
-
-// Run specific tests
-const {
-  runAuthenticationTest,
-  runJournalCreationTest,
-} = require('./tests/e2e/mcp-demo.test.ts')
-await runAuthenticationTest()
-await runJournalCreationTest()
-```
-
-### MCP Testing Features
-
-- Real email verification testing in development
-- Authentication flow automation
-- Component interaction testing
-- Critical user journey validation
-- Test data isolation with 4 user personas
-- Integration with `scripts/run-mcp-tests.js` for guided execution
 
 ## Code Quality Standards
 
