@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import Image from 'next/image'
 import { CreateRelationshipSchema } from '@/lib/validations'
 import {
@@ -10,10 +10,25 @@ import {
   Relationship,
 } from '@/lib/types'
 import { useRelationshipMutations } from '@/hooks/use-relationships'
+import { useDebounce } from '@/hooks/use-debounce'
+import {
+  FILE_UPLOAD_ERRORS,
+  FORM_ERRORS,
+  AUTH_ERRORS,
+  API_ERRORS,
+} from '@/lib/constants/error-messages'
 // Removed Convex Id import for testing compatibility
 import Button from '@/components/ui/button'
 import Input from '@/components/ui/input'
 import Select from '@/components/ui/select'
+
+// Constants
+const FORM_SUCCESS_DELAY = 1000 // 1 second
+const FORM_RESET_DELAY = 1500 // 1.5 seconds
+const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+const MIN_FILE_SIZE = 100 // 100 bytes
+const MAX_DATA_URL_LENGTH = 7 * 1024 * 1024 // 7MB base64 limit
+const VALIDATION_DEBOUNCE_DELAY = 500 // 500ms
 
 interface RelationshipFormProps {
   relationship?: Relationship
@@ -54,6 +69,43 @@ export default function RelationshipForm({
     relationship?.photo || null
   )
 
+  // Debounced form validation
+  const debouncedFormData = useDebounce(formData, VALIDATION_DEBOUNCE_DELAY)
+
+  // Debounced validation effect
+  useEffect(() => {
+    if (debouncedFormData.name.trim() || debouncedFormData.type) {
+      // Only validate if user has started typing
+      const hasContent = debouncedFormData.name.trim().length > 0
+      if (hasContent) {
+        try {
+          CreateRelationshipSchema.parse(debouncedFormData)
+          // Clear errors if validation passes
+          setErrors(prev => {
+            const newErrors = { ...prev }
+            delete newErrors.name
+            delete newErrors.type
+            delete newErrors.form
+            return newErrors
+          })
+        } catch (error: unknown) {
+          // Set validation errors
+          if (error && typeof error === 'object' && 'issues' in error) {
+            const zodError = error as {
+              issues: Array<{ path: Array<string | number>; message: string }>
+            }
+            const validationErrors: Record<string, string> = {}
+            zodError.issues?.forEach(issue => {
+              const fieldName = issue.path[0]?.toString() || 'form'
+              validationErrors[fieldName] = issue.message
+            })
+            setErrors(prev => ({ ...prev, ...validationErrors }))
+          }
+        }
+      }
+    }
+  }, [debouncedFormData])
+
   // Handle form field changes
   const handleChange = (field: keyof CreateRelationshipData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -67,26 +119,83 @@ export default function RelationshipForm({
   const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        setErrors(prev => ({ ...prev, photo: 'Please select an image file' }))
+      // Allowed MIME types and extensions for security
+      const allowedTypes = [
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'image/webp',
+      ]
+      const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
+
+      // Validate file type with strict MIME type checking
+      if (!allowedTypes.includes(file.type)) {
+        setErrors(prev => ({
+          ...prev,
+          photo: FILE_UPLOAD_ERRORS.INVALID_TYPE,
+        }))
         return
       }
 
-      // Validate file size (5MB limit)
-      if (file.size > 5 * 1024 * 1024) {
-        setErrors(prev => ({ ...prev, photo: 'Image must be less than 5MB' }))
+      // Validate file extension as additional security layer
+      const fileExtension = file.name
+        .toLowerCase()
+        .substring(file.name.lastIndexOf('.'))
+      if (!allowedExtensions.includes(fileExtension)) {
+        setErrors(prev => ({
+          ...prev,
+          photo: FILE_UPLOAD_ERRORS.INVALID_EXTENSION,
+        }))
         return
       }
 
-      // Create preview
+      // Validate file size
+      if (file.size > MAX_FILE_SIZE) {
+        setErrors(prev => ({
+          ...prev,
+          photo: FILE_UPLOAD_ERRORS.FILE_TOO_LARGE,
+        }))
+        return
+      }
+
+      // Validate minimum file size to prevent empty files
+      if (file.size < MIN_FILE_SIZE) {
+        setErrors(prev => ({
+          ...prev,
+          photo: FILE_UPLOAD_ERRORS.FILE_TOO_SMALL,
+        }))
+        return
+      }
+
+      // Create preview with data URL validation
       const reader = new FileReader()
       reader.onload = e => {
         const dataUrl = e.target?.result as string
+
+        // Validate data URL format and prevent excessively large base64 strings
+        if (
+          !dataUrl.startsWith('data:image/') ||
+          dataUrl.length > MAX_DATA_URL_LENGTH
+        ) {
+          setErrors(prev => ({
+            ...prev,
+            photo: FILE_UPLOAD_ERRORS.INVALID_FORMAT,
+          }))
+          return
+        }
+
         setPhotoPreview(dataUrl)
         setFormData(prev => ({ ...prev, photo: dataUrl }))
         setErrors(prev => ({ ...prev, photo: '' }))
       }
+
+      reader.onerror = () => {
+        setErrors(prev => ({
+          ...prev,
+          photo: FILE_UPLOAD_ERRORS.READ_ERROR,
+        }))
+      }
+
       reader.readAsDataURL(file)
     }
   }
@@ -124,7 +233,7 @@ export default function RelationshipForm({
         })
       } else {
         // Fallback for unexpected error types
-        validationErrors.form = 'Validation failed'
+        validationErrors.form = FORM_ERRORS.VALIDATION_FAILED
       }
 
       setErrors(validationErrors)
@@ -137,7 +246,7 @@ export default function RelationshipForm({
     event.preventDefault()
 
     if (!isReady) {
-      setErrors({ submit: 'Please wait for authentication...' })
+      setErrors({ submit: AUTH_ERRORS.NOT_AUTHENTICATED })
       return
     }
 
@@ -170,7 +279,7 @@ export default function RelationshipForm({
       // Show success briefly before calling onSuccess
       setTimeout(() => {
         onSuccess?.(relationshipId)
-      }, 1000)
+      }, FORM_SUCCESS_DELAY)
 
       // Reset form if not editing
       if (!isEditing) {
@@ -178,11 +287,11 @@ export default function RelationshipForm({
           setFormData({ name: '', type: 'friend', photo: '' })
           setPhotoPreview(null)
           setSubmitSuccess(false)
-        }, 1500)
+        }, FORM_RESET_DELAY)
       }
     } catch (error: unknown) {
       const errorMessage =
-        error instanceof Error ? error.message : 'Failed to save relationship'
+        error instanceof Error ? error.message : API_ERRORS.SAVE_FAILED
       setErrors({ submit: errorMessage })
     } finally {
       setIsSubmitting(false)

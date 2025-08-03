@@ -5,6 +5,10 @@ import { useRouter } from 'next/navigation'
 import { useMutation } from 'convex/react'
 import { api } from '@/convex/_generated/api'
 import { Id } from '@/convex/_generated/dataModel'
+import { NOTIFICATION_ERRORS } from '@/lib/constants/error-messages'
+
+// Constants
+const NOTIFICATION_AUTO_CLOSE_DELAY = 8000 // 8 seconds
 
 interface NotificationOptions {
   title: string
@@ -47,6 +51,10 @@ export function useBrowserNotifications(): UseBrowserNotificationsReturn {
   const router = useRouter()
   const markReminderClicked = useMutation(api.notifications.markReminderClicked)
 
+  // Store router in ref to avoid dependency cycles
+  const routerRef = useRef(router)
+  routerRef.current = router
+
   // Store the handleNotificationClick function in a ref to avoid dependency cycles
   const handleNotificationClickRef = useRef<
     ((reminderId: Id<'reminderLogs'>) => Promise<void>) | null
@@ -59,7 +67,7 @@ export function useBrowserNotifications(): UseBrowserNotificationsReturn {
         await markReminderClicked({ reminderId })
         console.log('Marked reminder as clicked:', reminderId)
       } catch (error) {
-        console.error('Failed to mark reminder as clicked:', error)
+        console.error('Failed to process reminder click:', error)
       }
     },
     [markReminderClicked]
@@ -121,7 +129,7 @@ export function useBrowserNotifications(): UseBrowserNotificationsReturn {
         return permission
       } catch (error) {
         if (process.env.NODE_ENV !== 'test') {
-          console.error('Error requesting notification permission:', error)
+          console.error('Failed to request notification permission:', error)
         }
         return 'denied'
       }
@@ -177,9 +185,9 @@ export function useBrowserNotifications(): UseBrowserNotificationsReturn {
 
           // Navigate to relevant page
           if (options.data?.route && typeof options.data.route === 'string') {
-            router.push(options.data.route)
+            routerRef.current.push(options.data.route)
           } else {
-            router.push('/dashboard')
+            routerRef.current.push('/dashboard')
           }
 
           notification.close()
@@ -189,16 +197,16 @@ export function useBrowserNotifications(): UseBrowserNotificationsReturn {
         if (!options.requireInteraction) {
           setTimeout(() => {
             notification.close()
-          }, 8000) // 8 seconds
+          }, NOTIFICATION_AUTO_CLOSE_DELAY)
         }
 
         return notification
       } catch (error) {
-        console.error('Error showing notification:', error)
+        console.error('Failed to show notification:', error)
         return null
       }
     },
-    [state.isEnabled, router, handleNotificationClick]
+    [state.isEnabled]
   )
 
   // Clear notifications
@@ -251,7 +259,7 @@ export function useBrowserNotifications(): UseBrowserNotificationsReturn {
         }
       })
     } catch (error) {
-      console.error('Service worker registration failed:', error)
+      console.error('Failed to register service worker:', error)
     }
   }, [])
 
