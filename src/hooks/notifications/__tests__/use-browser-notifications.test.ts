@@ -82,7 +82,7 @@ describe('useBrowserNotifications', () => {
   afterEach(() => {
     // Clean up window properties
     delete (window as unknown as { Notification?: unknown }).Notification
-    delete (navigator as unknown as { serviceWorker?: unknown }).serviceWorker
+    // Don't delete navigator.serviceWorker as it cannot be deleted in jsdom
   })
 
   it('initializes with correct default state when notifications are supported', () => {
@@ -101,8 +101,11 @@ describe('useBrowserNotifications', () => {
   })
 
   it('initializes with unsupported state when Notification API is not available', () => {
-    delete (window as unknown as { Notification?: unknown }).Notification
+    // Store original and set to undefined
+    const originalNotification = (window as any).Notification
+    ;(window as any).Notification = undefined
 
+    // Render hook after Notification is undefined
     const { result } = renderHook(() => useBrowserNotifications())
 
     expect(result.current.state).toEqual({
@@ -110,6 +113,9 @@ describe('useBrowserNotifications', () => {
       isSupported: false,
       isEnabled: false,
     })
+
+    // Restore original
+    ;(window as any).Notification = originalNotification
   })
 
   it('requests notification permission successfully', async () => {
@@ -354,24 +360,25 @@ describe('useBrowserNotifications', () => {
   })
 
   it('handles service worker unavailability gracefully', () => {
-    delete (navigator as unknown as { serviceWorker?: unknown }).serviceWorker
-
     const { result } = renderHook(() => useBrowserNotifications())
 
-    // Should not throw when service worker is not available
-    act(() => {
-      result.current.clearNotifications('test-tag')
-    })
+    // Mock a scenario where navigator.serviceWorker.controller is null
+    const consoleSpy = jest.spyOn(console, 'warn').mockImplementation()
 
-    // Re-add for cleanup
-    Object.defineProperty(navigator, 'serviceWorker', {
-      value: {
-        register: mockServiceWorkerRegister,
-        controller: mockServiceWorkerController,
-        addEventListener: jest.fn(),
-      },
-      writable: true,
-    })
+    // Temporarily mock controller as null for this test
+    const originalController = navigator.serviceWorker.controller
+    ;(navigator.serviceWorker as any).controller = null
+
+    // Should not throw when service worker controller is not available
+    expect(() => {
+      act(() => {
+        result.current.clearNotifications('test-tag')
+      })
+    }).not.toThrow()
+
+    // Restore
+    ;(navigator.serviceWorker as any).controller = originalController
+    consoleSpy.mockRestore()
   })
 
   it('handles reminder click tracking errors gracefully', async () => {

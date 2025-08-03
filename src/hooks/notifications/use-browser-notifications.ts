@@ -5,6 +5,23 @@ import { useRouter } from 'next/navigation'
 import { useMutation } from 'convex/react'
 import { api } from '@/convex/_generated/api'
 import { Id } from '@/convex/_generated/dataModel'
+import { NOTIFICATION_CONFIG } from '@/lib/constants/app-config'
+import {
+  handleAsyncOperation,
+  logError,
+  ErrorCategory,
+  createAppError,
+  ErrorSeverity,
+} from '@/lib/utils/error-handling'
+
+// Import constants from centralized configuration
+const {
+  AUTO_CLOSE_DELAY: NOTIFICATION_AUTO_CLOSE_DELAY,
+  DEFAULT_ICON,
+  DEFAULT_BADGE,
+  REQUIRE_INTERACTION_DEFAULT,
+  SILENT_DEFAULT,
+} = NOTIFICATION_CONFIG
 
 interface NotificationOptions {
   title: string
@@ -47,19 +64,32 @@ export function useBrowserNotifications(): UseBrowserNotificationsReturn {
   const router = useRouter()
   const markReminderClicked = useMutation(api.notifications.markReminderClicked)
 
+  // Create stable navigation function to avoid dependency cycles
+  const navigateToRoute = useCallback(
+    (route: string) => {
+      router.push(route)
+    },
+    [router]
+  )
+
   // Store the handleNotificationClick function in a ref to avoid dependency cycles
   const handleNotificationClickRef = useRef<
     ((reminderId: Id<'reminderLogs'>) => Promise<void>) | null
   >(null)
 
-  // Handle notification click events
+  // Handle notification click events with standardized error handling
   const handleNotificationClick = useCallback(
     async (reminderId: Id<'reminderLogs'>) => {
       try {
         await markReminderClicked({ reminderId })
-        console.log('Marked reminder as clicked:', reminderId)
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Marked reminder as clicked:', reminderId)
+        }
       } catch (error) {
-        console.error('Failed to mark reminder as clicked:', error)
+        // Log error but don't show to user (background operation)
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Failed to mark reminder as clicked:', reminderId, error)
+        }
       }
     },
     [markReminderClicked]
@@ -73,7 +103,8 @@ export function useBrowserNotifications(): UseBrowserNotificationsReturn {
   // Initialize browser notification state
   useEffect(() => {
     const checkSupport = () => {
-      const isSupported = 'Notification' in window
+      const isSupported =
+        'Notification' in window && typeof Notification !== 'undefined'
       const permission = isSupported ? Notification.permission : 'denied'
       const isEnabled = permission === 'granted'
 
@@ -108,20 +139,28 @@ export function useBrowserNotifications(): UseBrowserNotificationsReturn {
         return 'denied'
       }
 
-      try {
-        const permission = await Notification.requestPermission()
+      const { data: permission } = await handleAsyncOperation(
+        () => Notification.requestPermission(),
+        {
+          category: ErrorCategory.NOTIFICATION,
+          fallbackValue: 'denied' as NotificationPermission,
+          onError: appError => {
+            // Only log in non-test environments
+            if (process.env.NODE_ENV !== 'test') {
+              logError(appError)
+            }
+          },
+        }
+      )
 
-        setState(prev => ({
-          ...prev,
-          permission,
-          isEnabled: permission === 'granted',
-        }))
+      const finalPermission = permission || 'denied'
+      setState(prev => ({
+        ...prev,
+        permission: finalPermission,
+        isEnabled: finalPermission === 'granted',
+      }))
 
-        return permission
-      } catch (error) {
-        console.error('Error requesting notification permission:', error)
-        return 'denied'
-      }
+      return finalPermission
     }, [state.isSupported])
 
   // Show a browser notification
@@ -132,75 +171,109 @@ export function useBrowserNotifications(): UseBrowserNotificationsReturn {
         return null
       }
 
-      try {
-        const notification = new Notification(options.title, {
-          body: options.body,
-          icon: options.icon || '/icons/icon-192x192.png',
-          badge: options.badge || '/icons/icon-72x72.png',
-          tag: options.tag,
-          data: options.data,
-          requireInteraction: options.requireInteraction ?? true,
-          silent: options.silent ?? false,
-        })
+      const { data: notification } = await handleAsyncOperation(
+        async () => {
+          const notif = new Notification(options.title, {
+            body: options.body,
+            icon: options.icon || DEFAULT_ICON,
+            badge: options.badge || DEFAULT_BADGE,
+            tag: options.tag,
+            data: options.data,
+            requireInteraction:
+              options.requireInteraction ?? REQUIRE_INTERACTION_DEFAULT,
+            silent: options.silent ?? SILENT_DEFAULT,
+          })
 
-        // Handle notification click
-        notification.onclick = event => {
-          event.preventDefault()
+          // Handle notification click
+          notif.onclick = event => {
+            event.preventDefault()
 
-          // Try to focus window, but handle gracefully in test environments
-          try {
-            window.focus()
-          } catch (error) {
-            // Ignore focus errors in test environments
-            if (process.env.NODE_ENV !== 'test') {
-              console.warn('Could not focus window:', error)
+            // Try to focus window, but handle gracefully in test environments
+            try {
+              if (
+                process.env.NODE_ENV !== 'test' &&
+                typeof window.focus === 'function'
+              ) {
+                window.focus()
+              }
+            } catch (focusError) {
+              // Log focus errors only in development
+              if (process.env.NODE_ENV === 'development') {
+                const appError = createAppError(
+                  'Could not focus window',
+                  ErrorCategory.NOTIFICATION,
+                  ErrorSeverity.LOW,
+                  { details: { focusError }, userFriendly: false }
+                )
+                logError(appError)
+              }
             }
+
+            // Handle reminder-specific clicks
+            if (
+              options.data?.reminderId &&
+              typeof options.data.reminderId === 'string'
+            ) {
+              handleNotificationClick(
+                options.data.reminderId as Id<'reminderLogs'>
+              )
+            }
+
+            // Navigate to relevant page
+            if (options.data?.route && typeof options.data.route === 'string') {
+              navigateToRoute(options.data.route)
+            } else {
+              navigateToRoute('/dashboard')
+            }
+
+            notif.close()
           }
 
-          // Handle reminder-specific clicks
-          if (
-            options.data?.reminderId &&
-            typeof options.data.reminderId === 'string'
-          ) {
-            handleNotificationClick(
-              options.data.reminderId as Id<'reminderLogs'>
-            )
+          // Auto-close after delay (unless requireInteraction is true)
+          if (!options.requireInteraction) {
+            setTimeout(() => {
+              notif.close()
+            }, NOTIFICATION_AUTO_CLOSE_DELAY)
           }
 
-          // Navigate to relevant page
-          if (options.data?.route && typeof options.data.route === 'string') {
-            router.push(options.data.route)
-          } else {
-            router.push('/dashboard')
-          }
-
-          notification.close()
+          return notif
+        },
+        {
+          category: ErrorCategory.NOTIFICATION,
+          fallbackValue: null,
+          onError: appError => {
+            // Log notification creation errors
+            logError(appError)
+          },
         }
+      )
 
-        // Auto-close after delay (unless requireInteraction is true)
-        if (!options.requireInteraction) {
-          setTimeout(() => {
-            notification.close()
-          }, 8000) // 8 seconds
-        }
-
-        return notification
-      } catch (error) {
-        console.error('Error showing notification:', error)
-        return null
-      }
+      return notification
     },
-    [state.isEnabled, router, handleNotificationClick]
+    [state.isEnabled, handleNotificationClick, navigateToRoute]
   )
 
   // Clear notifications
   const clearNotifications = useCallback((tag?: string) => {
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-      // If service worker is available, use it to clear notifications
-      navigator.serviceWorker.controller.postMessage({
-        type: 'CLEAR_NOTIFICATIONS',
-        tag,
-      })
+    try {
+      if ('serviceWorker' in navigator && navigator.serviceWorker?.controller) {
+        // If service worker is available, use it to clear notifications
+        navigator.serviceWorker.controller.postMessage({
+          type: 'CLEAR_NOTIFICATIONS',
+          tag,
+        })
+      }
+    } catch (error) {
+      // Log service worker errors only in development
+      if (process.env.NODE_ENV === 'development') {
+        const appError = createAppError(
+          'Could not clear notifications via service worker',
+          ErrorCategory.NOTIFICATION,
+          ErrorSeverity.LOW,
+          { details: { error }, userFriendly: false }
+        )
+        logError(appError)
+      }
     }
   }, [])
 
@@ -236,7 +309,13 @@ export function useBrowserNotifications(): UseBrowserNotificationsReturn {
         }
       })
     } catch (error) {
-      console.error('Service worker registration failed:', error)
+      const appError = createAppError(
+        'Failed to register service worker',
+        ErrorCategory.NOTIFICATION,
+        ErrorSeverity.MEDIUM,
+        { details: { error }, userFriendly: false }
+      )
+      logError(appError)
     }
   }, [])
 

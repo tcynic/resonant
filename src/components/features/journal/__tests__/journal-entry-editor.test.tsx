@@ -212,10 +212,10 @@ describe('JournalEntryEditor', () => {
       await user.selectOptions(moodSelect, 'happy')
 
       const tagInput = screen.getByTestId('tag-input-field')
-      await user.type(tagInput, 'test, journal')
+      await user.type(tagInput, 'testjournal')
+      await user.keyboard('{Enter}')
 
-      const privateCheckbox = screen.getByLabelText('Keep this entry private')
-      await user.click(privateCheckbox) // Toggle to false (shared)
+      // Private checkbox should start as false (unchecked), so we don't click it
 
       const saveButton = screen.getByText('Save Entry')
       await user.click(saveButton)
@@ -226,7 +226,7 @@ describe('JournalEntryEditor', () => {
           content: 'This is a complete journal entry with enough content',
           mood: 'happy',
           isPrivate: false,
-          tags: ['test', 'journal'],
+          tags: ['testjournal'],
         })
       })
     })

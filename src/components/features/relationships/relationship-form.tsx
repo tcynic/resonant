@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { CreateRelationshipSchema } from '@/lib/validations'
 import {
@@ -10,10 +10,36 @@ import {
   Relationship,
 } from '@/lib/types'
 import { useRelationshipMutations } from '@/hooks/use-relationships'
+import { useDebounce } from '@/hooks/use-debounce'
+import {
+  FILE_UPLOAD_ERRORS,
+  FORM_ERRORS,
+  AUTH_ERRORS,
+} from '@/lib/constants/error-messages'
+import { FORM_CONFIG, FILE_UPLOAD_CONFIG } from '@/lib/constants/app-config'
+import {
+  validateUploadedFile,
+  validateDataURL,
+  formatFileSize,
+} from '@/lib/utils/file-validation'
+import {
+  handleAsyncOperation,
+  getUserFriendlyErrorMessage,
+  createFileUploadError,
+  logError,
+  ErrorCategory,
+} from '@/lib/utils/error-handling'
 // Removed Convex Id import for testing compatibility
 import Button from '@/components/ui/button'
 import Input from '@/components/ui/input'
 import Select from '@/components/ui/select'
+
+// Import constants from centralized configuration
+const {
+  SUCCESS_DELAY: FORM_SUCCESS_DELAY,
+  RESET_DELAY: FORM_RESET_DELAY,
+  VALIDATION_DEBOUNCE_DELAY,
+} = FORM_CONFIG
 
 interface RelationshipFormProps {
   relationship?: Relationship
@@ -50,9 +76,73 @@ export default function RelationshipForm({
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitSuccess, setSubmitSuccess] = useState(false)
+  const [isValidating, setIsValidating] = useState(false)
+  const [validationFeedback, setValidationFeedback] = useState<
+    Record<string, 'valid' | 'invalid' | 'pending'>
+  >({})
   const [photoPreview, setPhotoPreview] = useState<string | null>(
     relationship?.photo || null
   )
+
+  // Debounced form validation
+  const debouncedFormData = useDebounce(formData, VALIDATION_DEBOUNCE_DELAY)
+
+  // Debounced validation effect with user feedback
+  useEffect(() => {
+    if (debouncedFormData.name.trim() || debouncedFormData.type) {
+      // Only validate if user has started typing
+      const hasContent = debouncedFormData.name.trim().length > 0
+      if (hasContent) {
+        setIsValidating(true)
+        setValidationFeedback(prev => ({
+          ...prev,
+          name: 'pending',
+          type: 'pending',
+        }))
+
+        // Add slight delay to show validation feedback
+        const validationTimer = setTimeout(() => {
+          try {
+            CreateRelationshipSchema.parse(debouncedFormData)
+            // Clear errors if validation passes
+            setErrors(prev => {
+              const newErrors = { ...prev }
+              delete newErrors.name
+              delete newErrors.type
+              delete newErrors.form
+              return newErrors
+            })
+            setValidationFeedback(prev => ({
+              ...prev,
+              name: 'valid',
+              type: 'valid',
+            }))
+          } catch (error: unknown) {
+            // Set validation errors
+            if (error && typeof error === 'object' && 'issues' in error) {
+              const zodError = error as {
+                issues: Array<{ path: Array<string | number>; message: string }>
+              }
+              const validationErrors: Record<string, string> = {}
+              const feedbackUpdates: Record<string, 'invalid'> = {}
+
+              zodError.issues?.forEach(issue => {
+                const fieldName = issue.path[0]?.toString() || 'form'
+                validationErrors[fieldName] = issue.message
+                feedbackUpdates[fieldName] = 'invalid'
+              })
+
+              setErrors(prev => ({ ...prev, ...validationErrors }))
+              setValidationFeedback(prev => ({ ...prev, ...feedbackUpdates }))
+            }
+          }
+          setIsValidating(false)
+        }, FORM_CONFIG.VALIDATION_FEEDBACK_DELAY)
+
+        return () => clearTimeout(validationTimer)
+      }
+    }
+  }, [debouncedFormData])
 
   // Handle form field changes
   const handleChange = (field: keyof CreateRelationshipData, value: string) => {
@@ -61,33 +151,69 @@ export default function RelationshipForm({
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }))
     }
+    // Reset validation feedback to pending state for immediate user feedback
+    setValidationFeedback(prev => ({ ...prev, [field]: 'pending' }))
   }
 
-  // Handle photo upload
-  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle photo upload with comprehensive validation
+  const handlePhotoChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0]
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        setErrors(prev => ({ ...prev, photo: 'Please select an image file' }))
+    if (!file) return
+
+    // Perform comprehensive file validation
+    try {
+      const validation = await validateUploadedFile(file)
+
+      if (!validation.isValid) {
+        setErrors(prev => ({
+          ...prev,
+          photo: validation.errors[0] || FILE_UPLOAD_ERRORS.INVALID_FORMAT,
+        }))
         return
       }
 
-      // Validate file size (5MB limit)
-      if (file.size > 5 * 1024 * 1024) {
-        setErrors(prev => ({ ...prev, photo: 'Image must be less than 5MB' }))
-        return
-      }
-
-      // Create preview
+      // Create preview with enhanced data URL validation
       const reader = new FileReader()
       reader.onload = e => {
         const dataUrl = e.target?.result as string
+
+        // Enhanced data URL validation
+        const dataUrlValidation = validateDataURL(dataUrl)
+        if (!dataUrlValidation.isValid) {
+          setErrors(prev => ({
+            ...prev,
+            photo:
+              dataUrlValidation.errors[0] || FILE_UPLOAD_ERRORS.INVALID_FORMAT,
+          }))
+          return
+        }
+
         setPhotoPreview(dataUrl)
         setFormData(prev => ({ ...prev, photo: dataUrl }))
         setErrors(prev => ({ ...prev, photo: '' }))
       }
+
+      reader.onerror = () => {
+        setErrors(prev => ({
+          ...prev,
+          photo: FILE_UPLOAD_ERRORS.READ_ERROR,
+        }))
+      }
+
       reader.readAsDataURL(file)
+    } catch {
+      const fileError = createFileUploadError(
+        'Unable to validate file. Please try again.',
+        file.name,
+        { fileSize: file.size, fileType: file.type }
+      )
+      logError(fileError)
+      setErrors(prev => ({
+        ...prev,
+        photo: getUserFriendlyErrorMessage(fileError),
+      }))
     }
   }
 
@@ -122,6 +248,9 @@ export default function RelationshipForm({
           const fieldName = issue.path[0]?.toString() || 'form'
           validationErrors[fieldName] = issue.message
         })
+      } else {
+        // Fallback for unexpected error types
+        validationErrors.form = FORM_ERRORS.VALIDATION_FAILED
       }
 
       setErrors(validationErrors)
@@ -129,12 +258,12 @@ export default function RelationshipForm({
     }
   }
 
-  // Handle form submission
+  // Handle form submission with standardized error handling
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
 
     if (!isReady) {
-      setErrors({ submit: 'Please wait for authentication...' })
+      setErrors({ submit: AUTH_ERRORS.NOT_AUTHENTICATED })
       return
     }
 
@@ -145,7 +274,7 @@ export default function RelationshipForm({
     setIsSubmitting(true)
     setErrors({})
 
-    try {
+    const operation = async () => {
       let relationshipId: string
 
       if (isEditing && relationship) {
@@ -162,12 +291,28 @@ export default function RelationshipForm({
         relationshipId = await createRelationship(formData)
       }
 
+      return relationshipId
+    }
+
+    const { data: relationshipId, error } = await handleAsyncOperation(
+      operation,
+      {
+        category: ErrorCategory.NETWORK,
+        retryAttempts: 1,
+        retryDelay: 1000,
+        onError: appError => {
+          setErrors({ submit: getUserFriendlyErrorMessage(appError) })
+        },
+      }
+    )
+
+    if (relationshipId && !error) {
       setSubmitSuccess(true)
 
       // Show success briefly before calling onSuccess
       setTimeout(() => {
         onSuccess?.(relationshipId)
-      }, 1000)
+      }, FORM_SUCCESS_DELAY)
 
       // Reset form if not editing
       if (!isEditing) {
@@ -175,39 +320,117 @@ export default function RelationshipForm({
           setFormData({ name: '', type: 'friend', photo: '' })
           setPhotoPreview(null)
           setSubmitSuccess(false)
-        }, 1500)
+        }, FORM_RESET_DELAY)
       }
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Failed to save relationship'
-      setErrors({ submit: errorMessage })
-    } finally {
-      setIsSubmitting(false)
     }
+
+    setIsSubmitting(false)
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Name Field */}
-      <Input
-        label="Relationship Name"
-        type="text"
-        value={formData.name}
-        onChange={e => handleChange('name', e.target.value)}
-        placeholder="Enter name (e.g., John, Mom, Best Friend)"
-        error={errors.name}
-        required
-      />
+      <div className="relative">
+        <Input
+          label="Relationship Name"
+          type="text"
+          value={formData.name}
+          onChange={e => handleChange('name', e.target.value)}
+          placeholder="Enter name (e.g., John, Mom, Best Friend)"
+          error={errors.name}
+          required
+        />
+        {/* Validation feedback indicator */}
+        {validationFeedback.name && (
+          <div className="absolute right-3 top-9 flex items-center">
+            {validationFeedback.name === 'pending' && isValidating && (
+              <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            )}
+            {validationFeedback.name === 'valid' && !errors.name && (
+              <svg
+                className="w-5 h-5 text-green-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            )}
+            {validationFeedback.name === 'invalid' && errors.name && (
+              <svg
+                className="w-5 h-5 text-red-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Type Field */}
-      <Select
-        label="Relationship Type"
-        value={formData.type}
-        onChange={e => handleChange('type', e.target.value as RelationshipType)}
-        options={relationshipTypeOptions}
-        error={errors.type}
-        required
-      />
+      <div className="relative">
+        <Select
+          label="Relationship Type"
+          value={formData.type}
+          onChange={e =>
+            handleChange('type', e.target.value as RelationshipType)
+          }
+          options={relationshipTypeOptions}
+          error={errors.type}
+          required
+        />
+        {/* Validation feedback indicator */}
+        {validationFeedback.type && (
+          <div className="absolute right-8 top-9 flex items-center">
+            {validationFeedback.type === 'pending' && isValidating && (
+              <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            )}
+            {validationFeedback.type === 'valid' && !errors.type && (
+              <svg
+                className="w-5 h-5 text-green-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            )}
+            {validationFeedback.type === 'invalid' && errors.type && (
+              <svg
+                className="w-5 h-5 text-red-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Photo Upload */}
       <div className="space-y-2">
@@ -262,7 +485,10 @@ export default function RelationshipForm({
               <span className="text-sm text-gray-600">
                 Click to upload a photo
               </span>
-              <span className="text-xs text-gray-500">PNG, JPG up to 5MB</span>
+              <span className="text-xs text-gray-500">
+                PNG, JPG, GIF, WebP up to{' '}
+                {formatFileSize(FILE_UPLOAD_CONFIG.MAX_FILE_SIZE)}
+              </span>
             </label>
           </div>
         )}
