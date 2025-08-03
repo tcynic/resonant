@@ -6,7 +6,7 @@ import { DataExport } from '../data-export'
 
 // Mock dependencies
 jest.mock('@clerk/nextjs')
-jest.mock('convex/react')
+// Convex is mocked globally in jest.setup.js
 
 // Mock URL.createObjectURL and document methods
 global.URL.createObjectURL = jest.fn(() => 'blob:mock-url')

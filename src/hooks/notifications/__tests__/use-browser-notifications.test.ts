@@ -9,7 +9,7 @@ import type { FunctionReference } from 'convex/server'
 
 // Mock dependencies
 jest.mock('next/navigation')
-jest.mock('convex/react')
+// Convex is mocked globally in jest.setup.js
 
 const mockPush = jest.fn()
 const mockUseMutation = useMutation as jest.MockedFunction<typeof useMutation>

@@ -3,31 +3,14 @@ const mockQuery = jest.fn()
 const mockMutation = jest.fn()
 const mockAction = jest.fn()
 
-// Export all hooks as jest functions
-const useQuery = jest.fn((queryFunc, ...args) => {
-  // Return undefined by default (loading state)
-  return undefined
-})
+// Export all hooks as jest functions - make them real jest mocks
+const useQuery = jest.fn()
 
-const useMutation = jest.fn(mutationFunc => {
-  // Return a mock mutation function
-  return jest.fn().mockResolvedValue(undefined)
-})
+const useMutation = jest.fn(() => jest.fn())
 
-const useAction = jest.fn(actionFunc => {
-  // Return a mock action function
-  return jest.fn().mockResolvedValue(undefined)
-})
+const useAction = jest.fn(() => jest.fn())
 
-const usePaginatedQuery = jest.fn((queryFunc, args, options) => {
-  // Return a mock paginated query result
-  return {
-    results: [],
-    status: 'LoadingFirstPage',
-    isLoading: true,
-    loadMore: jest.fn(),
-  }
-})
+const usePaginatedQuery = jest.fn()
 
 // Components
 const Authenticated = ({ children }) => children

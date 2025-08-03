@@ -7,7 +7,7 @@ import { ReminderSettings } from '../reminder-settings'
 
 // Mock dependencies
 jest.mock('@clerk/nextjs')
-jest.mock('convex/react')
+// Convex is mocked globally in jest.setup.js
 
 const mockUseUser = useUser as jest.MockedFunction<typeof useUser>
 const mockUseQuery = useQuery as jest.MockedFunction<typeof useQuery>

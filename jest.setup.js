@@ -38,3 +38,19 @@ jest.mock('@/hooks/notifications/use-browser-notifications', () => ({
     isSupported: true,
   })),
 }))
+
+// Mock useConvexUser hook
+jest.mock('@/hooks/use-convex-user', () => ({
+  useConvexUser: jest.fn(() => ({
+    convexUser: {
+      _id: 'test-convex-user-id',
+      clerkId: 'test-user-id',
+      name: 'Test User',
+      email: 'test@example.com',
+      createdAt: Date.now(),
+    },
+    isLoading: false,
+    isCreating: false,
+    error: null,
+  })),
+}))

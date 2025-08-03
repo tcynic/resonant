@@ -17,23 +17,7 @@ jest.mock('@clerk/nextjs', () => ({
   }),
 }))
 
-// Mock useConvexUser hook
-jest.mock('@/hooks/use-convex-user', () => ({
-  useConvexUser: () => ({
-    convexUser: {
-      _id: 'test-convex-user-id',
-      clerkId: 'test-user-id',
-      name: 'John',
-      email: 'john@example.com',
-      createdAt: Date.now(),
-    },
-    isLoading: false,
-    isCreating: false,
-    error: null,
-  }),
-}))
-
-// Convex is already mocked globally in jest.setup.js
+// Convex and useConvexUser are mocked globally in jest.setup.js
 
 // Mock dashboard components
 jest.mock('@/components/features/dashboard/health-score-card', () => {

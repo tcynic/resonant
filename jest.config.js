@@ -23,6 +23,8 @@ const customJestConfig = {
     '<rootDir>/convex/__tests__/',
     '<rootDir>/convex/migrations/__tests__/',
     '<rootDir>/convex/monitoring/__tests__/',
+    '<rootDir>/convex/fallback/__tests__/',
+    '<rootDir>/convex/utils/__tests__/',
   ],
   transformIgnorePatterns: ['node_modules/(?!(convex-test|convex)/)'],
 }

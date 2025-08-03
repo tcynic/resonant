@@ -10,9 +10,17 @@ jest.mock('@/hooks/use-relationships')
 jest.mock('@clerk/nextjs', () => ({
   useUser: () => ({ user: { id: 'user_123' } }),
 }))
+// Override global mock for fine-grained control in this test
 jest.mock('convex/react', () => ({
-  useMutation: jest.fn(),
   useQuery: jest.fn(),
+  useMutation: jest.fn(() => jest.fn()),
+  useAction: jest.fn(() => jest.fn()),
+  usePaginatedQuery: jest.fn(),
+  Authenticated: ({ children }: any) => children,
+  Unauthenticated: ({ children }: any) => children,
+  AuthLoading: ({ children }: any) => children,
+  ConvexProvider: ({ children }: any) => children,
+  ConvexReactClient: jest.fn(),
 }))
 // Mock Convex generated files (these files don't exist yet in development)
 jest.mock('../../../../convex/_generated/api', () => ({}), { virtual: true })

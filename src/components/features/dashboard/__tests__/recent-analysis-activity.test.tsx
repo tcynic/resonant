@@ -2,9 +2,17 @@ import { render, screen } from '@testing-library/react'
 import { RecentAnalysisActivity } from '../recent-analysis-activity'
 import { Id } from '@/convex/_generated/dataModel'
 
-// Mock Convex hooks
+// Override global mock for fine-grained control in this test
 jest.mock('convex/react', () => ({
   useQuery: jest.fn(),
+  useMutation: jest.fn(() => jest.fn()),
+  useAction: jest.fn(() => jest.fn()),
+  usePaginatedQuery: jest.fn(),
+  Authenticated: ({ children }: any) => children,
+  Unauthenticated: ({ children }: any) => children,
+  AuthLoading: ({ children }: any) => children,
+  ConvexProvider: ({ children }: any) => children,
+  ConvexReactClient: jest.fn(),
 }))
 
 // Mock Next.js Link

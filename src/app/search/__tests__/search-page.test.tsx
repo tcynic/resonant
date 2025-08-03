@@ -10,7 +10,7 @@ import SearchPage from '../page'
 
 // Mock dependencies
 jest.mock('@clerk/nextjs')
-jest.mock('convex/react')
+// Convex is mocked globally in jest.setup.js
 jest.mock('next/navigation')
 
 // Mock child components with simplified implementations
