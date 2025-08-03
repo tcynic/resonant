@@ -24,3 +24,17 @@ jest.mock('next/image', () => ({
     return <img {...props} />
   },
 }))
+
+// Mock Convex
+jest.mock('convex/react')
+jest.mock('convex-test')
+
+// Mock notification hooks
+jest.mock('@/hooks/notifications/use-browser-notifications', () => ({
+  useBrowserNotifications: jest.fn(() => ({
+    permission: 'granted',
+    requestPermission: jest.fn().mockResolvedValue('granted'),
+    showNotification: jest.fn().mockResolvedValue(undefined),
+    isSupported: true,
+  })),
+}))

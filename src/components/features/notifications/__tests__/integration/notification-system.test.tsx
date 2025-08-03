@@ -10,7 +10,7 @@ import { useBrowserNotifications } from '../../../../../hooks/notifications/use-
 // Mock all dependencies
 jest.mock('@clerk/nextjs')
 jest.mock('convex/react')
-jest.mock('../../../../hooks/notifications/use-browser-notifications')
+jest.mock('@/hooks/notifications/use-browser-notifications')
 jest.mock('../../../hooks/use-is-client', () => ({
   useIsClient: () => true,
 }))

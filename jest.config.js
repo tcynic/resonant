@@ -12,6 +12,8 @@ const customJestConfig = {
   moduleNameMapper: {
     '^@/convex/_generated/api$': '<rootDir>/convex/_generated/api',
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^convex/react$': '<rootDir>/__mocks__/convex/react.js',
+    '^convex-test$': '<rootDir>/__mocks__/convex-test.js',
   },
   testPathIgnorePatterns: [
     '<rootDir>/.next/',
@@ -19,15 +21,10 @@ const customJestConfig = {
     '<rootDir>/tests/e2e/',
     '<rootDir>/tests/smoke/',
     '<rootDir>/convex/__tests__/',
+    '<rootDir>/convex/migrations/__tests__/',
+    '<rootDir>/convex/monitoring/__tests__/',
   ],
-  // Handle convex-test ES modules
-  extensionsToTreatAsEsm: ['.ts'],
-  globals: {
-    'ts-jest': {
-      useESM: true,
-    },
-  },
-  transformIgnorePatterns: ['node_modules/(?!(convex-test)/)'],
+  transformIgnorePatterns: ['node_modules/(?!(convex-test|convex)/)'],
 }
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
