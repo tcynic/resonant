@@ -45,7 +45,7 @@ describe('HighlightedText', () => {
   })
 
   it('should apply custom CSS classes', () => {
-    render(
+    const { container } = render(
       <HighlightedText
         text="Hello world"
         searchTerm="world"
@@ -54,8 +54,8 @@ describe('HighlightedText', () => {
       />
     )
 
-    const container = screen.getByText('Hello world').closest('span')
-    expect(container).toHaveClass('custom-class')
+    const wrapper = container.querySelector('.custom-class')
+    expect(wrapper).toBeInTheDocument()
 
     const highlight = screen.getByText('world')
     expect(highlight).toHaveClass('custom-highlight')

@@ -18,6 +18,13 @@ jest.mock('../../use-debounce', () => ({
   useDebounce: jest.fn(value => value), // Return value immediately for testing
 }))
 
+// Wrap timer advances in act to handle state updates
+const advanceTimers = (ms: number) => {
+  act(() => {
+    jest.advanceTimersByTime(ms)
+  })
+}
+
 describe('useAutoSave', () => {
   beforeEach(() => {
     jest.clearAllMocks()
@@ -53,13 +60,15 @@ describe('useAutoSave', () => {
       expect(result.current.hasDraft).toBe(false)
     })
 
-    it('should save data when enabled and content exists', () => {
+    it('should save data when enabled and content exists', async () => {
       renderHook(() =>
         useAutoSave(mockData, { key: 'test-entry', enabled: true })
       )
 
-      act(() => {
+      await act(async () => {
         jest.advanceTimersByTime(100) // Trigger save
+        // Wait for any pending updates
+        await Promise.resolve()
       })
 
       expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
@@ -73,9 +82,7 @@ describe('useAutoSave', () => {
         useAutoSave(mockData, { key: 'test-entry', enabled: false })
       )
 
-      act(() => {
-        jest.advanceTimersByTime(1000)
-      })
+      advanceTimers(1000)
 
       expect(mockLocalStorage.setItem).not.toHaveBeenCalled()
     })
@@ -87,9 +94,7 @@ describe('useAutoSave', () => {
         useAutoSave(emptyData, { key: 'test-entry', enabled: true })
       )
 
-      act(() => {
-        jest.advanceTimersByTime(1000)
-      })
+      advanceTimers(1000)
 
       expect(mockLocalStorage.setItem).not.toHaveBeenCalled()
     })
@@ -113,8 +118,8 @@ describe('useAutoSave', () => {
 
       act(() => {
         rerender({ data: mockData })
-        jest.advanceTimersByTime(100)
       })
+      advanceTimers(100)
 
       // Should have triggered save operation
       expect(mockLocalStorage.setItem).toHaveBeenCalled()
@@ -127,9 +132,7 @@ describe('useAutoSave', () => {
 
       const beforeSave = new Date()
 
-      act(() => {
-        jest.advanceTimersByTime(100)
-      })
+      advanceTimers(100)
 
       // lastSaved should be set after save
       if (result.current.lastSaved) {
@@ -174,9 +177,7 @@ describe('useAutoSave', () => {
         useAutoSave(mockData, { key: 'test-entry', enabled: true })
       )
 
-      act(() => {
-        jest.advanceTimersByTime(100)
-      })
+      advanceTimers(100)
 
       // Should not throw error, should handle gracefully
       expect(result.current.saveStatus).toBeDefined()
@@ -194,9 +195,7 @@ describe('useAutoSave', () => {
         useAutoSave(specialData, { key: 'test-entry', enabled: true })
       )
 
-      act(() => {
-        jest.advanceTimersByTime(100)
-      })
+      advanceTimers(100)
 
       expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
         'journal-draft-test-entry',
@@ -217,9 +216,7 @@ describe('useAutoSave', () => {
         useAutoSave(incompleteData, { key: 'test-entry', enabled: true })
       )
 
-      act(() => {
-        jest.advanceTimersByTime(100)
-      })
+      advanceTimers(100)
 
       expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
         'journal-draft-test-entry',
@@ -238,9 +235,7 @@ describe('useAutoSave', () => {
         useAutoSave(largeData, { key: 'test-entry', enabled: true })
       )
 
-      act(() => {
-        jest.advanceTimersByTime(100)
-      })
+      advanceTimers(100)
 
       expect(mockLocalStorage.setItem).toHaveBeenCalled()
     })
@@ -253,18 +248,14 @@ describe('useAutoSave', () => {
         { initialProps: { data: mockData } }
       )
 
-      act(() => {
-        jest.advanceTimersByTime(100)
-      })
+      advanceTimers(100)
 
       expect(mockLocalStorage.setItem).toHaveBeenCalledTimes(1)
 
       // Re-render with same data
       rerender({ data: mockData })
 
-      act(() => {
-        jest.advanceTimersByTime(100)
-      })
+      advanceTimers(100)
 
       // Should not save again if data hasn't changed
       // Note: This behavior depends on the implementation details
@@ -283,9 +274,7 @@ describe('useAutoSave', () => {
         })
       }
 
-      act(() => {
-        jest.advanceTimersByTime(100)
-      })
+      advanceTimers(100)
 
       // Due to debouncing, should not save 10 times
       // The exact number depends on debounce implementation

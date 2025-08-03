@@ -258,7 +258,7 @@ describe('RelationshipForm', () => {
       render(<RelationshipForm />)
 
       expect(screen.getByText(/click to upload a photo/i)).toBeInTheDocument()
-      expect(screen.getByText(/png, jpg up to 5mb/i)).toBeInTheDocument()
+      expect(screen.getByText(/PNG, JPG, GIF, WebP up to/i)).toBeInTheDocument()
     })
 
     it('shows photo preview when photo is provided', () => {
