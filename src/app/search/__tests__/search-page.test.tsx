@@ -236,9 +236,10 @@ describe('SearchPage Integration', () => {
       (query: FunctionReference<'query'>, args?: unknown) => {
         if (args === 'skip') return null
         // Mock query name check without using toString
-        const queryName = typeof query === 'object' && query !== null && 'name' in query 
-          ? (query as any).name 
-          : String(query)
+        const queryName =
+          typeof query === 'object' && query !== null && 'name' in query
+            ? (query as any).name
+            : String(query)
         if (queryName.includes('getUserByClerkId')) return mockUserData
         if (queryName.includes('getRelationshipsByUser'))
           return mockRelationships

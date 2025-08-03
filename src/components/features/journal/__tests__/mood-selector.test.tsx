@@ -176,7 +176,9 @@ describe('MoodSelector', () => {
 
   describe('Custom Props', () => {
     it('should render without label when explicitly set to empty string', () => {
-      render(<MoodSelector value={undefined} onChange={mockOnChange} label="" />)
+      render(
+        <MoodSelector value={undefined} onChange={mockOnChange} label="" />
+      )
 
       // When label is empty string, no label should be rendered
       expect(screen.queryByText('How are you feeling?')).not.toBeInTheDocument()

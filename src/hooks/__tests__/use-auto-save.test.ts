@@ -77,9 +77,12 @@ describe('useAutoSave', () => {
       jest.advanceTimersByTime(100) // Additional time for promise resolution
     })
 
-    await waitFor(() => {
-      expect(result.current.saveStatus).toBe('saved')
-    }, { timeout: 10000 })
+    await waitFor(
+      () => {
+        expect(result.current.saveStatus).toBe('saved')
+      },
+      { timeout: 10000 }
+    )
 
     // Should have saved to localStorage
     expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
@@ -110,9 +113,12 @@ describe('useAutoSave', () => {
       jest.advanceTimersByTime(100) // Additional time for promise resolution
     })
 
-    await waitFor(() => {
-      expect(result.current.saveStatus).toBe('saved')
-    }, { timeout: 10000 })
+    await waitFor(
+      () => {
+        expect(result.current.saveStatus).toBe('saved')
+      },
+      { timeout: 10000 }
+    )
 
     await act(async () => {
       result.current.clearDraft()
@@ -168,9 +174,12 @@ describe('useAutoSave', () => {
       jest.advanceTimersByTime(100) // Additional time for promise resolution
     })
 
-    await waitFor(() => {
-      expect(result.current.saveStatus).toBe('saved')
-    }, { timeout: 10000 })
+    await waitFor(
+      () => {
+        expect(result.current.saveStatus).toBe('saved')
+      },
+      { timeout: 10000 }
+    )
 
     // Update with additional fields
     await act(async () => {
@@ -188,9 +197,12 @@ describe('useAutoSave', () => {
       jest.advanceTimersByTime(100) // Additional time for promise resolution
     })
 
-    await waitFor(() => {
-      expect(result.current.saveStatus).toBe('saved')
-    }, { timeout: 10000 })
+    await waitFor(
+      () => {
+        expect(result.current.saveStatus).toBe('saved')
+      },
+      { timeout: 10000 }
+    )
 
     expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
       'journal-draft-test-draft',
@@ -223,9 +235,12 @@ describe('useAutoSave', () => {
       jest.advanceTimersByTime(100) // Additional time for promise resolution
     })
 
-    await waitFor(() => {
-      expect(result.current.saveStatus).toBe('error')
-    }, { timeout: 10000 })
+    await waitFor(
+      () => {
+        expect(result.current.saveStatus).toBe('error')
+      },
+      { timeout: 10000 }
+    )
 
     // Should not throw error and handle gracefully
     expect(() => jest.runAllTimers()).not.toThrow()
@@ -289,17 +304,23 @@ describe('useAutoSave', () => {
       jest.advanceTimersByTime(100) // Additional time for promise resolution
     })
 
-    await waitFor(() => {
-      expect(result.current.saveStatus).toBe('saved')
-    }, { timeout: 10000 })
+    await waitFor(
+      () => {
+        expect(result.current.saveStatus).toBe('saved')
+      },
+      { timeout: 10000 }
+    )
 
     // Wait for status reset timeout
     await act(async () => {
       jest.advanceTimersByTime(2000)
     })
 
-    await waitFor(() => {
-      expect(result.current.saveStatus).toBe('idle')
-    }, { timeout: 10000 })
+    await waitFor(
+      () => {
+        expect(result.current.saveStatus).toBe('idle')
+      },
+      { timeout: 10000 }
+    )
   }, 15000)
 })

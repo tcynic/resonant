@@ -49,7 +49,9 @@ test.describe('Authentication Flow Tests', () => {
       page.getByRole('textbox', { name: 'Email address' })
     ).toBeVisible()
     await expect(page.getByRole('textbox', { name: 'Password' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Continue', exact: true })).toBeVisible()
+    await expect(
+      page.getByRole('button', { name: 'Continue', exact: true })
+    ).toBeVisible()
 
     // Check alternative sign-up options
     await expect(
@@ -65,7 +67,9 @@ test.describe('Authentication Flow Tests', () => {
       page.getByRole('textbox', { name: 'Email address' })
     ).toBeVisible()
     await expect(page.getByRole('textbox', { name: 'Password' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Continue', exact: true })).toBeVisible()
+    await expect(
+      page.getByRole('button', { name: 'Continue', exact: true })
+    ).toBeVisible()
 
     // Check alternative sign-in options
     await expect(
