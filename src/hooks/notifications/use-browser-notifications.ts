@@ -73,7 +73,7 @@ export function useBrowserNotifications(): UseBrowserNotificationsReturn {
   // Initialize browser notification state
   useEffect(() => {
     const checkSupport = () => {
-      const isSupported = 'Notification' in window
+      const isSupported = 'Notification' in window && typeof Notification !== 'undefined'
       const permission = isSupported ? Notification.permission : 'denied'
       const isEnabled = permission === 'granted'
 
@@ -119,7 +119,9 @@ export function useBrowserNotifications(): UseBrowserNotificationsReturn {
 
         return permission
       } catch (error) {
-        console.error('Error requesting notification permission:', error)
+        if (process.env.NODE_ENV !== 'test') {
+          console.error('Error requesting notification permission:', error)
+        }
         return 'denied'
       }
     }, [state.isSupported])
@@ -149,7 +151,9 @@ export function useBrowserNotifications(): UseBrowserNotificationsReturn {
 
           // Try to focus window, but handle gracefully in test environments
           try {
-            window.focus()
+            if (process.env.NODE_ENV !== 'test' && typeof window.focus === 'function') {
+              window.focus()
+            }
           } catch (error) {
             // Ignore focus errors in test environments
             if (process.env.NODE_ENV !== 'test') {
@@ -195,12 +199,19 @@ export function useBrowserNotifications(): UseBrowserNotificationsReturn {
 
   // Clear notifications
   const clearNotifications = useCallback((tag?: string) => {
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-      // If service worker is available, use it to clear notifications
-      navigator.serviceWorker.controller.postMessage({
-        type: 'CLEAR_NOTIFICATIONS',
-        tag,
-      })
+    try {
+      if ('serviceWorker' in navigator && navigator.serviceWorker?.controller) {
+        // If service worker is available, use it to clear notifications
+        navigator.serviceWorker.controller.postMessage({
+          type: 'CLEAR_NOTIFICATIONS',
+          tag,
+        })
+      }
+    } catch (error) {
+      // Ignore errors when service worker is not available
+      if (process.env.NODE_ENV !== 'test') {
+        console.warn('Could not clear notifications via service worker:', error)
+      }
     }
   }, [])
 

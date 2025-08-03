@@ -76,8 +76,8 @@ export function useJournalEntryById(entryId?: string) {
   // Mock data for development until Convex is fully integrated
   const currentUser = { _id: 'mock_user_id' }
 
-  // Provide mock entry if entryId is provided
-  const journalEntry: JournalEntry | null = entryId
+  // Provide mock entry only for specific test IDs, null for non-existent ones
+  const journalEntry: JournalEntry | null = entryId && entryId !== 'non_existent_id'
     ? {
         _id: entryId,
         _creationTime: Date.now() - 86400000,

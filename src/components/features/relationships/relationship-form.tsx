@@ -122,6 +122,9 @@ export default function RelationshipForm({
           const fieldName = issue.path[0]?.toString() || 'form'
           validationErrors[fieldName] = issue.message
         })
+      } else {
+        // Fallback for unexpected error types
+        validationErrors.form = 'Validation failed'
       }
 
       setErrors(validationErrors)

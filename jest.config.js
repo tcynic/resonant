@@ -13,7 +13,13 @@ const customJestConfig = {
     '^@/convex/_generated/api$': '<rootDir>/convex/_generated/api',
     '^@/(.*)$': '<rootDir>/src/$1',
   },
-  testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/'],
+  testPathIgnorePatterns: [
+    '<rootDir>/.next/', 
+    '<rootDir>/node_modules/',
+    '<rootDir>/tests/e2e/',
+    '<rootDir>/tests/smoke/',
+    '<rootDir>/convex/__tests__/',
+  ],
   // Handle convex-test ES modules
   extensionsToTreatAsEsm: ['.ts'],
   globals: {

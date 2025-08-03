@@ -47,7 +47,12 @@ export default function Select({
           {label}
         </label>
       )}
-      <select id={selectId} className={selectClasses} {...props}>
+      <select 
+        id={selectId} 
+        className={selectClasses} 
+        aria-invalid={!!error}
+        {...props}
+      >
         {placeholder && (
           <option value="" disabled>
             {placeholder}
