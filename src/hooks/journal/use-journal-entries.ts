@@ -77,20 +77,21 @@ export function useJournalEntryById(entryId?: string) {
   const currentUser = { _id: 'mock_user_id' }
 
   // Provide mock entry only for specific test IDs, null for non-existent ones
-  const journalEntry: JournalEntry | null = entryId && entryId !== 'non_existent_id'
-    ? {
-        _id: entryId,
-        _creationTime: Date.now() - 86400000,
-        userId: 'mock_user_id',
-        relationshipId: 'mock_relationship_id',
-        content: 'Mock journal entry content for testing',
-        mood: 'happy',
-        isPrivate: false,
-        tags: ['mock', 'testing'],
-        createdAt: Date.now() - 86400000,
-        updatedAt: Date.now(),
-      }
-    : null
+  const journalEntry: JournalEntry | null =
+    entryId && entryId !== 'non_existent_id'
+      ? {
+          _id: entryId,
+          _creationTime: Date.now() - 86400000,
+          userId: 'mock_user_id',
+          relationshipId: 'mock_relationship_id',
+          content: 'Mock journal entry content for testing',
+          mood: 'happy',
+          isPrivate: false,
+          tags: ['mock', 'testing'],
+          createdAt: Date.now() - 86400000,
+          updatedAt: Date.now(),
+        }
+      : null
 
   // TODO: Replace with actual Convex queries when generated files are available
   // const currentUser = useQuery(

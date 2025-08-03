@@ -14,7 +14,7 @@ const customJestConfig = {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   testPathIgnorePatterns: [
-    '<rootDir>/.next/', 
+    '<rootDir>/.next/',
     '<rootDir>/node_modules/',
     '<rootDir>/tests/e2e/',
     '<rootDir>/tests/smoke/',

@@ -73,7 +73,8 @@ export function useBrowserNotifications(): UseBrowserNotificationsReturn {
   // Initialize browser notification state
   useEffect(() => {
     const checkSupport = () => {
-      const isSupported = 'Notification' in window && typeof Notification !== 'undefined'
+      const isSupported =
+        'Notification' in window && typeof Notification !== 'undefined'
       const permission = isSupported ? Notification.permission : 'denied'
       const isEnabled = permission === 'granted'
 
@@ -151,7 +152,10 @@ export function useBrowserNotifications(): UseBrowserNotificationsReturn {
 
           // Try to focus window, but handle gracefully in test environments
           try {
-            if (process.env.NODE_ENV !== 'test' && typeof window.focus === 'function') {
+            if (
+              process.env.NODE_ENV !== 'test' &&
+              typeof window.focus === 'function'
+            ) {
               window.focus()
             }
           } catch (error) {

@@ -57,7 +57,7 @@ describe('RelationshipForm', () => {
 
       const form = document.querySelector('form')
       expect(form).toBeInTheDocument()
-      
+
       // Use fireEvent to directly submit the form
       fireEvent.submit(form!)
 
@@ -114,9 +114,12 @@ describe('RelationshipForm', () => {
       })
 
       // Wait for onSuccess callback (called after 1 second timeout)
-      await waitFor(() => {
-        expect(mockOnSuccess).toHaveBeenCalledWith('rel_123')
-      }, { timeout: 2000 })
+      await waitFor(
+        () => {
+          expect(mockOnSuccess).toHaveBeenCalledWith('rel_123')
+        },
+        { timeout: 2000 }
+      )
     })
 
     it('resets form after successful creation', async () => {
@@ -140,10 +143,13 @@ describe('RelationshipForm', () => {
       })
 
       // Wait for form reset (happens after 1.5 second timeout)
-      await waitFor(() => {
-        expect(screen.getByLabelText(/relationship name/i)).toHaveValue('')
-      }, { timeout: 2000 })
-      
+      await waitFor(
+        () => {
+          expect(screen.getByLabelText(/relationship name/i)).toHaveValue('')
+        },
+        { timeout: 2000 }
+      )
+
       expect(screen.getByLabelText(/relationship type/i)).toHaveValue('friend')
     })
 
@@ -182,7 +188,9 @@ describe('RelationshipForm', () => {
       render(<RelationshipForm relationship={mockRelationship} />)
 
       expect(screen.getByDisplayValue('Jane Smith')).toBeInTheDocument()
-      expect(screen.getByRole('combobox', { name: /relationship type/i })).toHaveValue('family')
+      expect(
+        screen.getByRole('combobox', { name: /relationship type/i })
+      ).toHaveValue('family')
       expect(
         screen.getByRole('button', { name: /update relationship/i })
       ).toBeInTheDocument()
@@ -218,9 +226,12 @@ describe('RelationshipForm', () => {
       })
 
       // Wait for onSuccess callback (called after 1 second timeout)
-      await waitFor(() => {
-        expect(mockOnSuccess).toHaveBeenCalledWith('rel_123')
-      }, { timeout: 2000 })
+      await waitFor(
+        () => {
+          expect(mockOnSuccess).toHaveBeenCalledWith('rel_123')
+        },
+        { timeout: 2000 }
+      )
     })
 
     it('does not send unchanged fields in update', async () => {

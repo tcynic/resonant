@@ -47,9 +47,9 @@ export default function Select({
           {label}
         </label>
       )}
-      <select 
-        id={selectId} 
-        className={selectClasses} 
+      <select
+        id={selectId}
+        className={selectClasses}
         aria-invalid={!!error}
         {...props}
       >

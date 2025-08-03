@@ -32,12 +32,12 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             {label}
           </label>
         )}
-        <input 
-          ref={ref} 
-          id={inputId} 
-          className={inputClasses} 
+        <input
+          ref={ref}
+          id={inputId}
+          className={inputClasses}
           aria-invalid={!!error}
-          {...props} 
+          {...props}
         />
         {error && <p className="text-sm text-red-600">{error}</p>}
         {helperText && !error && (
