@@ -12,10 +12,10 @@ env:
   CACHE_KEY_SUFFIX: v1
 
 jobs:
-  quality-checks:
-    name: Quality Checks
+  build-validation:
+    name: Build Validation
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout code
@@ -47,28 +47,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run ESLint
-        run: npm run lint
-
-      - name: Run Prettier check
-        run: npm run format:check
-
-      - name: Run TypeScript check
-        run: npm run typecheck || echo "TypeScript check completed with warnings - Convex types may cause deep instantiation issues"
-
-      - name: Build application
-        run: npm run build
+      - name: Run build validation with comprehensive tests
+        run: npm run test:build:full
         env:
           NEXT_PUBLIC_CONVEX_URL: ${{ secrets.CONVEX_URL_STAGING || 'https://test.convex.cloud' }}
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY_STAGING || 'pk_test_build_placeholder_key_for_ci_only' }}
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY_STAGING || 'sk_test_build_placeholder_key_for_ci_only' }}
-          # Using real Clerk keys from GitHub Secrets for proper build validation
+          CI: true
 
-  unit-tests:
-    name: Unit Tests
+  comprehensive-tests:
+    name: Comprehensive Test Pipeline
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: quality-checks
+    timeout-minutes: 30
+    needs: build-validation
 
     steps:
       - name: Checkout code
@@ -91,26 +82,29 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run unit tests
-        run: npm run test:ci
+      - name: Run comprehensive test pipeline
+        run: npm run ci:test-pipeline
         env:
+          NEXT_PUBLIC_CONVEX_URL: ${{ secrets.CONVEX_URL_STAGING || 'https://test.convex.cloud' }}
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY_STAGING || 'pk_test_placeholder' }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY_STAGING || 'sk_test_placeholder' }}
           CI: true
 
-      - name: Upload coverage reports
+      - name: Upload test coverage
         uses: codecov/codecov-action@v4
         if: github.event_name == 'push'
         with:
           file: ./coverage/lcov.info
-          flags: unittests
+          flags: comprehensive-tests
           name: codecov-umbrella
           fail_ci_if_error: false
 
-  integration-tests:
-    name: Integration Tests
+  smoke-tests:
+    name: Smoke Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    needs: unit-tests
-    if: github.event_name == 'push' || contains(github.event.pull_request.labels.*.name, 'run-integration-tests')
+    timeout-minutes: 15
+    needs: build-validation
+    if: github.event_name == 'pull_request'
 
     steps:
       - name: Checkout code
@@ -125,18 +119,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run integration tests
-        run: npm run test:ci:auth
+      - name: Run quick validation tests
+        run: npm run test:build
         env:
           NEXT_PUBLIC_CONVEX_URL: ${{ secrets.CONVEX_URL_STAGING || 'https://test.convex.cloud' }}
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY_STAGING || 'pk_test_placeholder' }}
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY_STAGING || 'sk_test_placeholder' }}
+          CI: true
 
   e2e-tests:
     name: E2E Tests
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    needs: integration-tests
+    needs: comprehensive-tests
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
@@ -223,7 +218,7 @@ jobs:
     name: Security Scan
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: quality-checks
+    needs: build-validation
     permissions:
       security-events: write
       contents: read
@@ -254,7 +249,7 @@ jobs:
     name: Performance Check
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: quality-checks
+    needs: build-validation
     if: github.event_name == 'pull_request'
 
     steps:
