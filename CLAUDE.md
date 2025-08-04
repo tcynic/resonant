@@ -19,6 +19,19 @@ npm run convex:dev   # Terminal 2: Convex real-time backend + dashboard
 cp .env.local.template .env.local  # Copy and configure environment variables
 ```
 
+### Claude Code CLI Slash Commands
+
+```bash
+# Quick development workflow
+npm run push              # /push command: format, commit, and push code with auto-generated commit message
+
+# Usage: Simply run `npm run push` or `./scripts/push-command.sh` to:
+# 1. Run prettier to format code
+# 2. Generate intelligent commit message based on changed files
+# 3. Stage all changes and commit
+# 4. Push to remote repository
+```
+
 ### Code Quality & Testing
 
 ```bash
