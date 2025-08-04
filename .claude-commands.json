@@ -1,0 +1,34 @@
+{
+  "commands": {
+    "push": {
+      "description": "Format, commit, and push code with auto-generated commit message",
+      "script": "./scripts/push-command.sh",
+      "type": "shell"
+    },
+    "next-story": {
+      "description": "Create next story using bmad system",
+      "type": "task",
+      "task": "Execute the .bmad-core/tasks/create-next-story.md task to identify and prepare the next logical story file"
+    },
+    "review-story": {
+      "description": "Review current story using bmad system",
+      "type": "task",
+      "task": "Execute the .bmad-core/tasks/review-story.md task to review the current story draft"
+    },
+    "create-epic": {
+      "description": "Create new epic using bmad system",
+      "type": "task",
+      "task": "Execute the .bmad-core/tasks/brownfield-create-epic.md task to create a new epic"
+    },
+    "validate-story": {
+      "description": "Validate next story using bmad system",
+      "type": "task",
+      "task": "Execute the .bmad-core/tasks/validate-next-story.md task to validate the next story"
+    },
+    "create-doc": {
+      "description": "Create documentation using bmad system",
+      "type": "task",
+      "task": "Execute the .bmad-core/tasks/create-doc.md task to create technical documentation"
+    }
+  }
+}

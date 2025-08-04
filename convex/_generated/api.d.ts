@@ -41,6 +41,7 @@ import type * as monitoring_cost_monitoring from "../monitoring/cost_monitoring.
 import type * as monitoring_dashboard_queries from "../monitoring/dashboard_queries.js";
 import type * as monitoring_failure_detection from "../monitoring/failure_detection.js";
 import type * as monitoring_health_checks from "../monitoring/health_checks.js";
+import type * as monitoring_langextract_metrics from "../monitoring/langextract-metrics.js";
 import type * as monitoring_success_rate_tracking from "../monitoring/success_rate_tracking.js";
 import type * as notifications from "../notifications.js";
 import type * as recovery_orchestration from "../recovery_orchestration.js";
@@ -112,6 +113,7 @@ declare const fullApi: ApiFromModules<{
   "monitoring/dashboard_queries": typeof monitoring_dashboard_queries;
   "monitoring/failure_detection": typeof monitoring_failure_detection;
   "monitoring/health_checks": typeof monitoring_health_checks;
+  "monitoring/langextract-metrics": typeof monitoring_langextract_metrics;
   "monitoring/success_rate_tracking": typeof monitoring_success_rate_tracking;
   notifications: typeof notifications;
   recovery_orchestration: typeof recovery_orchestration;

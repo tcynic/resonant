@@ -5,6 +5,24 @@
  */
 
 import { validateAIEnvironment, logAIConfigStatus } from './ai_config'
+import {
+  extract as langExtract,
+  type AnnotatedDocument,
+  type ExampleData,
+} from 'langextract'
+
+export interface LangExtractResult {
+  structuredData: {
+    emotions: Array<{ text: string; type: string; intensity?: string }>
+    themes: Array<{ text: string; category: string; context?: string }>
+    triggers: Array<{ text: string; type: string; severity?: string }>
+    communication: Array<{ text: string; style: string; tone?: string }>
+    relationships: Array<{ text: string; type: string; dynamic?: string }>
+  }
+  extractedEntities: string[]
+  processingSuccess: boolean
+  errorMessage?: string
+}
 
 export interface AnalysisResult {
   sentimentScore: number
@@ -22,10 +40,15 @@ export interface AnalysisResult {
   energyImpact?: Record<string, unknown>
   stabilityAnalysis?: Record<string, unknown>
   overallConfidence: number
+  // Enhanced with LangExtract data
+  langExtractData?: LangExtractResult
 }
 
 // Configuration validation for compatibility
 let configValidated = false
+
+// Feature flag for LangExtract preprocessing
+const LANGEXTRACT_ENABLED = process.env.LANGEXTRACT_ENABLED === 'true' || false
 
 function validateConfig() {
   if (!configValidated) {
@@ -37,6 +60,237 @@ function validateConfig() {
       )
     }
     configValidated = true
+  }
+}
+
+/**
+ * Preprocess journal entry with LangExtract for structured data extraction
+ */
+export async function preprocessWithLangExtract(
+  content: string,
+  relationshipContext?: string
+): Promise<LangExtractResult> {
+  if (!LANGEXTRACT_ENABLED) {
+    return {
+      structuredData: {
+        emotions: [],
+        themes: [],
+        triggers: [],
+        communication: [],
+        relationships: [],
+      },
+      extractedEntities: [],
+      processingSuccess: false,
+      errorMessage: 'LangExtract preprocessing disabled',
+    }
+  }
+
+  try {
+    // Define extraction prompt for relationship journal entries
+    const promptDescription = `
+      Extract emotional and relationship information from this journal entry.
+      Focus on emotions, themes, triggers, communication patterns, and relationship dynamics.
+      Use exact text from the entry for extractions.
+    `
+
+    // Define examples for relationship journal analysis
+    const examples: ExampleData[] = [
+      {
+        text: "Today I felt really frustrated when my partner didn't listen during our conversation about finances. We ended up arguing again, which makes me feel disconnected from them.",
+        extractions: [
+          {
+            extractionClass: 'emotion',
+            extractionText: 'frustrated',
+            attributes: { type: 'negative', intensity: 'high' },
+          },
+          {
+            extractionClass: 'trigger',
+            extractionText: "didn't listen",
+            attributes: { type: 'communication', severity: 'medium' },
+          },
+          {
+            extractionClass: 'theme',
+            extractionText: 'conversation about finances',
+            attributes: { category: 'money', context: 'relationship' },
+          },
+          {
+            extractionClass: 'communication',
+            extractionText: 'arguing',
+            attributes: { style: 'confrontational', tone: 'negative' },
+          },
+          {
+            extractionClass: 'relationship',
+            extractionText: 'feel disconnected',
+            attributes: { type: 'emotional_distance', dynamic: 'negative' },
+          },
+        ],
+      },
+    ]
+
+    // Add relationship context to the content if provided
+    const textToAnalyze = relationshipContext
+      ? `${content}\n\nRelationship context: ${relationshipContext}`
+      : content
+
+    const result = await langExtract(textToAnalyze, {
+      promptDescription,
+      examples,
+      modelId: 'gemini-2.5-flash',
+      modelType: 'gemini',
+      temperature: 0.3,
+      debug: false,
+    })
+
+    // Process the results with proper validation
+    if (Array.isArray(result) && result.length === 0) {
+      throw new Error('Invalid LangExtract response format: empty result array')
+    }
+
+    const annotatedDoc = Array.isArray(result) ? result[0] : result
+    if (!annotatedDoc || typeof annotatedDoc !== 'object') {
+      throw new Error(
+        'Invalid LangExtract response format: missing or invalid document structure'
+      )
+    }
+
+    if (!Array.isArray(annotatedDoc.extractions)) {
+      throw new Error(
+        'Invalid LangExtract response format: extractions must be an array'
+      )
+    }
+
+    const extractions = annotatedDoc.extractions
+
+    // Validate extraction structure
+    for (const extraction of extractions) {
+      if (!extraction || typeof extraction !== 'object') {
+        throw new Error(
+          'Invalid LangExtract response format: extraction must be an object'
+        )
+      }
+      if (typeof extraction.extractionText !== 'string') {
+        throw new Error(
+          'Invalid LangExtract response format: extractionText must be a string'
+        )
+      }
+      if (typeof extraction.extractionClass !== 'string') {
+        throw new Error(
+          'Invalid LangExtract response format: extractionClass must be a string'
+        )
+      }
+      // attributes is optional, but if present, must be an object
+      if (extraction.attributes && typeof extraction.attributes !== 'object') {
+        throw new Error(
+          'Invalid LangExtract response format: attributes must be an object'
+        )
+      }
+    }
+
+    const structuredData = {
+      emotions: extractions
+        .filter(e => e.extractionClass === 'emotion')
+        .map(e => ({
+          text: e.extractionText,
+          type: (e.attributes?.type as string) || 'unknown',
+          intensity: e.attributes?.intensity as string,
+        })),
+      themes: extractions
+        .filter(e => e.extractionClass === 'theme')
+        .map(e => ({
+          text: e.extractionText,
+          category: (e.attributes?.category as string) || 'general',
+          context: e.attributes?.context as string,
+        })),
+      triggers: extractions
+        .filter(e => e.extractionClass === 'trigger')
+        .map(e => ({
+          text: e.extractionText,
+          type: (e.attributes?.type as string) || 'unknown',
+          severity: e.attributes?.severity as string,
+        })),
+      communication: extractions
+        .filter(e => e.extractionClass === 'communication')
+        .map(e => ({
+          text: e.extractionText,
+          style: (e.attributes?.style as string) || 'neutral',
+          tone: e.attributes?.tone as string,
+        })),
+      relationships: extractions
+        .filter(e => e.extractionClass === 'relationship')
+        .map(e => ({
+          text: e.extractionText,
+          type: (e.attributes?.type as string) || 'general',
+          dynamic: e.attributes?.dynamic as string,
+        })),
+    }
+
+    return {
+      structuredData,
+      extractedEntities: extractions.map(e => e.extractionText),
+      processingSuccess: true,
+    }
+  } catch (error) {
+    console.error('LangExtract preprocessing failed:', error)
+    return {
+      structuredData: {
+        emotions: [],
+        themes: [],
+        triggers: [],
+        communication: [],
+        relationships: [],
+      },
+      extractedEntities: [],
+      processingSuccess: false,
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+    }
+  }
+}
+
+/**
+ * Record LangExtract processing metrics for monitoring
+ * This function should be called from HTTP Actions where ctx is available
+ */
+export async function recordLangExtractProcessingMetrics(
+  ctx: any,
+  userId: string,
+  entryId: string,
+  result: LangExtractResult,
+  processingTimeMs: number,
+  fallbackUsed: boolean = false
+) {
+  if (!ctx.db) {
+    console.warn('Database context not available for metrics recording')
+    return
+  }
+
+  try {
+    // Calculate structured data counts
+    const structuredDataSize = {
+      emotions: result.structuredData.emotions.length,
+      themes: result.structuredData.themes.length,
+      triggers: result.structuredData.triggers.length,
+      communication: result.structuredData.communication.length,
+      relationships: result.structuredData.relationships.length,
+    }
+
+    // Record metrics using the monitoring function
+    await ctx.runMutation(
+      'monitoring/langextract-metrics:recordLangExtractMetrics',
+      {
+        userId,
+        entryId,
+        processingTimeMs,
+        success: result.processingSuccess,
+        errorMessage: result.errorMessage,
+        extractedEntitiesCount: result.extractedEntities.length,
+        structuredDataSize,
+        langExtractVersion: 'v1.0', // Update with actual version
+        fallbackUsed,
+      }
+    )
+  } catch (error) {
+    console.error('Failed to record LangExtract metrics:', error)
+    // Don't throw - metrics recording should not fail the main process
   }
 }
 
@@ -190,12 +444,25 @@ function estimateCost(content: string): number {
 }
 
 /**
- * Fallback analysis for when AI fails
+ * Enhanced fallback analysis that can use LangExtract data
  */
-export function fallbackAnalysis(
+export async function fallbackAnalysis(
   content: string,
-  mood?: string
-): Partial<AnalysisResult> {
+  mood?: string,
+  relationshipContext?: string
+): Promise<Partial<AnalysisResult>> {
+  // Try LangExtract preprocessing if enabled
+  let langExtractData: LangExtractResult | undefined
+  if (LANGEXTRACT_ENABLED) {
+    try {
+      langExtractData = await preprocessWithLangExtract(
+        content,
+        relationshipContext
+      )
+    } catch (error) {
+      console.warn('LangExtract preprocessing failed in fallback:', error)
+    }
+  }
   // Simple rule-based fallback
   const words = content.toLowerCase().split(/\s+/)
   const positiveWords = [
@@ -238,23 +505,70 @@ export function fallbackAnalysis(
   // Normalize to -1 to 1 range
   sentimentScore = Math.max(-1, Math.min(1, sentimentScore))
 
+  // Enhanced patterns using LangExtract data when available
+  let enhancedPatterns = {
+    recurring_themes: [
+      ...extractThemes(content, undefined),
+      'fallback_analysis',
+    ],
+    emotional_triggers: extractTriggers(content),
+    communication_style: detectCommunicationStyle(content),
+    relationship_dynamics: ['basic_sentiment'],
+  }
+
+  let enhancedKeywords = Array.from(new Set(emotionalKeywords)).slice(0, 5)
+  let enhancedConfidence = 0.5
+  let enhancedReasoning = `Fallback analysis: ${sentimentScore > 0 ? 'Positive' : sentimentScore < 0 ? 'Negative' : 'Neutral'} sentiment detected`
+
+  // Use LangExtract data to enhance the analysis if available
+  if (langExtractData?.processingSuccess) {
+    const { structuredData } = langExtractData
+
+    // Enhance themes with LangExtract data
+    const extractedThemes = structuredData.themes.map(t => t.category)
+    enhancedPatterns.recurring_themes = Array.from(
+      new Set([...enhancedPatterns.recurring_themes, ...extractedThemes])
+    )
+
+    // Enhance triggers with LangExtract data
+    const extractedTriggers = structuredData.triggers.map(t => t.type)
+    enhancedPatterns.emotional_triggers = Array.from(
+      new Set([...enhancedPatterns.emotional_triggers, ...extractedTriggers])
+    )
+
+    // Enhance communication style with LangExtract data
+    const communicationStyles = structuredData.communication.map(c => c.style)
+    if (communicationStyles.length > 0) {
+      enhancedPatterns.communication_style = communicationStyles[0] // Use first detected style
+    }
+
+    // Enhance relationship dynamics with LangExtract data
+    const relationshipTypes = structuredData.relationships.map(r => r.type)
+    enhancedPatterns.relationship_dynamics = Array.from(
+      new Set([...enhancedPatterns.relationship_dynamics, ...relationshipTypes])
+    )
+
+    // Enhance emotional keywords
+    const extractedEmotions = structuredData.emotions.map(e => e.text)
+    enhancedKeywords = Array.from(
+      new Set([...enhancedKeywords, ...extractedEmotions])
+    ).slice(0, 8)
+
+    // Increase confidence when LangExtract data is available
+    enhancedConfidence = 0.7
+    enhancedReasoning += ' (enhanced with LangExtract structured data)'
+  }
+
   return {
     sentimentScore,
-    emotionalKeywords: [...new Set(emotionalKeywords)].slice(0, 5),
-    confidenceLevel: 0.5, // Lower confidence for fallback
-    reasoning: `Fallback analysis: ${sentimentScore > 0 ? 'Positive' : sentimentScore < 0 ? 'Negative' : 'Neutral'} sentiment detected`,
-    patterns: {
-      recurring_themes: [
-        ...extractThemes(content, undefined),
-        'fallback_analysis',
-      ],
-      emotional_triggers: extractTriggers(content),
-      communication_style: detectCommunicationStyle(content),
-      relationship_dynamics: ['basic_sentiment'],
-    },
+    emotionalKeywords: enhancedKeywords,
+    confidenceLevel: enhancedConfidence,
+    reasoning: enhancedReasoning,
+    patterns: enhancedPatterns,
     tokensUsed: estimateTokens(content),
     apiCost: estimateCost(content),
-    overallConfidence: 0.5,
+    overallConfidence: enhancedConfidence,
+    langExtractData, // Include the LangExtract data in the result
   }
 }
 

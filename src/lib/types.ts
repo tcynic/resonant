@@ -90,6 +90,54 @@ export type AnalysisType =
   | 'conflict_resolution'
   | 'gratitude'
 
+// LangExtract structured data types (Story LangExtract-2)
+export interface LangExtractEmotion {
+  text: string
+  type: string
+  intensity?: string
+}
+
+export interface LangExtractTheme {
+  text: string
+  category: string
+  context?: string
+}
+
+export interface LangExtractTrigger {
+  text: string
+  type: string
+  severity?: string
+}
+
+export interface LangExtractCommunication {
+  text: string
+  style: string
+  tone?: string
+}
+
+export interface LangExtractRelationship {
+  text: string
+  type: string
+  dynamic?: string
+}
+
+export interface LangExtractStructuredData {
+  emotions: LangExtractEmotion[]
+  themes: LangExtractTheme[]
+  triggers: LangExtractTrigger[]
+  communication: LangExtractCommunication[]
+  relationships: LangExtractRelationship[]
+}
+
+export interface LangExtractResult {
+  structuredData: LangExtractStructuredData
+  extractedEntities: string[]
+  processingSuccess: boolean
+  errorMessage?: string
+  processingTimeMs?: number
+  langExtractVersion?: string
+}
+
 export interface AIAnalysisResults {
   sentimentScore?: number // 1-10 scale
   emotions?: string[]
@@ -101,6 +149,8 @@ export interface AIAnalysisResults {
   resolutionScore?: number // 1-10 for conflict resolution
   gratitudeScore?: number // 1-10 for gratitude
   additionalData?: unknown // Flexible field for analysis-specific data
+  // Enhanced with LangExtract data (Story LangExtract-2)
+  langExtractData?: LangExtractResult
 }
 
 export interface AIAnalysisMetadata {
