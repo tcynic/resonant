@@ -54,3 +54,32 @@ jest.mock('@/hooks/use-convex-user', () => ({
     error: null,
   })),
 }))
+
+// Mock useIsClient hook
+jest.mock('@/hooks/use-is-client', () => ({
+  useIsClient: jest.fn(() => true),
+}))
+
+// Mock Convex API
+jest.mock('@/convex/_generated/api', () => ({
+  api: {
+    users: {
+      getUserByClerkId: { _isConvexFunction: true },
+    },
+    dataExport: {
+      getExportStatistics: { _isConvexFunction: true },
+      createExport: { _isConvexFunction: true },
+      createExportJob: { _isConvexFunction: true },
+    },
+    journalEntries: {
+      search: { _isConvexFunction: true },
+      getByUserId: { _isConvexFunction: true },
+    },
+    healthScores: {
+      getLatestByUserId: { _isConvexFunction: true },
+    },
+    relationships: {
+      getByUserId: { _isConvexFunction: true },
+    },
+  },
+}))

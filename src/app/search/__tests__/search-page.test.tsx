@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useUser } from '@clerk/nextjs'
@@ -12,6 +13,30 @@ import SearchPage from '../page'
 jest.mock('@clerk/nextjs')
 // Convex is mocked globally in jest.setup.js
 jest.mock('next/navigation')
+
+// Mock next/dynamic to return components synchronously
+jest.mock('next/dynamic', () => () => {
+  const MockSearchContent = () => (
+    <div data-testid="search-content">
+      <div data-testid="search-bar">Mock search bar</div>
+      <div data-testid="search-filters">Mock search filters</div>
+      <div data-testid="search-results">Mock search results</div>
+    </div>
+  )
+  MockSearchContent.displayName = 'SearchContent'
+  return MockSearchContent
+})
+
+// Mock the SearchContent component
+jest.mock('../search-content', () => ({
+  SearchContent: () => (
+    <div data-testid="search-content">
+      <div data-testid="search-bar">Mock search bar</div>
+      <div data-testid="search-filters">Mock search filters</div>
+      <div data-testid="search-results">Mock search results</div>
+    </div>
+  ),
+}))
 
 // Mock child components with simplified implementations
 interface MockSearchBarProps {

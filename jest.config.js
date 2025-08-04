@@ -27,6 +27,8 @@ const customJestConfig = {
     '<rootDir>/convex/utils/__tests__/',
   ],
   transformIgnorePatterns: ['node_modules/(?!(convex-test|convex)/)'],
+  collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/*.d.ts'],
+  coveragePathIgnorePatterns: ['node_modules/', '.next/', 'coverage/'],
 }
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

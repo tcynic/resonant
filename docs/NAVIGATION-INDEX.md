@@ -13,8 +13,10 @@
 
 ### Architecture & Technical
 
-- **[System Architecture](architecture/system-architecture.md)** - Overall system design
-- **[Tech Stack](architecture/tech-stack.md)** - Technology decisions
+- **[System Architecture](architecture/system-architecture.md)** - Advanced production system design with enhanced monitoring
+- **[Tech Stack](architecture/tech-stack.md)** - Production-grade technology stack with LangExtract integration
+- **[Advanced Monitoring Architecture](architecture/advanced-monitoring-architecture.md)** - Enterprise monitoring and auto-recovery
+- **[LangExtract Integration Architecture](architecture/langextract-integration-architecture.md)** - Structured data extraction layer
 - **[Developer Architecture](architecture/developer-architecture.md)** - Development guidelines
 
 ### Testing & Quality Assurance
@@ -53,7 +55,7 @@
 
 ### `/docs/architecture/` - Technical Architecture
 
-- System design, data flows, and architectural decisions
+- Advanced system design, enhanced data flows, monitoring architecture, and LangExtract integration
 
 ### `/docs/testing/` - Quality Assurance
 
@@ -137,9 +139,11 @@ The following files were reorganized for better structure:
 ### For New Team Members
 
 1. Start with [Main README](../README.md)
-2. Review [System Architecture](architecture/system-architecture.md)
-3. Set up development environment
-4. Read [API Specifications](development/api/api-specifications.md)
+2. Review [System Architecture](architecture/system-architecture.md) - Advanced production implementation
+3. Understand [LangExtract Integration](architecture/langextract-integration-architecture.md) - Structured data layer
+4. Explore [Advanced Monitoring](architecture/advanced-monitoring-architecture.md) - Enterprise reliability
+5. Set up development environment
+6. Read [API Specifications](development/api/api-specifications.md)
 
 ### For Deployment
 
