@@ -13,8 +13,6 @@ jest.mock('langextract', () => ({
 }))
 
 describe('LangExtract Integration (Simple)', () => {
-  const mockExtract = require('langextract').extract
-
   beforeEach(() => {
     jest.clearAllMocks()
   })

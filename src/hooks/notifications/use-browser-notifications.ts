@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { useMutation } from 'convex/react'
-import { api } from '@/convex/_generated/api'
 import type { Id } from '@/convex/_generated/dataModel'
 import { NOTIFICATION_CONFIG } from '@/lib/constants/app-config'
 import {
@@ -61,8 +59,6 @@ export function useBrowserNotifications(): UseBrowserNotificationsReturn {
   })
 
   const router = useRouter()
-  // Temporarily disable to avoid TypeScript deep instantiation issues
-  const markReminderClicked = null // useMutation(api.notifications.markReminderClicked)
 
   // Create stable navigation function to avoid dependency cycles
   const navigateToRoute = useCallback(

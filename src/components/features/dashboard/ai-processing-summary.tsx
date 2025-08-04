@@ -17,7 +17,10 @@ interface AIProcessingSummaryProps {
   userId: Id<'users'>
 }
 
-export function AIProcessingSummary({ userId }: AIProcessingSummaryProps) {
+export function AIProcessingSummary({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  userId: _userId,
+}: AIProcessingSummaryProps) {
   return (
     <Card>
       <CardHeader>

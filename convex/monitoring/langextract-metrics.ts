@@ -93,13 +93,11 @@ export const getLangExtractMetrics = query({
     includeFailures: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    let metricsQuery = ctx.db.query('langExtractMetrics')
-
-    if (args.userId) {
-      metricsQuery = metricsQuery.withIndex('by_user', (q: any) =>
-        q.eq('userId', args.userId)
-      )
-    }
+    const metricsQuery = args.userId
+      ? ctx.db
+          .query('langExtractMetrics')
+          .withIndex('by_user', (q: any) => q.eq('userId', args.userId))
+      : ctx.db.query('langExtractMetrics')
 
     const hours = args.hours || 24
     const cutoffTime = Date.now() - hours * 60 * 60 * 1000
@@ -117,80 +115,83 @@ export const getLangExtractMetrics = query({
 })
 
 // Get aggregate performance statistics
+// Internal function to calculate performance stats
+async function calculatePerformanceStats(ctx: any, hours: number = 24) {
+  const hourBuckets = Math.floor(hours)
+  const currentHour = Math.floor(Date.now() / (60 * 60 * 1000))
+  const startHour = currentHour - hourBuckets
+
+  const aggregateMetrics = await ctx.db
+    .query('langExtractAggregateMetrics')
+    .withIndex('by_hour', (q: any) => q.gte('hourBucket', startHour))
+    .collect()
+
+  if (aggregateMetrics.length === 0) {
+    return {
+      totalRequests: 0,
+      successRate: 0,
+      averageProcessingTime: 0,
+      totalEntitiesExtracted: 0,
+      fallbackUsageRate: 0,
+      hourlyBreakdown: [],
+    }
+  }
+
+  const totals = aggregateMetrics.reduce(
+    (acc: any, metric: any) => ({
+      totalRequests: acc.totalRequests + metric.totalRequests,
+      successfulRequests: acc.successfulRequests + metric.successfulRequests,
+      failedRequests: acc.failedRequests + metric.failedRequests,
+      totalProcessingTime: acc.totalProcessingTime + metric.totalProcessingTime,
+      totalEntitiesExtracted:
+        acc.totalEntitiesExtracted + metric.totalEntitiesExtracted,
+      fallbackUsageCount: acc.fallbackUsageCount + metric.fallbackUsageCount,
+    }),
+    {
+      totalRequests: 0,
+      successfulRequests: 0,
+      failedRequests: 0,
+      totalProcessingTime: 0,
+      totalEntitiesExtracted: 0,
+      fallbackUsageCount: 0,
+    }
+  )
+
+  return {
+    totalRequests: totals.totalRequests,
+    successRate:
+      totals.totalRequests > 0
+        ? (totals.successfulRequests / totals.totalRequests) * 100
+        : 0,
+    averageProcessingTime:
+      totals.totalRequests > 0
+        ? totals.totalProcessingTime / totals.totalRequests
+        : 0,
+    totalEntitiesExtracted: totals.totalEntitiesExtracted,
+    fallbackUsageRate:
+      totals.totalRequests > 0
+        ? (totals.fallbackUsageCount / totals.totalRequests) * 100
+        : 0,
+    hourlyBreakdown: aggregateMetrics.map((metric: any) => ({
+      hour: metric.hourBucket,
+      timestamp: metric.hourBucket * 60 * 60 * 1000,
+      requests: metric.totalRequests,
+      successRate:
+        metric.totalRequests > 0
+          ? (metric.successfulRequests / metric.totalRequests) * 100
+          : 0,
+      averageProcessingTime: metric.averageProcessingTime,
+      entitiesExtracted: metric.totalEntitiesExtracted,
+    })),
+  }
+}
+
 export const getLangExtractPerformanceStats = query({
   args: {
     hours: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const hours = args.hours || 24
-    const hourBuckets = Math.floor(hours)
-    const currentHour = Math.floor(Date.now() / (60 * 60 * 1000))
-    const startHour = currentHour - hourBuckets
-
-    const aggregateMetrics = await ctx.db
-      .query('langExtractAggregateMetrics')
-      .withIndex('by_hour', (q: any) => q.gte('hourBucket', startHour))
-      .collect()
-
-    if (aggregateMetrics.length === 0) {
-      return {
-        totalRequests: 0,
-        successRate: 0,
-        averageProcessingTime: 0,
-        totalEntitiesExtracted: 0,
-        fallbackUsageRate: 0,
-        hourlyBreakdown: [],
-      }
-    }
-
-    const totals = aggregateMetrics.reduce(
-      (acc, metric) => ({
-        totalRequests: acc.totalRequests + metric.totalRequests,
-        successfulRequests: acc.successfulRequests + metric.successfulRequests,
-        failedRequests: acc.failedRequests + metric.failedRequests,
-        totalProcessingTime:
-          acc.totalProcessingTime + metric.totalProcessingTime,
-        totalEntitiesExtracted:
-          acc.totalEntitiesExtracted + metric.totalEntitiesExtracted,
-        fallbackUsageCount: acc.fallbackUsageCount + metric.fallbackUsageCount,
-      }),
-      {
-        totalRequests: 0,
-        successfulRequests: 0,
-        failedRequests: 0,
-        totalProcessingTime: 0,
-        totalEntitiesExtracted: 0,
-        fallbackUsageCount: 0,
-      }
-    )
-
-    return {
-      totalRequests: totals.totalRequests,
-      successRate:
-        totals.totalRequests > 0
-          ? (totals.successfulRequests / totals.totalRequests) * 100
-          : 0,
-      averageProcessingTime:
-        totals.totalRequests > 0
-          ? totals.totalProcessingTime / totals.totalRequests
-          : 0,
-      totalEntitiesExtracted: totals.totalEntitiesExtracted,
-      fallbackUsageRate:
-        totals.totalRequests > 0
-          ? (totals.fallbackUsageCount / totals.totalRequests) * 100
-          : 0,
-      hourlyBreakdown: aggregateMetrics.map(metric => ({
-        hour: metric.hourBucket,
-        timestamp: metric.hourBucket * 60 * 60 * 1000,
-        requests: metric.totalRequests,
-        successRate:
-          metric.totalRequests > 0
-            ? (metric.successfulRequests / metric.totalRequests) * 100
-            : 0,
-        averageProcessingTime: metric.averageProcessingTime,
-        entitiesExtracted: metric.totalEntitiesExtracted,
-      })),
-    }
+    return await calculatePerformanceStats(ctx, args.hours)
   },
 })
 
@@ -276,7 +277,7 @@ async function getSuccessfulRequestsCount(
 export const checkLangExtractPerformanceAlerts = query({
   args: {},
   handler: async ctx => {
-    const recentStats = await getLangExtractPerformanceStats(ctx, { hours: 1 })
+    const recentStats = await calculatePerformanceStats(ctx, 1)
     const alerts = []
 
     // Alert on high failure rate
