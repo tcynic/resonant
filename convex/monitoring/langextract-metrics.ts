@@ -4,7 +4,26 @@
  */
 
 import { v } from 'convex/values'
-import { mutation, query } from '../_generated/server'
+import { mutation, query, MutationCtx } from '../_generated/server'
+import { Id } from '../_generated/dataModel'
+
+type RecordMetricsArgs = {
+  userId: Id<'users'>
+  entryId: Id<'journalEntries'>
+  processingTimeMs: number
+  success: boolean
+  errorMessage?: string
+  extractedEntitiesCount: number
+  structuredDataSize: {
+    emotions: number
+    themes: number
+    triggers: number
+    communication: number
+    relationships: number
+  }
+  langExtractVersion?: string
+  fallbackUsed: boolean
+}
 
 // Metrics collection for LangExtract performance
 export const recordLangExtractMetrics = mutation({
@@ -46,12 +65,16 @@ export const recordLangExtractMetrics = mutation({
   },
 })
 
-async function updateAggregateMetrics(ctx: any, args: any, timestamp: number) {
+async function updateAggregateMetrics(
+  ctx: MutationCtx,
+  args: RecordMetricsArgs,
+  timestamp: number
+) {
   const hourlyKey = Math.floor(timestamp / (60 * 60 * 1000)) // Hour buckets
 
   const existing = await ctx.db
     .query('langExtractAggregateMetrics')
-    .withIndex('by_hour', (q: any) => q.eq('hourBucket', hourlyKey))
+    .withIndex('by_hour', q => q.eq('hourBucket', hourlyKey))
     .first()
 
   if (existing) {

@@ -141,9 +141,46 @@ export async function preprocessWithLangExtract(
       debug: false,
     })
 
-    // Process the results
+    // Process the results with proper validation
     const annotatedDoc = Array.isArray(result) ? result[0] : result
-    const extractions = annotatedDoc.extractions || []
+    if (!annotatedDoc || typeof annotatedDoc !== 'object') {
+      throw new Error(
+        'Invalid LangExtract response format: missing or invalid document structure'
+      )
+    }
+
+    if (!Array.isArray(annotatedDoc.extractions)) {
+      throw new Error(
+        'Invalid LangExtract response format: extractions must be an array'
+      )
+    }
+
+    const extractions = annotatedDoc.extractions
+
+    // Validate extraction structure
+    for (const extraction of extractions) {
+      if (!extraction || typeof extraction !== 'object') {
+        throw new Error(
+          'Invalid LangExtract response format: extraction must be an object'
+        )
+      }
+      if (typeof extraction.extractionText !== 'string') {
+        throw new Error(
+          'Invalid LangExtract response format: extractionText must be a string'
+        )
+      }
+      if (typeof extraction.extractionClass !== 'string') {
+        throw new Error(
+          'Invalid LangExtract response format: extractionClass must be a string'
+        )
+      }
+      // attributes is optional, but if present, must be an object
+      if (extraction.attributes && typeof extraction.attributes !== 'object') {
+        throw new Error(
+          'Invalid LangExtract response format: attributes must be an object'
+        )
+      }
+    }
 
     const structuredData = {
       emotions: extractions
