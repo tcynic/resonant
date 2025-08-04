@@ -60,19 +60,19 @@ export default function LangExtractPerformanceDashboard({
   const performanceStats: PerformanceStats | undefined = useQuery(
     api.monitoring['langextract-metrics'].getLangExtractPerformanceStats,
     { hours: selectedTimeRange }
-  ) as any
+  )
 
   // Fetch alerts
   const alerts: AlertType[] | undefined = useQuery(
     api.monitoring['langextract-metrics'].checkLangExtractPerformanceAlerts,
     {}
-  ) as any
+  )
 
   // Fetch error analysis
   const errorAnalysis: ErrorAnalysis | undefined = useQuery(
     api.monitoring['langextract-metrics'].getLangExtractErrorAnalysis,
     { hours: selectedTimeRange }
-  ) as any
+  )
 
   const getSuccessRateColor = (rate: number) => {
     if (rate >= 95) return 'text-green-600'

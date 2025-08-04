@@ -189,7 +189,7 @@ describe('DataExport', () => {
     // Use more flexible text matching for potentially broken up text
     expect(
       screen.getByText(
-        (content, element) =>
+        content =>
           content.includes('Download') && content.includes('complete copy')
       )
     ).toBeInTheDocument()

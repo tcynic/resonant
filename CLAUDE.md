@@ -163,8 +163,9 @@ npm run langextract:e2e        # E2E tests for LangExtract features
 ### Test Account System
 
 Four comprehensive test user personas:
+
 - **New User**: Empty state for onboarding testing
-- **Active User**: Moderate data for typical workflows  
+- **Active User**: Moderate data for typical workflows
 - **Power User**: Extensive data for performance testing
 - **Edge Case User**: Boundary conditions and special characters
 
@@ -209,7 +210,7 @@ npm run test:ci:advanced   # Advanced feature tests
 # Staging deployment
 npm run deploy:staging      # Code quality + tests + Convex deploy + Vercel preview
 
-# Production deployment  
+# Production deployment
 npm run deploy:production   # Full validation + deploy + health check
 
 # Health monitoring
@@ -223,7 +224,7 @@ npm run deploy:health-check # Post-deployment validation
 - **Error Handling**: `convex/utils/error_logger.ts` for centralized logging
 - **Service Recovery**: `convex/service_recovery.ts` for failure handling
 
-## Code Quality Standards  
+## Code Quality Standards
 
 - **TypeScript**: Strict mode enabled, no `any` types allowed
 - **ESLint**: Next.js config with Prettier integration
