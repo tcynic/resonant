@@ -53,6 +53,10 @@ import type * as scheduler_queue_maintenance from "../scheduler/queue_maintenanc
 import type * as scheduler_queue_metrics from "../scheduler/queue_metrics.js";
 import type * as scheduler_queue_overflow from "../scheduler/queue_overflow.js";
 import type * as scheduler from "../scheduler.js";
+import type * as schema_ai_analysis from "../schema/ai-analysis.js";
+import type * as schema_langextract_types from "../schema/langextract-types.js";
+import type * as schema_monitoring from "../schema/monitoring.js";
+import type * as schema_user_preferences from "../schema/user-preferences.js";
 import type * as search from "../search.js";
 import type * as service_recovery from "../service_recovery.js";
 import type * as test_testDataManager from "../test/testDataManager.js";
@@ -125,6 +129,10 @@ declare const fullApi: ApiFromModules<{
   "scheduler/queue_metrics": typeof scheduler_queue_metrics;
   "scheduler/queue_overflow": typeof scheduler_queue_overflow;
   scheduler: typeof scheduler;
+  "schema/ai-analysis": typeof schema_ai_analysis;
+  "schema/langextract-types": typeof schema_langextract_types;
+  "schema/monitoring": typeof schema_monitoring;
+  "schema/user-preferences": typeof schema_user_preferences;
   search: typeof search;
   service_recovery: typeof service_recovery;
   "test/testDataManager": typeof test_testDataManager;
