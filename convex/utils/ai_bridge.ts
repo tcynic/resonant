@@ -142,6 +142,10 @@ export async function preprocessWithLangExtract(
     })
 
     // Process the results with proper validation
+    if (Array.isArray(result) && result.length === 0) {
+      throw new Error('Invalid LangExtract response format: empty result array')
+    }
+
     const annotatedDoc = Array.isArray(result) ? result[0] : result
     if (!annotatedDoc || typeof annotatedDoc !== 'object') {
       throw new Error(

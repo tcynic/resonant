@@ -4,7 +4,7 @@
  */
 
 import { v } from 'convex/values'
-import { mutation, query, MutationCtx } from '../_generated/server'
+import { mutation, query, MutationCtx, QueryCtx } from '../_generated/server'
 import { Id } from '../_generated/dataModel'
 
 type RecordMetricsArgs = {
@@ -119,14 +119,14 @@ export const getLangExtractMetrics = query({
     const metricsQuery = args.userId
       ? ctx.db
           .query('langExtractMetrics')
-          .withIndex('by_user', (q: any) => q.eq('userId', args.userId))
+          .withIndex('by_user', q => q.eq('userId', args.userId!))
       : ctx.db.query('langExtractMetrics')
 
     const hours = args.hours || 24
     const cutoffTime = Date.now() - hours * 60 * 60 * 1000
 
     const metrics = await metricsQuery
-      .filter((q: any) => q.gte(q.field('createdAt'), cutoffTime))
+      .filter(q => q.gte(q.field('createdAt'), cutoffTime))
       .collect()
 
     if (!args.includeFailures) {
@@ -139,14 +139,14 @@ export const getLangExtractMetrics = query({
 
 // Get aggregate performance statistics
 // Internal function to calculate performance stats
-async function calculatePerformanceStats(ctx: any, hours: number = 24) {
+async function calculatePerformanceStats(ctx: QueryCtx, hours: number = 24) {
   const hourBuckets = Math.floor(hours)
   const currentHour = Math.floor(Date.now() / (60 * 60 * 1000))
   const startHour = currentHour - hourBuckets
 
   const aggregateMetrics = await ctx.db
     .query('langExtractAggregateMetrics')
-    .withIndex('by_hour', (q: any) => q.gte('hourBucket', startHour))
+    .withIndex('by_hour', q => q.gte('hourBucket', startHour))
     .collect()
 
   if (aggregateMetrics.length === 0) {
@@ -161,7 +161,7 @@ async function calculatePerformanceStats(ctx: any, hours: number = 24) {
   }
 
   const totals = aggregateMetrics.reduce(
-    (acc: any, metric: any) => ({
+    (acc, metric) => ({
       totalRequests: acc.totalRequests + metric.totalRequests,
       successfulRequests: acc.successfulRequests + metric.successfulRequests,
       failedRequests: acc.failedRequests + metric.failedRequests,
@@ -195,7 +195,7 @@ async function calculatePerformanceStats(ctx: any, hours: number = 24) {
       totals.totalRequests > 0
         ? (totals.fallbackUsageCount / totals.totalRequests) * 100
         : 0,
-    hourlyBreakdown: aggregateMetrics.map((metric: any) => ({
+    hourlyBreakdown: aggregateMetrics.map(metric => ({
       hour: metric.hourBucket,
       timestamp: metric.hourBucket * 60 * 60 * 1000,
       requests: metric.totalRequests,
@@ -229,7 +229,7 @@ export const getLangExtractErrorAnalysis = query({
 
     const failedMetrics = await ctx.db
       .query('langExtractMetrics')
-      .filter((q: any) =>
+      .filter(q =>
         q.and(
           q.eq(q.field('success'), false),
           q.gte(q.field('createdAt'), cutoffTime)
@@ -280,12 +280,12 @@ export const getLangExtractErrorAnalysis = query({
 })
 
 async function getSuccessfulRequestsCount(
-  ctx: any,
+  ctx: QueryCtx,
   cutoffTime: number
 ): Promise<number> {
   const successfulMetrics = await ctx.db
     .query('langExtractMetrics')
-    .filter((q: any) =>
+    .filter(q =>
       q.and(
         q.eq(q.field('success'), true),
         q.gte(q.field('createdAt'), cutoffTime)

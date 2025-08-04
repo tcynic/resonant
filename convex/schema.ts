@@ -1,5 +1,6 @@
 import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
+import { langExtractDataSchema } from './schema/langextract-types'
 
 export default defineSchema({
   users: defineTable({
@@ -292,52 +293,8 @@ export default defineSchema({
     ),
 
     // LangExtract Structured Data (Story LangExtract-2)
-    langExtractData: v.optional(
-      v.object({
-        structuredData: v.object({
-          emotions: v.array(
-            v.object({
-              text: v.string(),
-              type: v.string(),
-              intensity: v.optional(v.string()),
-            })
-          ),
-          themes: v.array(
-            v.object({
-              text: v.string(),
-              category: v.string(),
-              context: v.optional(v.string()),
-            })
-          ),
-          triggers: v.array(
-            v.object({
-              text: v.string(),
-              type: v.string(),
-              severity: v.optional(v.string()),
-            })
-          ),
-          communication: v.array(
-            v.object({
-              text: v.string(),
-              style: v.string(),
-              tone: v.optional(v.string()),
-            })
-          ),
-          relationships: v.array(
-            v.object({
-              text: v.string(),
-              type: v.string(),
-              dynamic: v.optional(v.string()),
-            })
-          ),
-        }),
-        extractedEntities: v.array(v.string()),
-        processingSuccess: v.boolean(),
-        errorMessage: v.optional(v.string()),
-        processingTimeMs: v.optional(v.number()), // LangExtract processing time
-        langExtractVersion: v.optional(v.string()), // Track LangExtract library version
-      })
-    ),
+    // Using modular schema definition for better maintainability
+    langExtractData: v.optional(langExtractDataSchema),
 
     status: v.union(
       v.literal('processing'),
