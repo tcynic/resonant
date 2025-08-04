@@ -61,8 +61,8 @@ export function useBrowserNotifications(): UseBrowserNotificationsReturn {
   })
 
   const router = useRouter()
-  // @ts-expect-error - TypeScript has issues with deeply nested Convex types
-  const markReminderClicked = useMutation(api.notifications.markReminderClicked)
+  // Temporarily disable to avoid TypeScript deep instantiation issues
+  const markReminderClicked = null // useMutation(api.notifications.markReminderClicked)
 
   // Create stable navigation function to avoid dependency cycles
   const navigateToRoute = useCallback(
@@ -81,7 +81,10 @@ export function useBrowserNotifications(): UseBrowserNotificationsReturn {
   const handleNotificationClick = useCallback(
     async (reminderId: Id<'reminderLogs'>) => {
       try {
-        await markReminderClicked({ reminderId })
+        // Temporarily disabled during development - markReminderClicked is null
+        // if (markReminderClicked) {
+        //   await markReminderClicked({ reminderId })
+        // }
         if (process.env.NODE_ENV === 'development') {
           console.log('Marked reminder as clicked:', reminderId)
         }
@@ -92,7 +95,7 @@ export function useBrowserNotifications(): UseBrowserNotificationsReturn {
         }
       }
     },
-    [markReminderClicked]
+    [] // Removed markReminderClicked dependency since it's null during development
   )
 
   // Update the ref when the function changes

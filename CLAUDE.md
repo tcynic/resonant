@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Resonant is a relationship health journal application built with Next.js 15, React 19, TypeScript, and real-time Convex backend. The app enables users to track relationship wellness through journaling, mood tracking, and AI-powered insights.
+Resonant is a relationship health journal application built with Next.js 15, React 19, TypeScript, and real-time Convex backend. The app enables users to track relationship wellness through journaling, mood tracking, and AI-powered insights with LangExtract integration for structured emotional and thematic analysis.
 
 ## Core Development Commands
 
@@ -53,7 +53,36 @@ npm run typecheck      # TypeScript validation
 # Build commands
 npm run build          # Production build
 npm run convex:deploy  # Deploy Convex functions to production
+
+# LangExtract Integration Validation
+./scripts/validate-langextract-integration.sh  # Comprehensive integration validation
 ```
+
+## LangExtract Integration
+
+### Key Components
+
+- **Core Integration**: `convex/utils/ai_bridge.ts` - LangExtract preprocessing function
+- **Database Schema**: Enhanced with `langExtractMetrics` and `langExtractAggregateMetrics` tables
+- **UI Components**: `src/components/features/dashboard/structured-insights.tsx`
+- **Monitoring**: `convex/monitoring/langextract-metrics.ts`
+- **E2E Tests**: `tests/e2e/langextract-integration.spec.ts`
+
+### Feature Flag Management
+
+```bash
+# Environment variables for LangExtract control
+LANGEXTRACT_ENABLED=true|false
+LANGEXTRACT_TIMEOUT_MS=5000
+LANGEXTRACT_MAX_RETRIES=2
+LANGEXTRACT_FALLBACK_ENABLED=true
+```
+
+### Deployment Procedures
+
+- **Feature Flag Documentation**: `docs/procedures/langextract-feature-flag-management.md`
+- **Deployment & Rollback**: `docs/procedures/langextract-deployment-rollback.md`
+- **Epic & Stories**: `docs/stories/epic-langextract-integration.md`
 
 [... rest of the existing content remains unchanged ...]
 

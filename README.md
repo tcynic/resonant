@@ -8,7 +8,7 @@ Resonant helps users build stronger, more meaningful connections by providing to
 
 - Journal about relationships with rich content and mood tracking
 - Track relationship health over time
-- Get AI-powered insights for relationship improvement
+- Get AI-powered insights with structured emotional analysis through LangExtract integration
 - Maintain privacy with secure, personal data
 
 ## 🚀 Tech Stack
@@ -23,6 +23,7 @@ Resonant helps users build stronger, more meaningful connections by providing to
 ### Backend
 
 - **Convex** for real-time database and serverless functions
+- **LangExtract** for structured emotional and thematic analysis of journal entries
 - **Zod** for type-safe validation schemas
 - **TypeScript** throughout for type safety
 
@@ -153,7 +154,35 @@ The system includes 4 test user personas:
 - Relationship health summaries
 - Journal entry statistics
 - Mood tracking over time
-- AI-powered insights (planned)
+- AI-powered insights with structured emotional analysis
+- LangExtract integration for emotional, thematic, and relationship pattern recognition
+- Enhanced dashboard visualizations with color-coded emotional insights
+
+### 🧠 LangExtract AI Integration
+
+Resonant now features advanced emotional and thematic analysis powered by LangExtract:
+
+#### Structured Emotional Analysis
+
+- **Emotion Detection**: Identifies and categorizes emotions with intensity levels
+- **Theme Recognition**: Extracts key relationship themes (communication, quality time, support, etc.)
+- **Trigger Identification**: Recognizes emotional triggers with severity assessment
+- **Communication Patterns**: Analyzes conversation styles and tones
+- **Relationship Dynamics**: Identifies positive/negative interaction patterns
+
+#### Enhanced Insights Dashboard
+
+- **Color-Coded Badges**: Visual representation of emotions, themes, and triggers
+- **Intensity Indicators**: Visual markers showing emotional intensity (●●● for high, ●○○ for low)
+- **Processing Metrics**: Real-time performance monitoring and success rates
+- **Fallback Protection**: Graceful degradation with standard analysis when needed
+
+#### Feature Management
+
+- **Feature Flag Control**: Safe deployment with gradual rollout capabilities
+- **Performance Monitoring**: Comprehensive metrics collection and alerting
+- **Error Handling**: Robust error handling with automatic fallback to standard analysis
+- **Backward Compatibility**: Seamless integration with existing functionality
 
 ## 🔧 Available Scripts
 
@@ -204,7 +233,9 @@ npm run convex:deploy  # Deploy Convex functions
 - **users**: User profiles with Clerk integration
 - **relationships**: User's relationship definitions and types
 - **journalEntries**: Journal content with mood, tags, and relationships
-- **healthScores**: AI-calculated relationship health metrics (planned)
+- **healthScores**: AI-calculated relationship health metrics with LangExtract structured insights
+- **langExtractMetrics**: Performance monitoring for LangExtract processing
+- **langExtractAggregateMetrics**: Aggregated performance statistics for monitoring
 
 ## 🚢 Deployment
 
@@ -225,8 +256,14 @@ NEXT_PUBLIC_CONVEX_URL=
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
 CLERK_SECRET_KEY=
 
-# AI Features (Future)
+# AI Features
 GOOGLE_GEMINI_API_KEY=
+
+# LangExtract Integration
+LANGEXTRACT_ENABLED=true
+LANGEXTRACT_TIMEOUT_MS=5000
+LANGEXTRACT_MAX_RETRIES=2
+LANGEXTRACT_FALLBACK_ENABLED=true
 ```
 
 ## 🤝 Contributing

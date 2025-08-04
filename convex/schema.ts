@@ -291,6 +291,54 @@ export default defineSchema({
       })
     ),
 
+    // LangExtract Structured Data (Story LangExtract-2)
+    langExtractData: v.optional(
+      v.object({
+        structuredData: v.object({
+          emotions: v.array(
+            v.object({
+              text: v.string(),
+              type: v.string(),
+              intensity: v.optional(v.string()),
+            })
+          ),
+          themes: v.array(
+            v.object({
+              text: v.string(),
+              category: v.string(),
+              context: v.optional(v.string()),
+            })
+          ),
+          triggers: v.array(
+            v.object({
+              text: v.string(),
+              type: v.string(),
+              severity: v.optional(v.string()),
+            })
+          ),
+          communication: v.array(
+            v.object({
+              text: v.string(),
+              style: v.string(),
+              tone: v.optional(v.string()),
+            })
+          ),
+          relationships: v.array(
+            v.object({
+              text: v.string(),
+              type: v.string(),
+              dynamic: v.optional(v.string()),
+            })
+          ),
+        }),
+        extractedEntities: v.array(v.string()),
+        processingSuccess: v.boolean(),
+        errorMessage: v.optional(v.string()),
+        processingTimeMs: v.optional(v.number()), // LangExtract processing time
+        langExtractVersion: v.optional(v.string()), // Track LangExtract library version
+      })
+    ),
+
     status: v.union(
       v.literal('processing'),
       v.literal('completed'),
@@ -322,6 +370,7 @@ export default defineSchema({
       'modelType',
       'createdAt',
     ]),
+  // Note: LangExtract indexes would require custom queries due to nested object structure
 
   // Relationship Health Scores - Enhanced for comprehensive tracking
   healthScores: defineTable({
@@ -1465,4 +1514,44 @@ export default defineSchema({
     .index('by_severity_detected', ['severity', 'detectedAt'])
     .index('by_status_detected', ['status', 'detectedAt'])
     .index('by_detected_at', ['detectedAt']),
+
+  // LangExtract Performance Metrics (Story LangExtract-3)
+  langExtractMetrics: defineTable({
+    userId: v.id('users'),
+    entryId: v.id('journalEntries'),
+    processingTimeMs: v.number(),
+    success: v.boolean(),
+    errorMessage: v.optional(v.string()),
+    extractedEntitiesCount: v.number(),
+    structuredDataSize: v.object({
+      emotions: v.number(),
+      themes: v.number(),
+      triggers: v.number(),
+      communication: v.number(),
+      relationships: v.number(),
+    }),
+    langExtractVersion: v.string(),
+    fallbackUsed: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index('by_user', ['userId'])
+    .index('by_success', ['success'])
+    .index('by_created_at', ['createdAt'])
+    .index('by_user_created', ['userId', 'createdAt']),
+
+  // LangExtract Aggregate Metrics (Story LangExtract-3)
+  langExtractAggregateMetrics: defineTable({
+    hourBucket: v.number(), // Hour timestamp for aggregation
+    totalRequests: v.number(),
+    successfulRequests: v.number(),
+    failedRequests: v.number(),
+    totalProcessingTime: v.number(),
+    averageProcessingTime: v.number(),
+    totalEntitiesExtracted: v.number(),
+    fallbackUsageCount: v.number(),
+    createdAt: v.number(),
+    lastUpdated: v.number(),
+  })
+    .index('by_hour', ['hourBucket'])
+    .index('by_created_at', ['createdAt']),
 })

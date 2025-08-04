@@ -36,6 +36,15 @@ Welcome to the comprehensive documentation for Resonant, an AI-powered relations
 - [Architecture Decision Records](architecture/architecture-decision-records.md)
 - [Coding Standards](architecture/coding-standards.md)
 
+### 🧠 **LangExtract AI Integration** ⭐ **Recently Completed**
+
+- **[Epic: LangExtract Integration](stories/epic-langextract-integration.md)** - Complete epic overview and technical requirements
+- **[Story 1: Core Integration](stories/story-langextract-1-core-integration.md)** - LangExtract preprocessing implementation with feature flags
+- **[Story 2: Enhanced Data Schema](stories/story-langextract-2-enhanced-data-schema.md)** - Database schema and structured insights UI
+- **[Story 3: Integration Testing](stories/story-langextract-3-integration-testing.md)** - Comprehensive testing and production readiness
+- **[Feature Flag Management](procedures/langextract-feature-flag-management.md)** - Complete deployment lifecycle procedures
+- **[Deployment & Rollback Procedures](procedures/langextract-deployment-rollback.md)** - Emergency procedures and rollout strategy
+
 ### 🧪 **Testing Strategy**
 
 - [Testing Strategy Framework](testing/testing-strategy-framework.md) - Overview & philosophy
