@@ -110,6 +110,7 @@ jest.mock('@/hooks/use-convex-user', () => ({
     isCreating: false,
     error: null,
   })),
+  useConvexUserId: jest.fn(() => 'test-convex-user-id'),
 }))
 
 // Mock useIsClient hook

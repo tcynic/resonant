@@ -31,6 +31,23 @@ jest.mock('convex/react', () => ({
   ConvexReactClient: jest.fn(),
 }))
 
+// Mock useConvexUser hook specifically for this test - MUST come after convex/react mock
+jest.mock('@/hooks/use-convex-user', () => ({
+  useConvexUser: jest.fn(() => ({
+    convexUser: {
+      _id: 'test-convex-user-id',
+      clerkId: 'test-user-id',
+      name: 'John Test',
+      email: 'john@test.com',
+      createdAt: Date.now(),
+    },
+    isLoading: false,
+    isCreating: false,
+    error: null,
+  })),
+  useConvexUserId: jest.fn(() => 'test-convex-user-id'),
+}))
+
 // Mock dashboard components for faster rendering
 jest.mock('@/components/features/dashboard/health-score-card', () => {
   return function MockHealthScoreCard({
@@ -212,6 +229,7 @@ const initialTrendData = {
 }
 
 import { useQuery } from 'convex/react'
+import { useConvexUser } from '@/hooks/use-convex-user'
 
 describe('Dashboard Integration Tests', () => {
   let queryCallCount = 0
@@ -230,6 +248,23 @@ describe('Dashboard Integration Tests', () => {
       recentActivity: initialRecentActivity,
       trendData: initialTrendData,
     }
+
+    // Ensure useConvexUser mock is properly configured
+    ;(
+      useConvexUser as jest.MockedFunction<typeof useConvexUser>
+    ).mockReturnValue({
+      convexUser: {
+        _id: 'test-convex-user-id',
+        clerkId: 'test-user-id',
+        name: 'John Test',
+        email: 'john@test.com',
+        createdAt: Date.now(),
+      },
+      isLoading: false,
+      isCreating: false,
+      error: null,
+    })
+
     // Note: The dashboard component currently has useQuery calls disabled/commented out
     // and hardcoded to null, so these tests are currently disabled until the queries are re-enabled
     ;(useQuery as jest.MockedFunction<typeof useQuery>).mockImplementation(

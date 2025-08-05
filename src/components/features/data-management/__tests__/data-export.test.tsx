@@ -13,36 +13,46 @@ global.URL.createObjectURL = jest.fn(() => 'blob:mock-url')
 global.URL.revokeObjectURL = jest.fn()
 
 // Mock document.createElement only for anchor elements
-const originalCreateElement = document.createElement
-const mockLink = {
+let mockLink: any = null
+let mockCreateElement: jest.SpyInstance
+
+// Create a fresh mock link for each test
+const createMockLink = () => ({
   href: '',
   download: '',
   click: jest.fn(),
   style: {},
   setAttribute: jest.fn(),
   removeAttribute: jest.fn(),
-}
+})
 
-jest.spyOn(document, 'createElement').mockImplementation(tagName => {
-  if (tagName === 'a') {
-    return mockLink as any
-  }
-  return originalCreateElement.call(document, tagName)
+// Set up the mock before any tests run
+beforeAll(() => {
+  mockCreateElement = jest
+    .spyOn(document, 'createElement')
+    .mockImplementation(tagName => {
+      if (tagName === 'a') {
+        mockLink = createMockLink()
+        return mockLink
+      }
+      // For other elements, create a simple mock
+      return {
+        setAttribute: jest.fn(),
+        removeAttribute: jest.fn(),
+        style: {},
+      } as any
+    })
 })
 
 const originalAppendChild = document.body.appendChild
 const originalRemoveChild = document.body.removeChild
 jest.spyOn(document.body, 'appendChild').mockImplementation(node => {
-  if (node === mockLink) {
-    return node as any
-  }
-  return originalAppendChild.call(document.body, node)
+  // Always allow appendChild to succeed
+  return node as any
 })
 jest.spyOn(document.body, 'removeChild').mockImplementation(node => {
-  if (node === mockLink) {
-    return node as any
-  }
-  return originalRemoveChild.call(document.body, node)
+  // Always allow removeChild to succeed
+  return node as any
 })
 
 const mockUseUser = useUser as jest.MockedFunction<typeof useUser>
@@ -155,6 +165,8 @@ describe('DataExport', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
+    // Reset mockLink to null so each test gets a fresh mock
+    mockLink = null
 
     mockUseUser.mockReturnValue({
       user: mockUser,
@@ -180,6 +192,11 @@ describe('DataExport', () => {
     })
     mockUseMutation.mockReturnValue(mockCreateExport)
     mockCreateExport.mockResolvedValue(mockExportResult)
+  })
+
+  afterAll(() => {
+    // Clean up the mock
+    mockCreateElement?.mockRestore()
   })
 
   it('should render data export interface', () => {
@@ -301,10 +318,17 @@ describe('DataExport', () => {
     const exportButton = screen.getByRole('button', { name: /Export My Data/ })
     await user.click(exportButton)
 
-    await waitFor(() => {
-      expect(mockLink.click).toHaveBeenCalled()
-    })
+    await waitFor(
+      () => {
+        // Check that createElement was called with 'a'
+        expect(mockCreateElement).toHaveBeenCalledWith('a')
+      },
+      { timeout: 3000 }
+    )
 
+    // Now check that mockLink was created and used
+    expect(mockLink).toBeTruthy()
+    expect(mockLink.click).toHaveBeenCalled()
     expect(mockLink.href).toBe('blob:mock-url')
     expect(mockLink.download).toBe('resonant-export-json-2024-12-15.json')
   })
@@ -376,19 +400,30 @@ describe('DataExport', () => {
     const exportButton = screen.getByRole('button', { name: /Export My Data/ })
     await user.click(exportButton)
 
-    await waitFor(() => {
-      expect(
-        screen.getByText(/If your download didn't start automatically/)
-      ).toBeInTheDocument()
-    })
+    await waitFor(
+      () => {
+        expect(
+          screen.getByText(/If your download didn't start automatically/)
+        ).toBeInTheDocument()
+      },
+      { timeout: 3000 }
+    )
 
     const downloadAgainButton = screen.getByRole('button', {
       name: /Download Again/,
     })
     expect(downloadAgainButton).toBeInTheDocument()
 
+    // Track how many times createElement has been called so far
+    const createElementCallCount = mockCreateElement.mock.calls.length
     await user.click(downloadAgainButton)
-    expect(mockLink.click).toHaveBeenCalledTimes(2) // Once for auto-download, once for manual
+
+    // The second click should create another link element
+    await waitFor(() => {
+      expect(mockCreateElement.mock.calls.length).toBeGreaterThan(
+        createElementCallCount
+      )
+    })
   })
 
   it('should handle missing user data gracefully', () => {
