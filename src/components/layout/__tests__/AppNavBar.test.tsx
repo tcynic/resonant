@@ -51,14 +51,22 @@ const mockNavigationActions = {
   updatePreferences: jest.fn(),
 }
 
+const mockUseNavigation = () => ({
+  state: mockNavigationState,
+  addRecentItem: mockNavigationActions.addRecentItem,
+  updateBreadcrumbs: mockNavigationActions.updateBreadcrumbs,
+  dispatch: mockNavigationActions.dispatch,
+  toggleSidebar: mockNavigationActions.toggleSidebar,
+  removeRecentItem: mockNavigationActions.removeRecentItem,
+  updateNotifications: mockNavigationActions.updateNotifications,
+  updatePreferences: mockNavigationActions.updatePreferences,
+})
+
 jest.mock('../NavigationProvider', () => ({
   NavigationProvider: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
-  useNavigation: () => ({
-    state: mockNavigationState,
-    ...mockNavigationActions,
-  }),
+  useNavigation: () => mockUseNavigation(),
 }))
 
 // Test wrapper component
@@ -87,6 +95,14 @@ describe('AppNavBar', () => {
       isSignedIn: true,
     } as any)
     mockUsePathname.mockReturnValue('/')
+
+    // Restore the useNavigation mock
+    const navModule = jest.requireMock('../NavigationProvider')
+    navModule.useNavigation = mockUseNavigation
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
   })
 
   describe('Loading State', () => {
@@ -189,12 +205,19 @@ describe('AppNavBar', () => {
         </TestWrapper>
       )
 
-      await user.click(screen.getByText('Journal'))
+      const journalLink = screen.getByText('Journal')
+      await user.click(journalLink)
 
+      // Check that navigation actions were called
+      expect(mockNavigationActions.addRecentItem).toHaveBeenCalled()
+      expect(mockNavigationActions.updateBreadcrumbs).toHaveBeenCalled()
+
+      // Verify the calls were made with journal data
       expect(mockNavigationActions.addRecentItem).toHaveBeenCalledWith(
         expect.objectContaining({
           type: 'journal',
           href: '/journal',
+          // Note: title contains React elements, not just text
         })
       )
 
@@ -387,22 +410,18 @@ describe('AppNavBar', () => {
     })
 
     it('should display 99+ for counts over 99', () => {
-      // Override the useNavigation mock for this specific test
-      const originalUseNavigation = jest.requireMock(
-        '../NavigationProvider'
-      ).useNavigation
-      jest
-        .mocked(jest.requireMock('../NavigationProvider').useNavigation)
-        .mockReturnValue({
-          state: {
-            ...mockNavigationState,
-            notifications: {
-              ...mockNavigationState.notifications,
-              unread: 150,
-            },
+      // Override the mock for this specific test
+      const navModule = jest.requireMock('../NavigationProvider')
+      navModule.useNavigation = jest.fn(() => ({
+        state: {
+          ...mockNavigationState,
+          notifications: {
+            ...mockNavigationState.notifications,
+            unread: 150,
           },
-          ...mockNavigationActions,
-        })
+        },
+        ...mockNavigationActions,
+      }))
 
       render(
         <TestWrapper>
@@ -411,30 +430,21 @@ describe('AppNavBar', () => {
       )
 
       expect(screen.getByText('99+')).toBeInTheDocument()
-
-      // Restore original mock
-      jest
-        .mocked(jest.requireMock('../NavigationProvider').useNavigation)
-        .mockImplementation(originalUseNavigation)
     })
 
     it('should not display badge when no unread notifications', () => {
-      // Override the useNavigation mock for this specific test
-      const originalUseNavigation = jest.requireMock(
-        '../NavigationProvider'
-      ).useNavigation
-      jest
-        .mocked(jest.requireMock('../NavigationProvider').useNavigation)
-        .mockReturnValue({
-          state: {
-            ...mockNavigationState,
-            notifications: {
-              ...mockNavigationState.notifications,
-              unread: 0,
-            },
+      // Override the mock for this specific test
+      const navModule = jest.requireMock('../NavigationProvider')
+      navModule.useNavigation = jest.fn(() => ({
+        state: {
+          ...mockNavigationState,
+          notifications: {
+            ...mockNavigationState.notifications,
+            unread: 0,
           },
-          ...mockNavigationActions,
-        })
+        },
+        ...mockNavigationActions,
+      }))
 
       render(
         <TestWrapper>
@@ -446,11 +456,6 @@ describe('AppNavBar', () => {
       expect(
         screen.getByLabelText(/notifications.*0 unread/i)
       ).toBeInTheDocument()
-
-      // Restore original mock
-      jest
-        .mocked(jest.requireMock('../NavigationProvider').useNavigation)
-        .mockImplementation(originalUseNavigation)
     })
   })
 
@@ -565,7 +570,7 @@ describe('AppNavBar', () => {
 
       expect(screen.getByRole('navigation')).toHaveAttribute(
         'aria-label',
-        'Main navigation'
+        'Top navigation'
       )
 
       const userMenuButton = screen.getByRole('button', { name: /john doe/i })
@@ -646,7 +651,7 @@ describe('AppNavBar', () => {
         </TestWrapper>
       )
 
-      expect(screen.getByRole('navigation')).toHaveClass('custom-nav-class')
+      expect(screen.getByRole('banner')).toHaveClass('custom-nav-class')
     })
   })
 

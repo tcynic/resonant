@@ -48,7 +48,7 @@ export function useAutoSave(
 
   // Auto-save effect
   useEffect(() => {
-    if (!enabled || !debouncedData.content.trim()) {
+    if (!enabled || !debouncedData || !debouncedData.content?.trim()) {
       return
     }
 

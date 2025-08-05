@@ -81,6 +81,12 @@ jest.mock('@/convex/_generated/api', () => ({
     relationships: {
       getByUserId: { _isConvexFunction: true },
     },
+    dashboard: {
+      getDashboardData: { _isConvexFunction: true },
+      getDashboardStats: { _isConvexFunction: true },
+      getRecentActivity: { _isConvexFunction: true },
+      getDashboardTrends: { _isConvexFunction: true },
+    },
   },
 }))
 
