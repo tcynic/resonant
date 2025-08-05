@@ -97,7 +97,7 @@ describe('TimingControls', () => {
     expect(mockProps.onTimezoneChange).toHaveBeenCalledWith('Europe/London')
   })
 
-  it.skip('shows detected timezone option when different from current', async () => {
+  it('shows detected timezone option when different from current', async () => {
     render(<TimingControls {...mockProps} />)
 
     // Wait for the useEffect to set the detected timezone - look for the detected label
@@ -106,7 +106,7 @@ describe('TimingControls', () => {
     })
   })
 
-  it.skip('allows quick selection of detected timezone', async () => {
+  it('allows quick selection of detected timezone', async () => {
     const user = userEvent.setup()
     render(<TimingControls {...mockProps} />)
 

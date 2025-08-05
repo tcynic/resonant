@@ -76,9 +76,80 @@ jest.mock('next/navigation', () => ({
   }),
 }))
 
-// Mock Convex
+// Mock Convex with flexible implementations
 jest.mock('convex/react', () => ({
-  useQuery: jest.fn(() => null),
+  useQuery: jest.fn((queryRef, args) => {
+    // Skip queries marked as 'skip'
+    if (args === 'skip') return null
+    
+    // Return mock data based on query type
+    const queryStr = String(queryRef)
+    
+    
+    if (queryStr.includes('getUserByClerkId') || queryStr.includes('users.getUserByClerkId')) {
+      return {
+        _id: 'test-convex-user-id',
+        clerkId: 'test-user-id',
+        name: 'Test User',
+        email: 'test@example.com',
+        createdAt: Date.now(),
+        preferences: {
+          reminderSettings: {
+            enabled: true,
+            frequency: 'daily',
+            preferredTime: '09:00',
+            timezone: 'America/New_York',
+            doNotDisturbStart: '22:00',
+            doNotDisturbEnd: '07:00',
+            reminderTypes: {
+              gentleNudge: true,
+              relationshipFocus: true,
+              healthScoreAlerts: false,
+            },
+          },
+        },
+      }
+    }
+    if (queryStr.includes('getUserReminderAnalytics') || queryStr.includes('notifications.getUserReminderAnalytics')) {
+      return {
+        totalReminders: 15,
+        clickedReminders: 8,
+        clickThroughRate: 53.3,
+        engagementScore: 72,
+        deliveredReminders: 12,
+        dismissedReminders: 2,
+      }
+    }
+    if (queryStr.includes('getLatestByUserId')) {
+      return [
+        {
+          _id: 'test-health-score-id',
+          userId: 'test-convex-user-id',
+          relationshipId: 'test-relationship-id',
+          overallScore: 85,
+          communicationScore: 90,
+          intimacyScore: 80,
+          conflictResolutionScore: 85,
+          createdAt: Date.now(),
+        }
+      ]
+    }
+    if (queryStr.includes('getByUserId')) {
+      return [
+        {
+          _id: 'test-entry-id',
+          userId: 'test-convex-user-id',
+          content: 'Test journal entry',
+          mood: 'happy',
+          tags: ['test'],
+          createdAt: Date.now(),
+        }
+      ]
+    }
+    
+    // Default return null for unhandled queries
+    return null
+  }),
   useMutation: jest.fn(() => jest.fn()),
   useAction: jest.fn(() => jest.fn()),
   ConvexProvider: ({ children }) => children,

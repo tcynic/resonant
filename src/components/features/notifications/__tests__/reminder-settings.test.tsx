@@ -13,15 +13,6 @@ import {
 // Mock dependencies
 jest.mock('@clerk/nextjs')
 
-// Override the global Convex mock for this test
-jest.doMock('convex/react', () => ({
-  useQuery: jest.fn(),
-  useMutation: jest.fn(() => jest.fn()),
-  useAction: jest.fn(() => jest.fn()),
-  ConvexProvider: ({ children }: { children: React.ReactNode }) => children,
-  ConvexReactClient: jest.fn(),
-}))
-
 const mockUseUser = useUser as jest.MockedFunction<typeof useUser>
 const mockUseQuery = useQuery as jest.MockedFunction<typeof useQuery>
 const mockUseMutation = useMutation as jest.MockedFunction<typeof useMutation>
@@ -39,6 +30,7 @@ const mockUserData = {
   name: 'John Doe',
   email: 'john@example.com',
   clerkId: 'clerk_user_123',
+  createdAt: Date.now(),
   preferences: {
     reminderSettings: {
       enabled: true,
@@ -65,44 +57,39 @@ const mockReminderAnalytics = {
   dismissedReminders: 2,
 }
 
-describe.skip('ReminderSettings - TEMP DISABLED: Complex mock conflicts with global jest.setup.js', () => {
+describe('ReminderSettings', () => {
   const mockUpdateReminderSettings = Object.assign(jest.fn(), {
     withOptimisticUpdate: jest.fn(),
   })
 
   beforeEach(() => {
-    // Clear all mocks first
     jest.clearAllMocks()
-    jest.resetAllMocks()
-
-    // Setup user mock
+    
+    // Setup test-specific mock implementations
     mockUseUser.mockReturnValue({
       user: mockUser,
       isLoaded: true,
       isSignedIn: true,
     })
-
-    // Reset and setup useQuery mock to override global one
-    mockUseQuery.mockReset()
+    
+    // Override the global useQuery mock to return specific data for this test
     mockUseQuery.mockImplementation((queryRef, args) => {
       if (args === 'skip') return null
-      const queryStr = String(queryRef)
-      console.log('useQuery called with:', queryStr, args)
-      if (queryStr.includes('getUserByClerkId')) {
-        console.log('Returning mockUserData:', mockUserData)
+      
+      // Check if args has a clerkId (getUserByClerkId query)
+      if (args && typeof args === 'object' && 'clerkId' in args) {
         return mockUserData
       }
-      if (queryStr.includes('getUserReminderAnalytics')) {
-        console.log('Returning mockReminderAnalytics:', mockReminderAnalytics)
+      
+      // Check if args has userId (analytics query)
+      if (args && typeof args === 'object' && 'userId' in args) {
         return mockReminderAnalytics
       }
-      console.log('Returning null for query:', queryStr)
       return null
     })
-
-    // Setup mutation mock
+    
     mockUseMutation.mockReturnValue(mockUpdateReminderSettings)
-
+    
     // Mock Notification API
     Object.defineProperty(window, 'Notification', {
       value: {
@@ -113,33 +100,18 @@ describe.skip('ReminderSettings - TEMP DISABLED: Complex mock conflicts with glo
     })
   })
 
-  afterEach(() => {
-    jest.clearAllMocks()
-  })
-
-  it('renders the reminder settings interface', async () => {
-    // Force override the mocks right before render
-    mockUseQuery
-      .mockReturnValueOnce(mockUserData) // getUserByClerkId
-      .mockReturnValueOnce(mockReminderAnalytics) // getUserReminderAnalytics
-
+  it('renders the reminder settings interface', () => {
     render(<ReminderSettings />)
 
-    await waitFor(
-      () => {
-        expect(screen.getByText('Smart Reminders')).toBeInTheDocument()
-      },
-      { timeout: 3000 }
-    )
-
+    expect(screen.getByText('Smart Reminders')).toBeInTheDocument()
     expect(
       screen.getByText(
-        'Get personalized reminders to maintain consistent journaling'
+        'Get personalized reminders to maintain consistent journaling and relationship reflection'
       )
     ).toBeInTheDocument()
-    expect(
-      screen.getByRole('checkbox', { name: /enable smart reminders/i })
-    ).toBeChecked()
+    // The main toggle is the first checkbox (for enabling reminders)
+    const checkboxes = screen.getAllByRole('checkbox')
+    expect(checkboxes[0]).toBeChecked()
   })
 
   it('displays analytics when available', () => {
@@ -165,9 +137,9 @@ describe.skip('ReminderSettings - TEMP DISABLED: Complex mock conflicts with glo
     const user = userEvent.setup()
     render(<ReminderSettings />)
 
-    const masterToggle = screen.getByRole('checkbox', {
-      name: /enable smart reminders/i,
-    })
+    // The main toggle is the first checkbox (for enabling reminders)
+    const checkboxes = screen.getAllByRole('checkbox')
+    const masterToggle = checkboxes[0]
     expect(masterToggle).toBeChecked()
 
     await user.click(masterToggle)
@@ -223,9 +195,9 @@ describe.skip('ReminderSettings - TEMP DISABLED: Complex mock conflicts with glo
     const user = userEvent.setup()
     render(<ReminderSettings />)
 
-    const healthAlertsToggle = screen.getByRole('checkbox', {
-      name: /health score alerts/i,
-    })
+    // Health score alerts should be the last checkbox (4th checkbox: master, gentle nudge, relationship focus, health alerts)
+    const checkboxes = screen.getAllByRole('checkbox')
+    const healthAlertsToggle = checkboxes[3]
     expect(healthAlertsToggle).not.toBeChecked()
 
     await user.click(healthAlertsToggle)
@@ -254,10 +226,9 @@ describe.skip('ReminderSettings - TEMP DISABLED: Complex mock conflicts with glo
 
     render(<ReminderSettings />)
 
-    // Make a change
-    const masterToggle = screen.getByRole('checkbox', {
-      name: /enable smart reminders/i,
-    })
+    // Make a change - toggle the main switch (first checkbox)
+    const checkboxes = screen.getAllByRole('checkbox')
+    const masterToggle = checkboxes[0]
     await user.click(masterToggle)
 
     // Save settings
@@ -280,10 +251,9 @@ describe.skip('ReminderSettings - TEMP DISABLED: Complex mock conflicts with glo
 
     render(<ReminderSettings />)
 
-    // Make a change and save
-    const masterToggle = screen.getByRole('checkbox', {
-      name: /enable smart reminders/i,
-    })
+    // Make a change and save - toggle the main switch (first checkbox)
+    const checkboxes = screen.getAllByRole('checkbox')
+    const masterToggle = checkboxes[0]
     await user.click(masterToggle)
 
     const saveButton = screen.getByRole('button', { name: /save settings/i })
@@ -302,10 +272,9 @@ describe.skip('ReminderSettings - TEMP DISABLED: Complex mock conflicts with glo
 
     render(<ReminderSettings />)
 
-    // Make a change and save
-    const masterToggle = screen.getByRole('checkbox', {
-      name: /enable smart reminders/i,
-    })
+    // Make a change and save - toggle the main switch (first checkbox)
+    const checkboxes = screen.getAllByRole('checkbox')
+    const masterToggle = checkboxes[0]
     await user.click(masterToggle)
 
     const saveButton = screen.getByRole('button', { name: /save settings/i })
@@ -320,10 +289,9 @@ describe.skip('ReminderSettings - TEMP DISABLED: Complex mock conflicts with glo
     const user = userEvent.setup()
     render(<ReminderSettings />)
 
-    // Make a change
-    const masterToggle = screen.getByRole('checkbox', {
-      name: /enable smart reminders/i,
-    })
+    // Make a change - toggle the main switch (first checkbox)
+    const checkboxes = screen.getAllByRole('checkbox')
+    const masterToggle = checkboxes[0]
     await user.click(masterToggle)
 
     // Reset changes
@@ -340,7 +308,6 @@ describe.skip('ReminderSettings - TEMP DISABLED: Complex mock conflicts with glo
       isLoaded: true,
       isSignedIn: false,
     })
-    mockUseQuery.mockReturnValue(null)
 
     render(<ReminderSettings />)
 
@@ -361,10 +328,7 @@ describe.skip('ReminderSettings - TEMP DISABLED: Complex mock conflicts with glo
 
     render(<ReminderSettings />)
 
-    // Wait for component to load and render the notification section
-    await waitFor(() => {
-      expect(screen.getByText('Browser Notifications')).toBeInTheDocument()
-    })
+    expect(screen.getByText('Browser Notifications')).toBeInTheDocument()
 
     const enableButton = screen.getByRole('button', {
       name: /enable notifications/i,

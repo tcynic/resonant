@@ -18,18 +18,7 @@ jest.mock('@clerk/nextjs', () => ({
   }),
 }))
 
-// Override global mock for fine-grained control in this test
-jest.mock('convex/react', () => ({
-  useQuery: jest.fn(),
-  useMutation: jest.fn(() => jest.fn()),
-  useAction: jest.fn(() => jest.fn()),
-  usePaginatedQuery: jest.fn(),
-  Authenticated: ({ children }: any) => children,
-  Unauthenticated: ({ children }: any) => children,
-  AuthLoading: ({ children }: any) => children,
-  ConvexProvider: ({ children }: any) => children,
-  ConvexReactClient: jest.fn(),
-}))
+// Use global Convex mocks (no override needed)
 
 // Mock useConvexUser hook specifically for this test - MUST come after convex/react mock
 jest.mock('@/hooks/use-convex-user', () => ({
@@ -306,7 +295,7 @@ describe('Dashboard Integration Tests', () => {
     ).toBeInTheDocument()
   })
 
-  it.skip('should update when new journal entry affects health score - DISABLED: queries are hardcoded to null', async () => {
+  it('should update when new journal entry affects health score', async () => {
     const { rerender } = render(<DashboardContent />)
 
     // Verify initial state
@@ -353,7 +342,7 @@ describe('Dashboard Integration Tests', () => {
     })
   })
 
-  it.skip('should update recent activity when new entries are added - DISABLED: queries are hardcoded to null', async () => {
+  it('should update recent activity when new entries are added', async () => {
     const { rerender } = render(<DashboardContent />)
 
     // Verify initial activity count
@@ -380,7 +369,7 @@ describe('Dashboard Integration Tests', () => {
     })
   })
 
-  it.skip('should update trend chart when new data points are available - DISABLED: queries are hardcoded to null', async () => {
+  it('should update trend chart when new data points are available', async () => {
     const { rerender } = render(<DashboardContent />)
 
     // Verify initial trend data
@@ -410,7 +399,7 @@ describe('Dashboard Integration Tests', () => {
     })
   })
 
-  it.skip('should handle real-time updates when new relationship is added - DISABLED: queries are hardcoded to null', async () => {
+  it('should handle real-time updates when new relationship is added', async () => {
     const { rerender } = render(<DashboardContent />)
 
     // Verify initial relationship count
@@ -485,7 +474,7 @@ describe('Dashboard Integration Tests', () => {
     expect(relationshipNamesText).toContain('Alex')
   })
 
-  it.skip('should show real-time indicator when data is updated - DISABLED: queries are hardcoded to null', async () => {
+  it('should show real-time indicator when data is updated', async () => {
     render(<DashboardContent />)
 
     // Verify real-time indicator shows updated state
@@ -494,14 +483,14 @@ describe('Dashboard Integration Tests', () => {
     )
   })
 
-  it.skip('should handle connection status updates - DISABLED: queries are hardcoded to null', async () => {
+  it('should handle connection status updates', async () => {
     render(<DashboardContent />)
 
     // Verify connection status is shown
     expect(screen.getByTestId('connection-status')).toHaveTextContent('Live')
   })
 
-  it.skip('should maintain data consistency across all dashboard components - DISABLED: queries are hardcoded to null', async () => {
+  it('should maintain data consistency across all dashboard components', async () => {
     const { rerender } = render(<DashboardContent />)
 
     // Simulate comprehensive data update affecting all components
