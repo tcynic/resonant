@@ -1,1 +1,1 @@
-Run prettier than commit and push.
+Run prettier then commit and push.

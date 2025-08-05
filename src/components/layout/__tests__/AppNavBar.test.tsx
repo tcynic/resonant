@@ -387,72 +387,70 @@ describe('AppNavBar', () => {
     })
 
     it('should display 99+ for counts over 99', () => {
-      // Create a temporary mock for this specific test
-      const mockNavigationModule = jest.createMockFromModule(
+      // Override the useNavigation mock for this specific test
+      const originalUseNavigation = jest.requireMock(
         '../NavigationProvider'
-      ) as any
-      mockNavigationModule.useNavigation = jest.fn(() => ({
-        state: {
-          ...mockNavigationState,
-          notifications: {
-            ...mockNavigationState.notifications,
-            unread: 150,
+      ).useNavigation
+      jest
+        .mocked(jest.requireMock('../NavigationProvider').useNavigation)
+        .mockReturnValue({
+          state: {
+            ...mockNavigationState,
+            notifications: {
+              ...mockNavigationState.notifications,
+              unread: 150,
+            },
           },
-        },
-        ...mockNavigationActions,
-      }))
+          ...mockNavigationActions,
+        })
 
-      jest.doMock('../NavigationProvider', () => mockNavigationModule)
+      render(
+        <TestWrapper>
+          <AppNavBar />
+        </TestWrapper>
+      )
 
-      // Re-import the component to use the new mock
-      jest.isolateModules(() => {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const { default: TestAppNavBar } = require('../AppNavBar')
+      expect(screen.getByText('99+')).toBeInTheDocument()
 
-        render(
-          <TestWrapper>
-            <TestAppNavBar />
-          </TestWrapper>
-        )
-
-        expect(screen.getByText('99+')).toBeInTheDocument()
-      })
+      // Restore original mock
+      jest
+        .mocked(jest.requireMock('../NavigationProvider').useNavigation)
+        .mockImplementation(originalUseNavigation)
     })
 
     it('should not display badge when no unread notifications', () => {
-      // Create a temporary mock for this specific test
-      const mockNavigationModule = jest.createMockFromModule(
+      // Override the useNavigation mock for this specific test
+      const originalUseNavigation = jest.requireMock(
         '../NavigationProvider'
-      ) as any
-      mockNavigationModule.useNavigation = jest.fn(() => ({
-        state: {
-          ...mockNavigationState,
-          notifications: {
-            ...mockNavigationState.notifications,
-            unread: 0,
+      ).useNavigation
+      jest
+        .mocked(jest.requireMock('../NavigationProvider').useNavigation)
+        .mockReturnValue({
+          state: {
+            ...mockNavigationState,
+            notifications: {
+              ...mockNavigationState.notifications,
+              unread: 0,
+            },
           },
-        },
-        ...mockNavigationActions,
-      }))
+          ...mockNavigationActions,
+        })
 
-      jest.doMock('../NavigationProvider', () => mockNavigationModule)
+      render(
+        <TestWrapper>
+          <AppNavBar />
+        </TestWrapper>
+      )
 
-      // Re-import the component to use the new mock
-      jest.isolateModules(() => {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const { default: TestAppNavBar } = require('../AppNavBar')
+      expect(screen.queryByText('0')).not.toBeInTheDocument()
+      expect(
+        screen.getByLabelText(/notifications.*0 unread/i)
+      ).toBeInTheDocument()
 
-        render(
-          <TestWrapper>
-            <TestAppNavBar />
-          </TestWrapper>
-        )
-
-        expect(screen.queryByText('0')).not.toBeInTheDocument()
-        expect(
-          screen.getByLabelText(/notifications.*0 unread/i)
-        ).toBeInTheDocument()
-      })
+      // Restore original mock
+      jest
+        .mocked(jest.requireMock('../NavigationProvider').useNavigation)
+        .mockImplementation(originalUseNavigation)
     })
   })
 

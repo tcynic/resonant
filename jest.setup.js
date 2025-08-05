@@ -83,3 +83,29 @@ jest.mock('@/convex/_generated/api', () => ({
     },
   },
 }))
+
+// Global cleanup after each test
+afterEach(() => {
+  // Clear all mocks to prevent memory leaks
+  jest.clearAllMocks()
+  jest.restoreAllMocks()
+
+  // Clear any pending timers
+  jest.clearAllTimers()
+
+  // Restore console methods
+  global.console = {
+    ...console,
+    info: jest.fn(),
+    warn: jest.fn(),
+    log: jest.fn(),
+    debug: jest.fn(),
+    error: originalConsole.error,
+  }
+})
+
+// Clean up after all tests
+afterAll(() => {
+  // Restore original console
+  global.console = originalConsole
+})
