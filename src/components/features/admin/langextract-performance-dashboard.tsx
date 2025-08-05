@@ -51,32 +51,39 @@ interface PerformanceStats {
   }>
 }
 
+interface LangExtractAPI {
+  getLangExtractPerformanceStats: unknown
+  checkLangExtractPerformanceAlerts: unknown
+  getLangExtractErrorAnalysis: unknown
+}
+
 export default function LangExtractPerformanceDashboard({
   className = '',
 }: LangExtractPerformanceDashboardProps) {
   const [selectedTimeRange, setSelectedTimeRange] = React.useState(24)
 
   // Extract function references to avoid complex type inference
-  // @ts-ignore - Complex API type inference issue
-  const langExtractApi = (api as any)['monitoring/langextract_metrics']
+  // @ts-expect-error - Complex API type inference issue with nested monitoring module
+  const langExtractApi = (api as Record<string, unknown>)[
+    'monitoring/langextract_metrics'
+  ] as LangExtractAPI
 
   // Fetch performance statistics
-  const performanceStats: any = useQuery(
+  const performanceStats = useQuery(
     langExtractApi.getLangExtractPerformanceStats,
     { hours: selectedTimeRange }
-  )
+  ) as PerformanceStats | undefined
 
   // Fetch alerts
-  const alerts: any = useQuery(
+  const alerts = useQuery(
     langExtractApi.checkLangExtractPerformanceAlerts,
     {}
-  )
+  ) as AlertType[] | undefined
 
   // Fetch error analysis
-  const errorAnalysis: any = useQuery(
-    langExtractApi.getLangExtractErrorAnalysis,
-    { hours: selectedTimeRange }
-  )
+  const errorAnalysis = useQuery(langExtractApi.getLangExtractErrorAnalysis, {
+    hours: selectedTimeRange,
+  }) as ErrorAnalysis | undefined
 
   const getSuccessRateColor = (rate: number) => {
     if (rate >= 95) return 'text-green-600'
