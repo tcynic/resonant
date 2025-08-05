@@ -28,14 +28,15 @@ interface AIProcessingSummaryProps {
 }
 
 export function AIProcessingSummary({ userId }: AIProcessingSummaryProps) {
-  // Mock queries to match test expectations
-  const activeProcessing = useQuery(
-    api.aiAnalysis.getStatusWithQueue,
+  // Get processing statistics for dashboard display
+  const processingStats = useQuery(
+    api.aiAnalysis.getProcessingStats,
     userId ? { userId } : 'skip'
   )
 
-  const processingStats = useQuery(
-    api.aiAnalysis.getStatusWithQueue,
+  // Get active processing items
+  const activeProcessing = useQuery(
+    api.aiAnalysis.getUserActiveProcessing,
     userId ? { userId } : 'skip'
   )
 
