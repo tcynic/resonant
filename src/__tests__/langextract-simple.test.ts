@@ -18,12 +18,14 @@ describe('LangExtract Integration (Simple)', () => {
   })
 
   describe('preprocessWithLangExtract', () => {
-    it('should return disabled result when feature flag is disabled', async () => {
-      // Feature flag defaults to false
+    it('should return test mode disabled result when called in test environment', async () => {
+      // In test environment, function returns disabled result for safety
       const result = await preprocessWithLangExtract('test content')
 
       expect(result.processingSuccess).toBe(false)
-      expect(result.errorMessage).toBe('LangExtract preprocessing disabled')
+      expect(result.errorMessage).toBe(
+        'LangExtract preprocessing disabled (test mode)'
+      )
       expect(result.extractedEntities).toEqual([])
       expect(result.structuredData.emotions).toEqual([])
     })

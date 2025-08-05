@@ -5,6 +5,40 @@ process.env.NODE_ENV = 'test'
 process.env.AI_RATE_LIMITING_DISABLED = 'true'
 process.env.GOOGLE_GEMINI_API_KEY = 'test-api-key-for-jest'
 
+// LangExtract configuration
+process.env.LANGEXTRACT_ENABLED = 'true'
+process.env.LANGEXTRACT_TIMEOUT_MS = '5000'
+process.env.LANGEXTRACT_MAX_RETRIES = '2'
+process.env.LANGEXTRACT_FALLBACK_ENABLED = 'true'
+
+// AI configuration for comprehensive testing
+process.env.AI_RATE_LIMIT_ENABLED = 'false'
+process.env.AI_COST_TRACKING_ENABLED = 'false'
+process.env.AI_MAX_TOKENS_PER_REQUEST = '1000'
+process.env.AI_TIMEOUT_MS = '5000'
+process.env.AI_ANALYSIS_RATE_LIMIT = '1000'
+process.env.AI_ANALYSIS_BATCH_SIZE = '5'
+process.env.AI_ANALYSIS_TIMEOUT = '10000'
+
+// Suppress JSDOM navigation warnings in console output
+const originalConsoleError = console.error
+console.error = (...args) => {
+  // Suppress specific JSDOM navigation warnings
+  if (
+    args[0] &&
+    args[0].toString &&
+    args[0].toString().includes('Not implemented: navigation')
+  ) {
+    return
+  }
+  // Call original for other errors
+  return originalConsoleError.apply(console, args)
+}
+
+// Mock URL.createObjectURL and revokeObjectURL for file downloads
+global.URL.createObjectURL = jest.fn(() => 'blob:mock-url')
+global.URL.revokeObjectURL = jest.fn()
+
 // Mock console methods to reduce noise during tests
 const originalConsole = { ...console }
 global.console = {
@@ -25,8 +59,31 @@ jest.mock('next/image', () => ({
   },
 }))
 
+// Mock Next.js navigation
+jest.mock('next/navigation', () => ({
+  useRouter: jest.fn(() => ({
+    push: jest.fn(),
+    back: jest.fn(),
+    forward: jest.fn(),
+    refresh: jest.fn(),
+    replace: jest.fn(),
+    prefetch: jest.fn(),
+  })),
+  usePathname: jest.fn(() => '/'),
+  useSearchParams: jest.fn(() => new URLSearchParams()),
+  notFound: jest.fn(() => {
+    throw new Error('Not Found')
+  }),
+}))
+
 // Mock Convex
-jest.mock('convex/react')
+jest.mock('convex/react', () => ({
+  useQuery: jest.fn(() => null),
+  useMutation: jest.fn(() => jest.fn()),
+  useAction: jest.fn(() => jest.fn()),
+  ConvexProvider: ({ children }) => children,
+  ConvexReactClient: jest.fn(),
+}))
 jest.mock('convex-test')
 
 // Mock notification hooks
@@ -80,6 +137,12 @@ jest.mock('@/convex/_generated/api', () => ({
     },
     relationships: {
       getByUserId: { _isConvexFunction: true },
+    },
+    aiAnalysis: {
+      getStatusWithQueue: { _isConvexFunction: true },
+      getByEntryId: { _isConvexFunction: true },
+      create: { _isConvexFunction: true },
+      update: { _isConvexFunction: true },
     },
   },
 }))
