@@ -4,11 +4,6 @@ import { useUser } from '@clerk/nextjs'
 import type { UserResource } from '@clerk/types'
 import { useQuery, useMutation } from 'convex/react'
 import { ReminderSettings } from '../reminder-settings'
-import {
-  setupNotificationMocks,
-  mockUserData,
-  mockReminderAnalytics,
-} from '../test-helpers/notification-test-utils'
 
 // Mock dependencies
 jest.mock('@clerk/nextjs')
@@ -64,32 +59,32 @@ describe('ReminderSettings', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
-    
+
     // Setup test-specific mock implementations
     mockUseUser.mockReturnValue({
       user: mockUser,
       isLoaded: true,
       isSignedIn: true,
     })
-    
+
     // Override the global useQuery mock to return specific data for this test
     mockUseQuery.mockImplementation((queryRef, args) => {
       if (args === 'skip') return null
-      
+
       // Check if args has a clerkId (getUserByClerkId query)
       if (args && typeof args === 'object' && 'clerkId' in args) {
         return mockUserData
       }
-      
+
       // Check if args has userId (analytics query)
       if (args && typeof args === 'object' && 'userId' in args) {
         return mockReminderAnalytics
       }
       return null
     })
-    
+
     mockUseMutation.mockReturnValue(mockUpdateReminderSettings)
-    
+
     // Mock Notification API
     Object.defineProperty(window, 'Notification', {
       value: {

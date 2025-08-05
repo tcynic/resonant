@@ -38,7 +38,10 @@ export default function RealTimeIndicator({
 
   if (isLoading) {
     return (
-      <div className={`flex items-center space-x-2 text-blue-600 ${className}`}>
+      <div
+        className={`flex items-center space-x-2 text-blue-600 ${className}`}
+        data-testid="real-time-indicator"
+      >
         <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
         <span className="text-xs">Updating...</span>
       </div>
@@ -49,6 +52,7 @@ export default function RealTimeIndicator({
     return (
       <div
         className={`flex items-center space-x-2 text-green-600 animate-pulse ${className}`}
+        data-testid="real-time-indicator"
       >
         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
           <path

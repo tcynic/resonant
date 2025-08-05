@@ -284,15 +284,17 @@ describe('Dashboard Integration Tests', () => {
     jest.clearAllMocks()
   })
 
-  it('should display error state when dashboard queries are disabled', async () => {
+  it('should display dashboard content when data is available', async () => {
     render(<DashboardContent />)
 
-    // Since the dashboard queries are currently hardcoded to null,
-    // the component should show the error fallback
-    expect(screen.getByTestId('dashboard-error')).toBeInTheDocument()
-    expect(
-      screen.getByText(/Failed to load dashboard data/)
-    ).toBeInTheDocument()
+    // Now that dashboard queries return mock data,
+    // the component should show the dashboard content
+    await waitFor(() => {
+      expect(screen.getByTestId('health-score-card')).toBeInTheDocument()
+    })
+    expect(screen.getByTestId('trend-chart')).toBeInTheDocument()
+    expect(screen.getByTestId('real-time-indicator')).toBeInTheDocument()
+    expect(screen.getByTestId('connection-status')).toBeInTheDocument()
   })
 
   it('should update when new journal entry affects health score', async () => {

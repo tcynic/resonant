@@ -54,19 +54,15 @@ export const mockBrowserNotifications = {
 }
 
 export function setupNotificationMocks() {
-  const { useUser } = require('@clerk/nextjs')
-  const { useQuery, useMutation } = require('convex/react')
-  const {
-    useBrowserNotifications,
-  } = require('@/hooks/notifications/use-browser-notifications')
-
-  const mockUseUser = useUser as jest.MockedFunction<typeof useUser>
-  const mockUseQuery = useQuery as jest.MockedFunction<typeof useQuery>
-  const mockUseMutation = useMutation as jest.MockedFunction<typeof useMutation>
-  const mockUseBrowserNotifications =
-    useBrowserNotifications as jest.MockedFunction<
-      typeof useBrowserNotifications
-    >
+  // Mock implementation - these will be overridden in test files
+  const mockUseUser = jest.fn() as jest.MockedFunction<() => unknown>
+  const mockUseQuery = jest.fn() as jest.MockedFunction<
+    (queryRef: unknown, args?: unknown) => unknown
+  >
+  const mockUseMutation = jest.fn() as jest.MockedFunction<() => unknown>
+  const mockUseBrowserNotifications = jest.fn() as jest.MockedFunction<
+    () => unknown
+  >
 
   const mockUpdateReminderSettings = Object.assign(jest.fn(), {
     withOptimisticUpdate: jest.fn(),
@@ -83,7 +79,7 @@ export function setupNotificationMocks() {
   })
 
   // Setup Convex queries with proper handling
-  mockUseQuery.mockImplementation((queryRef, args) => {
+  mockUseQuery.mockImplementation((queryRef: unknown, args: unknown) => {
     if (args === 'skip') return null
     const queryStr = String(queryRef)
     if (queryStr.includes('getUserByClerkId')) {
@@ -102,13 +98,10 @@ export function setupNotificationMocks() {
   mockUseBrowserNotifications.mockReturnValue(mockBrowserNotifications)
 
   // Setup Notification API
-  Object.defineProperty(window, 'Notification', {
-    value: {
-      permission: 'granted',
-      requestPermission: jest.fn().mockResolvedValue('granted'),
-    },
-    writable: true,
-  })
+  ;(global as unknown as { Notification: unknown }).Notification = {
+    permission: 'granted',
+    requestPermission: jest.fn(),
+  }
 
   return {
     mockUseUser,
@@ -119,7 +112,7 @@ export function setupNotificationMocks() {
   }
 }
 
-export function createCustomUserData(overrides: any = {}) {
+export function createCustomUserData(overrides: Record<string, unknown> = {}) {
   return {
     ...mockUserData,
     preferences: {
@@ -132,7 +125,7 @@ export function createCustomUserData(overrides: any = {}) {
   }
 }
 
-export function createCustomAnalytics(overrides: any = {}) {
+export function createCustomAnalytics(overrides: Record<string, unknown> = {}) {
   return {
     ...mockReminderAnalytics,
     ...overrides,

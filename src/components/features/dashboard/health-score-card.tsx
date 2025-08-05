@@ -250,7 +250,11 @@ export default function HealthScoreCard({
   }
 
   return (
-    <Card className={`${className}`} padding="md">
+    <Card
+      className={`${className}`}
+      padding="md"
+      data-testid="health-score-card"
+    >
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex-1">
@@ -271,7 +275,10 @@ export default function HealthScoreCard({
                 </div>
               )}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">
+                <h3
+                  className="text-lg font-semibold text-gray-900"
+                  data-testid="relationship-name"
+                >
                   {relationship.name}
                 </h3>
                 <p className="text-sm text-gray-500 capitalize">
@@ -321,6 +328,7 @@ export default function HealthScoreCard({
               <span
                 className={`text-xl font-bold ${getOverallScoreColor(healthScore.overallScore)}`}
                 aria-label={`Health score for ${relationship.name}`}
+                data-testid="health-score"
               >
                 {healthScore.overallScore}
               </span>

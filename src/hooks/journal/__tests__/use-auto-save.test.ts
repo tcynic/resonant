@@ -18,7 +18,7 @@ jest.mock('../../use-debounce', () => ({
   useDebounce: jest.fn(),
 }))
 
-const { useDebounce } = require('../../use-debounce')
+const { useDebounce } = jest.requireActual('../../use-debounce')
 
 // Wrap timer advances in act to handle state updates
 const advanceTimers = (ms: number) => {
@@ -250,7 +250,7 @@ describe('useAutoSave', () => {
         content: 'Content with "quotes" and \n newlines \t tabs',
       }
 
-      const { result } = renderHook(() =>
+      renderHook(() =>
         useAutoSave(specialData, { key: 'test-entry', enabled: true })
       )
 
@@ -279,7 +279,7 @@ describe('useAutoSave', () => {
         tags: undefined,
       }
 
-      const { result } = renderHook(() =>
+      renderHook(() =>
         useAutoSave(incompleteData, { key: 'test-entry', enabled: true })
       )
 
@@ -306,7 +306,7 @@ describe('useAutoSave', () => {
         tags: Array.from({ length: 100 }, (_, i) => `tag${i}`), // Many tags
       }
 
-      const { result } = renderHook(() =>
+      renderHook(() =>
         useAutoSave(largeData, { key: 'test-entry', enabled: true })
       )
 

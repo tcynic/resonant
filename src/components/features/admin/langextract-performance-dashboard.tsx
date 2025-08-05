@@ -9,8 +9,6 @@
 
 import React from 'react'
 import { Card, CardHeader, CardContent } from '@/components/ui/card'
-import { useQuery } from 'convex/react'
-import { api } from '@/convex/_generated/api'
 
 interface LangExtractPerformanceDashboardProps {
   className?: string
@@ -33,22 +31,6 @@ interface ErrorAnalysis {
   errorGroups: ErrorGroup
   errorExamples: ErrorExamples
   failureRate: number
-}
-
-interface PerformanceStats {
-  totalRequests: number
-  successRate: number
-  averageProcessingTime: number
-  totalEntitiesExtracted: number
-  fallbackUsageRate: number
-  hourlyBreakdown: Array<{
-    hour: number
-    timestamp: number
-    requests: number
-    successRate: number
-    averageProcessingTime: number
-    entitiesExtracted: number
-  }>
 }
 
 export default function LangExtractPerformanceDashboard({

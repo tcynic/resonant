@@ -281,7 +281,8 @@ export default function RecentActivity({
               Recent Activity
             </h3>
             <p className="text-sm text-gray-500">
-              {totalCount} entries • {Math.round(analysisRate * 100)}% analyzed
+              <span data-testid="activity-count">{totalCount}</span> entries •{' '}
+              {Math.round(analysisRate * 100)}% analyzed
             </p>
           </div>
           {showViewAll && (
