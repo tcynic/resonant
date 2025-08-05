@@ -301,7 +301,13 @@ export const checkLangExtractPerformanceAlerts = query({
   args: {},
   handler: async ctx => {
     const recentStats = await calculatePerformanceStats(ctx, 1)
-    const alerts = []
+    const alerts: Array<{
+      type: string
+      severity: string
+      message: string
+      value: number
+      threshold: number
+    }> = []
 
     // Alert on high failure rate
     if (recentStats.successRate < 90 && recentStats.totalRequests > 10) {

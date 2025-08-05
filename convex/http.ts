@@ -16,6 +16,8 @@ http.route({
   handler: retryAnalysis,
 })
 
+// Note: LangExtract processing is now handled via internal actions, not HTTP routes
+
 // Clerk webhooks will be configured in a future story
 
 export default http

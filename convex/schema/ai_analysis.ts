@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { langExtractDataSchema } from './langextract-types'
+import { langExtractDataSchema } from './langextract_types'
 
 export const aiAnalysisSchema = {
   entryId: v.id('journalEntries'),

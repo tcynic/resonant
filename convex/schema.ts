@@ -1,6 +1,6 @@
 import { defineSchema, defineTable } from 'convex/server'
 import { v } from 'convex/values'
-import { langExtractDataSchema } from './schema/langextract-types'
+import { langExtractDataSchema } from './schema/langextract_types'
 
 export default defineSchema({
   users: defineTable({
