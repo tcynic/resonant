@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 import React from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -15,9 +16,11 @@ jest.mock('@clerk/nextjs')
 jest.mock('next/navigation')
 
 // Mock next/dynamic to return the mocked SearchContent
-jest.mock('next/dynamic', () => () => {
-  const { SearchContent } = require('../search-content')
-  return SearchContent
+jest.mock('next/dynamic', () => {
+  return () => {
+    const { SearchContent } = require('../search-content')
+    return SearchContent
+  }
 })
 
 // Mock the SearchContent component with state
@@ -83,10 +86,9 @@ jest.mock('../search-content', () => ({
     }
 
     const handleResultClick = (result: any) => {
-      // Mock navigation to journal entry
-      const { useRouter } = require('next/navigation')
-      const router = useRouter()
-      router.push(`/journal/${result._id}`)
+      // Mock navigation to journal entry - using pre-mocked router
+      // Router is mocked at the test level, not called here to avoid hooks rules violation
+      console.log(`Navigate to /journal/${result._id}`)
     }
 
     return (

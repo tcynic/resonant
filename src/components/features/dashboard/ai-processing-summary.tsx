@@ -15,6 +15,14 @@ import { api } from '@/convex/_generated/api'
 import { Id } from '@/convex/_generated/dataModel'
 import { Card, CardHeader, CardContent } from '@/components/ui/card'
 
+interface ProcessingItem {
+  _id: Id<'aiAnalysis'>
+  entryId: Id<'journalEntries'>
+  status: 'processing' | 'completed' | 'failed'
+  priority?: 'normal' | 'high' | 'urgent'
+  queuePosition?: number
+}
+
 interface AIProcessingSummaryProps {
   userId: Id<'users'>
 }
@@ -96,7 +104,7 @@ export function AIProcessingSummary({ userId }: AIProcessingSummaryProps) {
               <h4 className="text-sm font-medium text-gray-900">
                 {activeProcessing.length} Processing
               </h4>
-              {activeProcessing.map((item: any) => (
+              {activeProcessing.map((item: ProcessingItem) => (
                 <div
                   key={item._id}
                   className="flex items-center justify-between p-2 bg-yellow-50 rounded"

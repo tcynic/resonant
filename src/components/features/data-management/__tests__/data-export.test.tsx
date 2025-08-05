@@ -13,7 +13,7 @@ global.URL.createObjectURL = jest.fn(() => 'blob:mock-url')
 global.URL.revokeObjectURL = jest.fn()
 
 // Mock document.createElement only for anchor elements
-let mockLinks: any[] = []
+const mockLinks: any[] = []
 let mockCreateElement: jest.SpyInstance
 
 // Create a fresh mock link for each call
@@ -45,8 +45,6 @@ beforeAll(() => {
     })
 })
 
-const originalAppendChild = document.body.appendChild
-const originalRemoveChild = document.body.removeChild
 jest.spyOn(document.body, 'appendChild').mockImplementation(node => {
   // Always allow appendChild to succeed
   return node as any
