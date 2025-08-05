@@ -28,14 +28,14 @@ describe('AIProcessingSummary', () => {
 
   test('should display processing statistics', () => {
     mockUseQuery
-      .mockReturnValueOnce([]) // getUserActiveProcessing
       .mockReturnValueOnce({
-        // getProcessingStats
+        // getProcessingStats (first query in component)
         totalProcessing: 2,
         completedToday: 5,
         failedToday: 1,
         averageWaitTime: 30000,
       })
+      .mockReturnValueOnce([]) // getUserActiveProcessing (second query in component)
 
     render(<AIProcessingSummary userId={mockUserId} />)
 
@@ -56,14 +56,14 @@ describe('AIProcessingSummary', () => {
     ]
 
     mockUseQuery
-      .mockReturnValueOnce(mockActiveProcessing) // getUserActiveProcessing
       .mockReturnValueOnce({
-        // getProcessingStats
+        // getProcessingStats (first query in component)
         totalProcessing: 1,
         completedToday: 0,
         failedToday: 0,
         averageWaitTime: 0,
       })
+      .mockReturnValueOnce(mockActiveProcessing) // getUserActiveProcessing (second query in component)
 
     render(<AIProcessingSummary userId={mockUserId} />)
 
@@ -74,14 +74,14 @@ describe('AIProcessingSummary', () => {
 
   test('should show empty state when no processing', () => {
     mockUseQuery
-      .mockReturnValueOnce([]) // getUserActiveProcessing
       .mockReturnValueOnce({
-        // getProcessingStats
+        // getProcessingStats (first query in component)
         totalProcessing: 0,
         completedToday: 0,
         failedToday: 0,
         averageWaitTime: 0,
       })
+      .mockReturnValueOnce([]) // getUserActiveProcessing (second query in component)
 
     render(<AIProcessingSummary userId={mockUserId} />)
 
@@ -93,14 +93,14 @@ describe('AIProcessingSummary', () => {
 
   test('should show failed analyses alert', () => {
     mockUseQuery
-      .mockReturnValueOnce([]) // getUserActiveProcessing
       .mockReturnValueOnce({
-        // getProcessingStats
+        // getProcessingStats (first query in component)
         totalProcessing: 0,
         completedToday: 2,
         failedToday: 3,
         averageWaitTime: 0,
       })
+      .mockReturnValueOnce([]) // getUserActiveProcessing (second query in component)
 
     render(<AIProcessingSummary userId={mockUserId} />)
 

@@ -144,6 +144,13 @@ jest.mock('@/convex/_generated/api', () => ({
       getByEntryId: { _isConvexFunction: true },
       create: { _isConvexFunction: true },
       update: { _isConvexFunction: true },
+      getProcessingStats: { _isConvexFunction: true },
+      getUserActiveProcessing: { _isConvexFunction: true },
+    },
+    notifications: {
+      updateReminderSettings: { _isConvexFunction: true },
+      getReminderSettings: { _isConvexFunction: true },
+      getReminderAnalytics: { _isConvexFunction: true },
     },
   },
 }))

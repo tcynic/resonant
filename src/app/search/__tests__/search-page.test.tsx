@@ -58,24 +58,30 @@ jest.mock('../search-content', () => ({
       // Simulate async search with timeout
       setTimeout(() => {
         if (query.length >= 2) {
-          // Simulate search results
-          setSearchResults([
-            {
-              _id: 'entry-1',
-              content: 'Had a great conversation with Sarah about work',
-              relationship: { name: 'Sarah' },
-            },
-            {
-              _id: 'entry-2',
-              content: 'Lunch meeting with John was productive',
-              relationship: { name: 'John' },
-            },
-          ])
-          // Show suggestions for queries that start with "co"
-          if (query.toLowerCase().startsWith('co')) {
-            setSuggestions(['conversation', 'meeting', 'work'])
-          } else {
+          // Return empty results for "nonexistent" query
+          if (query === 'nonexistent') {
+            setSearchResults([])
             setSuggestions([])
+          } else {
+            // Simulate search results
+            setSearchResults([
+              {
+                _id: 'entry-1',
+                content: 'Had a great conversation with Sarah about work',
+                relationship: { name: 'Sarah' },
+              },
+              {
+                _id: 'entry-2',
+                content: 'Lunch meeting with John was productive',
+                relationship: { name: 'John' },
+              },
+            ])
+            // Show suggestions for queries that start with "co"
+            if (query.toLowerCase().startsWith('co')) {
+              setSuggestions(['conversation', 'meeting', 'work'])
+            } else {
+              setSuggestions([])
+            }
           }
         } else {
           setSearchResults([])
@@ -87,8 +93,9 @@ jest.mock('../search-content', () => ({
 
     const handleResultClick = (result: any) => {
       // Mock navigation to journal entry - using pre-mocked router
-      // Router is mocked at the test level, not called here to avoid hooks rules violation
-      console.log(`Navigate to /journal/${result._id}`)
+      const { useRouter } = require('next/navigation')
+      const router = useRouter()
+      router.push(`/journal/${result._id}`)
     }
 
     return (
