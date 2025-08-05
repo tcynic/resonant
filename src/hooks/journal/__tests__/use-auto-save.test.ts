@@ -61,14 +61,21 @@ describe('useAutoSave', () => {
     })
 
     it('should save data when enabled and content exists', async () => {
-      renderHook(() =>
-        useAutoSave(mockData, { key: 'test-entry', enabled: true })
+      // Start with empty data, then change to trigger the effect
+      const { rerender } = renderHook(
+        ({ data }) => useAutoSave(data, { key: 'test-entry', enabled: true }),
+        { initialProps: { data: { content: '', relationshipIds: [] } } }
       )
 
+      act(() => {
+        rerender({ data: mockData })
+      })
+
+      // Wait for debounce delay (500ms default) + internal save delay (100ms)
       await act(async () => {
-        jest.advanceTimersByTime(100) // Trigger save
-        // Wait for any pending updates
-        await Promise.resolve()
+        jest.advanceTimersByTime(700)
+        // Flush any pending promises
+        await new Promise(resolve => setTimeout(resolve, 0))
       })
 
       expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
@@ -99,7 +106,7 @@ describe('useAutoSave', () => {
       expect(mockLocalStorage.setItem).not.toHaveBeenCalled()
     })
 
-    it('should update save status correctly', () => {
+    it('should update save status correctly', async () => {
       const { result } = renderHook(() =>
         useAutoSave(
           { content: '', relationshipIds: [] },
@@ -119,7 +126,12 @@ describe('useAutoSave', () => {
       act(() => {
         rerender({ data: mockData })
       })
-      advanceTimers(100)
+
+      // Wait for debounce delay + internal save delay
+      await act(async () => {
+        jest.advanceTimersByTime(700)
+        await new Promise(resolve => setTimeout(resolve, 0))
+      })
 
       // Should have triggered save operation
       expect(mockLocalStorage.setItem).toHaveBeenCalled()
@@ -132,7 +144,7 @@ describe('useAutoSave', () => {
 
       const beforeSave = new Date()
 
-      advanceTimers(100)
+      advanceTimers(600)
 
       // lastSaved should be set after save
       if (result.current.lastSaved) {
@@ -185,7 +197,7 @@ describe('useAutoSave', () => {
   })
 
   describe('data validation and sanitization', () => {
-    it('should handle special characters in content', () => {
+    it('should handle special characters in content', async () => {
       const specialData = {
         ...mockData,
         content: 'Content with "quotes" and \n newlines \t tabs',
@@ -195,7 +207,10 @@ describe('useAutoSave', () => {
         useAutoSave(specialData, { key: 'test-entry', enabled: true })
       )
 
-      advanceTimers(100)
+      await act(async () => {
+        jest.advanceTimersByTime(700)
+        await new Promise(resolve => setTimeout(resolve, 0))
+      })
 
       expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
         'journal-draft-test-entry',
@@ -203,7 +218,7 @@ describe('useAutoSave', () => {
       )
     })
 
-    it('should handle undefined and null values', () => {
+    it('should handle undefined and null values', async () => {
       const incompleteData = {
         content: 'Valid content',
         relationshipIds: ['rel_123'],
@@ -216,7 +231,10 @@ describe('useAutoSave', () => {
         useAutoSave(incompleteData, { key: 'test-entry', enabled: true })
       )
 
-      advanceTimers(100)
+      await act(async () => {
+        jest.advanceTimersByTime(700)
+        await new Promise(resolve => setTimeout(resolve, 0))
+      })
 
       expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
         'journal-draft-test-entry',
@@ -224,7 +242,7 @@ describe('useAutoSave', () => {
       )
     })
 
-    it('should handle large data sets', () => {
+    it('should handle large data sets', async () => {
       const largeData = {
         ...mockData,
         content: 'A'.repeat(10000), // Large content
@@ -235,33 +253,39 @@ describe('useAutoSave', () => {
         useAutoSave(largeData, { key: 'test-entry', enabled: true })
       )
 
-      advanceTimers(100)
+      await act(async () => {
+        jest.advanceTimersByTime(700)
+        await new Promise(resolve => setTimeout(resolve, 0))
+      })
 
       expect(mockLocalStorage.setItem).toHaveBeenCalled()
     })
   })
 
   describe('performance and efficiency', () => {
-    it('should not save if data has not changed', () => {
+    it('should not save if data has not changed', async () => {
       const { rerender } = renderHook(
         ({ data }) => useAutoSave(data, { key: 'test-entry', enabled: true }),
         { initialProps: { data: mockData } }
       )
 
-      advanceTimers(100)
+      await act(async () => {
+        jest.advanceTimersByTime(700)
+        await new Promise(resolve => setTimeout(resolve, 0))
+      })
 
       expect(mockLocalStorage.setItem).toHaveBeenCalledTimes(1)
 
       // Re-render with same data
       rerender({ data: mockData })
 
-      advanceTimers(100)
+      advanceTimers(600)
 
       // Should not save again if data hasn't changed
       // Note: This behavior depends on the implementation details
     })
 
-    it('should handle rapid data changes efficiently', () => {
+    it('should handle rapid data changes efficiently', async () => {
       const { rerender } = renderHook(
         ({ data }) => useAutoSave(data, { key: 'test-entry', enabled: true }),
         { initialProps: { data: mockData } }
@@ -269,12 +293,17 @@ describe('useAutoSave', () => {
 
       // Rapidly change data multiple times
       for (let i = 0; i < 10; i++) {
-        rerender({
-          data: { ...mockData, content: `Content version ${i}` },
+        act(() => {
+          rerender({
+            data: { ...mockData, content: `Content version ${i}` },
+          })
         })
       }
 
-      advanceTimers(100)
+      await act(async () => {
+        jest.advanceTimersByTime(700)
+        await new Promise(resolve => setTimeout(resolve, 0))
+      })
 
       // Due to debouncing, should not save 10 times
       // The exact number depends on debounce implementation

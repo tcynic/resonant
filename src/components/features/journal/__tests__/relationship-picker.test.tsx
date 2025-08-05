@@ -35,7 +35,7 @@ describe('RelationshipPicker', () => {
       _creationTime: Date.now(),
       userId: 'user_123',
       name: 'Bob Smith',
-      type: 'partner' as const,
+      type: 'romantic' as const,
       photo: undefined,
       createdAt: Date.now(),
       updatedAt: Date.now(),

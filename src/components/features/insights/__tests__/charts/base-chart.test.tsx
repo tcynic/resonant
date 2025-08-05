@@ -9,15 +9,19 @@ import { ChartData } from 'chart.js'
 import { BaseChart, ChartSkeleton, ChartError } from '../../charts/base-chart'
 
 // Mock Chart.js
+const mockChartInstance = {
+  destroy: jest.fn(),
+  update: jest.fn(),
+  resize: jest.fn(),
+  data: {},
+  options: {},
+  canvas: {
+    toDataURL: jest.fn().mockReturnValue('data:image/png;base64,mock-data'),
+  },
+}
+
 jest.mock('chart.js', () => ({
-  Chart: jest.fn().mockImplementation(() => ({
-    destroy: jest.fn(),
-    update: jest.fn(),
-    resize: jest.fn(),
-    canvas: {
-      toDataURL: jest.fn().mockReturnValue('data:image/png;base64,mock-data'),
-    },
-  })),
+  Chart: jest.fn().mockImplementation(() => mockChartInstance),
   CategoryScale: jest.fn(),
   LinearScale: jest.fn(),
   PointElement: jest.fn(),
@@ -59,6 +63,10 @@ describe('BaseChart', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
+    // Reset mock instance methods
+    mockChartInstance.destroy.mockClear()
+    mockChartInstance.update.mockClear()
+    mockChartInstance.resize.mockClear()
   })
 
   it('should render chart with provided data', () => {

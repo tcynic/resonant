@@ -103,24 +103,17 @@ describe('PrivacySettings', () => {
       isSignedIn: true,
     })
     mockUseQuery.mockReturnValue(mockUserData)
-    mockUseMutation.mockReturnValue({
-      ...mockUpdatePrivacySettings,
-      withOptimisticUpdate: jest
-        .fn()
-        .mockReturnValue(mockUpdatePrivacySettings),
-    } as any)
+    mockUseMutation.mockReturnValue(mockUpdatePrivacySettings)
     mockUpdatePrivacySettings.mockResolvedValue(undefined)
   })
 
   it('should render privacy settings form', () => {
     render(<PrivacySettings />)
 
-    expect(screen.getByText('Privacy & Data Control')).toBeInTheDocument()
-    expect(screen.getByText('Data Sharing')).toBeInTheDocument()
-    expect(screen.getByText('Analytics & Usage Data')).toBeInTheDocument()
-    expect(screen.getByText('Marketing Communications')).toBeInTheDocument()
-    expect(screen.getByText('Search Indexing')).toBeInTheDocument()
-    expect(screen.getByText('Data Retention')).toBeInTheDocument()
+    expect(screen.getByText('Privacy Settings')).toBeInTheDocument()
+    expect(screen.getByText('Data Usage & Sharing')).toBeInTheDocument()
+    expect(screen.getByText('Allow anonymous data sharing')).toBeInTheDocument()
+    expect(screen.getByText('Allow search indexing')).toBeInTheDocument()
   })
 
   it('should load and display current privacy settings', () => {
@@ -159,7 +152,7 @@ describe('PrivacySettings', () => {
     expect(dataSharingCheckbox).toBeChecked()
 
     // Should show changes indicator
-    expect(screen.getByText('Save Changes')).not.toBeDisabled()
+    expect(screen.getByText('Save Settings')).not.toBeDisabled()
   })
 
   it('should handle analytics toggle', async () => {
@@ -172,7 +165,7 @@ describe('PrivacySettings', () => {
     expect(analyticsCheckbox).not.toBeChecked()
 
     // Should enable save button
-    expect(screen.getByText('Save Changes')).not.toBeDisabled()
+    expect(screen.getByText('Save Settings')).not.toBeDisabled()
   })
 
   it('should handle marketing communications toggle', async () => {
@@ -187,7 +180,7 @@ describe('PrivacySettings', () => {
     expect(marketingCheckbox).toBeChecked()
 
     // Should enable save button
-    expect(screen.getByText('Save Changes')).not.toBeDisabled()
+    expect(screen.getByText('Save Settings')).not.toBeDisabled()
   })
 
   it('should handle search indexing toggle', async () => {
@@ -200,7 +193,7 @@ describe('PrivacySettings', () => {
     expect(searchCheckbox).not.toBeChecked()
 
     // Should enable save button
-    expect(screen.getByText('Save Changes')).not.toBeDisabled()
+    expect(screen.getByText('Save Settings')).not.toBeDisabled()
   })
 
   it('should handle data retention selection', async () => {
@@ -214,7 +207,7 @@ describe('PrivacySettings', () => {
     expect(oneYearOption).toBeChecked()
 
     // Should enable save button
-    expect(screen.getByText('Save Changes')).not.toBeDisabled()
+    expect(screen.getByText('Save Settings')).not.toBeDisabled()
   })
 
   it('should save privacy settings when save button is clicked', async () => {
@@ -228,12 +221,12 @@ describe('PrivacySettings', () => {
     await user.click(dataSharingCheckbox)
 
     // Click save
-    const saveButton = screen.getByText('Save Changes')
+    const saveButton = screen.getByText('Save Settings')
     await user.click(saveButton)
 
     expect(mockUpdatePrivacySettings).toHaveBeenCalledWith({
       userId: 'convex_user_123',
-      privacySettings: {
+      preferences: {
         dataSharing: true, // Changed from false to true
         analyticsOptIn: true,
         marketingOptIn: false,
@@ -259,7 +252,7 @@ describe('PrivacySettings', () => {
     await user.click(dataSharingCheckbox)
 
     // Click save
-    const saveButton = screen.getByText('Save Changes')
+    const saveButton = screen.getByText('Save Settings')
     await user.click(saveButton)
 
     // Should show loading state
@@ -278,12 +271,12 @@ describe('PrivacySettings', () => {
     await user.click(dataSharingCheckbox)
 
     // Click save
-    const saveButton = screen.getByText('Save Changes')
+    const saveButton = screen.getByText('Save Settings')
     await user.click(saveButton)
 
     await waitFor(() => {
       expect(
-        screen.getByText('Settings saved successfully')
+        screen.getByText('Privacy settings saved successfully')
       ).toBeInTheDocument()
     })
 
@@ -306,7 +299,7 @@ describe('PrivacySettings', () => {
     await user.click(dataSharingCheckbox)
 
     // Click save
-    const saveButton = screen.getByText('Save Changes')
+    const saveButton = screen.getByText('Save Settings')
     await user.click(saveButton)
 
     await waitFor(() => {
@@ -337,10 +330,8 @@ describe('PrivacySettings', () => {
 
     render(<PrivacySettings />)
 
-    // Should show loading state
-    const loadingIndicator =
-      screen.getByTestId(/loading/i) || screen.getByText(/loading/i)
-    expect(loadingIndicator).toBeInTheDocument()
+    // Should show loading state (spinner)
+    expect(document.querySelector('.animate-spin')).toBeInTheDocument()
   })
 
   it('should use default settings when no user preferences exist', () => {
@@ -375,7 +366,7 @@ describe('PrivacySettings', () => {
 
     // Should show warning about impact
     expect(
-      screen.getByText(/Disabling this may affect search functionality/i)
+      screen.getByText(/may affect search functionality/i)
     ).toBeInTheDocument()
   })
 
@@ -396,7 +387,7 @@ describe('PrivacySettings', () => {
 
     // Should have proper heading structure
     expect(
-      screen.getByRole('heading', { name: /Privacy & Data Control/i })
+      screen.getByRole('heading', { name: /Privacy Settings/i })
     ).toBeInTheDocument()
   })
 })

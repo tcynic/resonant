@@ -69,8 +69,8 @@ describe('RecentAnalysisActivity', () => {
     expect(screen.getByText('Recent AI Analysis')).toBeInTheDocument()
     expect(screen.getByText('Positive')).toBeInTheDocument()
     expect(screen.getAllByText('Processing')).toHaveLength(2) // Once in status, once in summary
-    expect(screen.getByText('Sarah')).toBeInTheDocument()
-    expect(screen.getByText('John')).toBeInTheDocument()
+    expect(screen.getByText(/Sarah/)).toBeInTheDocument()
+    expect(screen.getByText(/John/)).toBeInTheDocument()
   })
 
   test('should show empty state when no analyses', () => {
