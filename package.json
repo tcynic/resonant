@@ -61,8 +61,8 @@
   "dependencies": {
     "@clerk/nextjs": "^6.25.4",
     "@google/generative-ai": "^0.24.1",
+    "@subframe/core": "^1.145.0",
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
     "autoprefixer": "^10.4.21",
     "chart.js": "^4.5.0",
     "chartjs-adapter-date-fns": "^3.0.0",
@@ -91,7 +91,7 @@
     "@testing-library/user-event": "^14.6.1",
     "@types/dotenv": "^6.1.1",
     "@types/jest": "^29.5.14",
-    "@types/node": "^20",
+    "@types/node": "20.19.9",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "convex-test": "^0.0.38",

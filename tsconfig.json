@@ -25,7 +25,8 @@
       "@/lib/*": ["./src/lib/*"],
       "@/hooks/*": ["./src/hooks/*"],
       "@/app/*": ["./src/app/*"],
-      "@/convex/*": ["./convex/*"]
+      "@/convex/*": ["./convex/*"],
+      "@/ui/*": ["./src/components/ui/ui/*"]
     }
   },
   "include": [

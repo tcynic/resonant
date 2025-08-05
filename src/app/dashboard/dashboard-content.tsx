@@ -27,6 +27,29 @@ import ErrorBoundary, {
 } from '@/components/ui/error-boundary'
 import { DashboardStats, TrendDataPoint } from '@/lib/types'
 
+// Import Subframe components
+import {
+  DefaultPageLayout,
+  Avatar,
+  Button,
+  ToggleGroup,
+  LineChart,
+  Table,
+  Badge,
+  Progress,
+  IconButton,
+  IconWithBackground,
+} from '@/components/ui/ui'
+import {
+  FeatherEdit2,
+  FeatherMoreVertical,
+  FeatherUsers,
+  FeatherPieChart,
+  FeatherTrendingUp,
+  FeatherBell,
+  FeatherHeart,
+} from '@subframe/core'
+
 interface DashboardHeaderProps {
   user: { firstName?: string } | null
   stats: DashboardStats | undefined
@@ -56,53 +79,41 @@ function DashboardHeader({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-8">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
-        <div className="min-w-0">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+    <div className="flex w-full items-center justify-between">
+      <div className="flex items-center gap-4">
+        <Avatar
+          size="large"
+          image="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=3276&ixlib=rb-4.0.3"
+        />
+        <div className="flex flex-col items-start gap-1">
+          <span className="text-heading-2 font-heading-2 text-default-font">
             {isClient ? safeTimeFormatting.getGreeting() : 'Hello'},{' '}
             {user?.firstName || 'there'}!
-          </h1>
-          <p className="text-gray-600 mt-1 text-sm sm:text-base">
-            Here&apos;s how your relationships are doing today
-          </p>
+          </span>
+          <span className="text-body font-body text-subtext-color">
+            {stats
+              ? `Last journal entry: ${safeTimeFormatting.formatLastUpdated(stats.lastUpdated)}`
+              : 'Loading...'}
+          </span>
         </div>
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-          <div className="text-left sm:text-right">
-            <p className="text-sm text-gray-500">
-              {stats
-                ? `Updated ${safeTimeFormatting.formatLastUpdated(stats.lastUpdated)}`
-                : 'Loading...'}
-            </p>
-            <div className="flex items-center sm:justify-end space-x-2 mt-1">
-              <ConnectionStatus />
-              <RealTimeIndicator
-                isLoading={isLoading}
-                lastUpdated={stats?.lastUpdated}
-              />
-            </div>
+      </div>
+      <div className="flex items-center gap-3">
+        <div className="text-right">
+          <div className="flex items-center justify-end space-x-2">
+            <ConnectionStatus />
+            <RealTimeIndicator
+              isLoading={isLoading}
+              lastUpdated={stats?.lastUpdated}
+            />
           </div>
-          <button
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className="flex items-center justify-center space-x-2 px-3 py-2 text-sm text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50 w-full sm:w-auto"
-          >
-            <svg
-              className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-              />
-            </svg>
-            <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
-          </button>
         </div>
+        <Button
+          icon={<FeatherEdit2 />}
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+        >
+          New Journal Entry
+        </Button>
       </div>
     </div>
   )
@@ -111,11 +122,15 @@ function DashboardHeader({
 function StatsGrid({ stats }: StatsGridProps) {
   if (!stats) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="flex w-full flex-wrap items-start gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Card key={i} className="animate-pulse" padding="md">
-            <div className="h-16 bg-gray-200 rounded" />
-          </Card>
+          <div
+            key={i}
+            className="flex grow shrink-0 basis-0 flex-col items-start gap-2 rounded-md border border-solid border-neutral-border bg-default-background px-6 py-6 animate-pulse"
+          >
+            <div className="h-4 bg-gray-200 rounded w-1/2" />
+            <div className="h-8 bg-gray-200 rounded w-1/3" />
+          </div>
         ))}
       </div>
     )
@@ -123,64 +138,46 @@ function StatsGrid({ stats }: StatsGridProps) {
 
   const statItems = [
     {
-      label: 'Relationships',
+      label: 'Total Relationships',
       value: stats.totals.relationships,
       subtext: `${stats.totals.trackedRelationships} tracked`,
-      icon: '💝',
-      color: 'text-pink-600',
     },
     {
-      label: 'Avg Health Score',
-      value: stats.health.averageScore,
+      label: 'Average Health Score',
+      value: `${stats.health.averageScore}%`,
       subtext:
         stats.health.averageScore >= 70
           ? 'Excellent'
           : stats.health.averageScore >= 50
             ? 'Good'
             : 'Needs focus',
-      icon: '📊',
-      color:
-        stats.health.averageScore >= 70
-          ? 'text-green-600'
-          : stats.health.averageScore >= 50
-            ? 'text-blue-600'
-            : 'text-yellow-600',
     },
     {
-      label: 'This Week',
+      label: 'Active Categories',
       value: stats.activity.entriesThisWeek,
       subtext: 'journal entries',
-      icon: '📝',
-      color: 'text-blue-600',
     },
     {
-      label: 'Improving',
+      label: 'Journal Entries',
       value: stats.health.improvingRelationships,
       subtext: `${stats.health.decliningRelationships} declining`,
-      icon: '📈',
-      color:
-        stats.health.improvingRelationships >
-        stats.health.decliningRelationships
-          ? 'text-green-600'
-          : 'text-orange-600',
     },
   ]
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div className="flex w-full flex-wrap items-start gap-4">
       {statItems.map((item, index) => (
-        <Card key={index} padding="md">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <span className="text-2xl">{item.icon}</span>
-            </div>
-            <div className="ml-4">
-              <p className={`text-2xl font-bold ${item.color}`}>{item.value}</p>
-              <p className="text-xs text-gray-500">{item.label}</p>
-              <p className="text-xs text-gray-400">{item.subtext}</p>
-            </div>
-          </div>
-        </Card>
+        <div
+          key={index}
+          className="flex grow shrink-0 basis-0 flex-col items-start gap-2 rounded-md border border-solid border-neutral-border bg-default-background px-6 py-6"
+        >
+          <span className="text-body-bold font-body-bold text-subtext-color">
+            {item.label}
+          </span>
+          <span className="text-heading-1 font-heading-1 text-default-font">
+            {item.value}
+          </span>
+        </div>
       ))}
     </div>
   )
@@ -188,8 +185,8 @@ function StatsGrid({ stats }: StatsGridProps) {
 
 function EmptyDashboard({ userName }: EmptyDashboardProps) {
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-8">
-      <div className="max-w-4xl mx-auto">
+    <DefaultPageLayout>
+      <div className="container max-w-none flex h-full w-full flex-col items-start gap-8 bg-default-background py-8">
         <DashboardHeader user={{ firstName: userName }} stats={undefined} />
 
         <div className="text-center py-16">
@@ -250,7 +247,7 @@ function EmptyDashboard({ userName }: EmptyDashboardProps) {
           </div>
         </div>
       </div>
-    </div>
+    </DefaultPageLayout>
   )
 }
 
@@ -331,22 +328,22 @@ export default function DashboardContent() {
   // Handle user sync error
   if (userSyncError) {
     return (
-      <div className="min-h-screen bg-gray-50 px-4 py-8">
-        <div className="max-w-7xl mx-auto">
+      <DefaultPageLayout>
+        <div className="container max-w-none flex h-full w-full flex-col items-start gap-8 bg-default-background py-8">
           <DashboardErrorFallback
             error={new Error(`Failed to sync user: ${userSyncError}`)}
             onRetry={() => safeWindow.reload()}
           />
         </div>
-      </div>
+      </DefaultPageLayout>
     )
   }
 
   // Handle case where user is being created in Convex
   if (isCreating) {
     return (
-      <div className="min-h-screen bg-gray-50 px-4 py-8">
-        <div className="max-w-7xl mx-auto">
+      <DefaultPageLayout>
+        <div className="container max-w-none flex h-full w-full flex-col items-start gap-8 bg-default-background py-8">
           <div className="bg-white p-6 rounded-lg shadow-sm text-center">
             <div className="w-16 h-16 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center">
               <span className="text-2xl">⚙️</span>
@@ -364,36 +361,41 @@ export default function DashboardContent() {
             </div>
           </div>
         </div>
-      </div>
+      </DefaultPageLayout>
     )
   }
 
   // Handle errors in critical data
   if (hasDataError) {
     return (
-      <div className="min-h-screen bg-gray-50 px-4 py-8">
-        <div className="max-w-7xl mx-auto">
+      <DefaultPageLayout>
+        <div className="container max-w-none flex h-full w-full flex-col items-start gap-8 bg-default-background py-8">
           <DashboardErrorFallback
             error={new Error('Failed to load dashboard data')}
             onRetry={() => safeWindow.reload()}
           />
         </div>
-      </div>
+      </DefaultPageLayout>
     )
   }
 
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 px-4 py-8">
-        <div className="max-w-7xl mx-auto space-y-8">
-          <div className="bg-white p-6 rounded-lg shadow-sm animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/3 mb-2" />
-            <div className="h-4 bg-gray-200 rounded w-1/2" />
+      <DefaultPageLayout>
+        <div className="container max-w-none flex h-full w-full flex-col items-start gap-8 bg-default-background py-8">
+          <div className="flex w-full items-center justify-between animate-pulse">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gray-200 rounded-full" />
+              <div className="flex flex-col items-start gap-1">
+                <div className="h-6 bg-gray-200 rounded w-32" />
+                <div className="h-4 bg-gray-200 rounded w-24" />
+              </div>
+            </div>
           </div>
           <StatsGrid stats={undefined} />
         </div>
-      </div>
+      </DefaultPageLayout>
     )
   }
 
@@ -403,8 +405,8 @@ export default function DashboardContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 px-3 sm:px-4 py-6 sm:py-8">
-      <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
+    <DefaultPageLayout>
+      <div className="container max-w-none flex h-full w-full flex-col items-start gap-8 bg-default-background py-8">
         {/* Header */}
         <DashboardHeader
           user={user ? { firstName: user.firstName || undefined } : null}
@@ -416,166 +418,244 @@ export default function DashboardContent() {
         <StatsGrid stats={dashboardStats} />
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-          {/* Health Score Cards */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-900">
-                Relationship Health Scores
-              </h2>
-              <p className="text-sm text-gray-500">
-                {dashboardData.relationships.length} relationships tracked
-              </p>
+        <div className="flex w-full items-start gap-6">
+          <div className="flex grow shrink-0 basis-0 flex-col items-start gap-6">
+            {/* Relationship Health Overview */}
+            <div className="flex w-full flex-col items-start gap-4 rounded-md border border-solid border-neutral-border bg-default-background px-6 py-6">
+              <div className="flex w-full items-center justify-between">
+                <span className="text-heading-3 font-heading-3 text-default-font">
+                  Relationship Health Overview
+                </span>
+                <ToggleGroup value="" onValueChange={(value: string) => {}}>
+                  <ToggleGroup.Item icon={null} value="3596e315">
+                    Week
+                  </ToggleGroup.Item>
+                  <ToggleGroup.Item icon={null} value="d7624619">
+                    Month
+                  </ToggleGroup.Item>
+                  <ToggleGroup.Item icon={null} value="b829d1ba">
+                    Year
+                  </ToggleGroup.Item>
+                </ToggleGroup>
+              </div>
+              <LineChart
+                categories={['Biology', 'Business', 'Psychology']}
+                data={[
+                  {
+                    Year: '2015',
+                    Psychology: 120,
+                    Business: 110,
+                    Biology: 100,
+                  },
+                  { Year: '2016', Psychology: 130, Business: 95, Biology: 105 },
+                  {
+                    Year: '2017',
+                    Psychology: 115,
+                    Business: 105,
+                    Biology: 110,
+                  },
+                  { Year: '2018', Psychology: 125, Business: 120, Biology: 90 },
+                  { Year: '2019', Psychology: 110, Business: 130, Biology: 85 },
+                  { Year: '2020', Psychology: 135, Business: 100, Biology: 95 },
+                  {
+                    Year: '2021',
+                    Psychology: 105,
+                    Business: 115,
+                    Biology: 120,
+                  },
+                  {
+                    Year: '2022',
+                    Psychology: 140,
+                    Business: 125,
+                    Biology: 130,
+                  },
+                ]}
+                index={'Year'}
+              />
             </div>
 
-            <ErrorBoundary
-              fallback={
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
-                  <NetworkErrorFallback onRetry={() => safeWindow.reload()} />
-                </div>
-              }
-            >
-              <div className="grid grid-cols-1 sm:grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
-                {dashboardData.relationships.map(
-                  (relationship: RelationshipWithScore) => (
-                    <HealthScoreCard
-                      key={relationship._id}
-                      relationship={relationship}
-                      healthScore={relationship.healthScore}
-                      showDetails={false}
+            {/* Recent Journal Entries */}
+            <div className="flex w-full flex-col items-start gap-4">
+              <span className="text-heading-3 font-heading-3 text-default-font">
+                Recent Journal Entries
+              </span>
+              <Table
+                header={
+                  <Table.HeaderRow>
+                    <Table.HeaderCell>Person</Table.HeaderCell>
+                    <Table.HeaderCell>Category</Table.HeaderCell>
+                    <Table.HeaderCell>Date</Table.HeaderCell>
+                    <Table.HeaderCell>Sentiment</Table.HeaderCell>
+                    <Table.HeaderCell />
+                  </Table.HeaderRow>
+                }
+              >
+                <Table.Row>
+                  <Table.Cell>
+                    <div className="flex items-center gap-2">
+                      <Avatar size="small" image="">
+                        J
+                      </Avatar>
+                      <span className="text-body-bold font-body-bold text-default-font">
+                        John Smith
+                      </span>
+                    </div>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Badge>Professional</Badge>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <span className="text-body font-body text-subtext-color">
+                      Today
+                    </span>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Progress value={85} />
+                  </Table.Cell>
+                  <Table.Cell>
+                    <IconButton
+                      icon={<FeatherMoreVertical />}
+                      onClick={(
+                        event: React.MouseEvent<HTMLButtonElement>
+                      ) => {}}
                     />
-                  )
-                )}
-              </div>
-            </ErrorBoundary>
+                  </Table.Cell>
+                </Table.Row>
+                <Table.Row>
+                  <Table.Cell>
+                    <div className="flex items-center gap-2">
+                      <Avatar size="small" image="">
+                        M
+                      </Avatar>
+                      <span className="text-body-bold font-body-bold text-default-font">
+                        Mom
+                      </span>
+                    </div>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Badge variant="warning">Family</Badge>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <span className="text-body font-body text-subtext-color">
+                      Yesterday
+                    </span>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Progress value={92} />
+                  </Table.Cell>
+                  <Table.Cell>
+                    <IconButton
+                      icon={<FeatherMoreVertical />}
+                      onClick={(
+                        event: React.MouseEvent<HTMLButtonElement>
+                      ) => {}}
+                    />
+                  </Table.Cell>
+                </Table.Row>
+                <Table.Row>
+                  <Table.Cell>
+                    <div className="flex items-center gap-2">
+                      <Avatar size="small" image="">
+                        E
+                      </Avatar>
+                      <span className="text-body-bold font-body-bold text-default-font">
+                        Emma
+                      </span>
+                    </div>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Badge variant="error">Romantic</Badge>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <span className="text-body font-body text-subtext-color">
+                      2 days ago
+                    </span>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Progress value={78} />
+                  </Table.Cell>
+                  <Table.Cell>
+                    <IconButton
+                      icon={<FeatherMoreVertical />}
+                      onClick={(
+                        event: React.MouseEvent<HTMLButtonElement>
+                      ) => {}}
+                    />
+                  </Table.Cell>
+                </Table.Row>
+              </Table>
+            </div>
           </div>
 
-          {/* Recent Activity */}
-          <div className="space-y-4 sm:space-y-6">
-            <ErrorBoundary
-              fallback={
-                <NetworkErrorFallback onRetry={() => safeWindow.reload()} />
-              }
-            >
-              <RecentActivity
-                activities={recentActivity?.activities || []}
-                totalCount={recentActivity?.totalCount || 0}
-                analysisRate={recentActivity?.analysisRate || 0}
-                showViewAll={true}
-              />
-            </ErrorBoundary>
+          {/* Sidebar */}
+          <div className="flex w-64 flex-none flex-col items-start gap-6">
+            {/* Quick Actions */}
+            <div className="flex w-full flex-col items-start gap-4 rounded-md border border-solid border-neutral-border bg-default-background px-6 py-6">
+              <span className="text-heading-3 font-heading-3 text-default-font">
+                Quick Actions
+              </span>
+              <div className="flex w-full flex-col items-start gap-2">
+                <Button
+                  className="h-8 w-full flex-none"
+                  icon={<FeatherEdit2 />}
+                  onClick={(event: React.MouseEvent<HTMLButtonElement>) => {}}
+                >
+                  New Entry
+                </Button>
+                <Button
+                  className="h-8 w-full flex-none"
+                  variant="neutral-secondary"
+                  icon={<FeatherUsers />}
+                  onClick={(event: React.MouseEvent<HTMLButtonElement>) => {}}
+                >
+                  View Relationships
+                </Button>
+                <Button
+                  className="h-8 w-full flex-none"
+                  variant="neutral-secondary"
+                  icon={<FeatherPieChart />}
+                  onClick={(event: React.MouseEvent<HTMLButtonElement>) => {}}
+                >
+                  View Analytics
+                </Button>
+              </div>
+            </div>
 
-            {/* AI Processing Summary */}
-            <ErrorBoundary
-              fallback={
-                <NetworkErrorFallback onRetry={() => safeWindow.reload()} />
-              }
-            >
-              <AIProcessingSummary userId={convexUser!._id as Id<'users'>} />
-            </ErrorBoundary>
-
-            {/* Recent Analysis Activity */}
-            <ErrorBoundary
-              fallback={
-                <NetworkErrorFallback onRetry={() => safeWindow.reload()} />
-              }
-            >
-              <RecentAnalysisActivity
-                userId={convexUser!._id as Id<'users'>}
-                limit={5}
-              />
-            </ErrorBoundary>
+            {/* AI Insights */}
+            <div className="flex w-full flex-col items-start gap-4 rounded-md border border-solid border-neutral-border bg-default-background px-6 py-6">
+              <span className="text-heading-3 font-heading-3 text-default-font">
+                AI Insights
+              </span>
+              <div className="flex w-full flex-col items-start gap-4">
+                <div className="flex w-full items-start gap-2">
+                  <IconWithBackground icon={<FeatherTrendingUp />} />
+                  <span className="text-body font-body text-default-font">
+                    Your professional relationships are showing positive growth
+                  </span>
+                </div>
+                <div className="flex w-full items-start gap-2">
+                  <IconWithBackground
+                    variant="warning"
+                    icon={<FeatherBell />}
+                  />
+                  <span className="text-body font-body text-default-font">
+                    Consider reaching out to family members more frequently
+                  </span>
+                </div>
+                <div className="flex w-full items-start gap-2">
+                  <IconWithBackground
+                    variant="success"
+                    icon={<FeatherHeart />}
+                  />
+                  <span className="text-body font-body text-default-font">
+                    Your romantic relationship is stable and healthy
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-
-        {/* Trend Chart */}
-        {trendData && trendData.trends.length > 0 && (
-          <ErrorBoundary
-            fallback={
-              <NetworkErrorFallback onRetry={() => safeWindow.reload()} />
-            }
-          >
-            <TrendChart
-              data={trendData.trends as TrendDataPoint[]}
-              relationshipNames={trendData.relationshipNames}
-              timeRange={trendData.timeRange}
-              height={400}
-            />
-          </ErrorBoundary>
-        )}
-
-        {/* Quick Actions */}
-        <Card padding="md">
-          <CardHeader>
-            <h3 className="text-lg font-semibold text-gray-900">
-              Quick Actions
-            </h3>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-              <Link
-                href="/journal/new"
-                className="flex items-center p-3 sm:p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
-              >
-                <span className="text-xl sm:text-2xl mr-3 flex-shrink-0">
-                  📝
-                </span>
-                <div className="min-w-0">
-                  <h4 className="font-medium text-gray-900 text-sm sm:text-base">
-                    New Journal Entry
-                  </h4>
-                  <p className="text-xs sm:text-sm text-gray-600">
-                    Reflect on your relationships
-                  </p>
-                </div>
-              </Link>
-
-              <Link
-                href="/relationships/new"
-                className="flex items-center p-3 sm:p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors"
-              >
-                <span className="text-xl sm:text-2xl mr-3 flex-shrink-0">
-                  💝
-                </span>
-                <div className="min-w-0">
-                  <h4 className="font-medium text-gray-900 text-sm sm:text-base">
-                    Add Relationship
-                  </h4>
-                  <p className="text-xs sm:text-sm text-gray-600">
-                    Track a new relationship
-                  </p>
-                </div>
-              </Link>
-
-              <Link
-                href="/journal"
-                className="flex items-center p-3 sm:p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors sm:col-span-2 lg:col-span-1"
-              >
-                <span className="text-xl sm:text-2xl mr-3 flex-shrink-0">
-                  📊
-                </span>
-                <div className="min-w-0">
-                  <h4 className="font-medium text-gray-900 text-sm sm:text-base">
-                    View History
-                  </h4>
-                  <p className="text-xs sm:text-sm text-gray-600">
-                    Browse past entries
-                  </p>
-                </div>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Entry History with Filtering */}
-        <ErrorBoundary
-          fallback={
-            <NetworkErrorFallback onRetry={() => safeWindow.reload()} />
-          }
-        >
-          <EntryHistory initialLimit={10} />
-        </ErrorBoundary>
       </div>
-    </div>
+    </DefaultPageLayout>
   )
 }
