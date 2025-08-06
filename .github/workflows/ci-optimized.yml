@@ -82,13 +82,23 @@ jobs:
         run: |
           echo "Creating .env.test file for testing..."
           cp .env.local.template .env.test
-          echo "NEXT_PUBLIC_CONVEX_URL=${{ secrets.CONVEX_URL_STAGING || '' }}" >> .env.test
-          echo "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.CLERK_PUBLISHABLE_KEY_STAGING || 'pk_test_placeholder' }}" >> .env.test
-          echo "CLERK_SECRET_KEY=${{ secrets.CLERK_SECRET_KEY_STAGING || 'sk_test_placeholder' }}" >> .env.test
+          echo "NEXT_PUBLIC_CONVEX_URL=${{ secrets.CONVEX_URL_STAGING }}" >> .env.test
+          echo "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.CLERK_PUBLISHABLE_KEY_STAGING }}" >> .env.test
+          echo "CLERK_SECRET_KEY=${{ secrets.CLERK_SECRET_KEY_STAGING }}" >> .env.test
           echo "TEST_ENVIRONMENT=test" >> .env.test
           echo "CI=true" >> .env.test
           echo "PLAYWRIGHT_BASE_URL=http://localhost:3000" >> .env.test
           echo "PLAYWRIGHT_HEADLESS=true" >> .env.test
+          
+          # Debug: Check if Clerk key starts with expected prefix
+          if [[ "${{ secrets.CLERK_PUBLISHABLE_KEY_STAGING }}" == pk_test_* ]]; then
+            echo "✅ Clerk publishable key appears to be a test key"
+          elif [[ "${{ secrets.CLERK_PUBLISHABLE_KEY_STAGING }}" == pk_live_* ]]; then
+            echo "✅ Clerk publishable key appears to be a live key"
+          else
+            echo "⚠️ Clerk publishable key format not recognized"
+          fi
+          
           echo "✅ Test environment file created"
 
       - name: Start development servers for testing
@@ -111,22 +121,17 @@ jobs:
           echo "✅ Development servers are ready"
         env:
           NEXT_PUBLIC_CONVEX_URL: ${{ secrets.CONVEX_URL_STAGING }}
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY_STAGING || 'pk_test_placeholder' }}
-          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY_STAGING || 'sk_test_placeholder' }}
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY_STAGING }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY_STAGING }}
 
       - name: Run comprehensive test pipeline
         run: |
-          if [ -z "${{ secrets.CONVEX_URL_STAGING }}" ]; then
-            echo "⚠️ No staging Convex URL configured, skipping tests that require Convex backend"
-            echo "To enable full testing, set CONVEX_URL_STAGING secret in repository settings"
-            npm run test:ci
-          else
-            npm run ci:test-pipeline
-          fi
+          # Since the secrets are configured, run the full test pipeline
+          npm run ci:test-pipeline
         env:
           NEXT_PUBLIC_CONVEX_URL: ${{ secrets.CONVEX_URL_STAGING }}
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY_STAGING || 'pk_test_placeholder' }}
-          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY_STAGING || 'sk_test_placeholder' }}
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY_STAGING }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY_STAGING }}
           PLAYWRIGHT_BASE_URL: http://localhost:3000
           TEST_ENVIRONMENT: test
           CI: true
@@ -341,9 +346,9 @@ jobs:
       - name: Setup E2E test environment
         run: |
           cp .env.local.template .env.test
-          echo "NEXT_PUBLIC_CONVEX_URL=${{ secrets.CONVEX_URL_STAGING || '' }}" >> .env.test
-          echo "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.CLERK_PUBLISHABLE_KEY_STAGING || 'pk_test_placeholder' }}" >> .env.test
-          echo "CLERK_SECRET_KEY=${{ secrets.CLERK_SECRET_KEY_STAGING || 'sk_test_placeholder' }}" >> .env.test
+          echo "NEXT_PUBLIC_CONVEX_URL=${{ secrets.CONVEX_URL_STAGING }}" >> .env.test
+          echo "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.CLERK_PUBLISHABLE_KEY_STAGING }}" >> .env.test
+          echo "CLERK_SECRET_KEY=${{ secrets.CLERK_SECRET_KEY_STAGING }}" >> .env.test
           echo "PLAYWRIGHT_BASE_URL=http://localhost:3000" >> .env.test
           echo "PLAYWRIGHT_HEADLESS=true" >> .env.test
           echo "TEST_ENVIRONMENT=test" >> .env.test
@@ -380,8 +385,8 @@ jobs:
           fi
         env:
           NEXT_PUBLIC_CONVEX_URL: ${{ secrets.CONVEX_URL_STAGING }}
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY_STAGING || 'pk_test_placeholder' }}
-          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY_STAGING || 'sk_test_placeholder' }}
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY_STAGING }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY_STAGING }}
           PLAYWRIGHT_BASE_URL: http://localhost:3000
           TEST_ENVIRONMENT: test
           CI: true
