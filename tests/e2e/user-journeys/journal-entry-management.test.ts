@@ -23,14 +23,14 @@ test.describe('Journal Entry Management Journey', () => {
 
       // Wait for successful sign-in
       await page.waitForURL(/\/dashboard/, { timeout: 15000 })
+      return true // Authentication successful
     } catch (error: any) {
       // If Clerk isn't loading, skip authentication for CI
       if (process.env.CI && error.message?.includes('data-clerk-element')) {
         console.log(
-          '⚠️ Clerk authentication not available in CI - skipping auth'
+          '⚠️ Clerk authentication not available in CI - test will be skipped'
         )
-        // Navigate directly to dashboard for testing (won't have real auth)
-        await page.goto('/dashboard')
+        return false // Authentication not available
       } else {
         throw error
       }
@@ -42,9 +42,12 @@ test.describe('Journal Entry Management Journey', () => {
   }) => {
     const { email, password, user } = getTestUserCredentials('newUser')
 
-    await test.step('Authenticate as new user', async () => {
-      await signInUser(page, email, password)
-    })
+    // Check authentication first
+    const authenticated = await signInUser(page, email, password)
+    if (!authenticated && process.env.CI) {
+      test.skip(true, 'Skipping test - authentication not available in CI')
+      return
+    }
 
     await test.step('Navigate to journal page', async () => {
       await page.goto('/journal')
