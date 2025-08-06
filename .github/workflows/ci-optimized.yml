@@ -93,11 +93,8 @@ jobs:
 
       - name: Start development servers for testing
         run: |
-          # Start Convex development server in background
-          npm run convex:dev &
-          CONVEX_PID=$!
-          echo "CONVEX_PID=$CONVEX_PID" >> $GITHUB_ENV
-          echo "Started Convex server with PID: $CONVEX_PID"
+          # Configure Convex for CI environment (skip Convex dev server since we use staging)
+          echo "Using staging Convex deployment: $NEXT_PUBLIC_CONVEX_URL"
 
           # Start Next.js development server in background
           npm run dev &
@@ -148,14 +145,10 @@ jobs:
         if: always()
         run: |
           echo "Cleaning up development servers..."
-          if [ ! -z "$CONVEX_PID" ]; then
-            kill $CONVEX_PID 2>/dev/null || echo "Convex server already stopped"
-          fi
           if [ ! -z "$NEXT_PID" ]; then
             kill $NEXT_PID 2>/dev/null || echo "Next.js server already stopped"
           fi
           # Kill any remaining node processes
-          pkill -f "convex dev" || true
           pkill -f "next dev" || true
           echo "✅ Development servers stopped"
 

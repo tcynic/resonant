@@ -11,15 +11,17 @@ test.describe('Journal Entry Management Journey', () => {
   // Helper function to sign in a user
   async function signInUser(page: any, email: string, password: string) {
     await page.goto('/sign-in')
-    await page.fill('input[type="email"], input[name="email"], #email', email)
-    await page.fill(
-      'input[type="password"], input[name="password"], #password',
-      password
-    )
-    await page.click(
-      'button[type="submit"], button:has-text("Sign in"), button:has-text("Sign In")'
-    )
-    await page.waitForSelector('text=Dashboard', { timeout: 15000 })
+
+    // Wait for the form to load
+    await page.waitForSelector('[data-clerk-element]', { timeout: 10000 })
+
+    // Use role-based selectors that match Clerk's form structure
+    await page.getByRole('textbox', { name: 'Email address' }).fill(email)
+    await page.getByRole('textbox', { name: 'Password' }).fill(password)
+    await page.getByRole('button', { name: 'Continue' }).click()
+
+    // Wait for successful sign-in
+    await page.waitForURL(/\/dashboard/, { timeout: 15000 })
   }
 
   test('should complete journal entry creation flow for new user', async ({
