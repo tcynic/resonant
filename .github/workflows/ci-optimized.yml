@@ -89,7 +89,7 @@ jobs:
           echo "CI=true" >> .env.test
           echo "PLAYWRIGHT_BASE_URL=http://localhost:3000" >> .env.test
           echo "PLAYWRIGHT_HEADLESS=true" >> .env.test
-          
+
           # Debug: Check if Clerk key starts with expected prefix
           if [[ "${{ secrets.CLERK_PUBLISHABLE_KEY_STAGING }}" == pk_test_* ]]; then
             echo "✅ Clerk publishable key appears to be a test key"
@@ -98,7 +98,7 @@ jobs:
           else
             echo "⚠️ Clerk publishable key format not recognized"
           fi
-          
+
           echo "✅ Test environment file created"
 
       - name: Start development servers for testing
