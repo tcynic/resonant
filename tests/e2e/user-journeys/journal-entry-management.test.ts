@@ -12,7 +12,7 @@ test.describe('Journal Entry Management Journey', () => {
   async function signInUser(page: any, email: string, password: string) {
     // Set up console message capture for debugging
     const consoleMessages: string[] = []
-    if (process.env.CI) {
+    if (process.env.CI || process.env.NEXT_PUBLIC_CI) {
       page.on('console', (msg: any) => {
         consoleMessages.push(`${msg.type()}: ${msg.text()}`)
       })
@@ -112,6 +112,23 @@ test.describe('Journal Entry Management Journey', () => {
           console.log('- Clerk elements found:', clerkElements.length)
           console.log('- Clerk scripts found:', clerkScripts.length)
           console.log('- Error elements found:', errorElements.length)
+
+          // Log actual error messages if any
+          if (errorElements.length > 0) {
+            console.log('📢 Error messages found:')
+            for (let i = 0; i < Math.min(errorElements.length, 3); i++) {
+              const errorText = await errorElements[i].textContent()
+              console.log(`  ${i + 1}. ${errorText}`)
+            }
+          }
+
+          // Check specifically for authentication configuration error
+          const authConfigErrors = await page.$$(
+            'text="Authentication configuration error"'
+          )
+          if (authConfigErrors.length > 0) {
+            console.log('🚨 Authentication configuration error detected!')
+          }
 
           // Check if SignIn component rendered at all
           const signInElements = await page.$$(

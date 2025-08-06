@@ -5,10 +5,11 @@ import { NextResponse } from 'next/server'
  * Only available in test environment
  */
 export async function GET() {
-  // Allow in development or test environments
+  // Allow in development, test, or CI environments
   if (
     process.env.NODE_ENV === 'production' &&
     !process.env.CI &&
+    !process.env.NEXT_PUBLIC_CI &&
     !process.env.TEST_ENVIRONMENT
   ) {
     return NextResponse.json(
@@ -23,6 +24,7 @@ export async function GET() {
       NODE_ENV: process.env.NODE_ENV,
       TEST_ENVIRONMENT: process.env.TEST_ENVIRONMENT,
       CI: process.env.CI,
+      NEXT_PUBLIC_CI: process.env.NEXT_PUBLIC_CI,
     },
     clerk: {
       publishableKeyPresent: !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,

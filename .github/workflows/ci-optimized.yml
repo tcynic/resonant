@@ -58,6 +58,7 @@ jobs:
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY_STAGING || 'pk_test_build_placeholder_key_for_ci_only' }}
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY_STAGING || 'sk_test_build_placeholder_key_for_ci_only' }}
           CI: true
+          NEXT_PUBLIC_CI: true
 
       - name: Cache build artifacts
         uses: actions/cache@v4
@@ -91,6 +92,7 @@ jobs:
           echo "NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard" >> .env.test
           echo "TEST_ENVIRONMENT=test" >> .env.test
           echo "CI=true" >> .env.test
+          echo "NEXT_PUBLIC_CI=true" >> .env.test
           echo "PLAYWRIGHT_BASE_URL=http://localhost:3000" >> .env.test
           echo "PLAYWRIGHT_HEADLESS=true" >> .env.test
 

@@ -12,7 +12,11 @@ export function ConvexClerkProvider({
 }) {
   // Debug logging for CI environment
   useEffect(() => {
-    if (process.env.NODE_ENV !== 'production' || process.env.CI) {
+    if (
+      process.env.NODE_ENV !== 'production' ||
+      process.env.CI ||
+      process.env.NEXT_PUBLIC_CI
+    ) {
       console.log('🔐 Clerk Provider Debug Info:')
       console.log(
         '- Publishable Key Present:',
@@ -26,6 +30,9 @@ export function ConvexClerkProvider({
       console.log('- Sign Up URL:', '/sign-up')
       console.log('- Environment:', process.env.NODE_ENV)
       console.log('- CI Mode:', !!process.env.CI)
+      console.log('- CI env value:', process.env.CI)
+      console.log('- NEXT_PUBLIC_CI Mode:', !!process.env.NEXT_PUBLIC_CI)
+      console.log('- NEXT_PUBLIC_CI value:', process.env.NEXT_PUBLIC_CI)
       console.log('- Window Object Available:', typeof window !== 'undefined')
 
       // Check if Clerk scripts are loading
