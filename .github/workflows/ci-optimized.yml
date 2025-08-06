@@ -81,6 +81,8 @@ jobs:
           NEXT_PUBLIC_CONVEX_URL: ${{ secrets.CONVEX_URL_STAGING || 'https://test.convex.cloud' }}
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY_STAGING || 'pk_test_placeholder' }}
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY_STAGING || 'sk_test_placeholder' }}
+          PLAYWRIGHT_BASE_URL: http://localhost:3000
+          TEST_ENVIRONMENT: ci
           CI: true
 
       - name: Run deployment health check
