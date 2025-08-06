@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '@/convex/_generated/api'
+import { ReminderSettings as ReminderSettingsType } from '@/lib/types/convex-types'
 import {
   Bell,
   Clock,
@@ -23,27 +24,13 @@ import Button from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import Checkbox from '@/components/ui/checkbox'
 
-interface ReminderSettings {
-  enabled: boolean
-  frequency: 'daily' | 'every2days' | 'weekly'
-  preferredTime: string // "HH:MM" format
-  timezone: string // IANA timezone
-  doNotDisturbStart: string // "HH:MM"
-  doNotDisturbEnd: string // "HH:MM"
-  reminderTypes: {
-    gentleNudge: boolean
-    relationshipFocus: boolean
-    healthScoreAlerts: boolean
-  }
-}
-
 interface ReminderSettingsProps {
   className?: string
 }
 
 export function ReminderSettings({ className = '' }: ReminderSettingsProps) {
   const { user } = useUser()
-  const [settings, setSettings] = useState<ReminderSettings>({
+  const [settings, setSettings] = useState<ReminderSettingsType>({
     enabled: false,
     frequency: 'daily',
     preferredTime: '09:00',
@@ -92,9 +79,12 @@ export function ReminderSettings({ className = '' }: ReminderSettingsProps) {
   useEffect(() => {
     if (userData?.preferences?.reminderSettings) {
       setSettings(prev => {
-        const newSettings = userData.preferences.reminderSettings
+        const newSettings = userData.preferences?.reminderSettings
         // Only update if settings actually changed
-        if (JSON.stringify(prev) !== JSON.stringify(newSettings)) {
+        if (
+          newSettings &&
+          JSON.stringify(prev) !== JSON.stringify(newSettings)
+        ) {
           return newSettings
         }
         return prev
@@ -102,14 +92,17 @@ export function ReminderSettings({ className = '' }: ReminderSettingsProps) {
     }
   }, [userData?._id]) // eslint-disable-line react-hooks/exhaustive-deps -- Using userData._id to prevent infinite loop while still updating when user changes
 
-  const handleSettingChange = (key: keyof ReminderSettings, value: unknown) => {
+  const handleSettingChange = (
+    key: keyof ReminderSettingsType,
+    value: unknown
+  ) => {
     setSettings(prev => ({ ...prev, [key]: value }))
     setHasChanges(true)
     setSaveStatus('idle')
   }
 
   const handleReminderTypeChange = (
-    type: keyof ReminderSettings['reminderTypes'],
+    type: keyof ReminderSettingsType['reminderTypes'],
     value: boolean
   ) => {
     setSettings(prev => ({
@@ -334,11 +327,12 @@ export function ReminderSettings({ className = '' }: ReminderSettingsProps) {
                 {[
                   { value: 'daily', label: 'Daily', icon: Sun },
                   {
-                    value: 'every2days',
+                    value: 'biweekly',
                     label: 'Every 2 Days',
                     icon: Calendar,
                   },
                   { value: 'weekly', label: 'Weekly', icon: Calendar },
+                  { value: 'monthly', label: 'Monthly', icon: Calendar },
                 ].map(({ value, label, icon: Icon }) => (
                   <label
                     key={value}

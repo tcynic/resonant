@@ -20,8 +20,9 @@ export default defineSchema({
             enabled: v.boolean(),
             frequency: v.union(
               v.literal('daily'),
-              v.literal('every2days'),
-              v.literal('weekly')
+              v.literal('weekly'),
+              v.literal('biweekly'),
+              v.literal('monthly')
             ),
             preferredTime: v.string(), // "HH:MM" format
             timezone: v.string(), // IANA timezone

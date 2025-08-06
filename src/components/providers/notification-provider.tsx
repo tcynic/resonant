@@ -4,25 +4,14 @@ import { createContext, useContext, useEffect, ReactNode } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { useQuery } from 'convex/react'
 import { api } from '@/convex/_generated/api'
+import { ReminderSettings } from '@/lib/types/convex-types'
 import { useBrowserNotifications } from '@/hooks/notifications/use-browser-notifications'
 import { useIsClient } from '@/hooks/use-is-client'
 
 interface NotificationContextType {
   browserNotifications: ReturnType<typeof useBrowserNotifications>
   isNotificationEnabled: boolean
-  reminderSettings: {
-    enabled: boolean
-    frequency: 'daily' | 'every2days' | 'weekly'
-    preferredTime: string
-    timezone: string
-    doNotDisturbStart: string
-    doNotDisturbEnd: string
-    reminderTypes: {
-      gentleNudge: boolean
-      relationshipFocus: boolean
-      healthScoreAlerts: boolean
-    }
-  } | null
+  reminderSettings: ReminderSettings | null
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(
