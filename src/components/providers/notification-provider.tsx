@@ -1,12 +1,10 @@
 'use client'
 
 import { createContext, useContext, useEffect, ReactNode } from 'react'
-import { useUser } from '@clerk/nextjs'
-import { useQuery } from 'convex/react'
-import { api } from '@/convex/_generated/api'
 import { ReminderSettings } from '@/lib/types/convex-types'
 import { useBrowserNotifications } from '@/hooks/notifications/use-browser-notifications'
 import { useIsClient } from '@/hooks/use-is-client'
+import { useConvexUser } from '@/hooks/use-convex-user'
 
 interface NotificationContextType {
   browserNotifications: ReturnType<typeof useBrowserNotifications>
@@ -23,17 +21,14 @@ interface NotificationProviderProps {
 }
 
 export function NotificationProvider({ children }: NotificationProviderProps) {
-  const { user } = useUser()
   const isClient = useIsClient()
   const browserNotifications = useBrowserNotifications()
+  const { convexUser: userData } = useConvexUser()
 
-  // Get user data and reminder settings
-  const userData = useQuery(
-    api.users.getUserByClerkId,
-    user?.id ? { clerkId: user.id } : 'skip'
-  )
-
-  const reminderSettings = userData?.preferences?.reminderSettings
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const reminderSettings = (userData?.preferences as any)?.reminderSettings as
+    | ReminderSettings
+    | undefined
 
   const isNotificationEnabled = Boolean(
     isClient &&
@@ -63,10 +58,10 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
       }
     }
 
-    if (user && reminderSettings) {
+    if (userData && reminderSettings) {
       initializeNotifications()
     }
-  }, [isClient, user, reminderSettings, browserNotifications])
+  }, [isClient, userData, reminderSettings, browserNotifications])
 
   // Listen for messages from service worker
   useEffect(() => {
