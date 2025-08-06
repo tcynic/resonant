@@ -78,6 +78,45 @@ jobs:
             public/
           retention-days: 1
 
+      - name: Create test environment file
+        run: |
+          echo "Creating .env.test file for testing..."
+          cp .env.local.template .env.test
+          echo "NEXT_PUBLIC_CONVEX_URL=${{ secrets.CONVEX_URL_STAGING || '' }}" >> .env.test
+          echo "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.CLERK_PUBLISHABLE_KEY_STAGING || 'pk_test_placeholder' }}" >> .env.test
+          echo "CLERK_SECRET_KEY=${{ secrets.CLERK_SECRET_KEY_STAGING || 'sk_test_placeholder' }}" >> .env.test
+          echo "TEST_ENVIRONMENT=test" >> .env.test
+          echo "CI=true" >> .env.test
+          echo "PLAYWRIGHT_BASE_URL=http://localhost:3000" >> .env.test
+          echo "PLAYWRIGHT_HEADLESS=true" >> .env.test
+          echo "✅ Test environment file created"
+
+      - name: Start development servers for testing
+        run: |
+          # Start Convex development server in background
+          npm run convex:dev &
+          CONVEX_PID=$!
+          echo "CONVEX_PID=$CONVEX_PID" >> $GITHUB_ENV
+          echo "Started Convex server with PID: $CONVEX_PID"
+
+          # Start Next.js development server in background
+          npm run dev &
+          NEXT_PID=$!
+          echo "NEXT_PID=$NEXT_PID" >> $GITHUB_ENV
+          echo "Started Next.js server with PID: $NEXT_PID"
+
+          # Wait for services to be ready
+          echo "Waiting for servers to start..."
+          sleep 30
+
+          # Check if servers are responding
+          timeout 60 bash -c 'until curl -f http://localhost:3000 > /dev/null 2>&1; do echo "Waiting for Next.js server..."; sleep 2; done'
+          echo "✅ Development servers are ready"
+        env:
+          NEXT_PUBLIC_CONVEX_URL: ${{ secrets.CONVEX_URL_STAGING }}
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY_STAGING || 'pk_test_placeholder' }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY_STAGING || 'sk_test_placeholder' }}
+
       - name: Run comprehensive test pipeline
         run: |
           if [ -z "${{ secrets.CONVEX_URL_STAGING }}" ]; then
@@ -104,6 +143,21 @@ jobs:
           fi
         env:
           NEXT_PUBLIC_CONVEX_URL: ${{ secrets.CONVEX_URL_STAGING }}
+
+      - name: Stop development servers
+        if: always()
+        run: |
+          echo "Cleaning up development servers..."
+          if [ ! -z "$CONVEX_PID" ]; then
+            kill $CONVEX_PID 2>/dev/null || echo "Convex server already stopped"
+          fi
+          if [ ! -z "$NEXT_PID" ]; then
+            kill $NEXT_PID 2>/dev/null || echo "Next.js server already stopped"
+          fi
+          # Kill any remaining node processes
+          pkill -f "convex dev" || true
+          pkill -f "next dev" || true
+          echo "✅ Development servers stopped"
 
       - name: Upload test coverage
         uses: codecov/codecov-action@v4
