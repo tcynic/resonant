@@ -1,8 +1,23 @@
 import { defineConfig, devices } from '@playwright/test'
 import { config } from 'dotenv'
+import * as fs from 'fs'
 
 // Load test environment variables
-config({ path: '.env.test' })
+// In CI, the .env.test file is created during the workflow
+if (fs.existsSync('.env.test')) {
+  const result = config({ path: '.env.test', override: true })
+  if (result.error) {
+    console.error('Error loading .env.test:', result.error)
+  } else {
+    console.log(
+      'Successfully loaded .env.test with',
+      Object.keys(result.parsed || {}).length,
+      'variables'
+    )
+  }
+} else {
+  console.log('.env.test not found, using existing environment variables')
+}
 
 /**
  * Playwright configuration for E2E testing

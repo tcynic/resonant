@@ -10,9 +10,38 @@ import { getTestUserCredentials } from '../../accounts/test-user-personas'
 test.describe('Journal Entry Management Journey', () => {
   // Helper function to sign in a user
   async function signInUser(page: any, email: string, password: string) {
+    // Debug: Check server environment configuration first
+    if (process.env.CI || process.env.TEST_ENVIRONMENT) {
+      try {
+        const debugResponse = await page.request.get('/api/debug/env')
+        if (debugResponse.ok()) {
+          const envStatus = await debugResponse.json()
+          console.log(
+            'Server environment status:',
+            JSON.stringify(envStatus, null, 2)
+          )
+        }
+      } catch (error) {
+        console.log('Could not fetch debug endpoint:', error)
+      }
+    }
+
     await page.goto('/sign-in')
 
     try {
+      // Debug: Log environment variables availability
+      if (process.env.CI) {
+        console.log('CI Environment detected')
+        console.log(
+          'Test env - Clerk key present:',
+          !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+        )
+        console.log(
+          'Test env - Clerk key prefix:',
+          process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.substring(0, 8)
+        )
+      }
+
       // Wait for the form to load - shorter timeout to fail fast if Clerk isn't configured
       await page.waitForSelector('[data-clerk-element]', { timeout: 5000 })
 
@@ -25,6 +54,13 @@ test.describe('Journal Entry Management Journey', () => {
       await page.waitForURL(/\/dashboard/, { timeout: 15000 })
       return true // Authentication successful
     } catch (error: any) {
+      // More detailed error logging
+      console.error('Authentication failed:', error.message)
+
+      // Check what's actually on the page
+      const pageUrl = page.url()
+      console.log('Current page URL:', pageUrl)
+
       // If Clerk isn't loading, skip authentication for CI
       if (process.env.CI && error.message?.includes('data-clerk-element')) {
         console.log(

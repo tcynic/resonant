@@ -46,6 +46,22 @@ export class AuthHelpers {
 
     console.log(`🔐 Signing in test user: ${userType} (${email})`)
 
+    // Debug: Check server environment configuration first
+    if (process.env.CI || process.env.TEST_ENVIRONMENT) {
+      try {
+        const debugResponse = await this.page.request.get('/api/debug/env')
+        if (debugResponse.ok()) {
+          const envStatus = await debugResponse.json()
+          console.log(
+            'Server environment status:',
+            JSON.stringify(envStatus, null, 2)
+          )
+        }
+      } catch (error) {
+        console.log('Could not fetch debug endpoint:', error)
+      }
+    }
+
     // Navigate to sign-in page
     await this.page.goto('/sign-in')
 
