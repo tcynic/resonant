@@ -10,6 +10,14 @@ import { getTestUserCredentials } from '../../accounts/test-user-personas'
 test.describe('Journal Entry Management Journey', () => {
   // Helper function to sign in a user
   async function signInUser(page: any, email: string, password: string) {
+    // Set up console message capture for debugging
+    const consoleMessages: string[] = []
+    if (process.env.CI) {
+      page.on('console', (msg: any) => {
+        consoleMessages.push(`${msg.type()}: ${msg.text()}`)
+      })
+    }
+
     // Debug: Check server environment configuration first
     if (process.env.CI || process.env.TEST_ENVIRONMENT) {
       try {
@@ -60,6 +68,74 @@ test.describe('Journal Entry Management Journey', () => {
       // Check what's actually on the page
       const pageUrl = page.url()
       console.log('Current page URL:', pageUrl)
+
+      // Capture debugging information in CI
+      if (process.env.CI) {
+        try {
+          // Take screenshot for debugging
+          console.log('📸 Capturing screenshot for debugging...')
+          await page.screenshot({
+            path: `debug-auth-failure-${Date.now()}.png`,
+            fullPage: true,
+          })
+
+          // Get page HTML content
+          const html = await page.content()
+          console.log('📄 Page HTML length:', html.length)
+          console.log('📄 Page title:', await page.title())
+
+          // Log relevant HTML snippets
+          if (html.includes('clerk')) {
+            console.log('📄 Page contains "clerk" references')
+            const clerkReferences = html.match(/clerk[^<>]*?/gi)?.slice(0, 5)
+            console.log('📄 Clerk references:', clerkReferences)
+          }
+
+          // Log head section for debugging
+          const headMatch = html.match(/<head[^>]*>[\s\S]*?<\/head>/i)
+          if (headMatch) {
+            console.log('📄 Head section length:', headMatch[0].length)
+            const scripts = headMatch[0].match(
+              /<script[^>]*>[\s\S]*?<\/script>|<script[^>]*\/>/gi
+            )
+            console.log('📄 Scripts in head:', scripts?.length || 0)
+          }
+
+          // Check for specific elements
+          const clerkElements = await page.$$('[data-clerk-element]')
+          const clerkScripts = await page.$$('script[src*="clerk"]')
+          const errorElements = await page.$$(
+            '[role="alert"], .error, .error-message'
+          )
+
+          console.log('🔍 Debug info:')
+          console.log('- Clerk elements found:', clerkElements.length)
+          console.log('- Clerk scripts found:', clerkScripts.length)
+          console.log('- Error elements found:', errorElements.length)
+
+          // Check if SignIn component rendered at all
+          const signInElements = await page.$$(
+            'div[class*="sign-in"], [data-testid*="sign-in"]'
+          )
+          console.log('- SignIn components found:', signInElements.length)
+
+          // Check for Next.js hydration errors
+          const hydrationErrors = await page.$$('[data-nextjs-dialog]')
+          console.log('- Next.js hydration errors:', hydrationErrors.length)
+
+          // Log browser console messages
+          if (consoleMessages.length > 0) {
+            console.log('📋 Browser console messages:')
+            consoleMessages.slice(-10).forEach((msg, i) => {
+              console.log(`  ${i + 1}. ${msg}`)
+            })
+          } else {
+            console.log('📋 No browser console messages captured')
+          }
+        } catch (debugError) {
+          console.log('Debug capture failed:', debugError)
+        }
+      }
 
       // If Clerk isn't loading, skip authentication for CI
       if (process.env.CI && error.message?.includes('data-clerk-element')) {

@@ -5,8 +5,12 @@ import { NextResponse } from 'next/server'
  * Only available in test environment
  */
 export async function GET() {
-  // Only allow in test environment
-  if (process.env.NODE_ENV === 'production' && !process.env.TEST_ENVIRONMENT) {
+  // Allow in development or test environments
+  if (
+    process.env.NODE_ENV === 'production' &&
+    !process.env.CI &&
+    !process.env.TEST_ENVIRONMENT
+  ) {
     return NextResponse.json(
       { error: 'Debug endpoint not available in production' },
       { status: 403 }
