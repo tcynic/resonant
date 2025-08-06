@@ -282,6 +282,7 @@ jobs:
           echo "CLERK_SECRET_KEY=${{ secrets.CLERK_SECRET_KEY_STAGING || 'sk_test_placeholder' }}" >> .env.test
           echo "PLAYWRIGHT_BASE_URL=http://localhost:3000" >> .env.test
           echo "PLAYWRIGHT_HEADLESS=true" >> .env.test
+          echo "TEST_ENVIRONMENT=test" >> .env.test
           echo "CI=true" >> .env.test
 
       - name: Install Playwright browsers
@@ -313,6 +314,7 @@ jobs:
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY_STAGING || 'pk_test_placeholder' }}
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY_STAGING || 'sk_test_placeholder' }}
           PLAYWRIGHT_BASE_URL: http://localhost:3000
+          TEST_ENVIRONMENT: test
           CI: true
 
       - name: Stop development servers
