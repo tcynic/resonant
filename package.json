@@ -31,7 +31,7 @@
     "test:e2e:chrome": "playwright test --project=chromium",
     "test:e2e:firefox": "playwright test --project=firefox",
     "test:e2e:webkit": "playwright test --project=webkit",
-    "test:setup:validate": "playwright test tests/setup/test-setup-validation.test.ts",
+    "test:setup:validate": "playwright test tests/e2e/test-setup-validation.test.ts",
     "test:setup:seed": "node scripts/seed-test-data.js",
     "test:smoke": "playwright test tests/smoke/",
     "test:accounts:validate": "node scripts/validate-test-accounts.js",
