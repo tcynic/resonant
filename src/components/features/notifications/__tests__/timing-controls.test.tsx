@@ -1,4 +1,4 @@
-import { render, screen, waitFor, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { TimingControls } from '../timing-controls'
 
@@ -18,7 +18,7 @@ const mockProps = {
 // Mock Intl API for timezone detection
 Object.defineProperty(global, 'Intl', {
   value: {
-    DateTimeFormat: jest.fn((locale, options) => {
+    DateTimeFormat: jest.fn(() => {
       const mockInstance = {
         resolvedOptions: jest.fn(() => ({
           timeZone: 'America/Los_Angeles',

@@ -100,7 +100,7 @@ export function ReminderSettings({ className = '' }: ReminderSettingsProps) {
         return prev
       })
     }
-  }, [userData?._id])
+  }, [userData?._id]) // eslint-disable-line react-hooks/exhaustive-deps -- Using userData._id to prevent infinite loop while still updating when user changes
 
   const handleSettingChange = (key: keyof ReminderSettings, value: unknown) => {
     setSettings(prev => ({ ...prev, [key]: value }))

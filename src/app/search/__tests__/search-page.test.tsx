@@ -93,9 +93,9 @@ jest.mock('../search-content', () => ({
 
     const handleResultClick = (result: any) => {
       // Use the mocked router to navigate
-      const { useRouter } = require('next/navigation')
-      const router = useRouter()
-      router.push(`/journal/${result._id}`)
+      // Import router mock at module level to avoid hook rules violation
+      const mockRouter = require('next/navigation').useRouter()
+      mockRouter.push(`/journal/${result._id}`)
     }
 
     return (
