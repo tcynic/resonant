@@ -2,7 +2,6 @@
 
 A modern web application for tracking and improving relationship wellness through journaling, mood tracking, and AI-powered insights.
 
-
 ## 🌟 Overview
 
 Resonant helps users build stronger, more meaningful connections by providing tools to:
