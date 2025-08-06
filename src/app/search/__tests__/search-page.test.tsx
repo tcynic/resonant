@@ -92,12 +92,10 @@ jest.mock('../search-content', () => ({
     }
 
     const handleResultClick = (result: any) => {
-      // Mock navigation to journal entry - router is already mocked in test setup
-      // We'll simulate the navigation call without using the hook
-      if (typeof window !== 'undefined') {
-        // In tests, this will be handled by the mocked router
-        console.log(`Navigate to: /journal/${result._id}`)
-      }
+      // Use the mocked router to navigate
+      const { useRouter } = require('next/navigation')
+      const router = useRouter()
+      router.push(`/journal/${result._id}`)
     }
 
     return (

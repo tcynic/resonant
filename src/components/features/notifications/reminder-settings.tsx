@@ -91,9 +91,16 @@ export function ReminderSettings({ className = '' }: ReminderSettingsProps) {
   // Load current settings
   useEffect(() => {
     if (userData?.preferences?.reminderSettings) {
-      setSettings(userData.preferences.reminderSettings)
+      setSettings(prev => {
+        const newSettings = userData.preferences.reminderSettings
+        // Only update if settings actually changed
+        if (JSON.stringify(prev) !== JSON.stringify(newSettings)) {
+          return newSettings
+        }
+        return prev
+      })
     }
-  }, [userData])
+  }, [userData?._id])
 
   const handleSettingChange = (key: keyof ReminderSettings, value: unknown) => {
     setSettings(prev => ({ ...prev, [key]: value }))

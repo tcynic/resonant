@@ -75,7 +75,7 @@ jest.mock('@/components/features/dashboard/entry-history', () => {
 
 jest.mock('@/components/features/dashboard/connection-status', () => {
   return function MockConnectionStatus() {
-    return <span>Live</span>
+    return <div data-testid="connection-status">Live</div>
   }
 })
 
@@ -266,12 +266,15 @@ describe('DashboardContent', () => {
   it('should render dashboard with all main sections', () => {
     render(<DashboardContent />)
 
-    // Since queries are commented out in the component, it shows error state
-    expect(screen.getByTestId('dashboard-error')).toBeInTheDocument()
+    // Should render dashboard header
+    expect(screen.getByText(/Hello, John!/)).toBeInTheDocument()
     expect(
-      screen.getByText(/Failed to load dashboard data/)
+      screen.getByText(/Here's how your relationships are doing today/)
     ).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument()
+
+    // Should render health score cards
+    expect(screen.getByText('Relationship Health Scores')).toBeInTheDocument()
+    expect(screen.getAllByTestId('health-score-card')).toHaveLength(2)
   })
 
   it('should display loading state when data is undefined', () => {
@@ -281,11 +284,8 @@ describe('DashboardContent', () => {
 
     render(<DashboardContent />)
 
-    // Since queries are commented out in component, it shows error state instead of loading
-    expect(screen.getByTestId('dashboard-error')).toBeInTheDocument()
-    expect(
-      screen.getByText(/Failed to load dashboard data/)
-    ).toBeInTheDocument()
+    // Should show loading spinner
+    expect(screen.getByTestId('loading-dashboard')).toBeInTheDocument()
   })
 
   it('should display error state when data fails to load', () => {
@@ -325,51 +325,39 @@ describe('DashboardContent', () => {
 
     render(<DashboardContent />)
 
-    // Since queries are commented out in component, shows error state
-    expect(screen.getByTestId('dashboard-error')).toBeInTheDocument()
+    // Should show empty dashboard state
     expect(
-      screen.getByText(/Failed to load dashboard data/)
+      screen.getByText(/Welcome to your Relationship Health Journal!/)
     ).toBeInTheDocument()
   })
 
   it('should render health score cards for each relationship', () => {
     render(<DashboardContent />)
 
-    // Since queries are commented out in component, shows error state
-    expect(screen.getByTestId('dashboard-error')).toBeInTheDocument()
-    expect(
-      screen.getByText(/Failed to load dashboard data/)
-    ).toBeInTheDocument()
+    // Should render health score cards
+    expect(screen.getByText('Relationship Health Scores')).toBeInTheDocument()
+    expect(screen.getAllByTestId('health-score-card')).toHaveLength(2)
   })
 
   it('should display dashboard statistics', () => {
     render(<DashboardContent />)
 
-    // Since queries are commented out in component, shows error state
-    expect(screen.getByTestId('dashboard-error')).toBeInTheDocument()
-    expect(
-      screen.getByText(/Failed to load dashboard data/)
-    ).toBeInTheDocument()
+    // Should display stats grid with values
+    expect(screen.getByTestId('stats-grid')).toBeInTheDocument()
   })
 
   it('should show recent activity component', () => {
     render(<DashboardContent />)
 
-    // Since queries are commented out in component, shows error state
-    expect(screen.getByTestId('dashboard-error')).toBeInTheDocument()
-    expect(
-      screen.getByText(/Failed to load dashboard data/)
-    ).toBeInTheDocument()
+    // Should render recent activity section
+    expect(screen.getByTestId('recent-activity')).toBeInTheDocument()
   })
 
   it('should render trend chart when data is available', () => {
     render(<DashboardContent />)
 
-    // Since queries are commented out in component, shows error state
-    expect(screen.getByTestId('dashboard-error')).toBeInTheDocument()
-    expect(
-      screen.getByText(/Failed to load dashboard data/)
-    ).toBeInTheDocument()
+    // Should render trend chart section
+    expect(screen.getByTestId('trend-chart')).toBeInTheDocument()
   })
 
   it('should not render trend chart when no data', () => {
@@ -408,82 +396,64 @@ describe('DashboardContent', () => {
   it('should display quick action links', () => {
     render(<DashboardContent />)
 
-    // Since queries are commented out in component, shows error state
-    expect(screen.getByTestId('dashboard-error')).toBeInTheDocument()
-    expect(
-      screen.getByText(/Failed to load dashboard data/)
-    ).toBeInTheDocument()
+    // Should display quick action links
+    expect(screen.getByText('New Journal Entry')).toBeInTheDocument()
+    expect(screen.getByText('Add Relationship')).toBeInTheDocument()
   })
 
   it('should show appropriate greeting based on time of day', () => {
     render(<DashboardContent />)
 
-    // Since queries are commented out in component, shows error state
-    expect(screen.getByTestId('dashboard-error')).toBeInTheDocument()
-    expect(
-      screen.getByText(/Failed to load dashboard data/)
-    ).toBeInTheDocument()
+    // Should show greeting with user name
+    expect(screen.getByText(/Hello, John!/)).toBeInTheDocument()
   })
 
   it('should display last updated time', () => {
     render(<DashboardContent />)
 
-    // Since queries are commented out in component, shows error state
-    expect(screen.getByTestId('dashboard-error')).toBeInTheDocument()
-    expect(
-      screen.getByText(/Failed to load dashboard data/)
-    ).toBeInTheDocument()
+    // Should show last updated time
+    expect(screen.getByText(/Updated/)).toBeInTheDocument()
   })
 
   it('should show live connection status', () => {
     render(<DashboardContent />)
 
-    // Since queries are commented out in component, shows error state
-    expect(screen.getByTestId('dashboard-error')).toBeInTheDocument()
-    expect(
-      screen.getByText(/Failed to load dashboard data/)
-    ).toBeInTheDocument()
+    // Should render connection status component
+    expect(screen.getByTestId('connection-status')).toBeInTheDocument()
   })
 
   it('should render refresh button', () => {
     render(<DashboardContent />)
 
-    // Since queries are commented out in component, shows error state with retry button
-    expect(screen.getByTestId('dashboard-error')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument()
+    // Should render refresh button in header
+    expect(screen.getByRole('button', { name: /refresh/i })).toBeInTheDocument()
   })
 
   it('should handle refresh button click', () => {
-    // Just test that the retry button is clickable in error state
+    // Test that refresh button is clickable
     render(<DashboardContent />)
 
-    const retryButton = screen.getByRole('button', { name: /retry/i })
-    expect(retryButton).toBeEnabled()
+    const refreshButton = screen.getByRole('button', { name: /refresh/i })
+    expect(refreshButton).toBeEnabled()
 
     // Test click doesn't throw error
     expect(() => {
-      fireEvent.click(retryButton)
+      fireEvent.click(refreshButton)
     }).not.toThrow()
   })
 
   it('should show relationship count in health scores section', () => {
     render(<DashboardContent />)
 
-    // Since queries are commented out in component, shows error state
-    expect(screen.getByTestId('dashboard-error')).toBeInTheDocument()
-    expect(
-      screen.getByText(/Failed to load dashboard data/)
-    ).toBeInTheDocument()
+    // Should show relationship count
+    expect(screen.getByText('2 relationships tracked')).toBeInTheDocument()
   })
 
   it('should display stats with proper labels', () => {
     render(<DashboardContent />)
 
-    // Since queries are commented out in component, shows error state
-    expect(screen.getByTestId('dashboard-error')).toBeInTheDocument()
-    expect(
-      screen.getByText(/Failed to load dashboard data/)
-    ).toBeInTheDocument()
+    // Should display stats with proper data
+    expect(screen.getByTestId('stats-grid')).toBeInTheDocument()
   })
 
   it('should handle different health score states', () => {
@@ -522,10 +492,8 @@ describe('DashboardContent', () => {
 
     render(<DashboardContent />)
 
-    // Since queries are commented out in component, shows error state
-    expect(screen.getByTestId('dashboard-error')).toBeInTheDocument()
-    expect(
-      screen.getByText(/Failed to load dashboard data/)
-    ).toBeInTheDocument()
+    // Should render dashboard with low health score data
+    expect(screen.getByText('Relationship Health Scores')).toBeInTheDocument()
+    expect(screen.getAllByTestId('health-score-card')).toHaveLength(2)
   })
 })

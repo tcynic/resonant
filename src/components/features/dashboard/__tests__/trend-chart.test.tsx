@@ -91,7 +91,7 @@ describe('TrendChart', () => {
       />
     )
 
-    expect(screen.getByText('Tracking 2 relationships')).toBeInTheDocument()
+    expect(screen.getByText(/\(2 relationships\)/)).toBeInTheDocument()
   })
 
   it('should render time period selector', () => {
@@ -226,7 +226,7 @@ describe('TrendChart', () => {
       />
     )
 
-    expect(screen.getByText('Tracking 0 relationships')).toBeInTheDocument()
+    expect(screen.getByText(/\(0 relationships\)/)).toBeInTheDocument()
   })
 
   it('should apply custom className', () => {
@@ -256,7 +256,7 @@ describe('TrendChart', () => {
     fireEvent.click(partnerButton)
 
     // Should update the tracking count
-    expect(screen.getByText('Tracking 1 relationships')).toBeInTheDocument()
+    expect(screen.getByText(/\(1 relationships\)/)).toBeInTheDocument()
   })
 
   it('should show different time period button states', () => {

@@ -413,7 +413,10 @@ export default function DashboardContent() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 px-4 py-8">
+      <div
+        className="min-h-screen bg-gray-50 px-4 py-8"
+        data-testid="loading-dashboard"
+      >
         <div className="max-w-7xl mx-auto space-y-8">
           <div className="bg-white p-6 rounded-lg shadow-sm animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-1/3 mb-2" />
@@ -441,7 +444,9 @@ export default function DashboardContent() {
         />
 
         {/* Stats Grid */}
-        <StatsGrid stats={dashboardStats} />
+        <div data-testid="stats-grid">
+          <StatsGrid stats={dashboardStats} />
+        </div>
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">

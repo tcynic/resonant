@@ -18,7 +18,7 @@ jest.mock('../../use-debounce', () => ({
   useDebounce: jest.fn(),
 }))
 
-const { useDebounce } = jest.requireActual('../../use-debounce')
+import { useDebounce } from '../../use-debounce'
 
 // Wrap timer advances in act to handle state updates
 const advanceTimers = (ms: number) => {
@@ -38,7 +38,9 @@ describe('useAutoSave', () => {
   })
 
   afterEach(() => {
-    jest.runOnlyPendingTimers()
+    act(() => {
+      jest.runOnlyPendingTimers()
+    })
     jest.useRealTimers()
     jest.restoreAllMocks()
   })
