@@ -115,7 +115,7 @@ function DashboardHeader({
 function StatsGrid({ stats }: StatsGridProps) {
   if (!stats) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {Array.from({ length: 4 }).map((_, i) => (
           <Card key={i} className="animate-pulse" padding="md">
             <div className="h-16 bg-gray-200 rounded" />
@@ -171,9 +171,9 @@ function StatsGrid({ stats }: StatsGridProps) {
   ]
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       {statItems.map((item, index) => (
-        <Card key={index} padding="md">
+        <Card key={index} padding="md" className="transition-shadow hover:shadow-md">
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <span className="text-2xl">{item.icon}</span>
@@ -459,12 +459,7 @@ export default function DashboardContent() {
         {/* Main Content Grid */}
         <div
           className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
-            gap: 24,
-            alignItems: 'start',
-          }}
+          style={{ gap: 24, alignItems: 'start' }}
         >
           {/* Health Score Cards */}
           <div className="lg:col-span-2 space-y-6">
@@ -484,14 +479,7 @@ export default function DashboardContent() {
                 </div>
               }
             >
-              <div
-                className="grid grid-cols-1 sm:grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6"
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-                  gap: 16,
-                }}
-              >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 {dashboardData.relationships.map(
                   (relationship: RelationshipWithScore) => (
                     <HealthScoreCard
@@ -571,14 +559,7 @@ export default function DashboardContent() {
             </h3>
           </CardHeader>
           <CardContent>
-            <div
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                gap: 12,
-              }}
-            >
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               <Link
                 href="/journal/new"
                 className="flex items-center p-3 sm:p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
