@@ -4,6 +4,7 @@
  */
 
 import { Id, TableNames } from '../../../convex/_generated/dataModel'
+import { LangExtractResult } from '../types'
 
 // ============================================================================
 // CORE ENTITY TYPES
@@ -90,6 +91,8 @@ export interface AIAnalysis {
   confidenceLevel: number // 0 to 1
   reasoning: string
   patterns: AnalysisPatterns
+  // Optional structured data from LangExtract (Story LangExtract-2)
+  langExtractData?: LangExtractResult
   analysisVersion: string
   processingTime: number
   tokensUsed?: number

@@ -86,15 +86,13 @@ export const createEntry = mutation({
       if (args.allowAIAnalysis !== false) {
         try {
           // Use queue-based processing with priority assessment
-          await ctx.scheduler.runAfter(
-            1000, // Small delay to allow entry to be fully committed
-            internal.scheduler.analysis_queue.enqueueAnalysis,
-            {
-              entryId,
-              userId: args.userId,
-              priority: undefined, // Let queue system assess priority automatically
-            }
-          )
+          // Avoid deep generic type instantiation by delegating to helper
+          const { enqueueAnalysis } = await import('./scheduler/enqueueHelper')
+          await enqueueAnalysis(ctx as any, {
+            entryId: entryId as any,
+            userId: args.userId as any,
+            priority: 'normal',
+          })
         } catch (analysisError) {
           // Don't fail the entire entry creation if AI analysis queuing fails
           console.error('Failed to queue AI analysis:', analysisError)

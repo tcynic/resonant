@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useUser } from '@clerk/nextjs'
 import { useQuery } from 'convex/react'
-import { api } from '../../../convex/_generated/api'
+// import { api } from '../../../convex/_generated/api'
+import { ApiUnsafe } from '../../../convex/api-unsafe'
 import { Id } from '../../../convex/_generated/dataModel'
 import { RelationshipWithScore } from '@/lib/types'
 import {
@@ -173,7 +174,11 @@ function StatsGrid({ stats }: StatsGridProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       {statItems.map((item, index) => (
-        <Card key={index} padding="md" className="transition-shadow hover:shadow-md">
+        <Card
+          key={index}
+          padding="md"
+          className="transition-shadow hover:shadow-md"
+        >
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <span className="text-2xl">{item.icon}</span>
@@ -305,17 +310,17 @@ export default function DashboardContent() {
   // Dashboard data queries
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const dashboardData: any = useQuery(
-    api.dashboard.getDashboardData,
+    ApiUnsafe.dashboard.getDashboardData,
     convexUser?._id ? { userId: convexUser._id as Id<'users'> } : 'skip'
   )
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const dashboardStats: any = useQuery(
-    api.dashboard.getDashboardStats,
+    ApiUnsafe.dashboard.getDashboardStats,
     convexUser?._id ? { userId: convexUser._id as Id<'users'> } : 'skip'
   )
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recentActivity: any = useQuery(
-    api.dashboard.getRecentActivity,
+    ApiUnsafe.dashboard.getRecentActivity,
     convexUser?._id
       ? { userId: convexUser._id as Id<'users'>, limit: 10 }
       : 'skip'
@@ -323,7 +328,7 @@ export default function DashboardContent() {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const trendData: any = useQuery(
-    api.dashboard.getDashboardTrends,
+    ApiUnsafe.dashboard.getDashboardTrends,
     convexUser?._id
       ? {
           userId: convexUser._id as Id<'users'>,
@@ -438,7 +443,11 @@ export default function DashboardContent() {
   return (
     <div
       className="min-h-screen bg-gray-50 px-3 sm:px-4 py-6 sm:py-8"
-      style={{ minHeight: '100vh', backgroundColor: '#f9fafb', padding: '24px 12px' }}
+      style={{
+        minHeight: '100vh',
+        backgroundColor: '#f9fafb',
+        padding: '24px 12px',
+      }}
     >
       <div
         className="max-w-7xl mx-auto space-y-6 sm:space-y-8"

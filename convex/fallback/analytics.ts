@@ -342,15 +342,12 @@ export const requestFallbackUpgrade = mutation({
 
     // Enqueue AI analysis with appropriate priority
     const priority = args.priority || 'normal'
-    await ctx.scheduler.runAfter(
-      0,
-      internal.scheduler.analysis_queue.enqueueAnalysis,
-      {
-        entryId: fallbackAnalysis.entryId,
-        userId: fallbackAnalysis.userId,
-        priority,
-      }
-    )
+    const { enqueueAnalysis } = await import('../scheduler/enqueueHelper')
+    await enqueueAnalysis(ctx as any, {
+      entryId: fallbackAnalysis.entryId as any,
+      userId: fallbackAnalysis.userId as any,
+      priority,
+    })
 
     return {
       success: true,

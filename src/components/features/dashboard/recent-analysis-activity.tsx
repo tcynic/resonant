@@ -1,7 +1,6 @@
 'use client'
 
-import { useQuery } from 'convex/react'
-import { api } from '@/convex/_generated/api'
+import { useRecentAnalyses } from '@/hooks/useRecentAnalyses'
 import { Id } from '@/convex/_generated/dataModel'
 import { Card, CardHeader, CardContent } from '@/components/ui/card'
 import Link from 'next/link'
@@ -24,10 +23,8 @@ export function RecentAnalysisActivity({
   userId,
   limit = 5,
 }: RecentAnalysisActivityProps) {
-  const recentAnalyses = useQuery(api.aiAnalysis.getRecentAnalyses, {
-    userId,
-    limit,
-  })
+  // Avoid deep conditional type instantiation by loosening query generic inference
+  const recentAnalyses = useRecentAnalyses(userId, limit)
 
   if (!recentAnalyses || recentAnalyses.length === 0) {
     return (

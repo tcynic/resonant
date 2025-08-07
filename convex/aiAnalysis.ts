@@ -9,6 +9,13 @@ import {
 import { v } from 'convex/values'
 import { Id } from './_generated/dataModel'
 import { internal, api } from './_generated/api'
+import { enqueueAnalysis as enqueueAnalysisHelper } from './scheduler/enqueueHelper'
+import {
+  InternalUnsafe,
+  runActionUnsafe,
+  runMutationUnsafe,
+  runQueryUnsafe,
+} from './utils/internal-wrapper'
 import { langExtractDataSchema } from './schema/langextract_types'
 // NOTE: AI analysis now uses HTTP Actions instead of client-side bridge
 
@@ -66,15 +73,15 @@ export const queueAnalysis = mutation({
     const priority =
       args.priority === 'low' ? 'normal' : args.priority || 'normal' // Convert legacy 'low' to 'normal'
 
-    await ctx.scheduler.runAfter(
-      100,
-      internal.scheduler.analysis_queue.enqueueAnalysis,
-      {
-        entryId: args.entryId,
-        userId: entry.userId,
-        priority: priority as 'normal' | 'high' | 'urgent',
-      }
-    )
+    // Narrow overly deep type instantiation by isolating payload typing
+    const enqueuePayload = {
+      entryId: args.entryId,
+      userId: entry.userId,
+      priority: priority as 'normal' | 'high' | 'urgent',
+    }
+
+    // Access internal path through an any-typed alias to avoid expensive generic resolution
+    await enqueueAnalysisHelper(ctx as any, enqueuePayload)
 
     return { status: 'queued', analysisId }
   },
@@ -239,15 +246,11 @@ export const reprocessStuckEntries = mutation({
 
         if (stuck.reason === 'no_analysis') {
           // Use new queue-based processing
-          await ctx.scheduler.runAfter(
-            0,
-            internal.scheduler.analysis_queue.enqueueAnalysis,
-            {
-              entryId: stuck.entryId,
-              userId: entry.userId!,
-              priority: 'normal',
-            }
-          )
+          await enqueueAnalysisHelper(ctx as any, {
+            entryId: stuck.entryId as any,
+            userId: entry.userId as any,
+            priority: 'normal',
+          })
           reprocessed.push({ ...stuck, action: 'queued_for_analysis' })
         } else if (
           stuck.reason === 'stuck_processing' ||
@@ -262,15 +265,11 @@ export const reprocessStuckEntries = mutation({
             })
           }
           // Use queue-based reprocessing
-          await ctx.scheduler.runAfter(
-            0,
-            internal.scheduler.analysis_queue.enqueueAnalysis,
-            {
-              entryId: stuck.entryId,
-              userId: entry.userId!,
-              priority: 'high', // Give reprocessing higher priority
-            }
-          )
+          await enqueueAnalysisHelper(ctx as any, {
+            entryId: stuck.entryId as any,
+            userId: entry.userId as any,
+            priority: 'high',
+          })
           reprocessed.push({ ...stuck, action: 'requeued_for_analysis' })
         }
       } catch (error) {
@@ -554,11 +553,16 @@ export const retryAnalysisInternal = internalAction({
     method?: string
   }> => {
     // Redirect to direct processing instead of HTTP Actions
-    return await ctx.runAction(internal.aiAnalysis.processAnalysisDirectly, {
-      entryId: args.entryId,
-      userId: args.userId,
-      priority: 'high', // Retries get higher priority
-    })
+    // Avoid deep generic type instantiation when referencing internal path directly
+    return await runActionUnsafe(
+      ctx as any,
+      InternalUnsafe.aiAnalysis.processAnalysisDirectly,
+      {
+        entryId: args.entryId,
+        userId: args.userId,
+        priority: 'high', // Retries get higher priority
+      }
+    )
   },
 })
 
@@ -572,20 +576,28 @@ export const processAnalysisDirectly = internalAction({
   handler: async (ctx, args) => {
     try {
       // Get the journal entry via runQuery since actions don't have direct db access
-      const entry = await ctx.runQuery(internal.journalEntries.getForAnalysis, {
-        entryId: args.entryId,
-      })
+      const entry = await runQueryUnsafe(
+        ctx as any,
+        InternalUnsafe.journalEntries.getForAnalysis,
+        {
+          entryId: args.entryId,
+        }
+      )
 
       if (!entry) {
         throw new Error('Journal entry not found')
       }
 
       // Mark analysis as processing
-      await ctx.runMutation(internal.aiAnalysis.updateStatus, {
-        entryId: args.entryId,
-        status: 'processing',
-        processingAttempts: 1,
-      })
+      await runMutationUnsafe(
+        ctx as any,
+        InternalUnsafe.aiAnalysis.updateStatus,
+        {
+          entryId: args.entryId,
+          status: 'processing',
+          processingAttempts: 1,
+        }
+      )
 
       // Use fallback analysis pipeline to avoid HTTP Action circular dependency
       const { handleFallbackInPipeline } = await import(
@@ -612,11 +624,15 @@ export const processAnalysisDirectly = internalAction({
       console.error('Direct analysis processing failed:', error)
 
       // Mark as failed
-      await ctx.runMutation(internal.aiAnalysis.markFailed, {
-        entryId: args.entryId,
-        error:
-          error instanceof Error ? error.message : 'Direct processing failed',
-      })
+      await runMutationUnsafe(
+        ctx as any,
+        InternalUnsafe.aiAnalysis.markFailed,
+        {
+          entryId: args.entryId,
+          error:
+            error instanceof Error ? error.message : 'Direct processing failed',
+        }
+      )
 
       return {
         success: false,
@@ -741,15 +757,11 @@ export const analyzeDirectly = mutation({
     // Use new queue-based processing with priority assessment
     const priority = args.priority || 'normal'
 
-    await ctx.scheduler.runAfter(
-      100,
-      internal.scheduler.analysis_queue.enqueueAnalysis,
-      {
-        entryId: args.entryId,
-        userId: entry.userId,
-        priority: priority as 'normal' | 'high' | 'urgent',
-      }
-    )
+    await enqueueAnalysisHelper(ctx as any, {
+      entryId: args.entryId as any,
+      userId: entry.userId as any,
+      priority: priority as 'normal' | 'high' | 'urgent',
+    })
 
     return { status: 'queued', analysisId }
   },

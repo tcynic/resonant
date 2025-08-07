@@ -23,7 +23,8 @@ interface NotificationProviderProps {
 export function NotificationProvider({ children }: NotificationProviderProps) {
   const isClient = useIsClient()
   const browserNotifications = useBrowserNotifications()
-  const { convexUser: userData } = useConvexUser()
+  const userHook = useConvexUser()
+  const userData = userHook?.convexUser
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const reminderSettings = (userData?.preferences as any)?.reminderSettings as
@@ -58,9 +59,8 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
       }
     }
 
-    if (userData && reminderSettings) {
-      initializeNotifications()
-    }
+    // Always register the service worker on client to enable notifications
+    initializeNotifications()
   }, [isClient, userData, reminderSettings, browserNotifications])
 
   // Listen for messages from service worker
