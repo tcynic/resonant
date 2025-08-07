@@ -459,7 +459,12 @@ export default function DashboardContent() {
         {/* Main Content Grid */}
         <div
           className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8"
-          style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 24 }}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
+            gap: 24,
+            alignItems: 'start',
+          }}
         >
           {/* Health Score Cards */}
           <div className="lg:col-span-2 space-y-6">
@@ -481,7 +486,11 @@ export default function DashboardContent() {
             >
               <div
                 className="grid grid-cols-1 sm:grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6"
-                style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16 }}
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                  gap: 16,
+                }}
               >
                 {dashboardData.relationships.map(
                   (relationship: RelationshipWithScore) => (
@@ -498,7 +507,10 @@ export default function DashboardContent() {
           </div>
 
           {/* Recent Activity */}
-          <div className="space-y-4 sm:space-y-6" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div
+            className="space-y-4 sm:space-y-6"
+            style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
+          >
             <ErrorBoundary
               fallback={
                 <NetworkErrorFallback onRetry={() => safeWindow.reload()} />
@@ -561,7 +573,11 @@ export default function DashboardContent() {
           <CardContent>
             <div
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"
-              style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gap: 12,
+              }}
             >
               <Link
                 href="/journal/new"
