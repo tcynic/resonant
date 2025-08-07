@@ -81,6 +81,8 @@ function UserMenu() {
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
+          width="16"
+          height="16"
         >
           <path
             strokeLinecap="round"
@@ -165,6 +167,8 @@ function GlobalSearch() {
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
+            width="20"
+            height="20"
           >
             <path
               strokeLinecap="round"
@@ -207,6 +211,8 @@ function NotificationIndicator() {
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
+        width="24"
+        height="24"
       >
         <path
           strokeLinecap="round"
@@ -245,6 +251,8 @@ function MobileMenuButton({
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
+        width="24"
+        height="24"
       >
         {isOpen ? (
           <path
