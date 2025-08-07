@@ -5,6 +5,15 @@ import { api } from '@/convex/_generated/api'
 import { Id } from '@/convex/_generated/dataModel'
 import { Card, CardHeader, CardContent } from '@/components/ui/card'
 import Link from 'next/link'
+import { LangExtractResult } from '@/lib/types'
+
+type WithLangExtract = {
+  langExtractData?: LangExtractResult
+}
+
+function hasEnhancedInsights(item: unknown): item is WithLangExtract {
+  return typeof item === 'object' && item !== null && 'langExtractData' in item
+}
 
 interface RecentAnalysisActivityProps {
   userId: Id<'users'>
@@ -42,6 +51,15 @@ export function RecentAnalysisActivity({
       </Card>
     )
   }
+
+  const hasAnyEnhancedInsights = Array.isArray(recentAnalyses)
+    ? recentAnalyses.some(
+        a => hasEnhancedInsights(a) && a.langExtractData?.processingSuccess
+      )
+    : false
+
+  const isEnhancedAnalysis = (item: unknown): boolean =>
+    hasEnhancedInsights(item) && !!item.langExtractData?.processingSuccess
 
   const formatTimeAgo = (timestamp: number) => {
     const now = Date.now()
@@ -103,12 +121,19 @@ export function RecentAnalysisActivity({
           <h3 className="text-lg font-semibold text-gray-900">
             Recent AI Analysis
           </h3>
-          <Link
-            href="/journal"
-            className="text-sm text-blue-600 hover:text-blue-700"
-          >
-            View All
-          </Link>
+          <div className="flex items-center gap-2">
+            {hasAnyEnhancedInsights && (
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                🔍 Enhanced
+              </span>
+            )}
+            <Link
+              href="/journal"
+              className="text-sm text-blue-600 hover:text-blue-700"
+            >
+              View All
+            </Link>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -139,6 +164,11 @@ export function RecentAnalysisActivity({
                         : analysis.status.charAt(0).toUpperCase() +
                           analysis.status.slice(1)}
                     </span>
+                    {isEnhancedAnalysis(analysis) && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200">
+                        Enhanced
+                      </span>
+                    )}
                     {analysis.relationshipName && (
                       <span className="text-xs text-gray-500">
                         • {analysis.relationshipName}

@@ -9,6 +9,7 @@ import {
 import { v } from 'convex/values'
 import { Id } from './_generated/dataModel'
 import { internal, api } from './_generated/api'
+import { langExtractDataSchema } from './schema/langextract_types'
 // NOTE: AI analysis now uses HTTP Actions instead of client-side bridge
 
 // Queue journal entry for AI analysis (Epic 2)
@@ -451,6 +452,8 @@ export const storeResult = internalMutation({
         explanation: v.string(),
       })
     ),
+    // Persist LangExtract structured data when available (Story LangExtract-2)
+    langExtractData: v.optional(langExtractDataSchema),
     analysisVersion: v.string(),
     processingTime: v.number(),
     tokensUsed: v.number(),
@@ -474,6 +477,7 @@ export const storeResult = internalMutation({
         patterns: args.patterns,
         emotionalStability: args.emotionalStability,
         energyImpact: args.energyImpact,
+        langExtractData: args.langExtractData,
         analysisVersion: args.analysisVersion,
         processingTime: args.processingTime,
         tokensUsed: args.tokensUsed,
@@ -493,6 +497,7 @@ export const storeResult = internalMutation({
         patterns: args.patterns,
         emotionalStability: args.emotionalStability,
         energyImpact: args.energyImpact,
+        langExtractData: args.langExtractData,
         analysisVersion: args.analysisVersion,
         processingTime: args.processingTime,
         tokensUsed: args.tokensUsed,
@@ -663,6 +668,8 @@ export const completeAnalysis = internalMutation({
       patterns: results.patterns,
       emotionalStability: results.emotionalStability,
       energyImpact: results.energyImpact,
+      // Persist LangExtract data when provided by HTTP Action results
+      langExtractData: results.langExtractData,
       analysisVersion: results.analysisVersion,
       processingTime: results.processingTime,
       tokensUsed: results.tokensUsed,
