@@ -19,14 +19,34 @@ export function Card({
     lg: 'p-8',
   }
 
+  const paddingInline = {
+    none: 0,
+    sm: 16,
+    md: 24,
+    lg: 32,
+  } as const
+
   const classes = `
     bg-white rounded-lg border border-gray-200 shadow-sm
     ${paddingClasses[padding]}
     ${className}
   `.trim()
 
+  const fallbackStyle: React.CSSProperties = {
+    backgroundColor: '#ffffff',
+    border: '1px solid #e5e7eb',
+    borderRadius: 8,
+    boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+    padding: paddingInline[padding],
+  }
+
+  const mergedStyle: React.CSSProperties = {
+    ...fallbackStyle,
+    ...(props.style as React.CSSProperties),
+  }
+
   return (
-    <div className={classes} {...props}>
+    <div className={classes} style={mergedStyle} {...props}>
       {children}
     </div>
   )
@@ -39,7 +59,16 @@ interface CardHeaderProps {
 
 export function CardHeader({ children, className = '' }: CardHeaderProps) {
   return (
-    <div className={`border-b border-gray-200 pb-4 mb-4 ${className}`}>
+    <div
+      className={`border-b border-gray-200 pb-4 mb-4 ${className}`}
+      style={{
+        borderBottom: '1px solid #e5e7eb',
+        paddingBottom: 16,
+        marginBottom: 16,
+        paddingLeft: 16,
+        paddingRight: 16,
+      }}
+    >
       {children}
     </div>
   )
@@ -61,7 +90,16 @@ interface CardFooterProps {
 
 export function CardFooter({ children, className = '' }: CardFooterProps) {
   return (
-    <div className={`border-t border-gray-200 pt-4 mt-4 ${className}`}>
+    <div
+      className={`border-t border-gray-200 pt-4 mt-4 ${className}`}
+      style={{
+        borderTop: '1px solid #e5e7eb',
+        paddingTop: 16,
+        marginTop: 16,
+        paddingLeft: 16,
+        paddingRight: 16,
+      }}
+    >
       {children}
     </div>
   )

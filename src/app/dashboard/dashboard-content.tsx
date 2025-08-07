@@ -436,8 +436,14 @@ export default function DashboardContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 px-3 sm:px-4 py-6 sm:py-8">
-      <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
+    <div
+      className="min-h-screen bg-gray-50 px-3 sm:px-4 py-6 sm:py-8"
+      style={{ minHeight: '100vh', backgroundColor: '#f9fafb', padding: '24px 12px' }}
+    >
+      <div
+        className="max-w-7xl mx-auto space-y-6 sm:space-y-8"
+        style={{ maxWidth: 1200, margin: '0 auto', display: 'block' }}
+      >
         {/* Header */}
         <DashboardHeader
           user={user ? { firstName: user.firstName || undefined } : null}
@@ -451,7 +457,10 @@ export default function DashboardContent() {
         </div>
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+        <div
+          className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8"
+          style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 24 }}
+        >
           {/* Health Score Cards */}
           <div className="lg:col-span-2 space-y-6">
             <div className="flex items-center justify-between mb-4">
@@ -470,7 +479,10 @@ export default function DashboardContent() {
                 </div>
               }
             >
-              <div className="grid grid-cols-1 sm:grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
+              <div
+                className="grid grid-cols-1 sm:grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6"
+                style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16 }}
+              >
                 {dashboardData.relationships.map(
                   (relationship: RelationshipWithScore) => (
                     <HealthScoreCard
@@ -486,7 +498,7 @@ export default function DashboardContent() {
           </div>
 
           {/* Recent Activity */}
-          <div className="space-y-4 sm:space-y-6">
+          <div className="space-y-4 sm:space-y-6" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <ErrorBoundary
               fallback={
                 <NetworkErrorFallback onRetry={() => safeWindow.reload()} />
@@ -547,7 +559,10 @@ export default function DashboardContent() {
             </h3>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            <div
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"
+              style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}
+            >
               <Link
                 href="/journal/new"
                 className="flex items-center p-3 sm:p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
