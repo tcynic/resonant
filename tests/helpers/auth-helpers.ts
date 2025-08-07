@@ -46,13 +46,55 @@ export class AuthHelpers {
 
     console.log(`🔐 Signing in test user: ${userType} (${email})`)
 
+    // Debug: Check server environment configuration first
+    if (process.env.CI || process.env.TEST_ENVIRONMENT) {
+      try {
+        const debugResponse = await this.page.request.get('/api/debug/env')
+        if (debugResponse.ok()) {
+          const envStatus = await debugResponse.json()
+          console.log(
+            'Server environment status:',
+            JSON.stringify(envStatus, null, 2)
+          )
+        }
+      } catch (error) {
+        console.log('Could not fetch debug endpoint:', error)
+      }
+    }
+
     // Navigate to sign-in page
     await this.page.goto('/sign-in')
 
-    // Wait for page to load
-    await expect(
-      this.page.getByRole('heading', { name: 'Sign in to Resonant' })
-    ).toBeVisible()
+    // Wait for page to load with enhanced debugging
+    try {
+      await expect(
+        this.page.getByRole('heading', { name: 'Sign in to Resonant' })
+      ).toBeVisible()
+    } catch (error) {
+      if (process.env.CI) {
+        // Enhanced debugging for sign-in page loading issues
+        console.log('📍 Sign-in page heading not found, debugging...')
+        const html = await this.page.content()
+        console.log('- Page title:', await this.page.title())
+        console.log(
+          '- Page HTML contains "sign":',
+          html.toLowerCase().includes('sign')
+        )
+        console.log(
+          '- Page HTML contains "resonant":',
+          html.toLowerCase().includes('resonant')
+        )
+
+        // Look for any headings
+        const headings = await this.page.$$('h1, h2, h3, h4, h5, h6')
+        console.log('- Total headings found:', headings.length)
+        for (let i = 0; i < Math.min(headings.length, 3); i++) {
+          const text = await headings[i].textContent()
+          console.log(`- Heading ${i + 1}:`, text)
+        }
+      }
+      throw error
+    }
 
     // Fill in the form
     await this.page.getByRole('textbox', { name: 'Email address' }).fill(email)

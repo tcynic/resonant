@@ -64,7 +64,7 @@ jobs:
           echo "Building application..."
           npm run build
         env:
-          NEXT_PUBLIC_CONVEX_URL: ${{ secrets.CONVEX_URL_TEST || 'https://test.convex.cloud' }}
+          NEXT_PUBLIC_CONVEX_URL: ${{ secrets.CONVEX_URL_TEST || '' }}
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY_TEST || 'pk_test_placeholder' }}
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY_TEST || 'sk_test_placeholder' }}
 

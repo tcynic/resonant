@@ -32,6 +32,8 @@ import type * as healthScores from "../healthScores.js";
 import type * as http from "../http.js";
 import type * as insights from "../insights.js";
 import type * as journalEntries from "../journalEntries.js";
+import type * as langextract_actions from "../langextract_actions.js";
+import type * as langextract_mutations from "../langextract_mutations.js";
 import type * as migrations_001_enhance_aianalysis_metadata from "../migrations/001_enhance_aianalysis_metadata.js";
 import type * as migrations_002_gradual_schema_rollout from "../migrations/002_gradual_schema_rollout.js";
 import type * as migrations_legacy_cleanup_v7 from "../migrations/legacy_cleanup_v7.js";
@@ -41,6 +43,7 @@ import type * as monitoring_cost_monitoring from "../monitoring/cost_monitoring.
 import type * as monitoring_dashboard_queries from "../monitoring/dashboard_queries.js";
 import type * as monitoring_failure_detection from "../monitoring/failure_detection.js";
 import type * as monitoring_health_checks from "../monitoring/health_checks.js";
+import type * as monitoring_langextract_metrics from "../monitoring/langextract_metrics.js";
 import type * as monitoring_success_rate_tracking from "../monitoring/success_rate_tracking.js";
 import type * as notifications from "../notifications.js";
 import type * as recovery_orchestration from "../recovery_orchestration.js";
@@ -52,6 +55,10 @@ import type * as scheduler_queue_maintenance from "../scheduler/queue_maintenanc
 import type * as scheduler_queue_metrics from "../scheduler/queue_metrics.js";
 import type * as scheduler_queue_overflow from "../scheduler/queue_overflow.js";
 import type * as scheduler from "../scheduler.js";
+import type * as schema_ai_analysis from "../schema/ai_analysis.js";
+import type * as schema_langextract_types from "../schema/langextract_types.js";
+import type * as schema_monitoring from "../schema/monitoring.js";
+import type * as schema_user_preferences from "../schema/user_preferences.js";
 import type * as search from "../search.js";
 import type * as service_recovery from "../service_recovery.js";
 import type * as test_testDataManager from "../test/testDataManager.js";
@@ -103,6 +110,8 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   insights: typeof insights;
   journalEntries: typeof journalEntries;
+  langextract_actions: typeof langextract_actions;
+  langextract_mutations: typeof langextract_mutations;
   "migrations/001_enhance_aianalysis_metadata": typeof migrations_001_enhance_aianalysis_metadata;
   "migrations/002_gradual_schema_rollout": typeof migrations_002_gradual_schema_rollout;
   "migrations/legacy_cleanup_v7": typeof migrations_legacy_cleanup_v7;
@@ -112,6 +121,7 @@ declare const fullApi: ApiFromModules<{
   "monitoring/dashboard_queries": typeof monitoring_dashboard_queries;
   "monitoring/failure_detection": typeof monitoring_failure_detection;
   "monitoring/health_checks": typeof monitoring_health_checks;
+  "monitoring/langextract_metrics": typeof monitoring_langextract_metrics;
   "monitoring/success_rate_tracking": typeof monitoring_success_rate_tracking;
   notifications: typeof notifications;
   recovery_orchestration: typeof recovery_orchestration;
@@ -123,6 +133,10 @@ declare const fullApi: ApiFromModules<{
   "scheduler/queue_metrics": typeof scheduler_queue_metrics;
   "scheduler/queue_overflow": typeof scheduler_queue_overflow;
   scheduler: typeof scheduler;
+  "schema/ai_analysis": typeof schema_ai_analysis;
+  "schema/langextract_types": typeof schema_langextract_types;
+  "schema/monitoring": typeof schema_monitoring;
+  "schema/user_preferences": typeof schema_user_preferences;
   search: typeof search;
   service_recovery: typeof service_recovery;
   "test/testDataManager": typeof test_testDataManager;

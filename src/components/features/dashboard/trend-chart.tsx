@@ -173,7 +173,7 @@ export default function TrendChart({
   }
 
   return (
-    <Card className={className} padding="md">
+    <Card className={className} padding="md" data-testid="trend-chart">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
@@ -182,11 +182,17 @@ export default function TrendChart({
             </h3>
             <p className="text-sm text-gray-500">
               Tracking{' '}
+              <span data-testid="trend-relationships">
+                {relationshipNames
+                  .filter(name => !hiddenRelationships.has(name))
+                  .join(', ')}
+              </span>{' '}
+              (
               {
                 relationshipNames.filter(name => !hiddenRelationships.has(name))
                   .length
               }{' '}
-              relationships
+              relationships)
             </p>
           </div>
           <TimePeriodSelector
@@ -291,7 +297,12 @@ export default function TrendChart({
         <div className="mt-4 pt-4 border-t border-gray-100">
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
-              <p className="text-2xl font-bold text-gray-900">{data.length}</p>
+              <p
+                className="text-2xl font-bold text-gray-900"
+                data-testid="trend-data-points"
+              >
+                {data.length}
+              </p>
               <p className="text-xs text-gray-500">Data Points</p>
             </div>
             <div>

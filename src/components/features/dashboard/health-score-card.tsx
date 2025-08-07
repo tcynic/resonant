@@ -4,7 +4,8 @@ import React from 'react'
 import Image from 'next/image'
 import { Card, CardHeader, CardContent } from '@/components/ui/card'
 import { AnalysisErrorFallback } from '@/components/ui/error-boundary'
-import { HealthScore, Relationship } from '@/lib/types'
+import { HealthScore, Relationship, LangExtractResult } from '@/lib/types'
+import StructuredInsights from './structured-insights'
 
 interface HealthScoreCardProps {
   healthScore: HealthScore | null
@@ -13,6 +14,8 @@ interface HealthScoreCardProps {
   showDetails?: boolean
   error?: Error | null
   isLoading?: boolean
+  // Enhanced with LangExtract data (Story LangExtract-2)
+  recentLangExtractData?: LangExtractResult
 }
 
 interface ScoreProgressProps {
@@ -104,6 +107,7 @@ export default function HealthScoreCard({
   showDetails = true,
   error = null,
   isLoading = false,
+  recentLangExtractData,
 }: HealthScoreCardProps) {
   // Handle loading state
   if (isLoading) {
@@ -246,7 +250,11 @@ export default function HealthScoreCard({
   }
 
   return (
-    <Card className={`${className}`} padding="md">
+    <Card
+      className={`${className}`}
+      padding="md"
+      data-testid="health-score-card"
+    >
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex-1">
@@ -267,7 +275,10 @@ export default function HealthScoreCard({
                 </div>
               )}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">
+                <h3
+                  className="text-lg font-semibold text-gray-900"
+                  data-testid="relationship-name"
+                >
                   {relationship.name}
                 </h3>
                 <p className="text-sm text-gray-500 capitalize">
@@ -317,6 +328,7 @@ export default function HealthScoreCard({
               <span
                 className={`text-xl font-bold ${getOverallScoreColor(healthScore.overallScore)}`}
                 aria-label={`Health score for ${relationship.name}`}
+                data-testid="health-score"
               >
                 {healthScore.overallScore}
               </span>
@@ -362,10 +374,23 @@ export default function HealthScoreCard({
               />
             </div>
 
+            {/* Enhanced Insights from LangExtract (Story LangExtract-2) */}
+            {recentLangExtractData && (
+              <div className="pt-4 border-t border-gray-100">
+                <StructuredInsights
+                  langExtractData={recentLangExtractData}
+                  compact={true}
+                />
+              </div>
+            )}
+
             {/* Confidence and Last Updated */}
             <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t border-gray-100">
               <span>
                 Confidence: {Math.round(healthScore.confidenceLevel * 100)}%
+                {recentLangExtractData?.processingSuccess && (
+                  <span className="ml-2 text-green-600">+Enhanced</span>
+                )}
               </span>
               <span data-testid="last-updated">
                 Updated {formatLastUpdated(healthScore.lastUpdated)}

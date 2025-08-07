@@ -158,38 +158,53 @@ export function PrivacySettings({ className = '' }: PrivacySettingsProps) {
         <div className="space-y-6">
           <div className="flex items-start space-x-3">
             <Checkbox
+              id="data-sharing"
               checked={settings.dataSharing}
               onChange={e =>
                 handleSettingChange('dataSharing', e.target.checked)
               }
+              aria-labelledby="data-sharing-label"
+              aria-describedby="data-sharing-desc"
             />
             <div className="flex-1">
-              <div className="font-medium text-gray-900 mb-1">
-                Allow data for AI analysis improvements
-              </div>
-              <div className="text-sm text-gray-600">
-                Help improve our AI analysis by allowing anonymized data to be
-                used for research and model training. Your personal information
-                and journal content remain private and are never shared.
+              <label
+                id="data-sharing-label"
+                htmlFor="data-sharing"
+                className="font-medium text-gray-900 mb-1 cursor-pointer block"
+              >
+                Allow anonymous data sharing
+              </label>
+              <div id="data-sharing-desc" className="text-sm text-gray-600">
+                Help improve our AI analysis features by allowing anonymized
+                usage data to be used for research and model training. Your
+                personal information and journal content remain private and are
+                never shared.
               </div>
             </div>
           </div>
 
           <div className="flex items-start space-x-3">
             <Checkbox
+              id="search-indexing"
               checked={settings.searchIndexing}
               onChange={e =>
                 handleSettingChange('searchIndexing', e.target.checked)
               }
+              aria-labelledby="search-indexing-label"
+              aria-describedby="search-indexing-desc"
             />
             <div className="flex-1">
-              <div className="font-medium text-gray-900 mb-1">
-                Enable search indexing
-              </div>
-              <div className="text-sm text-gray-600">
-                Allow your journal entries to be indexed for faster search
-                results. Disabling this will make search slower but prevents
-                indexing of your content.
+              <label
+                id="search-indexing-label"
+                htmlFor="search-indexing"
+                className="font-medium text-gray-900 mb-1 cursor-pointer block"
+              >
+                Allow search indexing
+              </label>
+              <div id="search-indexing-desc" className="text-sm text-gray-600">
+                Allow your entries to be searchable through indexing. Disabling
+                this may affect search functionality but prevents indexing of
+                your content.
               </div>
             </div>
           </div>
@@ -208,37 +223,54 @@ export function PrivacySettings({ className = '' }: PrivacySettingsProps) {
         <div className="space-y-6">
           <div className="flex items-start space-x-3">
             <Checkbox
+              id="usage-analytics"
               checked={settings.analyticsOptIn}
               onChange={e =>
                 handleSettingChange('analyticsOptIn', e.target.checked)
               }
+              aria-labelledby="usage-analytics-label"
+              aria-describedby="usage-analytics-desc"
             />
             <div className="flex-1">
-              <div className="font-medium text-gray-900 mb-1">
-                Usage analytics
-              </div>
-              <div className="text-sm text-gray-600">
-                Allow collection of anonymous usage statistics to help us
-                improve the app. This includes feature usage, performance
-                metrics, and error reporting.
+              <label
+                id="usage-analytics-label"
+                htmlFor="usage-analytics"
+                className="font-medium text-gray-900 mb-1 cursor-pointer block"
+              >
+                Allow usage analytics
+              </label>
+              <div id="usage-analytics-desc" className="text-sm text-gray-600">
+                Help us understand how you use the app by allowing collection of
+                anonymous usage statistics. This includes feature usage,
+                performance metrics, and error reporting.
               </div>
             </div>
           </div>
 
           <div className="flex items-start space-x-3">
             <Checkbox
+              id="marketing-communications"
               checked={settings.marketingOptIn}
               onChange={e =>
                 handleSettingChange('marketingOptIn', e.target.checked)
               }
+              aria-labelledby="marketing-communications-label"
+              aria-describedby="marketing-communications-desc"
             />
             <div className="flex-1">
-              <div className="font-medium text-gray-900 mb-1">
-                Marketing communications
-              </div>
-              <div className="text-sm text-gray-600">
-                Receive occasional emails about new features, tips, and updates.
-                You can unsubscribe at any time.
+              <label
+                id="marketing-communications-label"
+                htmlFor="marketing-communications"
+                className="font-medium text-gray-900 mb-1 cursor-pointer block"
+              >
+                Receive marketing communications
+              </label>
+              <div
+                id="marketing-communications-desc"
+                className="text-sm text-gray-600"
+              >
+                Receive updates about new features, tips, and improvements. You
+                can unsubscribe at any time.
               </div>
             </div>
           </div>

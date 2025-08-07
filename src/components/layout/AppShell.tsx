@@ -32,7 +32,7 @@ function AppShellContent({
       {showSidebar && (
         <aside
           className="w-64 bg-white shadow-sm border-r border-gray-200"
-          aria-label="Main navigation"
+          aria-label="Sidebar navigation"
         >
           <div className="p-4">
             <div className="text-sm text-gray-500">Sidebar (placeholder)</div>

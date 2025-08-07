@@ -19,6 +19,8 @@ jest.mock('@/hooks/use-relationships', () => ({
       { _id: 'rel_1', name: 'Alice', type: 'friend' },
       { _id: 'rel_2', name: 'Bob', type: 'romantic' },
     ],
+    isLoading: false,
+    error: null,
   })),
 }))
 
@@ -169,8 +171,10 @@ const { useJournalEntries } = jest.requireMock(
 const { useJournalEntryMutations } = jest.requireMock(
   '@/hooks/journal/use-journal-entries'
 )
+const { useRelationships } = jest.requireMock('@/hooks/use-relationships')
 const mockUseJournalEntries = jest.mocked(useJournalEntries)
 const mockUseJournalEntryMutations = jest.mocked(useJournalEntryMutations)
+const mockUseRelationships = jest.mocked(useRelationships)
 
 describe('JournalEntriesList', () => {
   const mockEntries: JournalEntry[] = [
@@ -229,6 +233,14 @@ describe('JournalEntriesList', () => {
     })
     mockUseJournalEntryMutations.mockReturnValue({
       deleteJournalEntry: jest.fn(),
+    })
+    mockUseRelationships.mockReturnValue({
+      relationships: [
+        { _id: 'rel_1', name: 'Alice', type: 'friend' },
+        { _id: 'rel_2', name: 'Bob', type: 'romantic' },
+      ],
+      isLoading: false,
+      error: null,
     })
   })
 

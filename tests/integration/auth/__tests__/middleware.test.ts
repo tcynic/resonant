@@ -25,6 +25,8 @@ describe('Authentication Middleware', () => {
       '/sign-up(.*)',
       '/',
       '/test-journal-demo',
+      '/api/webhooks/clerk',
+      '/api/debug-env',
     ])
   })
 

@@ -120,6 +120,19 @@ interface ExtendedStoreResultArgs {
   tokensUsed: number
   apiCost: number
   status: string
+  // LangExtract data
+  langExtractData?: {
+    structuredData: {
+      emotions: Array<{ text: string; type: string; intensity?: string }>
+      themes: Array<{ text: string; category: string; context?: string }>
+      triggers: Array<{ text: string; type: string; severity?: string }>
+      communication: Array<{ text: string; style: string; tone?: string }>
+      relationships: Array<{ text: string; type: string; dynamic?: string }>
+    }
+    extractedEntities: string[]
+    processingSuccess: boolean
+    errorMessage?: string
+  }
   // Enhanced error handling fields
   processingAttempts?: number
   lastErrorMessage?: string
@@ -340,6 +353,28 @@ export const analyzeJournalEntry = httpAction(async (ctx, request) => {
       emotions: analysis.emotionalKeywords || [],
     }))
 
+    // Attempt LangExtract preprocessing if enabled
+    let langExtractResult = null
+    try {
+      // Call the LangExtract action internally
+      const langExtractResponse = await ctx.runAction(
+        (internal as any).langextract_actions.processWithLangExtract,
+        {
+          content: journalEntry.content,
+          relationshipContext: journalEntry.relationshipName || undefined,
+          userId,
+          entryId,
+        }
+      )
+
+      if (langExtractResponse.success) {
+        langExtractResult = langExtractResponse.result
+      }
+    } catch (langExtractError) {
+      console.warn('LangExtract preprocessing failed:', langExtractError)
+      // Continue with regular analysis - LangExtract is optional
+    }
+
     // Prepare Gemini API request
     const geminiRequest: GeminiAnalysisRequest = {
       text: journalEntry.content,
@@ -502,6 +537,8 @@ export const analyzeJournalEntry = httpAction(async (ctx, request) => {
       tokensUsed: geminiResponse.metadata.tokensUsed,
       apiCost: geminiResponse.metadata.apiCost,
       status: 'completed',
+      // LangExtract data if available
+      langExtractData: langExtractResult || undefined,
       // Enhanced error handling metadata
       processingAttempts: retryCount + 1,
       circuitBreakerState: {
@@ -1160,7 +1197,9 @@ async function getPreviousAnalyses(
   limit: number = 5
 ) {
   try {
-    const analyses = await ctx.runQuery(
+    // @ts-ignore - Complex type inference issue
+    const analyses: any = await ctx.runQuery(
+      // @ts-ignore - Complex type inference issue
       internal.aiAnalysis.getRecentForPatterns,
       {
         userId,

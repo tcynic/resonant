@@ -11,15 +11,15 @@ interface MockCardProps {
   className?: string
 }
 
-jest.mock('@/components/ui/card', () => {
-  return function MockCard({ children, className }: MockCardProps) {
+jest.mock('@/components/ui/card', () => ({
+  Card: function MockCard({ children, className }: MockCardProps) {
     return (
       <div className={className} data-testid="journal-card">
         {children}
       </div>
     )
-  }
-})
+  },
+}))
 
 interface MockButtonProps {
   children: React.ReactNode
@@ -49,6 +49,35 @@ jest.mock('@/components/ui/button', () => {
     )
   }
 })
+
+// Mock hooks used by AIAnalysisStatus
+jest.mock('@/hooks/use-ai-analysis-status', () => ({
+  useAIAnalysisStatus: jest.fn(() => ({
+    status: 'completed',
+    progress: null,
+    error: null,
+    canRetry: false,
+    isLoading: false,
+    analysis: null,
+  })),
+}))
+
+jest.mock('@/hooks/use-processing-progress', () => ({
+  useProcessingProgress: jest.fn(() => ({
+    progress: null,
+  })),
+}))
+
+// Mock AIAnalysisStatus component
+jest.mock('../ai-analysis-status', () => ({
+  AIAnalysisStatus: function MockAIAnalysisStatus({
+    entryId,
+  }: {
+    entryId: string
+  }) {
+    return <div data-testid="ai-analysis-status">AI Status for {entryId}</div>
+  },
+}))
 
 describe('JournalEntryCard', () => {
   const mockEntry: JournalEntry = {

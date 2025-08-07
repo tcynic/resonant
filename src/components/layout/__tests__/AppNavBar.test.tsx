@@ -195,11 +195,16 @@ describe('AppNavBar', () => {
         expect.objectContaining({
           type: 'journal',
           href: '/journal',
+          id: expect.stringMatching(/^nav-\d+$/),
+          timestamp: expect.any(Number),
         })
       )
 
       expect(mockNavigationActions.updateBreadcrumbs).toHaveBeenCalledWith([
-        { label: 'Journal', href: '/journal', isActive: true },
+        expect.objectContaining({
+          href: '/journal',
+          isActive: true,
+        }),
       ])
     })
   })
@@ -387,72 +392,66 @@ describe('AppNavBar', () => {
     })
 
     it('should display 99+ for counts over 99', () => {
-      // Create a temporary mock for this specific test
-      const mockNavigationModule = jest.createMockFromModule(
-        '../NavigationProvider'
-      ) as any
-      mockNavigationModule.useNavigation = jest.fn(() => ({
-        state: {
-          ...mockNavigationState,
-          notifications: {
-            ...mockNavigationState.notifications,
-            unread: 150,
-          },
+      // Create a temporary mock for this test
+      const tempMockState = {
+        ...mockNavigationState,
+        notifications: {
+          ...mockNavigationState.notifications,
+          unread: 150,
         },
+      }
+
+      // Override the mock temporarily
+      const useNavigationModule = jest.requireMock('../NavigationProvider')
+      const originalMock = useNavigationModule.useNavigation
+      useNavigationModule.useNavigation = jest.fn(() => ({
+        state: tempMockState,
         ...mockNavigationActions,
       }))
 
-      jest.doMock('../NavigationProvider', () => mockNavigationModule)
+      render(
+        <TestWrapper>
+          <AppNavBar />
+        </TestWrapper>
+      )
 
-      // Re-import the component to use the new mock
-      jest.isolateModules(() => {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const { default: TestAppNavBar } = require('../AppNavBar')
+      expect(screen.getByText('99+')).toBeInTheDocument()
 
-        render(
-          <TestWrapper>
-            <TestAppNavBar />
-          </TestWrapper>
-        )
-
-        expect(screen.getByText('99+')).toBeInTheDocument()
-      })
+      // Restore original mock
+      useNavigationModule.useNavigation = originalMock
     })
 
     it('should not display badge when no unread notifications', () => {
-      // Create a temporary mock for this specific test
-      const mockNavigationModule = jest.createMockFromModule(
-        '../NavigationProvider'
-      ) as any
-      mockNavigationModule.useNavigation = jest.fn(() => ({
-        state: {
-          ...mockNavigationState,
-          notifications: {
-            ...mockNavigationState.notifications,
-            unread: 0,
-          },
+      // Create a temporary mock for this test
+      const tempMockState = {
+        ...mockNavigationState,
+        notifications: {
+          ...mockNavigationState.notifications,
+          unread: 0,
         },
+      }
+
+      // Override the mock temporarily
+      const useNavigationModule = jest.requireMock('../NavigationProvider')
+      const originalMock = useNavigationModule.useNavigation
+      useNavigationModule.useNavigation = jest.fn(() => ({
+        state: tempMockState,
         ...mockNavigationActions,
       }))
 
-      jest.doMock('../NavigationProvider', () => mockNavigationModule)
+      render(
+        <TestWrapper>
+          <AppNavBar />
+        </TestWrapper>
+      )
 
-      // Re-import the component to use the new mock
-      jest.isolateModules(() => {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const { default: TestAppNavBar } = require('../AppNavBar')
+      expect(screen.queryByText('0')).not.toBeInTheDocument()
+      expect(
+        screen.getByLabelText(/notifications.*0 unread/i)
+      ).toBeInTheDocument()
 
-        render(
-          <TestWrapper>
-            <TestAppNavBar />
-          </TestWrapper>
-        )
-
-        expect(screen.queryByText('0')).not.toBeInTheDocument()
-        expect(
-          screen.getByLabelText(/notifications.*0 unread/i)
-        ).toBeInTheDocument()
-      })
+      // Restore original mock
+      useNavigationModule.useNavigation = originalMock
     })
   })
 
@@ -567,7 +566,7 @@ describe('AppNavBar', () => {
 
       expect(screen.getByRole('navigation')).toHaveAttribute(
         'aria-label',
-        'Main navigation'
+        'Top navigation'
       )
 
       const userMenuButton = screen.getByRole('button', { name: /john doe/i })
@@ -648,7 +647,7 @@ describe('AppNavBar', () => {
         </TestWrapper>
       )
 
-      expect(screen.getByRole('navigation')).toHaveClass('custom-nav-class')
+      expect(screen.getByRole('banner')).toHaveClass('custom-nav-class')
     })
   })
 

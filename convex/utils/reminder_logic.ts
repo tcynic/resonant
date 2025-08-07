@@ -224,7 +224,7 @@ export function isWithinDoNotDisturbHours(
 export function calculateNextReminderTime(
   userPattern: UserJournalingPattern,
   reminderSettings: {
-    frequency: 'daily' | 'every2days' | 'weekly'
+    frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly'
     preferredTime: string
     timezone: string
     doNotDisturbStart: string
@@ -240,8 +240,11 @@ export function calculateNextReminderTime(
     case 'daily':
       baseIntervalMs = 24 * 60 * 60 * 1000 // 1 day
       break
-    case 'every2days':
+    case 'biweekly':
       baseIntervalMs = 48 * 60 * 60 * 1000 // 2 days
+      break
+    case 'monthly':
+      baseIntervalMs = 30 * 24 * 60 * 60 * 1000 // 30 days
       break
     case 'weekly':
       baseIntervalMs = 7 * 24 * 60 * 60 * 1000 // 7 days

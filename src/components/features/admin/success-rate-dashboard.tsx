@@ -93,7 +93,6 @@ export function SuccessRateDashboard() {
 
   // Query success rate data
   const successRateData = useQuery(
-    // @ts-expect-error - Convex query types cause deep instantiation issues
     api.monitoring.success_rate_tracking.getRealTimeSuccessRate,
     {}
   )

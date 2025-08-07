@@ -354,85 +354,86 @@ const AppNavBar = memo(function AppNavBar({ className = '' }: AppNavBarProps) {
   if (!user) return null
 
   return (
-    <nav
-      role="navigation"
-      aria-label="Main navigation"
+    <header
+      role="banner"
       className={`bg-white shadow-sm border-b border-gray-200 ${className}`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          {/* Left side: Logo and main navigation */}
-          <div className="flex items-center">
-            {/* Brand logo */}
-            <Link
-              href="/dashboard"
-              className="flex-shrink-0 flex items-center"
-              aria-label="Resonant - Go to dashboard"
-            >
-              <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">R</span>
-              </div>
-              <span className="ml-2 text-xl font-semibold text-gray-900 hidden sm:block">
-                Resonant
-              </span>
-            </Link>
+      <nav role="navigation" aria-label="Top navigation">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            {/* Left side: Logo and main navigation */}
+            <div className="flex items-center">
+              {/* Brand logo */}
+              <Link
+                href="/dashboard"
+                className="flex-shrink-0 flex items-center"
+                aria-label="Resonant - Go to dashboard"
+              >
+                <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">R</span>
+                </div>
+                <span className="ml-2 text-xl font-semibold text-gray-900 hidden sm:block">
+                  Resonant
+                </span>
+              </Link>
 
-            {/* Desktop navigation */}
-            <div className="hidden md:ml-8 md:flex md:space-x-1">
+              {/* Desktop navigation */}
+              <div className="hidden md:ml-8 md:flex md:space-x-1">
+                {navigationItems.map(({ label, href, icon }) => (
+                  <NavLink key={href} href={href}>
+                    <span className="mr-1">{icon}</span>
+                    {label}
+                  </NavLink>
+                ))}
+              </div>
+            </div>
+
+            {/* Center: Global search (desktop only) */}
+            <div className="hidden md:flex md:items-center md:flex-1 md:justify-center">
+              <GlobalSearch />
+            </div>
+
+            {/* Right side: Notifications and user menu */}
+            <div className="flex items-center space-x-2">
+              <NotificationIndicator />
+              <UserMenu />
+              <MobileMenuButton
+                isOpen={mobileMenuOpen}
+                onClick={toggleMobileMenu}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile menu */}
+        {mobileMenuOpen && (
+          <div
+            id="mobile-menu"
+            className="md:hidden border-t border-gray-200 bg-white"
+          >
+            <div className="px-2 pt-2 pb-3 space-y-1">
+              {/* Mobile search */}
+              <div className="px-3 py-2">
+                <GlobalSearch />
+              </div>
+
+              {/* Mobile navigation */}
               {navigationItems.map(({ label, href, icon }) => (
-                <NavLink key={href} href={href}>
-                  <span className="mr-1">{icon}</span>
+                <NavLink
+                  key={href}
+                  href={href}
+                  className="block px-3 py-2"
+                  onClick={closeMobileMenu}
+                >
+                  <span className="mr-2">{icon}</span>
                   {label}
                 </NavLink>
               ))}
             </div>
           </div>
-
-          {/* Center: Global search (desktop only) */}
-          <div className="hidden md:flex md:items-center md:flex-1 md:justify-center">
-            <GlobalSearch />
-          </div>
-
-          {/* Right side: Notifications and user menu */}
-          <div className="flex items-center space-x-2">
-            <NotificationIndicator />
-            <UserMenu />
-            <MobileMenuButton
-              isOpen={mobileMenuOpen}
-              onClick={toggleMobileMenu}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile menu */}
-      {mobileMenuOpen && (
-        <div
-          id="mobile-menu"
-          className="md:hidden border-t border-gray-200 bg-white"
-        >
-          <div className="px-2 pt-2 pb-3 space-y-1">
-            {/* Mobile search */}
-            <div className="px-3 py-2">
-              <GlobalSearch />
-            </div>
-
-            {/* Mobile navigation */}
-            {navigationItems.map(({ label, href, icon }) => (
-              <NavLink
-                key={href}
-                href={href}
-                className="block px-3 py-2"
-                onClick={closeMobileMenu}
-              >
-                <span className="mr-2">{icon}</span>
-                {label}
-              </NavLink>
-            ))}
-          </div>
-        </div>
-      )}
-    </nav>
+        )}
+      </nav>
+    </header>
   )
 })
 

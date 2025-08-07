@@ -101,10 +101,10 @@ describe('AppShell', () => {
       </AppShell>
     )
 
-    expect(screen.getByLabelText('Main navigation')).toBeInTheDocument()
+    expect(screen.getByLabelText('Sidebar navigation')).toBeInTheDocument()
     expect(screen.getByRole('banner')).toBeInTheDocument()
     expect(screen.getByText('Sidebar (placeholder)')).toBeInTheDocument()
-    expect(screen.getByText('Navbar (placeholder)')).toBeInTheDocument()
+    expect(screen.getByLabelText('Top navigation')).toBeInTheDocument()
   })
 
   it('should hide sidebar when showSidebar is false', () => {
@@ -126,7 +126,9 @@ describe('AppShell', () => {
       </AppShell>
     )
 
-    expect(screen.queryByLabelText('Main navigation')).not.toBeInTheDocument()
+    expect(
+      screen.queryByLabelText('Sidebar navigation')
+    ).not.toBeInTheDocument()
     expect(screen.queryByText('Sidebar (placeholder)')).not.toBeInTheDocument()
     expect(screen.getByText('Test Content')).toBeInTheDocument()
   })
@@ -175,7 +177,7 @@ describe('AppShell', () => {
     )
 
     // Check ARIA labels
-    expect(screen.getByLabelText('Main navigation')).toBeInTheDocument()
+    expect(screen.getByLabelText('Sidebar navigation')).toBeInTheDocument()
     expect(screen.getByRole('banner')).toBeInTheDocument()
     expect(screen.getByRole('main')).toBeInTheDocument()
   })

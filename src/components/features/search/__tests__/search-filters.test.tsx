@@ -335,20 +335,42 @@ describe('SearchFiltersComponent', () => {
 
   it('should handle multiple relationship selections', async () => {
     const user = userEvent.setup()
-    render(<SearchFiltersComponent {...defaultProps} />)
+    let currentFilters = defaultFilters
+
+    // Mock onFiltersChange to update filters state
+    const mockOnFiltersChangeStateful = jest.fn(newFilters => {
+      currentFilters = newFilters
+    })
+
+    const { rerender } = render(
+      <SearchFiltersComponent
+        {...defaultProps}
+        onFiltersChange={mockOnFiltersChangeStateful}
+      />
+    )
 
     // Expand filters
     const filterButton = screen.getByRole('button', { name: /filters/i })
     await user.click(filterButton)
 
-    // Select multiple relationships
+    // Select first relationship
     const sarahCheckbox = screen.getByLabelText(/Sarah Johnson/i)
-    const johnCheckbox = screen.getByLabelText(/John Smith/i)
-
     await user.click(sarahCheckbox)
+
+    // Update component with new filters
+    rerender(
+      <SearchFiltersComponent
+        {...defaultProps}
+        filters={currentFilters}
+        onFiltersChange={mockOnFiltersChangeStateful}
+      />
+    )
+
+    // Select second relationship
+    const johnCheckbox = screen.getByLabelText(/John Smith/i)
     await user.click(johnCheckbox)
 
-    expect(mockOnFiltersChange).toHaveBeenLastCalledWith({
+    expect(mockOnFiltersChangeStateful).toHaveBeenLastCalledWith({
       ...defaultFilters,
       relationshipIds: ['rel-1', 'rel-2'],
     })

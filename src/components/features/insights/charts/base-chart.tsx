@@ -97,7 +97,10 @@ export const BaseChart = forwardRef<ChartHandle, BaseChartProps>(
         }
       },
       destroyChart: () => {
-        if (chartRef.current) {
+        if (
+          chartRef.current &&
+          typeof chartRef.current.destroy === 'function'
+        ) {
           chartRef.current.destroy()
           chartRef.current = null
         }
@@ -115,7 +118,7 @@ export const BaseChart = forwardRef<ChartHandle, BaseChartProps>(
       if (!canvasRef.current || !data) return
 
       // Destroy existing chart
-      if (chartRef.current) {
+      if (chartRef.current && typeof chartRef.current.destroy === 'function') {
         chartRef.current.destroy()
       }
 
@@ -160,7 +163,10 @@ export const BaseChart = forwardRef<ChartHandle, BaseChartProps>(
 
       // Cleanup function
       return () => {
-        if (chartRef.current) {
+        if (
+          chartRef.current &&
+          typeof chartRef.current.destroy === 'function'
+        ) {
           chartRef.current.destroy()
           chartRef.current = null
         }

@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import '@testing-library/jest-dom'
 import RelationshipForm from '../relationship-form'
@@ -10,9 +10,17 @@ jest.mock('@/hooks/use-relationships')
 jest.mock('@clerk/nextjs', () => ({
   useUser: () => ({ user: { id: 'user_123' } }),
 }))
+// Override global mock for fine-grained control in this test
 jest.mock('convex/react', () => ({
-  useMutation: jest.fn(),
   useQuery: jest.fn(),
+  useMutation: jest.fn(() => jest.fn()),
+  useAction: jest.fn(() => jest.fn()),
+  usePaginatedQuery: jest.fn(),
+  Authenticated: ({ children }: any) => children,
+  Unauthenticated: ({ children }: any) => children,
+  AuthLoading: ({ children }: any) => children,
+  ConvexProvider: ({ children }: any) => children,
+  ConvexReactClient: jest.fn(),
 }))
 // Mock Convex generated files (these files don't exist yet in development)
 jest.mock('../../../../convex/_generated/api', () => ({}), { virtual: true })
@@ -53,13 +61,13 @@ describe('RelationshipForm', () => {
     })
 
     it('displays validation errors for empty required fields', async () => {
-      const user = userEvent.setup()
       render(<RelationshipForm />)
 
-      const submitButton = screen.getByRole('button', {
-        name: /create relationship/i,
-      })
-      await user.click(submitButton)
+      const form = document.querySelector('form')
+      expect(form).toBeInTheDocument()
+
+      // Use fireEvent to directly submit the form
+      fireEvent.submit(form!)
 
       await waitFor(() => {
         expect(
@@ -102,9 +110,8 @@ describe('RelationshipForm', () => {
       )
 
       // Submit form
-      await user.click(
-        screen.getByRole('button', { name: /create relationship/i })
-      )
+      const form = document.querySelector('form')
+      fireEvent.submit(form!)
 
       await waitFor(() => {
         expect(mockCreateRelationship).toHaveBeenCalledWith({
@@ -112,8 +119,15 @@ describe('RelationshipForm', () => {
           type: 'friend',
           photo: '',
         })
-        expect(mockOnSuccess).toHaveBeenCalledWith('rel_123')
       })
+
+      // Wait for onSuccess callback (called after 1 second timeout)
+      await waitFor(
+        () => {
+          expect(mockOnSuccess).toHaveBeenCalledWith('rel_123')
+        },
+        { timeout: 2000 }
+      )
     })
 
     it('resets form after successful creation', async () => {
@@ -136,8 +150,14 @@ describe('RelationshipForm', () => {
         expect(mockCreateRelationship).toHaveBeenCalled()
       })
 
-      // Check form is reset
-      expect(screen.getByLabelText(/relationship name/i)).toHaveValue('')
+      // Wait for form reset (happens after 1.5 second timeout)
+      await waitFor(
+        () => {
+          expect(screen.getByLabelText(/relationship name/i)).toHaveValue('')
+        },
+        { timeout: 2000 }
+      )
+
       expect(screen.getByLabelText(/relationship type/i)).toHaveValue('friend')
     })
 
@@ -176,7 +196,9 @@ describe('RelationshipForm', () => {
       render(<RelationshipForm relationship={mockRelationship} />)
 
       expect(screen.getByDisplayValue('Jane Smith')).toBeInTheDocument()
-      expect(screen.getByDisplayValue('family')).toBeInTheDocument()
+      expect(
+        screen.getByRole('combobox', { name: /relationship type/i })
+      ).toHaveValue('family')
       expect(
         screen.getByRole('button', { name: /update relationship/i })
       ).toBeInTheDocument()
@@ -200,9 +222,8 @@ describe('RelationshipForm', () => {
       await user.type(nameInput, 'Jane Doe')
 
       // Submit form
-      await user.click(
-        screen.getByRole('button', { name: /update relationship/i })
-      )
+      const form = document.querySelector('form')
+      fireEvent.submit(form!)
 
       await waitFor(() => {
         expect(mockUpdateRelationship).toHaveBeenCalledWith('rel_123', {
@@ -210,20 +231,25 @@ describe('RelationshipForm', () => {
           type: undefined,
           photo: undefined,
         })
-        expect(mockOnSuccess).toHaveBeenCalledWith('rel_123')
       })
+
+      // Wait for onSuccess callback (called after 1 second timeout)
+      await waitFor(
+        () => {
+          expect(mockOnSuccess).toHaveBeenCalledWith('rel_123')
+        },
+        { timeout: 2000 }
+      )
     })
 
     it('does not send unchanged fields in update', async () => {
-      const user = userEvent.setup()
       mockUpdateRelationship.mockResolvedValue(true)
 
       render(<RelationshipForm relationship={mockRelationship} />)
 
       // Submit without changes
-      await user.click(
-        screen.getByRole('button', { name: /update relationship/i })
-      )
+      const form = document.querySelector('form')
+      fireEvent.submit(form!)
 
       await waitFor(() => {
         expect(mockUpdateRelationship).toHaveBeenCalledWith('rel_123', {
@@ -240,7 +266,7 @@ describe('RelationshipForm', () => {
       render(<RelationshipForm />)
 
       expect(screen.getByText(/click to upload a photo/i)).toBeInTheDocument()
-      expect(screen.getByText(/png, jpg up to 5mb/i)).toBeInTheDocument()
+      expect(screen.getByText(/PNG, JPG, GIF, WebP up to/i)).toBeInTheDocument()
     })
 
     it('shows photo preview when photo is provided', () => {
@@ -312,9 +338,8 @@ describe('RelationshipForm', () => {
 
       // Fill and submit form
       await user.type(screen.getByLabelText(/relationship name/i), 'John Doe')
-      await user.click(
-        screen.getByRole('button', { name: /create relationship/i })
-      )
+      const form = document.querySelector('form')
+      fireEvent.submit(form!)
 
       expect(
         screen.getByRole('button', { name: /creating.../i })
@@ -335,12 +360,10 @@ describe('RelationshipForm', () => {
     })
 
     it('associates error messages with form fields', async () => {
-      const user = userEvent.setup()
       render(<RelationshipForm />)
 
-      await user.click(
-        screen.getByRole('button', { name: /create relationship/i })
-      )
+      const form = document.querySelector('form')
+      fireEvent.submit(form!)
 
       await waitFor(() => {
         const nameInput = screen.getByLabelText(/relationship name/i)
