@@ -353,22 +353,26 @@ export const analyzeJournalEntry = httpAction(async (ctx, request) => {
       emotions: analysis.emotionalKeywords || [],
     }))
 
-    // Attempt LangExtract preprocessing if enabled
+    // Attempt LangExtract preprocessing if enabled and rollout allows
     let langExtractResult = null
     try {
-      // Call the LangExtract action internally
-      const langExtractResponse = await ctx.runAction(
-        (internal as any).langextract_actions.processWithLangExtract,
-        {
-          content: journalEntry.content,
-          relationshipContext: journalEntry.relationshipName || undefined,
-          userId,
-          entryId,
-        }
-      )
+      const { shouldEnableLangExtract } = await import('./feature_flags')
+      const useLangExtract = await shouldEnableLangExtract(ctx, userId)
 
-      if (langExtractResponse.success) {
-        langExtractResult = langExtractResponse.result
+      if (useLangExtract) {
+        const langExtractResponse = await ctx.runAction(
+          (internal as any).langextract_actions.processWithLangExtract,
+          {
+            content: journalEntry.content,
+            relationshipContext: journalEntry.relationshipName || undefined,
+            userId,
+            entryId,
+          }
+        )
+
+        if (langExtractResponse.success) {
+          langExtractResult = langExtractResponse.result
+        }
       }
     } catch (langExtractError) {
       console.warn('LangExtract preprocessing failed:', langExtractError)

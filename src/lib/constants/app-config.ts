@@ -159,3 +159,47 @@ export type PerformanceConfigKey = keyof typeof PERFORMANCE_CONFIG
 export type UIConfigKey = keyof typeof UI_CONFIG
 export type DevConfigKey = keyof typeof DEV_CONFIG
 export type SecurityConfigKey = keyof typeof SECURITY_CONFIG
+
+/**
+ * LangExtract Feature Flag Configuration
+ *
+ * Centralized, environment-driven configuration for controlling the
+ * LangExtract integration rollout. Exposed as constants and helpers
+ * so both client and server code can make consistent decisions.
+ */
+export const LANGEXTRACT_CONFIG = {
+  ENABLED:
+    process.env.LANGEXTRACT_ENABLED === 'true' ||
+    process.env.NEXT_PUBLIC_LANGEXTRACT_ENABLED === 'true',
+  ROLLOUT_PERCENT: Number(
+    process.env.LANGEXTRACT_ROLLOUT_PERCENT ??
+      process.env.NEXT_PUBLIC_LANGEXTRACT_ROLLOUT_PERCENT ??
+      '0'
+  ),
+} as const
+
+/**
+ * Produce a stable, non-cryptographic hash bucket for a given string.
+ * Used to assign users deterministically to rollout cohorts.
+ */
+export function hashStringToBucket(input: string): number {
+  let hash = 5381
+  for (let index = 0; index < input.length; index += 1) {
+    // hash * 33 + charCode
+    hash = (hash << 5) + hash + input.charCodeAt(index)
+    // Ensure 32-bit integer wrap-around to stabilize across runtimes
+    hash |= 0
+  }
+  // Make bucket non-negative
+  return Math.abs(hash)
+}
+
+/**
+ * Determine whether LangExtract should be used for a given user.
+ * Respects the global ENABLED toggle and gradual rollout percentage.
+ */
+export function shouldUseLangExtract(userId: string): boolean {
+  if (!LANGEXTRACT_CONFIG.ENABLED) return false
+  const bucket = hashStringToBucket(userId) % 100
+  return bucket < LANGEXTRACT_CONFIG.ROLLOUT_PERCENT
+}
