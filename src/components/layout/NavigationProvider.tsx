@@ -242,11 +242,14 @@ export function NavigationProvider({
     state,
     dispatch,
     toggleSidebar,
+    setSidebarCollapsed: (collapsed: boolean) =>
+      dispatch({ type: 'SET_SIDEBAR_COLLAPSED', payload: collapsed }),
     addRecentItem,
     removeRecentItem,
     updateBreadcrumbs,
     updateNotifications,
     updatePreferences,
+    setCurrentRoute: (route: string) => dispatch({ type: 'SET_CURRENT_ROUTE', payload: route }),
   }
 
   return (

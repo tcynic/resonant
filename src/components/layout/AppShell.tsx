@@ -5,6 +5,7 @@ import { useUser, RedirectToSignIn } from '@clerk/nextjs'
 import { NavigationProvider } from './NavigationProvider'
 import { AppShellProps } from './types'
 import AppNavBar from './AppNavBar'
+import AppSidebar from './AppSidebar'
 
 // Loading spinner component
 function LoadingSpinner() {
@@ -28,17 +29,8 @@ function AppShellContent({
 }: AppShellProps) {
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar placeholder - will be implemented in future stories */}
-      {showSidebar && (
-        <aside
-          className="w-64 bg-white shadow-sm border-r border-gray-200"
-          aria-label="Sidebar navigation"
-        >
-          <div className="p-4">
-            <div className="text-sm text-gray-500">Sidebar (placeholder)</div>
-          </div>
-        </aside>
-      )}
+      {/* Sidebar */}
+      {showSidebar && <AppSidebar />}
 
       {/* Main content area */}
       <div className="flex-1 flex flex-col">

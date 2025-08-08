@@ -22,6 +22,7 @@ export interface RecentItem {
   title: string
   href: string
   timestamp: number
+  photoUrl?: string
 }
 
 export interface NavigationPreferences {
@@ -63,9 +64,11 @@ export interface NavigationContextType {
   state: NavigationState
   dispatch: React.Dispatch<NavigationAction>
   toggleSidebar: () => void
+  setSidebarCollapsed?: (collapsed: boolean) => void
   addRecentItem: (item: RecentItem) => void
   removeRecentItem: (id: string) => void
   updateBreadcrumbs: (breadcrumbs: BreadcrumbItem[]) => void
   updateNotifications: (notifications: NotificationCount) => void
   updatePreferences: (preferences: Partial<NavigationPreferences>) => void
+  setCurrentRoute?: (route: string) => void
 }

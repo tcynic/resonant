@@ -78,6 +78,7 @@ export const mockNavigationState: NavigationState = {
       title: 'Test Relationship',
       href: '/relationships/1',
       timestamp: Date.now() - 1000 * 60 * 60, // 1 hour ago
+      photoUrl: 'https://example.com/photo.jpg',
     },
   ],
   notifications: {
